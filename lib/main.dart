@@ -10,6 +10,7 @@ import 'screens/rooms_screen.dart';
 import 'screens/room_details_screen.dart';
 import 'screens/add_room_bill_screen.dart';
 import 'screens/add_tenant_screen.dart';
+import 'screens/allocate_tenant_screen.dart';
 import 'screens/tenants_screen.dart';
 import 'screens/tenant_profile_screen.dart';
 import 'screens/record_payment_screen.dart';
@@ -59,6 +60,14 @@ final router = GoRouter(
             final roomId = state.uri.queryParameters['roomId'];
             final bedId = state.uri.queryParameters['bedId'];
             return AddTenantScreen(initialRoomId: roomId, initialBedId: bedId);
+          },
+        ),
+        GoRoute(
+          path: '/allocate_tenant',
+          builder: (context, state) {
+            final roomId = state.uri.queryParameters['roomId']!;
+            final bedId = state.uri.queryParameters['bedId']!;
+            return AllocateTenantScreen(roomId: roomId, bedId: bedId);
           },
         ),
         GoRoute(

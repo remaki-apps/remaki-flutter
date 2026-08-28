@@ -181,7 +181,7 @@ class RoomDetailsScreen extends StatelessWidget {
             const Text('No Tenant', style: TextStyle(color: AppTheme.textSecondary)),
             const SizedBox(width: 16),
             ElevatedButton(
-              onPressed: () => context.push('/add_tenant?roomId=${room.id}&bedId=${bed.id}'),
+              onPressed: () => context.push('/allocate_tenant?roomId=${room.id}&bedId=${bed.id}'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 textStyle: const TextStyle(fontSize: 12),

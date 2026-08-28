@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
+import '../services/api_service.dart';
 
 class AppProvider with ChangeNotifier {
   List<Room> rooms = [];
@@ -13,7 +14,68 @@ class AppProvider with ChangeNotifier {
   static const String _paymentsKey = 'sunshine_pg_payments';
 
   AppProvider() {
-    loadFromStorage();
+    loadFromAPI();
+  }
+
+  Future<void> loadFromAPI() async {
+    try {
+      final tenantsData = await ApiService.fetchTenants();
+      final roomsData = await ApiService.fetchRooms();
+      
+      rooms = roomsData.map((e) {
+        return Room(
+          id: e['id'],
+          number: e['roomNumber'],
+          floor: e['floorNumber'] ?? 'Ground Floor',
+          capacity: e['capacity'],
+          beds: (e['beds'] as List).map((b) => Bed(
+            id: b['id'],
+            name: b['bedLabel'],
+            isAvailable: b['status'] == 'AVAILABLE' || b['status'] == 'VACANT',
+          )).toList(),
+        );
+      }).toList();
+
+      tenants = tenantsData.map((e) {
+        return Tenant(
+          id: e['id'],
+          name: e['name'],
+          phone: e['phone'] ?? '',
+          email: e['email'] ?? '',
+          roomId: e['room'] != null ? e['room']['id'] : '',
+          bedId: e['bed'] != null ? e['bed']['id'] : '',
+          moveInDate: e['moveInDate'] != null ? DateTime.tryParse(e['moveInDate']) ?? DateTime.now() : DateTime.now(),
+          rentAmount: (e['monthlyRent'] ?? 0).toDouble(),
+          securityDeposit: (e['securityDeposit'] ?? 0).toDouble(),
+          isPaid: e['paymentStatus'] == 'PAID',
+          rentDueDate: DateTime.now(), 
+          additionalCharges: (e['bills'] as List<dynamic>?)?.map((b) => AdditionalCharge(
+            id: b['id'],
+            description: b['description'] ?? 'Bill',
+            amount: (b['amount'] as num).toDouble(),
+            date: b['createdAt'] != null ? DateTime.tryParse(b['createdAt']) ?? DateTime.now() : DateTime.now(),
+          )).toList() ?? [],
+        );
+      }).toList();
+
+      for (var tenant in tenants) {
+        if (tenant.roomId.isNotEmpty && tenant.bedId.isNotEmpty) {
+          final roomIndex = rooms.indexWhere((r) => r.id == tenant.roomId);
+          if (roomIndex != -1) {
+            final bedIndex = rooms[roomIndex].beds.indexWhere((b) => b.id == tenant.bedId);
+            if (bedIndex != -1) {
+              rooms[roomIndex].beds[bedIndex].tenantId = tenant.id;
+              rooms[roomIndex].beds[bedIndex].isAvailable = false;
+            }
+          }
+        }
+      }
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading from API: $e');
+      await loadFromStorage();
+    }
   }
 
   Future<void> loadFromStorage() async {
@@ -74,6 +136,20 @@ class AppProvider with ChangeNotifier {
     var bed = room.beds.firstWhere((b) => b.id == tenant.bedId);
     bed.isAvailable = false;
     bed.tenantId = tenant.id;
+    
+    // Background API call
+    ApiService.createTenant({
+      'name': tenant.name,
+      'phone': tenant.phone,
+      'email': tenant.email,
+      'emergencyContact': tenant.emergencyContact,
+      'bedId': tenant.bedId,
+      'monthlyRent': tenant.rentAmount,
+      'securityDeposit': tenant.securityDeposit,
+      'dueDay': 5,
+      'moveInDate': tenant.moveInDate.toIso8601String(),
+    }).catchError((e) => debugPrint('Error creating tenant: \$e'));
+
     saveToStorage();
     notifyListeners();
   }
@@ -91,12 +167,28 @@ class AppProvider with ChangeNotifier {
     if (tenantIndex != -1) {
       tenants[tenantIndex].isPaid = true;
     }
+
+    ApiService.recordRentPayment({
+      'tenantId': tenantId,
+      'rentId': 'mock_rent_id', // Add proper rent record tracking if needed
+      'amount': amount,
+      'method': method.toUpperCase().replaceAll(' ', '_'),
+      'paymentDate': DateTime.now().toIso8601String(),
+    }).catchError((e) => debugPrint('Error recording payment: \$e'));
+
     saveToStorage();
     notifyListeners();
   }
 
   void addRoom(Room room) {
     rooms.add(room);
+    
+    ApiService.createRoom({
+      'roomNumber': room.number,
+      'floorNumber': room.floor,
+      'capacity': room.capacity,
+    }).catchError((e) => debugPrint('Error creating room: \$e'));
+
     saveToStorage();
     notifyListeners();
   }
@@ -131,6 +223,52 @@ class AppProvider with ChangeNotifier {
         date: DateTime.now(),
       ));
     }
+    
+    if (tenantIds.isNotEmpty) {
+      var tenant = tenants.firstWhere((t) => t.id == tenantIds.first);
+      if (tenant.roomId.isNotEmpty) {
+        ApiService.generateRoomCurrentBill({
+          'roomId': tenant.roomId,
+          'totalAmount': splitAmount * tenantIds.length,
+          'splitType': 'CUSTOM',
+          'customSplits': tenantIds.map((id) => {
+            'tenantProfileId': id,
+            'value': splitAmount
+          }).toList(),
+          'description': description,
+        }).catchError((e) => debugPrint('Error generating bill: \$e'));
+      }
+    }
+
+    saveToStorage();
+    notifyListeners();
+  }
+
+  void allocateTenant(String tenantId, String roomId, String bedId, {
+    double rentAmount = 0.0,
+    double securityDeposit = 0.0,
+    DateTime? moveInDate,
+  }) {
+    var tenant = tenants.firstWhere((t) => t.id == tenantId);
+    tenant.roomId = roomId;
+    tenant.bedId = bedId;
+    tenant.rentAmount = rentAmount;
+    tenant.securityDeposit = securityDeposit;
+    if (moveInDate != null) tenant.moveInDate = moveInDate;
+
+    var room = rooms.firstWhere((r) => r.id == roomId);
+    var bed = room.beds.firstWhere((b) => b.id == bedId);
+    bed.isAvailable = false;
+    bed.tenantId = tenantId;
+
+    ApiService.allocateTenantToBed(
+      tenantId, 
+      bedId,
+      rentAmount: rentAmount,
+      securityDeposit: securityDeposit,
+      moveInDate: moveInDate?.toIso8601String(),
+    ).catchError((e) => debugPrint('Error allocating tenant: \$e'));
+
     saveToStorage();
     notifyListeners();
   }

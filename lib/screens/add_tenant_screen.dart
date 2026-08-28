@@ -204,6 +204,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
       name: _nameController.text.trim(),
       phone: _phoneController.text.trim(),
       email: _emailController.text.trim(),
+      emergencyContact: _emergencyContactController.text.trim(),
       roomId: _selectedRoomId!,
       bedId: _selectedBedId!,
       moveInDate: _moveInDate,

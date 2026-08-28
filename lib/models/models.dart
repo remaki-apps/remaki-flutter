@@ -79,6 +79,7 @@ class Tenant {
   String name;
   String phone;
   String email;
+  String? emergencyContact;
   String roomId;
   String bedId;
   DateTime moveInDate;
@@ -96,6 +97,7 @@ class Tenant {
     required this.name,
     required this.phone,
     required this.email,
+    this.emergencyContact,
     required this.roomId,
     required this.bedId,
     required this.moveInDate,
@@ -111,6 +113,7 @@ class Tenant {
         'name': name,
         'phone': phone,
         'email': email,
+        'emergencyContact': emergencyContact,
         'roomId': roomId,
         'bedId': bedId,
         'moveInDate': moveInDate.toIso8601String(),
@@ -125,7 +128,8 @@ class Tenant {
         id: json['id'] as String,
         name: json['name'] as String,
         phone: json['phone'] as String,
-        email: json['email'] as String,
+        email: json['email'] as String? ?? '',
+        emergencyContact: json['emergencyContact'] as String?,
         roomId: json['roomId'] as String,
         bedId: json['bedId'] as String,
         moveInDate: DateTime.parse(json['moveInDate'] as String),

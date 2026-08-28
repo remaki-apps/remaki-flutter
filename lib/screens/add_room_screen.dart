@@ -14,10 +14,9 @@ class AddRoomScreen extends StatefulWidget {
 class _AddRoomScreenState extends State<AddRoomScreen> {
   final _formKey = GlobalKey<FormState>();
   final _roomNumberController = TextEditingController();
-  final _floorController = TextEditingController();
+  String _selectedFloor = 'Ground Floor';
   int _capacity = 2;
   final List<TextEditingController> _bedNameControllers = [];
-
 
   @override
   void initState() {
@@ -54,10 +53,19 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                 validator: (val) => val == null || val.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _floorController,
-                decoration: const InputDecoration(labelText: 'Floor *', hintText: 'e.g. 1st Floor, Ground Floor'),
-                validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+              DropdownButtonFormField<String>(
+                value: _selectedFloor,
+                decoration: const InputDecoration(labelText: 'Floor *'),
+                items: ['Ground Floor', '1st Floor', '2nd Floor', '3rd Floor', '4th Floor', '5th Floor']
+                    .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                    .toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() {
+                      _selectedFloor = val;
+                    });
+                  }
+                },
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<int>(
@@ -97,7 +105,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                       final newRoom = Room(
                         id: 'r_${DateTime.now().millisecondsSinceEpoch}',
                         number: _roomNumberController.text,
-                        floor: _floorController.text,
+                        floor: _selectedFloor,
                         capacity: _capacity,
                         beds: List.generate(_capacity, (i) => Bed(
                           id: 'b_${DateTime.now().millisecondsSinceEpoch}_$i',
