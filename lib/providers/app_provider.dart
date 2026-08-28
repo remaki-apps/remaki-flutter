@@ -222,6 +222,7 @@ class AppProvider with ChangeNotifier {
         amount: splitAmount,
         date: DateTime.now(),
       ));
+      tenant.isPaid = false; // Mark them as unpaid since a new bill is generated
     }
     
     if (tenantIds.isNotEmpty) {
