@@ -209,29 +209,6 @@ class RoomDetailsScreen extends StatelessWidget {
               ),
               child: const Text('Allocate Tenant'),
             ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline, color: AppTheme.danger),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text('Remove Bed'),
-                    content: Text('Are you sure you want to remove ${bed.name}?'),
-                    actions: [
-                      TextButton(onPressed: () => ctx.pop(), child: const Text('Cancel')),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
-                        onPressed: () {
-                          Provider.of<AppProvider>(context, listen: false).removeBed(room.id, bed.id);
-                          ctx.pop();
-                        },
-                        child: const Text('Remove'),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
           ]
         ],
       ),
@@ -243,6 +220,51 @@ class RoomDetailsScreen extends StatelessWidget {
         child: tile,
       );
     }
-    return tile;
+
+    return Dismissible(
+      key: ValueKey(bed.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 16),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.danger,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text('Remove Bed', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+            SizedBox(width: 4),
+            Icon(Icons.delete_outline, color: Colors.white, size: 20),
+          ],
+        ),
+      ),
+      confirmDismiss: (direction) async {
+        return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Remove Bed'),
+            content: Text('Are you sure you want to remove ${bed.name}?'),
+            actions: [
+              TextButton(onPressed: () => ctx.pop(false), child: const Text('Cancel')),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
+                onPressed: () => ctx.pop(true),
+                child: const Text('Remove'),
+              ),
+            ],
+          ),
+        ) ?? false;
+      },
+      onDismissed: (direction) {
+        Provider.of<AppProvider>(context, listen: false).removeBed(room.id, bed.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${bed.name} removed from Room ${room.number}')),
+        );
+      },
+      child: tile,
+    );
   }
 }

@@ -39,6 +39,10 @@ final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
   routes: [
+    GoRoute(
+      path: '/add_room',
+      builder: (context, state) => const AddRoomScreen(),
+    ),
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) {
@@ -48,10 +52,6 @@ final router = GoRouter(
         GoRoute(
           path: '/',
           builder: (context, state) => const DashboardScreen(),
-        ),
-        GoRoute(
-          path: '/add_room',
-          builder: (context, state) => const AddRoomScreen(),
         ),
         GoRoute(
           path: '/add_tenant',
