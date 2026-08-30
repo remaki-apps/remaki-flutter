@@ -125,6 +125,8 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                   label: 'Floor',
                   isRequired: true,
                   child: DropdownButtonFormField<String>(
+                    isExpanded: true,
+                    menuMaxHeight: 200.0,
                     value: _selectedFloor,
                     decoration: _inputDecoration(),
                     icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B)),
