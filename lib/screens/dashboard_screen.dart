@@ -68,6 +68,7 @@ class DashboardScreen extends StatelessWidget {
             Text('Rent Overview ($monthYear)', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Row(
+              // hii
               children: [
                 _buildRentStat('Expected Rent', '₹${appProvider.expectedRent.toStringAsFixed(0)}', AppTheme.primaryColor),
                 _buildRentStat('Collected Rent', '₹${appProvider.collectedRent.toStringAsFixed(0)}', AppTheme.success),
