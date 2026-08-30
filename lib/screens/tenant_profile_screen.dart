@@ -15,12 +15,44 @@ class TenantProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
     final tenantIndex = appProvider.tenants.indexWhere((t) => t.id == tenantId);
+
     if (tenantIndex == -1) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Tenant Profile')),
-        body: const Center(child: Text('Tenant not found')),
+        backgroundColor: const Color(0xFFF8F9FD),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => context.pop(),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFFF1F5F9)),
+                        ),
+                        child: const Icon(Icons.arrow_back, color: Color(0xFF0F172A), size: 20),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Expanded(
+                child: Center(
+                  child: Text('Tenant not found', style: TextStyle(color: Color(0xFF64748B))),
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     }
+
     final tenant = appProvider.tenants[tenantIndex];
     final roomIndex = appProvider.rooms.indexWhere((r) => r.id == tenant.roomId);
     final roomNumber = roomIndex != -1 ? appProvider.rooms[roomIndex].number : 'N/A';
@@ -32,110 +64,503 @@ class TenantProfileScreen extends StatelessWidget {
       ..sort((a, b) => b.date.compareTo(a.date));
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
-        title: const Text('Tenant Profile'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.exit_to_app, color: AppTheme.danger),
-            tooltip: 'Vacate Tenant',
-            onPressed: () => _showVacateDialog(context, appProvider, tenant, roomNumber, bedName),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      backgroundColor: const Color(0xFFF8F9FD),
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            TenantAvatar(
-              name: tenant.name,
-              imageUrl: tenant.imageUrl,
-              radius: 44,
-            ),
-            const SizedBox(height: 16),
-            Text(tenant.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            Text('Room $roomNumber - $bedName', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(color: AppTheme.success.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-              child: const Text('Active Tenant', style: TextStyle(color: AppTheme.success, fontSize: 12, fontWeight: FontWeight.bold)),
-            ),
-            const SizedBox(height: 32),
-
-            _buildDetailRow('Phone', tenant.phone, Icons.phone),
-            _buildDetailRow('Email', tenant.email, Icons.email),
-            _buildDetailRow('Move-in Date', DateFormat('dd/MM/yyyy').format(tenant.moveInDate), Icons.calendar_today),
-            _buildDetailRow('Base Monthly Rent', '₹${tenant.rentAmount.toStringAsFixed(0)}', Icons.money),
-            ...tenant.additionalCharges.map((c) => _buildDetailRow(c.description, '+ ₹${c.amount.toStringAsFixed(0)}', Icons.receipt_long)),
-            if (tenant.additionalCharges.isNotEmpty)
-              _buildDetailRow('Total Due', '₹${tenant.totalDue.toStringAsFixed(0)}', Icons.account_balance_wallet, isBold: true),
-            _buildDetailRow('Security Deposit', '₹${tenant.securityDeposit.toStringAsFixed(0)}', Icons.security),
-            const SizedBox(height: 32),
-
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.chat, color: Colors.green),
-                    label: const Text('WhatsApp'),
-                    onPressed: () async {
-                      final sanitizedPhone = tenant.phone.replaceAll(RegExp(r'\D'), '');
-                      final phoneNum = sanitizedPhone.startsWith('91') ? sanitizedPhone : '91$sanitizedPhone';
-                      final message = Uri.encodeComponent('Hi ${tenant.name}, a gentle reminder that your rent of ₹${tenant.totalDue.toStringAsFixed(0)} for Room $roomNumber is due.');
-                      final url = Uri.parse('https://wa.me/$phoneNum?text=$message');
-                      if (await canLaunchUrl(url)) {
-                        await launchUrl(url, mode: LaunchMode.externalApplication);
-                      }
-                    },
-                    style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+            // Top Header Bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => context.pop(),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xFFF1F5F9)),
+                            boxShadow: const [
+                              BoxShadow(color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 2)),
+                            ],
+                          ),
+                          child: const Icon(Icons.arrow_back, color: Color(0xFF0F172A), size: 20),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'Tenant Profile',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'View and manage tenant details',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => context.push('/record_payment/${tenant.id}'),
-                    child: const Text('Record Payment'),
+                  GestureDetector(
+                    onTap: () => _showVacateDialog(context, appProvider, tenant, roomNumber, bedName),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEE2E2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.person_remove_outlined, color: Color(0xFFEF4444), size: 20),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.exit_to_app, color: AppTheme.danger),
-                label: const Text('Vacate Tenant', style: TextStyle(color: AppTheme.danger, fontWeight: FontWeight.bold)),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: AppTheme.danger.withValues(alpha: 0.5)),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                onPressed: () => _showVacateDialog(context, appProvider, tenant, roomNumber, bedName),
+                ],
               ),
             ),
-            
-            const SizedBox(height: 32),
-            const Align(alignment: Alignment.centerLeft, child: Text('Rent Payment History', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
-            const SizedBox(height: 16),
-            
-            if (tenantPayments.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16.0),
-                child: Text('No recorded payments yet.', style: TextStyle(color: AppTheme.textSecondary)),
-              )
-            else
-              ...tenantPayments.map((payment) {
-                final dateStr = DateFormat('dd MMM yyyy').format(payment.date);
-                return Column(
+
+            // Scrollable Content
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Column(
                   children: [
-                    _buildPaymentHistoryRow(dateStr, '₹${payment.amount.toStringAsFixed(0)}', true, method: payment.method),
-                    const Divider(),
+                    // Hero Profile Card
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: const Color(0xFFF1F5F9)),
+                        boxShadow: const [
+                          BoxShadow(color: Color(0x06000000), blurRadius: 10, offset: Offset(0, 2)),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          TenantAvatar(
+                            name: tenant.name,
+                            imageUrl: tenant.imageUrl,
+                            radius: 42,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            tenant.name,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEEF2FF),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              'Room $roomNumber • $bedName',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Action Buttons (WhatsApp, Call, Collect Rent)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    final sanitizedPhone = tenant.phone.replaceAll(RegExp(r'\D'), '');
+                                    final phoneNum = sanitizedPhone.startsWith('91') ? sanitizedPhone : '91$sanitizedPhone';
+                                    final message = Uri.encodeComponent('Hi ${tenant.name}, a gentle reminder that your rent of ₹${tenant.totalDue.toStringAsFixed(0)} for Room $roomNumber is due.');
+                                    final url = Uri.parse('https://wa.me/$phoneNum?text=$message');
+                                    if (await canLaunchUrl(url)) {
+                                      await launchUrl(url, mode: LaunchMode.externalApplication);
+                                    }
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFDCFCE7),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: const Color(0xFFBBF7D0)),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Image.asset(
+                                          'assets/icons/whatsapp.png',
+                                          width: 18,
+                                          height: 18,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            'WhatsApp',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF15803D),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    final cleanPhone = tenant.phone.replaceAll(RegExp(r'[^\d+]'), '');
+                                    final url = Uri.parse('tel:$cleanPhone');
+                                    try {
+                                      if (await canLaunchUrl(url)) {
+                                        await launchUrl(url);
+                                      } else {
+                                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                                      }
+                                    } catch (e) {
+                                      debugPrint('Could not launch phone dialer: $e');
+                                    }
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF1F5F9),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    ),
+                                    child: const Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.phone_outlined, color: Color(0xFF475569), size: 16),
+                                        SizedBox(width: 4),
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            'Call',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF334155),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => context.push('/record_payment/${tenant.id}'),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEEF2FF),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: const Color(0xFFC7D2FE)),
+                                    ),
+                                    child: const Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.payments_outlined, color: AppTheme.primaryColor, size: 16),
+                                        SizedBox(width: 4),
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            'Collect Rent',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppTheme.primaryColor,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Financial Summary Cards
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: tenant.isPaid ? const Color(0xFFF0FDF4) : const Color(0xFFFFF7ED),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: tenant.isPaid ? const Color(0xFFDCFCE7) : const Color(0xFFFFEDD5)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text('Rent Due', style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: tenant.isPaid ? const Color(0xFFDCFCE7) : const Color(0xFFFFEDD5),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        tenant.isPaid ? 'PAID' : 'DUE',
+                                        style: TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                          color: tenant.isPaid ? const Color(0xFF16A34A) : const Color(0xFFEA580C),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  '₹${tenant.totalDue.toStringAsFixed(0)}',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: tenant.isPaid ? const Color(0xFF15803D) : const Color(0xFFC2410C),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Deposit', style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+                                const SizedBox(height: 6),
+                                Text(
+                                  '₹${tenant.securityDeposit.toStringAsFixed(0)}',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Details Card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFF1F5F9)),
+                        boxShadow: const [
+                          BoxShadow(color: Color(0x04000000), blurRadius: 8, offset: Offset(0, 2)),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Personal Information',
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildModernDetailItem(Icons.phone_outlined, 'Phone', tenant.phone),
+                          _buildModernDetailItem(Icons.email_outlined, 'Email', tenant.email),
+                          _buildModernDetailItem(Icons.calendar_today_outlined, 'Move-in Date', DateFormat('dd/MM/yyyy').format(tenant.moveInDate)),
+                          _buildModernDetailItem(Icons.payments_outlined, 'Monthly Rent', '₹${tenant.rentAmount.toStringAsFixed(0)}'),
+                          ...tenant.additionalCharges.map(
+                            (c) => _buildModernDetailItem(Icons.receipt_long_outlined, c.description, '+ ₹${c.amount.toStringAsFixed(0)}'),
+                          ),
+                          if (tenant.additionalCharges.isNotEmpty)
+                            _buildModernDetailItem(Icons.account_balance_wallet_outlined, 'Total Monthly Due', '₹${tenant.totalDue.toStringAsFixed(0)}', isHighlight: true),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Payment History Section
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Payment History',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                          ),
+                          Text(
+                            '${tenantPayments.length} Payments',
+                            style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    if (tenantPayments.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFF1F5F9)),
+                        ),
+                        child: const Center(
+                          child: Text('No recorded payments yet.', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
+                        ),
+                      )
+                    else
+                      ...tenantPayments.map((payment) {
+                        final dateStr = DateFormat('dd MMM yyyy').format(payment.date);
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFFF1F5F9)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 36,
+                                    height: 36,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF8FAFC),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    ),
+                                    child: const Icon(Icons.receipt_outlined, color: Color(0xFF475569), size: 18),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        dateStr,
+                                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        payment.method,
+                                        style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  Text(
+                                    '₹${payment.amount.toStringAsFixed(0)}',
+                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFDCFCE7),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Text('PAID', style: TextStyle(color: Color(0xFF16A34A), fontSize: 9, fontWeight: FontWeight.bold)),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
                   ],
-                );
-              }),
+                ),
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildModernDetailItem(IconData icon, String label, String value, {bool isHighlight = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: isHighlight ? AppTheme.primaryColor : const Color(0xFF64748B)),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isHighlight ? AppTheme.primaryColor : const Color(0xFF64748B),
+                  fontWeight: isHighlight ? FontWeight.bold : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: isHighlight ? AppTheme.primaryColor : const Color(0xFF0F172A),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -143,118 +568,151 @@ class TenantProfileScreen extends StatelessWidget {
   void _showVacateDialog(BuildContext context, AppProvider appProvider, dynamic tenant, String roomNumber, String bedName) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Vacate Tenant'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Are you sure you want to vacate ${tenant.name}?'),
-            const SizedBox(height: 8),
-            Text(
-              'This will free up Room $roomNumber - $bedName and mark the bed as available.',
-              style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-            ),
-            if (!tenant.isPaid && tenant.totalDue > 0) ...[
-              const SizedBox(height: 12),
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header Icon Circle
               Container(
-                padding: const EdgeInsets.all(10),
+                width: 56,
+                height: 56,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFEE2E2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.person_remove_rounded, color: Color(0xFFEF4444), size: 28),
+              ),
+              const SizedBox(height: 16),
+
+              // Title
+              const Text(
+                'Vacate Tenant?',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 6),
+
+              Text(
+                'Are you sure you want to vacate ${tenant.name}?',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+              ),
+              const SizedBox(height: 16),
+
+              // Room & Bed Info Card
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: AppTheme.danger.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.danger.withValues(alpha: 0.3)),
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.warning_amber_rounded, color: AppTheme.danger, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Tenant has pending dues of ₹${tenant.totalDue.toStringAsFixed(0)}.',
-                        style: const TextStyle(color: AppTheme.danger, fontSize: 12, fontWeight: FontWeight.w600),
+                    const Icon(Icons.meeting_room_outlined, size: 16, color: Color(0xFF475569)),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Room $roomNumber • $bedName',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF334155),
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
-            onPressed: () {
-              appProvider.vacateTenant(tenant.id);
-              Navigator.of(ctx).pop();
-              context.pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${tenant.name} has been vacated from Room $roomNumber - $bedName.'),
-                  backgroundColor: AppTheme.danger,
-                ),
-              );
-            },
-            child: const Text('Vacate Tenant', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildPaymentHistoryRow(String title, String amount, bool isPaid, {String? method}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-              if (method != null)
-                Text(method, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-            ],
-          ),
-          Row(
-            children: [
-              Text(amount, style: const TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(width: 16),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isPaid ? AppTheme.success.withValues(alpha: 0.1) : AppTheme.danger.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(4),
+              // Pending Dues Warning Alert
+              if (!tenant.isPaid && tenant.totalDue > 0) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF2F2),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFFCA5A5)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444), size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Tenant has pending dues of ₹${tenant.totalDue.toStringAsFixed(0)}.',
+                          style: const TextStyle(
+                            color: Color(0xFF991B1B),
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                child: Text(isPaid ? 'Paid' : 'Unpaid', style: TextStyle(color: isPaid ? AppTheme.success : AppTheme.danger, fontSize: 10, fontWeight: FontWeight.bold)),
+              ],
+
+              const SizedBox(height: 20),
+
+              // Action Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(color: Color(0xFF475569), fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        backgroundColor: const Color(0xFFEF4444),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () {
+                        appProvider.vacateTenant(tenant.id);
+                        Navigator.of(ctx).pop();
+                        context.pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('${tenant.name} has been vacated from Room $roomNumber - $bedName.'),
+                            backgroundColor: const Color(0xFFEF4444),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'Vacate Tenant',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value, IconData icon, {bool isBold = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 16, color: isBold ? AppTheme.primaryColor : AppTheme.textSecondary),
-              const SizedBox(width: 8),
-              Text(label, style: TextStyle(color: isBold ? AppTheme.primaryColor : AppTheme.textSecondary, fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
-            ],
           ),
-          Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: isBold ? 16 : 14, color: isBold ? AppTheme.primaryColor : Colors.black)),
-        ],
+        ),
       ),
     );
   }
 }
+
 
