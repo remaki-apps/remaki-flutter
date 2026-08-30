@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/tenant_avatar.dart';
 
 class TenantProfileScreen extends StatelessWidget {
   final String tenantId;
@@ -34,16 +35,23 @@ class TenantProfileScreen extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
         title: const Text('Tenant Profile'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.exit_to_app, color: AppTheme.danger),
+            tooltip: 'Vacate Tenant',
+            onPressed: () => _showVacateDialog(context, appProvider, tenant, roomNumber, bedName),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            CircleAvatar(
-              radius: 40,
-              backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-              child: Text(tenant.name.isNotEmpty ? tenant.name.substring(0, 1).toUpperCase() : 'T', style: const TextStyle(fontSize: 32, color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
+            TenantAvatar(
+              name: tenant.name,
+              imageUrl: tenant.imageUrl,
+              radius: 44,
             ),
             const SizedBox(height: 16),
             Text(tenant.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
@@ -93,6 +101,19 @@ class TenantProfileScreen extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.exit_to_app, color: AppTheme.danger),
+                label: const Text('Vacate Tenant', style: TextStyle(color: AppTheme.danger, fontWeight: FontWeight.bold)),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: AppTheme.danger.withValues(alpha: 0.5)),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                onPressed: () => _showVacateDialog(context, appProvider, tenant, roomNumber, bedName),
+              ),
+            ),
             
             const SizedBox(height: 32),
             const Align(alignment: Alignment.centerLeft, child: Text('Rent Payment History', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
@@ -115,6 +136,71 @@ class TenantProfileScreen extends StatelessWidget {
               }),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showVacateDialog(BuildContext context, AppProvider appProvider, dynamic tenant, String roomNumber, String bedName) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Vacate Tenant'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Are you sure you want to vacate ${tenant.name}?'),
+            const SizedBox(height: 8),
+            Text(
+              'This will free up Room $roomNumber - $bedName and mark the bed as available.',
+              style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+            ),
+            if (!tenant.isPaid && tenant.totalDue > 0) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.danger.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.danger.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: AppTheme.danger, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Tenant has pending dues of ₹${tenant.totalDue.toStringAsFixed(0)}.',
+                        style: const TextStyle(color: AppTheme.danger, fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
+            onPressed: () {
+              appProvider.vacateTenant(tenant.id);
+              Navigator.of(ctx).pop();
+              context.pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${tenant.name} has been vacated from Room $roomNumber - $bedName.'),
+                  backgroundColor: AppTheme.danger,
+                ),
+              );
+            },
+            child: const Text('Vacate Tenant', style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
     );
   }

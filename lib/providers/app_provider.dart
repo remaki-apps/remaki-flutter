@@ -134,5 +134,25 @@ class AppProvider with ChangeNotifier {
     saveToStorage();
     notifyListeners();
   }
+
+  void vacateTenant(String tenantId) {
+    var tenantIndex = tenants.indexWhere((t) => t.id == tenantId);
+    if (tenantIndex != -1) {
+      var tenant = tenants[tenantIndex];
+      for (var room in rooms) {
+        if (room.id == tenant.roomId) {
+          for (var bed in room.beds) {
+            if (bed.id == tenant.bedId || bed.tenantId == tenantId) {
+              bed.isAvailable = true;
+              bed.tenantId = null;
+            }
+          }
+        }
+      }
+      tenants.removeAt(tenantIndex);
+      saveToStorage();
+      notifyListeners();
+    }
+  }
 }
 

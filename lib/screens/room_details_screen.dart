@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../models/models.dart';
+import '../widgets/tenant_avatar.dart';
 
 class RoomDetailsScreen extends StatelessWidget {
   final String roomId;
@@ -89,9 +90,21 @@ class RoomDetailsScreen extends StatelessWidget {
             
             ...room.beds.map((bed) {
               Tenant? tenant;
-              if (!bed.isAvailable && bed.tenantId != null) {
-                tenant = appProvider.tenants.firstWhere((t) => t.id == bed.tenantId, orElse: () => Tenant(id: '', name: '', phone: '', email: '', roomId: '', bedId: '', moveInDate: DateTime.now(), rentAmount: 0, securityDeposit: 0, rentDueDate: DateTime.now()));
-                if (tenant.id.isEmpty) tenant = null;
+              if (!bed.isAvailable) {
+                if (bed.tenantId != null) {
+                  tenant = appProvider.tenants.firstWhere(
+                    (t) => t.id == bed.tenantId,
+                    orElse: () => Tenant(id: '', name: '', phone: '', email: '', roomId: '', bedId: '', moveInDate: DateTime.now(), rentAmount: 0, securityDeposit: 0, rentDueDate: DateTime.now()),
+                  );
+                  if (tenant.id.isEmpty) tenant = null;
+                }
+                if (tenant == null) {
+                  tenant = appProvider.tenants.firstWhere(
+                    (t) => t.roomId == room.id && t.bedId == bed.id,
+                    orElse: () => Tenant(id: '', name: '', phone: '', email: '', roomId: '', bedId: '', moveInDate: DateTime.now(), rentAmount: 0, securityDeposit: 0, rentDueDate: DateTime.now()),
+                  );
+                  if (tenant.id.isEmpty) tenant = null;
+                }
               }
               return _buildBedTile(context, room, bed, tenant);
             }),
@@ -135,7 +148,7 @@ class RoomDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildBedTile(BuildContext context, Room room, Bed bed, Tenant? tenant) {
-    return Container(
+    Widget tile = Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -161,6 +174,12 @@ class RoomDetailsScreen extends StatelessWidget {
             ),
           ),
           if (tenant != null) ...[
+            TenantAvatar(
+              name: tenant.name,
+              imageUrl: tenant.imageUrl,
+              radius: 16,
+            ),
+            const SizedBox(width: 8),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -177,6 +196,8 @@ class RoomDetailsScreen extends StatelessWidget {
               ),
               child: Text(tenant.isPaid ? 'Paid' : 'Unpaid', style: TextStyle(color: tenant.isPaid ? AppTheme.success : AppTheme.danger, fontSize: 10, fontWeight: FontWeight.bold)),
             ),
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right, color: AppTheme.textSecondary, size: 20),
           ] else ...[
             const Text('No Tenant', style: TextStyle(color: AppTheme.textSecondary)),
             const SizedBox(width: 16),
@@ -215,5 +236,13 @@ class RoomDetailsScreen extends StatelessWidget {
         ],
       ),
     );
+
+    if (tenant != null) {
+      return GestureDetector(
+        onTap: () => context.push('/tenant_profile/${tenant.id}'),
+        child: tile,
+      );
+    }
+    return tile;
   }
 }

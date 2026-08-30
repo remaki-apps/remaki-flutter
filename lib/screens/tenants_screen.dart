@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/tenant_avatar.dart';
 
 class TenantsScreen extends StatefulWidget {
   const TenantsScreen({super.key});
@@ -80,9 +81,10 @@ class _TenantsScreenState extends State<TenantsScreen> {
                           ),
                           child: Row(
                             children: [
-                              CircleAvatar(
-                                backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                                child: Text(tenant.name.isNotEmpty ? tenant.name.substring(0, 1).toUpperCase() : 'T', style: const TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
+                              TenantAvatar(
+                                name: tenant.name,
+                                imageUrl: tenant.imageUrl,
+                                radius: 22,
                               ),
                               const SizedBox(width: 16),
                               Expanded(

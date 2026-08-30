@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/tenant_avatar.dart';
 
 class UnpaidTenantsScreen extends StatelessWidget {
   const UnpaidTenantsScreen({super.key});
@@ -34,9 +35,12 @@ class UnpaidTenantsScreen extends StatelessWidget {
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   child: ListTile(
-                    leading: CircleAvatar(
+                    leading: TenantAvatar(
+                      name: tenant.name,
+                      imageUrl: tenant.imageUrl,
+                      radius: 20,
                       backgroundColor: AppTheme.danger.withValues(alpha: 0.1),
-                      child: Text(tenant.name.isNotEmpty ? tenant.name.substring(0, 1).toUpperCase() : 'T', style: const TextStyle(color: AppTheme.danger)),
+                      textColor: AppTheme.danger,
                     ),
                     title: Text(tenant.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text('Room $roomNumber - $bedName\nPending: ₹${tenant.totalDue.toStringAsFixed(0)}'),

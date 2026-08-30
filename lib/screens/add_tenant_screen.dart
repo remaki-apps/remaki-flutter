@@ -21,6 +21,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
+  final _imageUrlController = TextEditingController();
   final _dobController = TextEditingController();
   DateTime? _selectedDob;
   String _gender = 'Male';
@@ -110,6 +111,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
                 TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Full Name *', hintText: 'Enter full name')),
                 TextField(controller: _phoneController, decoration: const InputDecoration(labelText: 'Phone Number *', hintText: 'Enter phone number'), keyboardType: TextInputType.phone),
                 TextField(controller: _emailController, decoration: const InputDecoration(labelText: 'Email', hintText: 'Enter email address')),
+                TextField(controller: _imageUrlController, decoration: const InputDecoration(labelText: 'Profile Image URL (Optional)', hintText: 'https://example.com/photo.jpg')),
                 TextField(
                   controller: _dobController,
                   decoration: const InputDecoration(labelText: 'Date of Birth', hintText: 'Select DOB', suffixIcon: Icon(Icons.calendar_today)),
@@ -210,6 +212,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
       rentAmount: double.tryParse(_rentController.text) ?? 0.0,
       securityDeposit: double.tryParse(_securityController.text) ?? 0.0,
       rentDueDate: DateTime.now().add(const Duration(days: 30)),
+      imageUrl: _imageUrlController.text.trim().isNotEmpty ? _imageUrlController.text.trim() : null,
     );
     
     var room = provider.rooms.firstWhere((r) => r.id == _selectedRoomId);

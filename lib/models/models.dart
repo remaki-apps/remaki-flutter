@@ -88,6 +88,7 @@ class Tenant {
   bool get isUnpaid => !isPaid;
   DateTime rentDueDate;
   List<AdditionalCharge> additionalCharges;
+  String? imageUrl;
 
   double get totalDue => rentAmount + additionalCharges.fold(0.0, (sum, c) => sum + c.amount);
 
@@ -104,6 +105,7 @@ class Tenant {
     this.isPaid = false,
     required this.rentDueDate,
     List<AdditionalCharge>? additionalCharges,
+    this.imageUrl,
   }) : additionalCharges = additionalCharges ?? [];
 
   Map<String, dynamic> toJson() => {
@@ -119,6 +121,7 @@ class Tenant {
         'isPaid': isPaid,
         'rentDueDate': rentDueDate.toIso8601String(),
         'additionalCharges': additionalCharges.map((c) => c.toJson()).toList(),
+        'imageUrl': imageUrl,
       };
 
   factory Tenant.fromJson(Map<String, dynamic> json) => Tenant(
@@ -134,6 +137,7 @@ class Tenant {
         isPaid: json['isPaid'] as bool? ?? false,
         rentDueDate: DateTime.parse(json['rentDueDate'] as String),
         additionalCharges: (json['additionalCharges'] as List<dynamic>?)?.map((e) => AdditionalCharge.fromJson(e as Map<String, dynamic>)).toList() ?? [],
+        imageUrl: json['imageUrl'] as String?,
       );
 }
 

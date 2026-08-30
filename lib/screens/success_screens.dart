@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
+import '../widgets/tenant_avatar.dart';
 
 class SuccessScreen extends StatelessWidget {
   final String title;
@@ -92,9 +93,9 @@ class TenantAddedSuccessScreen extends StatelessWidget {
       subtitle: '',
       details: Row(
         children: [
-          CircleAvatar(
-            backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-            child: Text(name.isNotEmpty ? name.substring(0, 1).toUpperCase() : 'T'),
+          TenantAvatar(
+            name: name,
+            radius: 20,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -137,9 +138,9 @@ class PaymentSuccessScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              CircleAvatar(
-                backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                child: Text(name.isNotEmpty ? name.substring(0, 1).toUpperCase() : 'P'),
+              TenantAvatar(
+                name: name,
+                radius: 20,
               ),
               const SizedBox(width: 16),
               Expanded(

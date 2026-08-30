@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/tenant_avatar.dart';
 
 class AddRoomBillScreen extends StatefulWidget {
   final String roomId;
@@ -134,9 +135,10 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
                             });
                           },
                         ),
-                        CircleAvatar(
-                          backgroundColor: Colors.grey.shade200,
-                          child: Text(tenant.name.isNotEmpty ? tenant.name.substring(0, 1).toUpperCase() : 'T'),
+                        TenantAvatar(
+                          name: tenant.name,
+                          imageUrl: tenant.imageUrl,
+                          radius: 18,
                         ),
                       ],
                     ),
