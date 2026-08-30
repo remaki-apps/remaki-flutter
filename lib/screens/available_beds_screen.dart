@@ -65,7 +65,7 @@ class AvailableBedsScreen extends StatelessWidget {
                                 ],
                               ),
                               ElevatedButton(
-                                onPressed: () => context.push('/add_tenant?roomId=${room.id}&bedId=${bed.id}'),
+                                onPressed: () => context.push('/allocate_tenant?roomId=${room.id}&bedId=${bed.id}'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.primaryColor,
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
