@@ -364,9 +364,9 @@ class TenantProfileScreen extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: tenant.isPaid ? const Color(0xFFF0FDF4) : const Color(0xFFFFF7ED),
+                              color: tenant.totalDue == 0 ? const Color(0xFFF0FDF4) : const Color(0xFFFFF7ED),
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: tenant.isPaid ? const Color(0xFFDCFCE7) : const Color(0xFFFFEDD5)),
+                              border: Border.all(color: tenant.totalDue == 0 ? const Color(0xFFDCFCE7) : const Color(0xFFFFEDD5)),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -374,19 +374,19 @@ class TenantProfileScreen extends StatelessWidget {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Text('Rent Due', style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+                                    const Text('Total Due', style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: tenant.isPaid ? const Color(0xFFDCFCE7) : const Color(0xFFFFEDD5),
+                                        color: tenant.totalDue == 0 ? const Color(0xFFDCFCE7) : const Color(0xFFFFEDD5),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
-                                        tenant.isPaid ? 'PAID' : 'DUE',
+                                        tenant.totalDue == 0 ? 'PAID' : (tenant.pendingRentAmount < tenant.rentAmount && tenant.pendingRentAmount > 0 ? 'PARTIAL' : 'DUE'),
                                         style: TextStyle(
                                           fontSize: 9,
                                           fontWeight: FontWeight.bold,
-                                          color: tenant.isPaid ? const Color(0xFF16A34A) : const Color(0xFFEA580C),
+                                          color: tenant.totalDue == 0 ? const Color(0xFF16A34A) : const Color(0xFFEA580C),
                                         ),
                                       ),
                                     ),
@@ -394,11 +394,11 @@ class TenantProfileScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
-                                  '₹${tenant.totalDue.toStringAsFixed(0)}',
+                                  tenant.totalDue == 0 ? '₹0' : '₹${tenant.totalDue.toStringAsFixed(0)}',
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: tenant.isPaid ? const Color(0xFF15803D) : const Color(0xFFC2410C),
+                                    color: tenant.totalDue == 0 ? const Color(0xFF15803D) : const Color(0xFFC2410C),
                                   ),
                                 ),
                               ],
@@ -458,11 +458,22 @@ class TenantProfileScreen extends StatelessWidget {
                           _buildModernDetailItem(Icons.email_outlined, 'Email', tenant.email),
                           _buildModernDetailItem(Icons.calendar_today_outlined, 'Move-in Date', DateFormat('dd/MM/yyyy').format(tenant.moveInDate)),
                           _buildModernDetailItem(Icons.payments_outlined, 'Monthly Rent', '₹${tenant.rentAmount.toStringAsFixed(0)}'),
-                          ...tenant.additionalCharges.map(
-                            (c) => _buildModernDetailItem(Icons.receipt_long_outlined, c.description, '+ ₹${c.amount.toStringAsFixed(0)}'),
+                          if (!tenant.isPaid && tenant.pendingRentAmount > 0 && tenant.pendingRentAmount < tenant.rentAmount)
+                            _buildModernDetailItem(Icons.account_balance_wallet_outlined, 'Rent Balance Due', '₹${tenant.pendingRentAmount.toStringAsFixed(0)}', isHighlight: true),
+                          ...tenant.additionalCharges.where((c) => c.billType != 'RENT').map(
+                            (c) {
+                              final dueDateStr = c.billDueDate != null
+                                  ? ' (due ${DateFormat('dd/MM').format(c.billDueDate!)})'  
+                                  : '';
+                              return _buildModernDetailItem(
+                                Icons.receipt_long_outlined,
+                                '${c.description}$dueDateStr',
+                                '+ ₹${c.amount.toStringAsFixed(0)}',
+                              );
+                            },
                           ),
-                          if (tenant.additionalCharges.isNotEmpty)
-                            _buildModernDetailItem(Icons.account_balance_wallet_outlined, 'Total Monthly Due', '₹${tenant.totalDue.toStringAsFixed(0)}', isHighlight: true),
+                          if (tenant.additionalCharges.where((c) => c.billType != 'RENT').isNotEmpty)
+                            _buildModernDetailItem(Icons.account_balance_wallet_outlined, 'Total Due', '₹${tenant.totalDue.toStringAsFixed(0)}', isHighlight: true),
                         ],
                       ),
                     ),
@@ -674,7 +685,7 @@ class TenantProfileScreen extends StatelessWidget {
               ),
 
               // Pending Dues Warning Alert
-              if (!tenant.isPaid && tenant.totalDue > 0) ...[
+              if (tenant.totalDue > 0) ...[
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(12),

@@ -12,7 +12,7 @@ class UnpaidTenantsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
-    final unpaidTenants = appProvider.tenants.where((t) => t.isUnpaid).toList();
+    final unpaidTenants = appProvider.unpaidTenants;
 
     return Scaffold(
       appBar: AppBar(

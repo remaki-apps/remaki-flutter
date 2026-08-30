@@ -365,13 +365,13 @@ class RoomDetailsScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: tenant.isPaid ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
-                    borderRadius: BorderRadius.circular(6),
+                    color: tenant.totalDue == 0 ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    tenant.isPaid ? 'PAID' : 'UNPAID',
+                    tenant.totalDue == 0 ? 'PAID' : 'UNPAID',
                     style: TextStyle(
-                      color: tenant.isPaid ? const Color(0xFF16A34A) : const Color(0xFFEF4444),
+                      color: tenant.totalDue == 0 ? const Color(0xFF16A34A) : const Color(0xFFEF4444),
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),

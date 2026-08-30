@@ -85,8 +85,8 @@ class RentScreen extends StatelessWidget {
             const SizedBox(height: 32),
 
             // Legend
-            _buildLegendItem('Paid', appProvider.tenants.where((t) => t.isPaid).length, appProvider.collectedRent, AppTheme.success),
-            _buildLegendItem('Unpaid', appProvider.tenants.where((t) => !t.isPaid).length, appProvider.pendingRent, AppTheme.danger),
+            _buildLegendItem('Paid', appProvider.tenants.where((t) => t.totalDue == 0).length, appProvider.collectedRent, AppTheme.success),
+            _buildLegendItem('Unpaid', appProvider.tenants.where((t) => t.totalDue > 0).length, appProvider.pendingRent, AppTheme.danger),
             
             const SizedBox(height: 32),
             SizedBox(

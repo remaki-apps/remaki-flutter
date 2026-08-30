@@ -21,6 +21,7 @@ class AppProvider with ChangeNotifier {
     try {
       final tenantsData = await ApiService.fetchTenants();
       final roomsData = await ApiService.fetchRooms();
+      final paymentsData = await ApiService.fetchPayments();
       
       rooms = roomsData.map((e) {
         return Room(
@@ -48,13 +49,26 @@ class AppProvider with ChangeNotifier {
           rentAmount: (e['monthlyRent'] ?? 0).toDouble(),
           securityDeposit: (e['securityDeposit'] ?? 0).toDouble(),
           isPaid: e['paymentStatus'] == 'PAID',
-          rentDueDate: DateTime.now(), 
+          rentDueDate: e['rentDueDate'] != null ? DateTime.tryParse(e['rentDueDate']) ?? DateTime.now() : DateTime.now(),
+          pendingRentAmount: (e['pendingRentAmount'] as num?)?.toDouble() ?? (e['monthlyRent'] ?? 0).toDouble(),
           additionalCharges: (e['bills'] as List<dynamic>?)?.map((b) => AdditionalCharge(
             id: b['id'],
             description: b['description'] ?? 'Bill',
             amount: (b['amount'] as num).toDouble(),
             date: b['createdAt'] != null ? DateTime.tryParse(b['createdAt']) ?? DateTime.now() : DateTime.now(),
+            billType: b['type'] as String? ?? 'OTHER',
+            billDueDate: b['dueDate'] != null ? DateTime.tryParse(b['dueDate'] as String) : null,
           )).toList() ?? [],
+        );
+      }).toList();
+
+      payments = paymentsData.map((e) {
+        return Payment(
+          id: e['id'],
+          tenantId: e['tenantId'],
+          amount: (e['amount'] as num).toDouble(),
+          method: e['method'],
+          date: e['date'] != null ? DateTime.tryParse(e['date']) ?? DateTime.now() : DateTime.now(),
         );
       }).toList();
 
@@ -122,12 +136,15 @@ class AppProvider with ChangeNotifier {
   int get availableBeds => rooms.fold(0, (sum, room) => sum + room.availableBeds);
   double get occupancyRate => totalBeds == 0 ? 0 : occupiedBeds / totalBeds;
 
-  double get expectedRent => tenants.fold(0.0, (sum, t) => sum + t.totalDue);
-  double get collectedRent => tenants.where((t) => t.isPaid).fold(0.0, (sum, t) => sum + t.totalDue);
+  // Expected is total rent of all tenants + any pending bills
+  double get expectedRent => tenants.fold(0.0, (sum, t) => sum + t.rentAmount + t.totalPendingBills);
+  // Collected is what was actually paid towards rent (rentAmount - pendingRentAmount)
+  double get collectedRent => tenants.fold(0.0, (sum, t) => sum + (t.rentAmount - t.pendingRentAmount));
+  // Pending is the difference (which naturally equals pendingRentAmount + totalPendingBills)
   double get pendingRent => expectedRent - collectedRent;
 
   List<Tenant> get newTenantsThisMonth => tenants.where((t) => t.moveInDate.month == DateTime.now().month).toList();
-  List<Tenant> get unpaidTenants => tenants.where((t) => !t.isPaid).toList();
+  List<Tenant> get unpaidTenants => tenants.where((t) => t.totalDue > 0).toList();
 
   void addTenant(Tenant tenant) {
     tenants.add(tenant);
@@ -148,14 +165,14 @@ class AppProvider with ChangeNotifier {
       'securityDeposit': tenant.securityDeposit,
       'dueDay': 5,
       'moveInDate': tenant.moveInDate.toIso8601String(),
-    }).catchError((e) => debugPrint('Error creating tenant: \$e'));
+    }).catchError((e) => debugPrint('Error creating tenant: $e'));
 
     saveToStorage();
     notifyListeners();
   }
 
-  void recordPayment(String tenantId, double amount, String method) {
-    var payment = Payment(
+  Future<void> recordPayment(String tenantId, double amount, String method) async {
+    final payment = Payment(
       id: 'p_${DateTime.now().millisecondsSinceEpoch}',
       tenantId: tenantId,
       amount: amount,
@@ -163,18 +180,21 @@ class AppProvider with ChangeNotifier {
       method: method,
     );
     payments.add(payment);
-    var tenantIndex = tenants.indexWhere((t) => t.id == tenantId);
-    if (tenantIndex != -1) {
-      tenants[tenantIndex].isPaid = true;
-    }
 
-    ApiService.recordRentPayment({
-      'tenantId': tenantId,
-      'rentId': 'mock_rent_id', // Add proper rent record tracking if needed
-      'amount': amount,
-      'method': method.toUpperCase().replaceAll(' ', '_'),
-      'paymentDate': DateTime.now().toIso8601String(),
-    }).catchError((e) => debugPrint('Error recording payment: \$e'));
+    try {
+      await ApiService.recordRentPayment({
+        'tenantId': tenantId,
+        'rentId': 'mock_rent_id',
+        'amount': amount,
+        'method': method.toUpperCase().replaceAll(' ', '_'),
+        'paymentDate': DateTime.now().toIso8601String(),
+      });
+      // Reload from API to get the real paymentStatus and pendingRentAmount
+      await loadFromAPI();
+    } catch (e) {
+      debugPrint('Error recording payment: $e');
+      rethrow;
+    }
 
     saveToStorage();
     notifyListeners();
@@ -214,19 +234,9 @@ class AppProvider with ChangeNotifier {
   }
 
   void addBillToTenants(List<String> tenantIds, double splitAmount, String description) {
-    for (var tenantId in tenantIds) {
-      var tenant = tenants.firstWhere((t) => t.id == tenantId);
-      tenant.additionalCharges.add(AdditionalCharge(
-        id: 'ac_${DateTime.now().millisecondsSinceEpoch}_$tenantId',
-        description: description,
-        amount: splitAmount,
-        date: DateTime.now(),
-      ));
-      tenant.isPaid = false; // Mark them as unpaid since a new bill is generated
-    }
-    
+    // Fire the API call and reload from server when done so bills survive refresh.
     if (tenantIds.isNotEmpty) {
-      var tenant = tenants.firstWhere((t) => t.id == tenantIds.first);
+      final tenant = tenants.firstWhere((t) => t.id == tenantIds.first);
       if (tenant.roomId.isNotEmpty) {
         ApiService.generateRoomCurrentBill({
           'roomId': tenant.roomId,
@@ -237,7 +247,26 @@ class AppProvider with ChangeNotifier {
             'value': splitAmount
           }).toList(),
           'description': description,
-        }).catchError((e) => debugPrint('Error generating bill: \$e'));
+        }).then((_) {
+          // Reload from API so the newly created bills appear correctly
+          // (they are now PENDING in the DB and will come back from fetchTenants)
+          loadFromAPI();
+        }).catchError((e) => debugPrint('Error generating bill: $e'));
+      }
+    }
+
+    // Optimistically add charges to local state so the UI updates immediately
+    for (var tenantId in tenantIds) {
+      final idx = tenants.indexWhere((t) => t.id == tenantId);
+      if (idx != -1) {
+        tenants[idx].additionalCharges.add(AdditionalCharge(
+          id: 'ac_${DateTime.now().millisecondsSinceEpoch}_$tenantId',
+          description: description,
+          amount: splitAmount,
+          date: DateTime.now(),
+          billType: 'CURRENT',
+        ));
+        // NOTE: isPaid is NOT touched — utility bills don't affect rent status.
       }
     }
 

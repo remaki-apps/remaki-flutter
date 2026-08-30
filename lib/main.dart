@@ -82,6 +82,18 @@ final router = GoRouter(
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
+      path: '/allocate_tenant',
+      builder: (context, state) {
+        final roomId = state.uri.queryParameters['roomId'];
+        final bedId = state.uri.queryParameters['bedId'];
+        if (roomId == null || bedId == null) {
+          return const Scaffold(body: Center(child: Text('Error: Missing room or bed ID')));
+        }
+        return AllocateTenantScreen(roomId: roomId, bedId: bedId);
+      },
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
       path: '/tenant_added_success',
       builder: (context, state) {
         return TenantAddedSuccessScreen(

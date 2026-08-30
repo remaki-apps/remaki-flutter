@@ -22,6 +22,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
   final _dateController = TextEditingController();
   String _paymentMethod = 'Cash';
   DateTime _paymentDate = DateTime.now();
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -98,15 +99,15 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(tenant.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          Text('Amount Due: ₹${tenant.totalDue.toStringAsFixed(0)}', style: TextStyle(color: tenant.isPaid ? AppTheme.success : AppTheme.danger, fontSize: 12, fontWeight: FontWeight.bold)),
+                          Text('Amount Due: ₹${tenant.totalDue.toStringAsFixed(0)}', style: TextStyle(color: tenant.totalDue == 0 ? AppTheme.success : AppTheme.danger, fontSize: 12, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ],
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: (tenant.isPaid ? AppTheme.success : AppTheme.danger).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
-                    child: Text(tenant.isPaid ? 'Paid' : 'Unpaid', style: TextStyle(color: tenant.isPaid ? AppTheme.success : AppTheme.danger, fontSize: 10, fontWeight: FontWeight.bold)),
+                    decoration: BoxDecoration(color: (tenant.totalDue == 0 ? AppTheme.success : AppTheme.danger).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
+                    child: Text(tenant.totalDue == 0 ? 'Paid' : 'Unpaid', style: TextStyle(color: tenant.totalDue == 0 ? AppTheme.success : AppTheme.danger, fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -153,21 +154,34 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
+              height: 48,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: _isLoading ? null : () async {
                   final amount = double.tryParse(_amountController.text) ?? 0;
                   if (amount > 0) {
-                    appProvider.recordPayment(widget.tenantId, amount, _paymentMethod);
-                    
-                    final roomIndex = appProvider.rooms.indexWhere((r) => r.id == tenant.roomId);
-                    final roomNumber = roomIndex != -1 ? appProvider.rooms[roomIndex].number : 'N/A';
-                    final bedName = (roomIndex != -1) ? appProvider.rooms[roomIndex].beds.firstWhere((b) => b.id == tenant.bedId, orElse: () => Bed(id: '', name: '')).name : '';
-                    
-                    final dateStr = DateFormat('dd-MM-yyyy').format(_paymentDate);
-                    context.go('/payment_success?amount=$amount&name=${Uri.encodeComponent(tenant.name)}&roomBed=${Uri.encodeComponent('Room $roomNumber - $bedName')}&dateMethod=${Uri.encodeComponent('$dateStr • $_paymentMethod')}');
+                    setState(() => _isLoading = true);
+                    try {
+                      await appProvider.recordPayment(widget.tenantId, amount, _paymentMethod);
+                      
+                      final roomIndex = appProvider.rooms.indexWhere((r) => r.id == tenant.roomId);
+                      final roomNumber = roomIndex != -1 ? appProvider.rooms[roomIndex].number : 'N/A';
+                      final bedName = (roomIndex != -1) ? appProvider.rooms[roomIndex].beds.firstWhere((b) => b.id == tenant.bedId, orElse: () => Bed(id: '', name: '')).name : '';
+                      
+                      final dateStr = DateFormat('dd-MM-yyyy').format(_paymentDate);
+                      if (context.mounted) {
+                        context.go('/payment_success?amount=$amount&name=${Uri.encodeComponent(tenant.name)}&roomBed=${Uri.encodeComponent('Room $roomNumber - $bedName')}&dateMethod=${Uri.encodeComponent('$dateStr • $_paymentMethod')}');
+                      }
+                    } catch (e) {
+                      setState(() => _isLoading = false);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to record payment: $e')));
+                      }
+                    }
                   }
                 },
-                child: const Text('Confirm Payment'),
+                child: _isLoading 
+                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Confirm Payment'),
               ),
             ),
           ],

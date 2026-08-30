@@ -26,14 +26,25 @@ class AdditionalCharge {
   String description;
   double amount;
   DateTime date;
+  String billType;        // 'RENT', 'CURRENT', 'OTHER'
+  DateTime? billDueDate;  // the bill's own due date (distinct from rent due date)
 
-  AdditionalCharge({required this.id, required this.description, required this.amount, required this.date});
+  AdditionalCharge({
+    required this.id,
+    required this.description,
+    required this.amount,
+    required this.date,
+    this.billType = 'OTHER',
+    this.billDueDate,
+  });
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'description': description,
         'amount': amount,
         'date': date.toIso8601String(),
+        'billType': billType,
+        'billDueDate': billDueDate?.toIso8601String(),
       };
 
   factory AdditionalCharge.fromJson(Map<String, dynamic> json) => AdditionalCharge(
@@ -41,6 +52,8 @@ class AdditionalCharge {
         description: json['description'] as String,
         amount: (json['amount'] as num).toDouble(),
         date: DateTime.parse(json['date'] as String),
+        billType: json['billType'] as String? ?? 'OTHER',
+        billDueDate: json['billDueDate'] != null ? DateTime.tryParse(json['billDueDate'] as String) : null,
       );
 }
 
@@ -88,10 +101,18 @@ class Tenant {
   bool isPaid;
   bool get isUnpaid => !isPaid;
   DateTime rentDueDate;
+  // Amount still owed on rent this cycle (0 if fully paid, partial if partially paid)
+  double pendingRentAmount;
   List<AdditionalCharge> additionalCharges;
   String? imageUrl;
 
-  double get totalDue => rentAmount + additionalCharges.fold(0.0, (sum, c) => sum + c.amount);
+  // totalDue = unpaid utility/other bills only (not rent, as rent is tracked via pendingRentAmount)
+  double get totalPendingBills => additionalCharges
+      .where((c) => c.billType != 'RENT')
+      .fold(0.0, (sum, c) => sum + c.amount);
+
+  // Grand total owed: pending rent balance + pending utility bills
+  double get totalDue => pendingRentAmount + totalPendingBills;
 
   Tenant({
     required this.id,
@@ -106,6 +127,7 @@ class Tenant {
     required this.securityDeposit,
     this.isPaid = false,
     required this.rentDueDate,
+    this.pendingRentAmount = 0,
     List<AdditionalCharge>? additionalCharges,
     this.imageUrl,
   }) : additionalCharges = additionalCharges ?? [];
@@ -123,6 +145,7 @@ class Tenant {
         'securityDeposit': securityDeposit,
         'isPaid': isPaid,
         'rentDueDate': rentDueDate.toIso8601String(),
+        'pendingRentAmount': pendingRentAmount,
         'additionalCharges': additionalCharges.map((c) => c.toJson()).toList(),
         'imageUrl': imageUrl,
       };
@@ -140,6 +163,7 @@ class Tenant {
         securityDeposit: (json['securityDeposit'] as num).toDouble(),
         isPaid: json['isPaid'] as bool? ?? false,
         rentDueDate: DateTime.parse(json['rentDueDate'] as String),
+        pendingRentAmount: (json['pendingRentAmount'] as num?)?.toDouble() ?? 0,
         additionalCharges: (json['additionalCharges'] as List<dynamic>?)?.map((e) => AdditionalCharge.fromJson(e as Map<String, dynamic>)).toList() ?? [],
         imageUrl: json['imageUrl'] as String?,
       );

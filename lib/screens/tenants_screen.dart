@@ -29,12 +29,12 @@ class _TenantsScreenState extends State<TenantsScreen> {
     final appProvider = Provider.of<AppProvider>(context);
 
     final totalCount = appProvider.tenants.length;
-    final paidCount = appProvider.tenants.where((t) => t.isPaid).length;
-    final unpaidCount = appProvider.tenants.where((t) => !t.isPaid).length;
+    final paidCount = appProvider.tenants.where((t) => t.totalDue == 0).length;
+    final unpaidCount = appProvider.tenants.where((t) => t.totalDue > 0).length;
 
     var filteredTenants = appProvider.tenants.where((t) {
-      if (_filter == 'Paid' && !t.isPaid) return false;
-      if (_filter == 'Unpaid' && t.isPaid) return false;
+      if (_filter == 'Paid' && t.totalDue > 0) return false;
+      if (_filter == 'Unpaid' && t.totalDue == 0) return false;
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
         final roomIndex = appProvider.rooms.indexWhere((r) => r.id == t.roomId);
@@ -259,10 +259,10 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                             decoration: BoxDecoration(
-                                              color: tenant.isPaid ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
+                                              color: tenant.totalDue == 0 ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
                                               borderRadius: BorderRadius.circular(20),
                                               border: Border.all(
-                                                color: tenant.isPaid ? const Color(0xFFDCFCE7) : const Color(0xFFFCA5A5),
+                                                color: tenant.totalDue == 0 ? const Color(0xFFDCFCE7) : const Color(0xFFFCA5A5),
                                               ),
                                             ),
                                             child: Row(
@@ -272,15 +272,15 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                                   width: 5,
                                                   height: 5,
                                                   decoration: BoxDecoration(
-                                                    color: tenant.isPaid ? const Color(0xFF16A34A) : const Color(0xFFEF4444),
+                                                    color: tenant.totalDue == 0 ? const Color(0xFF16A34A) : const Color(0xFFEF4444),
                                                     shape: BoxShape.circle,
                                                   ),
                                                 ),
                                                 const SizedBox(width: 4),
                                                 Text(
-                                                  tenant.isPaid ? 'Paid' : 'Unpaid',
+                                                  tenant.totalDue == 0 ? 'Paid' : 'Unpaid',
                                                   style: TextStyle(
-                                                    color: tenant.isPaid ? const Color(0xFF15803D) : const Color(0xFFB91C1C),
+                                                    color: tenant.totalDue == 0 ? const Color(0xFF15803D) : const Color(0xFFB91C1C),
                                                     fontSize: 10,
                                                     fontWeight: FontWeight.bold,
                                                   ),
