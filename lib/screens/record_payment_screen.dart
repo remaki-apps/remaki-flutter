@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../providers/app_provider.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
+import '../widgets/tenant_avatar.dart';
+import '../widgets/custom_date_picker.dart';
 
 class RecordPaymentScreen extends StatefulWidget {
   final String tenantId;
@@ -36,11 +38,12 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
   }
 
   Future<void> _selectPaymentDate(BuildContext context) async {
-    final picked = await showDatePicker(
+    final picked = await showAppDatePicker(
       context: context,
       initialDate: _paymentDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
+      helpText: 'Select Payment Date',
     );
     if (picked != null) {
       setState(() {
@@ -83,11 +86,21 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
                     children: [
-                      Text(tenant.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text('Amount Due: ₹${tenant.totalDue.toStringAsFixed(0)}', style: TextStyle(color: tenant.isPaid ? AppTheme.success : AppTheme.danger, fontSize: 12, fontWeight: FontWeight.bold)),
+                      TenantAvatar(
+                        name: tenant.name,
+                        imageUrl: tenant.imageUrl,
+                        radius: 22,
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(tenant.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text('Amount Due: ₹${tenant.totalDue.toStringAsFixed(0)}', style: TextStyle(color: tenant.isPaid ? AppTheme.success : AppTheme.danger, fontSize: 12, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                     ],
                   ),
                   Container(

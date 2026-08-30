@@ -1,24 +1,78 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../theme/app_theme.dart';
 
 class MainShell extends StatelessWidget {
   final Widget child;
   const MainShell({super.key, required this.child});
 
-
   @override
   Widget build(BuildContext context) {
+    final int selectedIndex = _calculateSelectedIndex(context);
+
     return Scaffold(
       body: child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _calculateSelectedIndex(context),
-        onDestinationSelected: (int index) => _onItemTapped(index, context),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.bed_outlined), selectedIcon: Icon(Icons.bed), label: 'Rooms'),
-          NavigationDestination(icon: Icon(Icons.people_outline), selectedIcon: Icon(Icons.people), label: 'Tenants'),
-          NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long), label: 'Rent'),
-          NavigationDestination(icon: Icon(Icons.grid_view_outlined), selectedIcon: Icon(Icons.grid_view), label: 'More'),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Color(0xFFF1F5F9), width: 1)),
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x05000000),
+              blurRadius: 10,
+              offset: Offset(0, -3),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Container(
+            height: 52,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(context, 0, Icons.home_rounded, Icons.home_outlined, 'Dashboard', selectedIndex == 0),
+                _buildNavItem(context, 1, Icons.bed_rounded, Icons.bed_outlined, 'Rooms', selectedIndex == 1),
+                _buildNavItem(context, 2, Icons.people_rounded, Icons.people_outline_rounded, 'Tenants', selectedIndex == 2),
+                _buildNavItem(context, 3, Icons.account_balance_wallet_rounded, Icons.account_balance_wallet_outlined, 'Payments', selectedIndex == 3),
+                _buildNavItem(context, 4, Icons.grid_view_rounded, Icons.grid_view_outlined, 'More', selectedIndex == 4),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(BuildContext context, int index, IconData activeIcon, IconData inactiveIcon, String label, bool isSelected) {
+    return GestureDetector(
+      onTap: () => _onItemTapped(index, context),
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+            decoration: BoxDecoration(
+              color: isSelected ? const Color(0xFFEEF2FF) : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              isSelected ? activeIcon : inactiveIcon,
+              color: isSelected ? AppTheme.primaryColor : const Color(0xFF64748B),
+              size: 20,
+            ),
+          ),
+          const SizedBox(height: 1),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              color: isSelected ? AppTheme.primaryColor : const Color(0xFF64748B),
+            ),
+          ),
         ],
       ),
     );

@@ -40,6 +40,71 @@ final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
   routes: [
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/add_room',
+      builder: (context, state) => const AddRoomScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/room_details/:roomId',
+      builder: (context, state) => RoomDetailsScreen(roomId: state.pathParameters['roomId']!),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/add_room_bill/:roomId',
+      builder: (context, state) => AddRoomBillScreen(roomId: state.pathParameters['roomId']!),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/tenant_profile/:id',
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return TenantProfileScreen(tenantId: id);
+      },
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/record_payment/:id',
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return RecordPaymentScreen(tenantId: id);
+      },
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/add_tenant',
+      builder: (context, state) {
+        final roomId = state.uri.queryParameters['roomId'];
+        final bedId = state.uri.queryParameters['bedId'];
+        return AddTenantScreen(initialRoomId: roomId, initialBedId: bedId);
+      },
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/tenant_added_success',
+      builder: (context, state) {
+        return TenantAddedSuccessScreen(
+          name: state.uri.queryParameters['name'] ?? '',
+          phone: state.uri.queryParameters['phone'] ?? '',
+          roomBed: state.uri.queryParameters['roomBed'] ?? '',
+          rent: state.uri.queryParameters['rent'] ?? '',
+          moveIn: state.uri.queryParameters['moveIn'] ?? '',
+        );
+      },
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/payment_success',
+      builder: (context, state) {
+        return PaymentSuccessScreen(
+          amount: state.uri.queryParameters['amount'] ?? '',
+          name: state.uri.queryParameters['name'] ?? '',
+          roomBed: state.uri.queryParameters['roomBed'] ?? '',
+          dateMethod: state.uri.queryParameters['dateMethod'] ?? '',
+        );
+      },
+    ),
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) {
@@ -49,48 +114,6 @@ final router = GoRouter(
         GoRoute(
           path: '/',
           builder: (context, state) => const DashboardScreen(),
-        ),
-        GoRoute(
-          path: '/add_room',
-          builder: (context, state) => const AddRoomScreen(),
-        ),
-        GoRoute(
-          path: '/add_tenant',
-          builder: (context, state) {
-            final roomId = state.uri.queryParameters['roomId'];
-            final bedId = state.uri.queryParameters['bedId'];
-            return AddTenantScreen(initialRoomId: roomId, initialBedId: bedId);
-          },
-        ),
-        GoRoute(
-          path: '/allocate_tenant',
-          builder: (context, state) {
-            final roomId = state.uri.queryParameters['roomId']!;
-            final bedId = state.uri.queryParameters['bedId']!;
-            return AllocateTenantScreen(roomId: roomId, bedId: bedId);
-          },
-        ),
-        GoRoute(
-          path: '/tenant_added_success',
-          builder: (context, state) {
-            return TenantAddedSuccessScreen(
-              name: state.uri.queryParameters['name'] ?? '',
-              roomBed: state.uri.queryParameters['roomBed'] ?? '',
-              rent: state.uri.queryParameters['rent'] ?? '',
-              moveIn: state.uri.queryParameters['moveIn'] ?? '',
-            );
-          },
-        ),
-        GoRoute(
-          path: '/payment_success',
-          builder: (context, state) {
-            return PaymentSuccessScreen(
-              amount: state.uri.queryParameters['amount'] ?? '',
-              name: state.uri.queryParameters['name'] ?? '',
-              roomBed: state.uri.queryParameters['roomBed'] ?? '',
-              dateMethod: state.uri.queryParameters['dateMethod'] ?? '',
-            );
-          },
         ),
         GoRoute(
           path: '/unpaid_tenants',
@@ -105,30 +128,8 @@ final router = GoRouter(
           builder: (context, state) => const RoomsScreen(),
         ),
         GoRoute(
-          path: '/room_details/:roomId',
-          builder: (context, state) => RoomDetailsScreen(roomId: state.pathParameters['roomId']!),
-        ),
-        GoRoute(
-          path: '/add_room_bill/:roomId',
-          builder: (context, state) => AddRoomBillScreen(roomId: state.pathParameters['roomId']!),
-        ),
-        GoRoute(
           path: '/tenants',
           builder: (context, state) => const TenantsScreen(),
-        ),
-        GoRoute(
-          path: '/tenant_profile/:id',
-          builder: (context, state) {
-            final id = state.pathParameters['id']!;
-            return TenantProfileScreen(tenantId: id);
-          },
-        ),
-        GoRoute(
-          path: '/record_payment/:id',
-          builder: (context, state) {
-            final id = state.pathParameters['id']!;
-            return RecordPaymentScreen(tenantId: id);
-          },
         ),
         GoRoute(
           path: '/rent',
