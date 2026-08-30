@@ -93,9 +93,9 @@ class TenantProfileScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Column(
+                      const Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             'Tenant Profile',
                             style: TextStyle(
@@ -309,6 +309,48 @@ class TenantProfileScreen extends StatelessWidget {
                                 ),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: 10),
+                          GestureDetector(
+                            onTap: () async {
+                              final sanitizedPhone = tenant.phone.replaceAll(RegExp(r'\D'), '');
+                              final phoneNum = sanitizedPhone.startsWith('91') ? sanitizedPhone : '91$sanitizedPhone';
+                              final message = Uri.encodeComponent(
+                                'Hello ${tenant.name},\n\n'
+                                'Here are your Sunshine PG app login credentials:\n'
+                                '📱 Phone: ${tenant.phone}\n'
+                                '🔑 Password: hi123\n\n'
+                                'Log in to view your rent dues and receipts.'
+                              );
+                              final url = Uri.parse('https://wa.me/$phoneNum?text=$message');
+                              if (await canLaunchUrl(url)) {
+                                await launchUrl(url, mode: LaunchMode.externalApplication);
+                              }
+                            },
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF0FDF4),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFFBBF7D0)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/icons/whatsapp.png',
+                                    width: 18,
+                                    height: 18,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Text(
+                                    'Share Login Credentials via WhatsApp',
+                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -714,5 +756,3 @@ class TenantProfileScreen extends StatelessWidget {
     );
   }
 }
-
-

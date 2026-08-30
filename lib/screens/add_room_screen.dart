@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/app_provider.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
+import '../widgets/custom_expandable_dropdown.dart';
 
 class AddRoomScreen extends StatefulWidget {
   const AddRoomScreen({super.key});
@@ -120,28 +121,15 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                 const SizedBox(height: 12),
 
                 // Card 2: Floor
-                _buildCardWrapper(
+                CustomExpandableDropdown<String>(
+                  label: 'Floor *',
+                  value: _selectedFloor,
+                  hintText: 'Select Floor',
                   icon: Icons.domain_outlined,
-                  label: 'Floor',
-                  isRequired: true,
-                  child: DropdownButtonFormField<String>(
-                    isExpanded: true,
-                    menuMaxHeight: 200.0,
-                    value: _selectedFloor,
-                    decoration: _inputDecoration(),
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B)),
-                    items: _floorOptions
-                        .map((floor) => DropdownMenuItem(
-                              value: floor,
-                              child: Text(floor, style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A))),
-                            ))
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setState(() => _selectedFloor = val);
-                      }
-                    },
-                  ),
+                  items: _floorOptions.map((f) => DropdownOption(value: f, label: f)).toList(),
+                  onChanged: (val) {
+                    setState(() => _selectedFloor = val);
+                  },
                 ),
                 const SizedBox(height: 12),
 

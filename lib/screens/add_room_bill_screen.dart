@@ -43,7 +43,7 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.close, color: Colors.black), onPressed: () => context.pop()),
+        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => context.pop()),
         actions: [IconButton(icon: const Icon(Icons.more_vert, color: Colors.black), onPressed: () {})],
       ),
       body: Column(

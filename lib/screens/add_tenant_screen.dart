@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../providers/app_provider.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
+import '../widgets/custom_expandable_dropdown.dart';
+import '../widgets/custom_date_picker.dart';
 
 class AddTenantScreen extends StatefulWidget {
   final String? initialRoomId;
@@ -17,6 +20,7 @@ class AddTenantScreen extends StatefulWidget {
 
 class _AddTenantScreenState extends State<AddTenantScreen> {
   int _currentStep = 0;
+  String? _inlineError;
 
   // Step 1: Personal Info
   final _nameController = TextEditingController();
@@ -61,11 +65,12 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
   }
 
   Future<void> _selectDob(BuildContext context) async {
-    final picked = await showDatePicker(
+    final picked = await showAppDatePicker(
       context: context,
       initialDate: _selectedDob ?? DateTime(2000, 1, 1),
       firstDate: DateTime(1950),
       lastDate: DateTime.now(),
+      helpText: 'Select Date of Birth',
     );
     if (picked != null) {
       setState(() {
@@ -76,11 +81,12 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
   }
 
   Future<void> _selectMoveInDate(BuildContext context) async {
-    final picked = await showDatePicker(
+    final picked = await showAppDatePicker(
       context: context,
       initialDate: _moveInDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
+      helpText: 'Select Move-in Date',
     );
     if (picked != null) {
       setState(() {
@@ -212,25 +218,34 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
                         elevation: 2,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
-                      onPressed: () {
-                        if (_currentStep < 2) {
-                          if (_currentStep == 0 && _nameController.text.trim().isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Please enter full name')),
-                            );
-                            return;
+                        onPressed: () {
+                          setState(() => _inlineError = null);
+                          if (_currentStep < 2) {
+                            if (_currentStep == 0) {
+                              if (_nameController.text.trim().isEmpty) {
+                                setState(() => _inlineError = 'Please enter tenant full name.');
+                                return;
+                              }
+                              if (_phoneController.text.trim().length != 10) {
+                                setState(() => _inlineError = 'Phone number must be exactly 10 digits.');
+                                return;
+                              }
+                            }
+                            if (_currentStep == 1) {
+                              if (_selectedRoomId == null) {
+                                setState(() => _inlineError = 'Please select a room.');
+                                return;
+                              }
+                              if (_selectedBedId == null) {
+                                setState(() => _inlineError = 'Please select a bed.');
+                                return;
+                              }
+                            }
+                            setState(() => _currentStep += 1);
+                          } else {
+                            _submit(appProvider);
                           }
-                          if (_currentStep == 1 && (_selectedRoomId == null || _selectedBedId == null)) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Please select Room and Bed')),
-                            );
-                            return;
-                          }
-                          setState(() => _currentStep += 1);
-                        } else {
-                          _submit(appProvider);
-                        }
-                      },
+                        },
                       child: Text(
                         _currentStep == 2 ? 'Complete & Save' : 'Continue',
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
@@ -298,16 +313,83 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
     );
   }
 
+  Widget _buildInlineErrorBanner() {
+    if (_inlineError == null) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFCA5A5)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline_rounded, color: Color(0xFFEF4444), size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              _inlineError!,
+              style: const TextStyle(
+                color: Color(0xFFB91C1C),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEEF2FF),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFC7D2FE)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: AppTheme.primaryColor, size: 18),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.primaryColor,
+              letterSpacing: -0.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCurrentStepContent(AppProvider appProvider) {
     switch (_currentStep) {
       case 0:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Personal Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-            const SizedBox(height: 16),
+            _buildInlineErrorBanner(),
+            _buildSectionHeader('Personal Details', Icons.person_outline),
             _buildInputField(_nameController, 'Full Name *', 'Enter tenant full name', Icons.person_outline),
-            _buildInputField(_phoneController, 'Phone Number *', 'Enter 10-digit phone number', Icons.phone_outlined, keyboardType: TextInputType.phone),
+            _buildInputField(
+              _phoneController,
+              'Phone Number *',
+              'Enter 10-digit phone number',
+              Icons.phone_outlined,
+              keyboardType: TextInputType.phone,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(10),
+              ],
+            ),
             _buildInputField(_emailController, 'Email Address', 'Enter email address', Icons.email_outlined, keyboardType: TextInputType.emailAddress),
             
             // DOB Picker
@@ -322,16 +404,13 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
             ),
 
             // Gender Dropdown
-            Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: DropdownButtonFormField<String>(
-                isExpanded: true,
-                menuMaxHeight: 200.0,
-                value: _gender,
-                decoration: _inputDecoration('Gender', '', Icons.wc_outlined),
-                items: ['Male', 'Female', 'Other'].map((g) => DropdownMenuItem(value: g, child: Text(g, overflow: TextOverflow.ellipsis))).toList(),
-                onChanged: (val) => setState(() => _gender = val!),
-              ),
+            CustomExpandableDropdown<String>(
+              label: 'Gender',
+              value: _gender,
+              hintText: 'Select Gender',
+              icon: Icons.wc_outlined,
+              items: ['Male', 'Female', 'Other'].map((g) => DropdownOption(value: g, label: g)).toList(),
+              onChanged: (val) => setState(() => _gender = val),
             ),
 
             _buildInputField(_emergencyContactController, 'Emergency Contact', 'Name & Phone number', Icons.contact_phone_outlined, maxLines: 2),
@@ -342,42 +421,42 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Room & Bed Allocation', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-            const SizedBox(height: 16),
+            _buildInlineErrorBanner(),
+            _buildSectionHeader('Room & Bed Allocation', Icons.meeting_room_outlined),
 
             // Room Selection
-            DropdownButtonFormField<String>(
-              isExpanded: true,
-              menuMaxHeight: 200.0,
+            CustomExpandableDropdown<String>(
+              label: 'Select Room *',
               value: _selectedRoomId,
-              hint: const Text('Select Available Room', overflow: TextOverflow.ellipsis),
-              decoration: _inputDecoration('Select Room *', '', Icons.meeting_room_outlined),
-              items: availableRooms.map((r) => DropdownMenuItem(
-                value: r.id,
-                child: Text('Room ${r.number} (${r.availableBeds} beds left)', overflow: TextOverflow.ellipsis),
-              )).toList(),
+              hintText: 'Select Available Room',
+              icon: Icons.meeting_room_outlined,
+              items: availableRooms
+                  .map((r) => DropdownOption(value: r.id, label: 'Room ${r.number} [${r.availableBeds} beds left]'))
+                  .toList(),
               onChanged: (val) => setState(() {
                 _selectedRoomId = val;
                 _selectedBedId = null;
+                _inlineError = null;
               }),
             ),
-            const SizedBox(height: 16),
 
             // Bed Selection
             if (_selectedRoomId != null) ...[
-              DropdownButtonFormField<String>(
-                isExpanded: true,
-                menuMaxHeight: 200.0,
+              CustomExpandableDropdown<String>(
+                label: 'Select Bed *',
                 value: _selectedBedId,
-                hint: const Text('Select Available Bed', overflow: TextOverflow.ellipsis),
-                decoration: _inputDecoration('Select Bed *', '', Icons.single_bed_outlined),
+                hintText: 'Select Available Bed',
+                icon: Icons.single_bed_outlined,
                 items: appProvider.rooms
                     .firstWhere((r) => r.id == _selectedRoomId)
                     .beds
                     .where((b) => b.isAvailable)
-                    .map((b) => DropdownMenuItem(value: b.id, child: Text(b.name, overflow: TextOverflow.ellipsis)))
+                    .map((b) => DropdownOption(value: b.id, label: b.name))
                     .toList(),
-                onChanged: (val) => setState(() => _selectedBedId = val),
+                onChanged: (val) => setState(() {
+                  _selectedBedId = val;
+                  _inlineError = null;
+                }),
               ),
             ] else
               Container(
@@ -407,43 +486,37 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Rent & Payment Terms', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-            const SizedBox(height: 16),
+            _buildInlineErrorBanner(),
+            _buildSectionHeader('Rent & Payment Terms', Icons.payments_outlined),
             _buildInputField(_rentController, 'Monthly Rent (₹) *', 'e.g. 8500', Icons.payments_outlined, keyboardType: TextInputType.number),
             _buildInputField(_securityController, 'Security Deposit (₹) *', 'e.g. 10000', Icons.security_outlined, keyboardType: TextInputType.number),
             
             // Rent Due Date Dropdown
-            Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: DropdownButtonFormField<String>(
-                isExpanded: true,
-                menuMaxHeight: 200.0,
-                value: _rentDueDate,
-                decoration: _inputDecoration('Rent Due Date', '', Icons.event_outlined),
-                items: List.generate(31, (index) {
-                  final day = index + 1;
-                  String suffix = 'th';
-                  if (day < 11 || day > 13) {
-                    switch (day % 10) {
-                      case 1:
-                        suffix = 'st';
-                        break;
-                      case 2:
-                        suffix = 'nd';
-                        break;
-                      case 3:
-                        suffix = 'rd';
-                        break;
-                    }
+            CustomExpandableDropdown<String>(
+              label: 'Rent Due Date',
+              value: _rentDueDate,
+              hintText: 'Select Rent Due Date',
+              icon: Icons.event_outlined,
+              items: List.generate(31, (index) {
+                final day = index + 1;
+                String suffix = 'th';
+                if (day < 11 || day > 13) {
+                  switch (day % 10) {
+                    case 1:
+                      suffix = 'st';
+                      break;
+                    case 2:
+                      suffix = 'nd';
+                      break;
+                    case 3:
+                      suffix = 'rd';
+                      break;
                   }
-                  final val = '$day$suffix of every month';
-                  return DropdownMenuItem(
-                    value: val,
-                    child: Text(val, overflow: TextOverflow.ellipsis),
-                  );
-                }),
-                onChanged: (val) => setState(() => _rentDueDate = val!),
-              ),
+                }
+                final val = '$day$suffix of every month';
+                return DropdownOption(value: val, label: val);
+              }),
+              onChanged: (val) => setState(() => _rentDueDate = val),
             ),
 
             // Move-In Date Picker
@@ -458,16 +531,15 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
             ),
 
             // Agreement Duration
-            Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: DropdownButtonFormField<String>(
-                isExpanded: true,
-                menuMaxHeight: 200.0,
-                value: _agreementDuration,
-                decoration: _inputDecoration('Agreement Duration', '', Icons.description_outlined),
-                items: ['None', '6 Months', '11 Months', '12 Months'].map((g) => DropdownMenuItem(value: g, child: Text(g, overflow: TextOverflow.ellipsis))).toList(),
-                onChanged: (val) => setState(() => _agreementDuration = val!),
-              ),
+            CustomExpandableDropdown<String>(
+              label: 'Agreement Duration',
+              value: _agreementDuration,
+              hintText: 'Select Duration',
+              icon: Icons.description_outlined,
+              items: ['None', '6 Months', '11 Months', '12 Months']
+                  .map((g) => DropdownOption(value: g, label: g))
+                  .toList(),
+              onChanged: (val) => setState(() => _agreementDuration = val),
             ),
           ],
         );
@@ -483,6 +555,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
     IconData icon, {
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -490,6 +563,10 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
         controller: controller,
         keyboardType: keyboardType,
         maxLines: maxLines,
+        inputFormatters: inputFormatters,
+        onChanged: (_) {
+          if (_inlineError != null) setState(() => _inlineError = null);
+        },
         decoration: _inputDecoration(label, hint, icon),
       ),
     );
@@ -510,14 +587,30 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
   }
 
   void _submit(AppProvider provider) {
-    if (_nameController.text.trim().isEmpty ||
-        _selectedRoomId == null ||
-        _selectedBedId == null ||
-        _rentController.text.trim().isEmpty ||
-        _securityController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all required fields (Name, Room, Bed, Rent, Security Deposit)')),
-      );
+    setState(() => _inlineError = null);
+
+    if (_nameController.text.trim().isEmpty) {
+      setState(() => _inlineError = 'Please enter tenant full name.');
+      return;
+    }
+    if (_phoneController.text.trim().length != 10) {
+      setState(() => _inlineError = 'Phone number must be exactly 10 digits.');
+      return;
+    }
+    if (_selectedRoomId == null) {
+      setState(() => _inlineError = 'Please select a room.');
+      return;
+    }
+    if (_selectedBedId == null) {
+      setState(() => _inlineError = 'Please select a bed.');
+      return;
+    }
+    if (_rentController.text.trim().isEmpty) {
+      setState(() => _inlineError = 'Please enter Monthly Rent (₹).');
+      return;
+    }
+    if (_securityController.text.trim().isEmpty) {
+      setState(() => _inlineError = 'Please enter Security Deposit (₹).');
       return;
     }
 
@@ -542,7 +635,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
 
     provider.addTenant(tenant);
 
-    context.go('/tenant_added_success?name=${Uri.encodeComponent(tenant.name)}&roomBed=${Uri.encodeComponent('Room ${room.number} - ${bed.name}')}&rent=${tenant.rentAmount}&moveIn=${Uri.encodeComponent(_moveInController.text)}');
+    context.go('/tenant_added_success?name=${Uri.encodeComponent(tenant.name)}&phone=${Uri.encodeComponent(tenant.phone)}&roomBed=${Uri.encodeComponent('Room ${room.number} - ${bed.name}')}&rent=${tenant.rentAmount}&moveIn=${Uri.encodeComponent(_moveInController.text)}');
   }
 }
 

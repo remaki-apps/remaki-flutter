@@ -85,6 +85,7 @@ final router = GoRouter(
       builder: (context, state) {
         return TenantAddedSuccessScreen(
           name: state.uri.queryParameters['name'] ?? '',
+          phone: state.uri.queryParameters['phone'] ?? '',
           roomBed: state.uri.queryParameters['roomBed'] ?? '',
           rent: state.uri.queryParameters['rent'] ?? '',
           moveIn: state.uri.queryParameters['moveIn'] ?? '',

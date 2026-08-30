@@ -6,6 +6,7 @@ import '../providers/app_provider.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tenant_avatar.dart';
+import '../widgets/custom_date_picker.dart';
 
 class RecordPaymentScreen extends StatefulWidget {
   final String tenantId;
@@ -37,11 +38,12 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
   }
 
   Future<void> _selectPaymentDate(BuildContext context) async {
-    final picked = await showDatePicker(
+    final picked = await showAppDatePicker(
       context: context,
       initialDate: _paymentDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
+      helpText: 'Select Payment Date',
     );
     if (picked != null) {
       setState(() {
