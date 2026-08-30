@@ -140,6 +140,10 @@ final router = GoRouter(
           builder: (context, state) => const DashboardScreen(),
         ),
         GoRoute(
+          path: '/dashboard',
+          builder: (context, state) => const DashboardScreen(),
+        ),
+        GoRoute(
           path: '/unpaid_tenants',
           builder: (context, state) => const UnpaidTenantsScreen(),
         ),
