@@ -68,7 +68,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Login failed: \${e.toString().replaceAll('Exception:', '').trim()}';
+        _errorMessage = "Login failed: \${e.toString().replaceAll('Exception:', '').trim()}";
       });
     }
   }

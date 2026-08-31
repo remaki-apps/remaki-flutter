@@ -61,7 +61,7 @@ class _AdminForgotPasswordScreenState extends State<AdminForgotPasswordScreen> {
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.primary,
+                    color: AppTheme.primaryColor,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -82,7 +82,7 @@ class _AdminForgotPasswordScreenState extends State<AdminForgotPasswordScreen> {
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Reset failed: \${e.toString().replaceAll('Exception:', '').trim()}';
+        _errorMessage = "Reset failed: \${e.toString().replaceAll('Exception:', '').trim()}";
       });
     } finally {
       if (mounted) {
