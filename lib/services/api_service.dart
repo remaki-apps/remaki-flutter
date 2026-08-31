@@ -5,14 +5,25 @@ class ApiService {
   static const String _baseUrl = 'https://remaki-backend.onrender.com/graphql';
   // Note: Appending /graphql as this is a GraphQL backend
 
+  static String? _token;
+
+  static void setAuthToken(String token) {
+    _token = token;
+  }
+
   static Future<Map<String, dynamic>> performQuery(String query, {Map<String, dynamic>? variables}) async {
     try {
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+      };
+      
+      if (_token != null) {
+        headers['Authorization'] = 'Bearer $_token';
+      }
+
       final response = await http.post(
         Uri.parse(_baseUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          // 'Authorization': 'Bearer YOUR_TOKEN', // If auth is implemented
-        },
+        headers: headers,
         body: jsonEncode({
           'query': query,
           'variables': variables ?? {},
