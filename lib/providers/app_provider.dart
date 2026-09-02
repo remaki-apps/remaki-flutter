@@ -146,7 +146,7 @@ class AppProvider with ChangeNotifier {
   List<Tenant> get newTenantsThisMonth => tenants.where((t) => t.moveInDate.month == DateTime.now().month).toList();
   List<Tenant> get unpaidTenants => tenants.where((t) => t.totalDue > 0).toList();
 
-  void addTenant(Tenant tenant) {
+  Future<String?> addTenant(Tenant tenant) async {
     tenants.add(tenant);
     // update bed status
     var room = rooms.firstWhere((r) => r.id == tenant.roomId);
@@ -154,21 +154,27 @@ class AppProvider with ChangeNotifier {
     bed.isAvailable = false;
     bed.tenantId = tenant.id;
     
-    // Background API call
-    ApiService.createTenant({
-      'name': tenant.name,
-      'phone': tenant.phone,
-      'email': tenant.email,
-      'emergencyContact': tenant.emergencyContact,
-      'bedId': tenant.bedId,
-      'monthlyRent': tenant.rentAmount,
-      'securityDeposit': tenant.securityDeposit,
-      'dueDay': 5,
-      'moveInDate': tenant.moveInDate.toIso8601String(),
-    }).catchError((e) => debugPrint('Error creating tenant: $e'));
-
-    saveToStorage();
-    notifyListeners();
+    try {
+      final tempPassword = await ApiService.createTenant({
+        'name': tenant.name,
+        'phone': tenant.phone,
+        'email': tenant.email,
+        'emergencyContact': tenant.emergencyContact,
+        'bedId': tenant.bedId,
+        'monthlyRent': tenant.rentAmount,
+        'securityDeposit': tenant.securityDeposit,
+        'dueDay': 5,
+        'moveInDate': tenant.moveInDate.toIso8601String(),
+      });
+      saveToStorage();
+      notifyListeners();
+      return tempPassword;
+    } catch (e) {
+      debugPrint('Error creating tenant: $e');
+      saveToStorage();
+      notifyListeners();
+      return null;
+    }
   }
 
   Future<void> recordPayment(String tenantId, double amount, String method) async {

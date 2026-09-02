@@ -5,14 +5,14 @@ import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/api_service.dart';
 
-class AdminLoginScreen extends StatefulWidget {
-  const AdminLoginScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<AdminLoginScreen> createState() => _AdminLoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _AdminLoginScreenState extends State<AdminLoginScreen> {
+class _LoginScreenState extends State<LoginScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
@@ -22,7 +22,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -46,8 +46,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       
       // Perform GraphQL login
       final result = await ApiService.performQuery('''
-        mutation AdminCustomLogin(\$input: AdminCustomLoginInput!) {
-          adminCustomLogin(input: \$input) {
+        mutation CustomLogin(\$input: CustomLoginInput!) {
+          customLogin(input: \$input) {
             token
             user {
               id
@@ -63,7 +63,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         }
       });
 
-      final token = result['adminCustomLogin']['token'];
+      final token = result['customLogin']['token'];
+      final role = result['customLogin']['user']['role'];
       
       // Save token in ApiService (persisted via SharedPreferences)
       await ApiService.setAuthToken(token);
@@ -72,7 +73,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       await appProvider.loadFromAPI();
       
       if (mounted) {
-        context.go('/');
+        if (role == 'ADMIN') {
+          context.go('/');
+        } else {
+          context.go('/tenant_home');
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -193,7 +198,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                       ),
                       const SizedBox(height: 6),
                       const Text(
-                        'Admin Portal • Management Suite',
+                        'Resident & Management Portal',
                         style: TextStyle(
                           fontSize: 13,
                           color: Color(0xFFC7D2FE),
@@ -234,7 +239,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                             ),
                             const SizedBox(height: 4),
                             const Text(
-                              'Enter your credentials to access the admin dashboard',
+                              'Enter your credentials to access your account',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: AppTheme.textSecondary,
@@ -277,9 +282,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                               const SizedBox(height: 20),
                             ],
 
-                            // Email Field
+                            // Phone Field
                             const Text(
-                              'Email Address',
+                              'Phone Number',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -288,15 +293,15 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                             ),
                             const SizedBox(height: 8),
                             TextField(
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
+                              controller: _phoneController,
+                              keyboardType: TextInputType.phone,
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,
                                 color: AppTheme.textPrimary,
                               ),
                               decoration: InputDecoration(
-                                hintText: 'admin@sunshinepg.com',
+                                hintText: '9876543210',
                                 hintStyle: const TextStyle(
                                   color: Color(0xFFA0AEC0),
                                   fontSize: 14,
@@ -309,7 +314,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: const Icon(
-                                    Icons.mail_outline_rounded,
+                                    Icons.phone_outlined,
                                     color: AppTheme.primaryColor,
                                     size: 18,
                                   ),
@@ -445,7 +450,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                   ],
                                 ),
                                 TextButton(
-                                  onPressed: () => context.push('/admin_forgot_password'),
+                                  onPressed: () => context.push('/forgot_password'),
                                   style: TextButton.styleFrom(
                                     padding: EdgeInsets.zero,
                                     minimumSize: Size.zero,

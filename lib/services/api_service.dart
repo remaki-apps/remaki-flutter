@@ -203,17 +203,19 @@ class ApiService {
 
   // --- Mutations ---
 
-  static Future<void> createTenant(Map<String, dynamic> input) async {
+  static Future<String?> createTenant(Map<String, dynamic> input) async {
     const String query = '''
       mutation CreateTenant(\$input: CreateTenantInput!) {
         createTenant(input: \$input) {
           id
           name
           status
+          tempPassword
         }
       }
     ''';
-    await performQuery(query, variables: {'input': input});
+    final result = await performQuery(query, variables: {'input': input});
+    return result['createTenant']['tempPassword'];
   }
 
   static Future<void> createRoom(Map<String, dynamic> input) async {

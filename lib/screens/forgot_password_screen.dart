@@ -3,14 +3,14 @@ import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
 import '../services/api_service.dart';
 
-class AdminForgotPasswordScreen extends StatefulWidget {
-  const AdminForgotPasswordScreen({super.key});
+class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
 
   @override
-  State<AdminForgotPasswordScreen> createState() => _AdminForgotPasswordScreenState();
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _AdminForgotPasswordScreenState extends State<AdminForgotPasswordScreen> {
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _phoneController = TextEditingController();
   bool _isLoading = false;
   String _errorMessage = '';
@@ -119,7 +119,7 @@ class _AdminForgotPasswordScreenState extends State<AdminForgotPasswordScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    'Reset Admin Password',
+                    'Reset Password',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,

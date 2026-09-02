@@ -21,8 +21,9 @@ import 'screens/success_screens.dart';
 import 'screens/available_beds_screen.dart';
 import 'screens/unpaid_tenants_screen.dart';
 import 'screens/add_room_screen.dart';
-import 'screens/admin_login_screen.dart';
-import 'screens/admin_forgot_password_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/forgot_password_screen.dart';
+import 'screens/tenant_home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,17 +43,22 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: ApiService.isLoggedIn ? '/' : '/admin_login',
+  initialLocation: ApiService.isLoggedIn ? '/' : '/login',
   routes: [
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
-      path: '/admin_login',
-      builder: (context, state) => const AdminLoginScreen(),
+      path: '/login',
+      builder: (context, state) => const LoginScreen(),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
-      path: '/admin_forgot_password',
-      builder: (context, state) => const AdminForgotPasswordScreen(),
+      path: '/forgot_password',
+      builder: (context, state) => const ForgotPasswordScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/tenant_home',
+      builder: (context, state) => const TenantHomeScreen(),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

@@ -21,6 +21,7 @@ class AddTenantScreen extends StatefulWidget {
 class _AddTenantScreenState extends State<AddTenantScreen> {
   int _currentStep = 0;
   String? _inlineError;
+  bool _isLoading = false;
 
   // Step 1: Personal Info
   final _nameController = TextEditingController();
@@ -246,10 +247,16 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
                             _submit(appProvider);
                           }
                         },
-                      child: Text(
-                        _currentStep == 2 ? 'Complete & Save' : 'Continue',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
-                      ),
+                      child: _isLoading 
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                          )
+                        : Text(
+                            _currentStep == 2 ? 'Complete & Save' : 'Continue',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                          ),
                     ),
                   ),
                 ],
@@ -586,7 +593,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
     );
   }
 
-  void _submit(AppProvider provider) {
+  Future<void> _submit(AppProvider provider) async {
     setState(() => _inlineError = null);
 
     if (_nameController.text.trim().isEmpty) {
@@ -633,9 +640,15 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
     _selectedBedId = null;
     _selectedRoomId = null;
 
-    provider.addTenant(tenant);
+    setState(() => _isLoading = true);
+    
+    final tempPassword = await provider.addTenant(tenant);
 
-    context.go('/tenant_added_success?tenantId=${tenant.id}&password=${Uri.encodeComponent(tenant.password)}&name=${Uri.encodeComponent(tenant.name)}&phone=${Uri.encodeComponent(tenant.phone)}&roomNumber=${Uri.encodeComponent(room.number)}&floor=${Uri.encodeComponent(room.floor)}&roomBed=${Uri.encodeComponent('Room ${room.number}')}&rent=${tenant.rentAmount}&moveIn=${Uri.encodeComponent(_moveInController.text)}');
+    if (!mounted) return;
+    
+    setState(() => _isLoading = false);
+
+    context.go('/tenant_added_success?tenantId=${tenant.id}&password=${Uri.encodeComponent(tempPassword ?? '')}&name=${Uri.encodeComponent(tenant.name)}&phone=${Uri.encodeComponent(tenant.phone)}&roomNumber=${Uri.encodeComponent(room.number)}&floor=${Uri.encodeComponent(room.floor)}&roomBed=${Uri.encodeComponent('Room ${room.number}')}&rent=${tenant.rentAmount}&moveIn=${Uri.encodeComponent(_moveInController.text)}');
   }
 }
 
