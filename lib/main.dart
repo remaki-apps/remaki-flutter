@@ -157,7 +157,7 @@ final router = GoRouter(
         ),
         GoRoute(
           path: '/unpaid_tenants',
-          builder: (context, state) => const UnpaidTenantsScreen(),
+          builder: (context, state) => UnpaidTenantsScreen(filter: state.uri.queryParameters['filter']),
         ),
         GoRoute(
           path: '/available_beds',

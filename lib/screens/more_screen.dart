@@ -47,7 +47,7 @@ class MoreScreen extends StatelessWidget {
               Navigator.of(ctx).pop();
               await ApiService.clearAuthToken();
               if (context.mounted) {
-                context.go('/admin_login');
+                context.go('/login');
               }
             },
             child: const Text('Logout', style: TextStyle(fontWeight: FontWeight.bold)),

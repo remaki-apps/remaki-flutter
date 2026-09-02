@@ -14,7 +14,7 @@ class TenantHomeScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              await ApiService.logout();
+              await ApiService.clearAuthToken();
               if (context.mounted) {
                 context.go('/login');
               }

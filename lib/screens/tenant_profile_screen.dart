@@ -7,6 +7,7 @@ import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tenant_avatar.dart';
 import '../widgets/fancy_toast.dart';
+import 'edit_financials_dialog.dart';
 
 class TenantProfileScreen extends StatelessWidget {
   final String tenantId;
@@ -472,9 +473,31 @@ class TenantProfileScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Personal Information',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Personal Information',
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                              ),
+                              GestureDetector(
+                                onTap: () => _showEditFinancialsDialog(context, appProvider, tenant),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Row(
+                                    children: [
+                                      Icon(Icons.edit_outlined, size: 14, color: AppTheme.primaryColor),
+                                      SizedBox(width: 4),
+                                      Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 12),
                           _buildModernDetailItem(Icons.phone_outlined, 'Phone', tenant.phone),
@@ -785,6 +808,16 @@ class TenantProfileScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showEditFinancialsDialog(BuildContext context, AppProvider appProvider, dynamic tenant) {
+    showDialog(
+      context: context,
+      builder: (ctx) => EditFinancialsDialog(
+        provider: appProvider,
+        tenant: tenant,
       ),
     );
   }

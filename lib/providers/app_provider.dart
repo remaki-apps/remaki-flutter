@@ -57,6 +57,7 @@ class AppProvider with ChangeNotifier {
             amount: (b['amount'] as num).toDouble(),
             date: b['createdAt'] != null ? DateTime.tryParse(b['createdAt']) ?? DateTime.now() : DateTime.now(),
             billType: b['type'] as String? ?? 'OTHER',
+            status: b['status'] as String? ?? 'PENDING',
             billDueDate: b['dueDate'] != null ? DateTime.tryParse(b['dueDate'] as String) : null,
           )).toList() ?? [],
         );
@@ -137,14 +138,25 @@ class AppProvider with ChangeNotifier {
   double get occupancyRate => totalBeds == 0 ? 0 : occupiedBeds / totalBeds;
 
   // Expected is total rent of all tenants + any pending bills
-  double get expectedRent => tenants.fold(0.0, (sum, t) => sum + t.rentAmount + t.totalPendingBills);
-  // Collected is what was actually paid towards rent (rentAmount - pendingRentAmount)
-  double get collectedRent => tenants.fold(0.0, (sum, t) => sum + (t.rentAmount - t.pendingRentAmount));
-  // Pending is the difference (which naturally equals pendingRentAmount + totalPendingBills)
+  // --- Combined Metrics (if needed elsewhere) ---
+  double get expectedRent => tenants.fold(0.0, (sum, t) => sum + t.rentAmount + t.totalExpectedBills);
+  double get collectedRent => tenants.fold(0.0, (sum, t) => sum + (t.rentAmount - t.pendingRentAmount) + t.totalPaidBills);
   double get pendingRent => expectedRent - collectedRent;
+
+  // --- Rent Only Metrics ---
+  double get expectedRentOnly => tenants.fold(0.0, (sum, t) => sum + t.rentAmount);
+  double get collectedRentOnly => tenants.fold(0.0, (sum, t) => sum + (t.rentAmount - t.pendingRentAmount));
+  double get pendingRentOnly => expectedRentOnly - collectedRentOnly;
+
+  // --- Bills Only Metrics ---
+  double get expectedBillsOnly => tenants.fold(0.0, (sum, t) => sum + t.totalExpectedBills);
+  double get collectedBillsOnly => tenants.fold(0.0, (sum, t) => sum + t.totalPaidBills);
+  double get pendingBillsOnly => tenants.fold(0.0, (sum, t) => sum + t.totalPendingBills);
 
   List<Tenant> get newTenantsThisMonth => tenants.where((t) => t.moveInDate.month == DateTime.now().month).toList();
   List<Tenant> get unpaidTenants => tenants.where((t) => t.totalDue > 0).toList();
+  List<Tenant> get unpaidRentTenants => tenants.where((t) => t.pendingRentAmount > 0).toList();
+  List<Tenant> get unpaidBillsTenants => tenants.where((t) => t.totalPendingBills > 0).toList();
 
   Future<String?> addTenant(Tenant tenant) async {
     tenants.add(tenant);
@@ -153,6 +165,7 @@ class AppProvider with ChangeNotifier {
     var bed = room.beds.firstWhere((b) => b.id == tenant.bedId);
     bed.isAvailable = false;
     bed.tenantId = tenant.id;
+    notifyListeners();
     
     try {
       final tempPassword = await ApiService.createTenant({
@@ -166,18 +179,16 @@ class AppProvider with ChangeNotifier {
         'dueDay': 5,
         'moveInDate': tenant.moveInDate.toIso8601String(),
       });
-      saveToStorage();
-      notifyListeners();
+      await loadFromAPI();
       return tempPassword;
     } catch (e) {
       debugPrint('Error creating tenant: $e');
-      saveToStorage();
-      notifyListeners();
+      await loadFromAPI();
       return null;
     }
   }
 
-  Future<void> recordPayment(String tenantId, double amount, String method) async {
+  Future<void> recordPayment(String tenantId, double amount, String method, {String paymentType = 'BOTH'}) async {
     final payment = Payment(
       id: 'p_${DateTime.now().millisecondsSinceEpoch}',
       tenantId: tenantId,
@@ -194,6 +205,7 @@ class AppProvider with ChangeNotifier {
         'amount': amount,
         'method': method.toUpperCase().replaceAll(' ', '_'),
         'paymentDate': DateTime.now().toIso8601String(),
+        'paymentType': paymentType,
       });
       // Reload from API to get the real paymentStatus and pendingRentAmount
       await loadFromAPI();
@@ -259,6 +271,36 @@ class AppProvider with ChangeNotifier {
     room.capacity = room.beds.length;
     saveToStorage();
     notifyListeners();
+  }
+
+  void _syncTotals() {
+    // Already recalculating dynamically on getter. We can leave this.
+  }
+
+  Future<void> editTenantFinancials(String tenantId, double? rentAmount, double? securityDeposit, int? rentDueDay, String? paymentMode) async {
+    try {
+      await ApiService.updateTenantFinancials(
+        tenantId: tenantId,
+        rentAmount: rentAmount,
+        securityDeposit: securityDeposit,
+        rentDueDay: rentDueDay,
+        paymentMode: paymentMode,
+      );
+      await loadFromAPI();
+    } catch (e) {
+      debugPrint('Error updating tenant financials: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> editBillAmount(String billId, double newAmount) async {
+    try {
+      await ApiService.updateBill(billId, newAmount);
+      await loadFromAPI();
+    } catch (e) {
+      debugPrint('Error updating bill: $e');
+      rethrow;
+    }
   }
 
   void addBillToTenants(List<String> tenantIds, double splitAmount, String description) {

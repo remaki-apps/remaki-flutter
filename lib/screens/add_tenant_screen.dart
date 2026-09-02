@@ -633,6 +633,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
       rentAmount: double.tryParse(_rentController.text) ?? 0.0,
       securityDeposit: double.tryParse(_securityController.text) ?? 0.0,
       rentDueDate: DateTime.now().add(const Duration(days: 30)),
+      pendingRentAmount: double.tryParse(_rentController.text) ?? 0.0,
     );
 
     var room = provider.rooms.firstWhere((r) => r.id == _selectedRoomId);

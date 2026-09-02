@@ -8,12 +8,17 @@ import '../theme/app_theme.dart';
 import '../widgets/tenant_avatar.dart';
 
 class UnpaidTenantsScreen extends StatelessWidget {
-  const UnpaidTenantsScreen({super.key});
+  final String? filter;
+  const UnpaidTenantsScreen({super.key, this.filter});
 
   @override
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
-    final unpaidTenants = appProvider.unpaidTenants;
+    final unpaidTenants = filter == 'bills' 
+        ? appProvider.unpaidBillsTenants 
+        : filter == 'rent' 
+            ? appProvider.unpaidRentTenants 
+            : appProvider.unpaidTenants;
 
     return Scaffold(
       appBar: AppBar(
@@ -79,7 +84,7 @@ class UnpaidTenantsScreen extends StatelessWidget {
                       textColor: AppTheme.danger,
                     ),
                     title: Text(tenant.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text('Room $roomNumber - $bedName\nPending: ₹${tenant.totalDue.toStringAsFixed(0)}'),
+                    subtitle: Text('Room $roomNumber - $bedName\nPending: ₹${(filter == 'bills' ? tenant.totalPendingBills : filter == 'rent' ? tenant.pendingRentAmount : tenant.totalDue).toStringAsFixed(0)}'),
                     isThreeLine: true,
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,

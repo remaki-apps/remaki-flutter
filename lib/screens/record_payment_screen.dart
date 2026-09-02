@@ -21,6 +21,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
   final _notesController = TextEditingController();
   final _dateController = TextEditingController();
   String _paymentMethod = 'Cash';
+  String _paymentType = 'BOTH';
   DateTime _paymentDate = DateTime.now();
   bool _isLoading = false;
 
@@ -34,6 +35,15 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
       if (tenantIndex != -1) {
         final tenant = appProvider.tenants[tenantIndex];
         _amountController.text = tenant.totalDue.toStringAsFixed(0);
+        setState(() {
+          if (tenant.pendingRentAmount > 0 && tenant.totalPendingBills == 0) {
+            _paymentType = 'RENT';
+          } else if (tenant.totalPendingBills > 0 && tenant.pendingRentAmount == 0) {
+            _paymentType = 'BILLS';
+          } else {
+            _paymentType = 'BOTH';
+          }
+        });
       }
     });
   }
@@ -121,6 +131,22 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
             ),
             const SizedBox(height: 24),
 
+            const Text('Payment For', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(child: _buildTypeRadio('Both', 'BOTH')),
+                Expanded(child: _buildTypeRadio('Rent Only', 'RENT')),
+              ],
+            ),
+            Row(
+              children: [
+                Expanded(child: _buildTypeRadio('Bills Only', 'BILLS')),
+                const Expanded(child: SizedBox()),
+              ],
+            ),
+            const SizedBox(height: 24),
+
             const Text('Payment Method', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Row(
@@ -161,7 +187,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                   if (amount > 0) {
                     setState(() => _isLoading = true);
                     try {
-                      await appProvider.recordPayment(widget.tenantId, amount, _paymentMethod);
+                      await appProvider.recordPayment(widget.tenantId, amount, _paymentMethod, paymentType: _paymentType);
                       
                       final roomIndex = appProvider.rooms.indexWhere((r) => r.id == tenant.roomId);
                       final roomNumber = roomIndex != -1 ? appProvider.rooms[roomIndex].number : 'N/A';
@@ -190,15 +216,27 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
     );
   }
 
+  Widget _buildTypeRadio(String title, String value) {
+    return RadioListTile<String>(
+      title: Text(title, style: const TextStyle(fontSize: 14)),
+      value: value,
+      groupValue: _paymentType,
+      contentPadding: EdgeInsets.zero,
+      onChanged: (val) {
+        if (val != null) setState(() => _paymentType = val);
+      },
+    );
+  }
+
   Widget _buildMethodRadio(String value) {
     return RadioListTile<String>(
       title: Text(value, style: const TextStyle(fontSize: 14)),
       value: value,
       groupValue: _paymentMethod,
+      contentPadding: EdgeInsets.zero,
       onChanged: (val) {
         if (val != null) setState(() => _paymentMethod = val);
       },
-      contentPadding: EdgeInsets.zero,
     );
   }
 }

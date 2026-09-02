@@ -38,6 +38,7 @@ class AdditionalCharge {
   double amount;
   DateTime date;
   String billType;        // 'RENT', 'CURRENT', 'OTHER'
+  String status;          // 'PENDING', 'PAID'
   DateTime? billDueDate;  // the bill's own due date (distinct from rent due date)
 
   AdditionalCharge({
@@ -46,6 +47,7 @@ class AdditionalCharge {
     required this.amount,
     required this.date,
     this.billType = 'OTHER',
+    this.status = 'PENDING',
     this.billDueDate,
   });
 
@@ -55,6 +57,7 @@ class AdditionalCharge {
         'amount': amount,
         'date': date.toIso8601String(),
         'billType': billType,
+        'status': status,
         'billDueDate': billDueDate?.toIso8601String(),
       };
 
@@ -64,6 +67,7 @@ class AdditionalCharge {
         amount: (json['amount'] as num).toDouble(),
         date: DateTime.parse(json['date'] as String),
         billType: json['billType'] as String? ?? 'OTHER',
+        status: json['status'] as String? ?? 'PENDING',
         billDueDate: json['billDueDate'] != null ? DateTime.tryParse(json['billDueDate'] as String) : null,
       );
 }
@@ -118,11 +122,20 @@ class Tenant {
   String? imageUrl;
   bool credentialsSent;
   String password;
+  String? defaultPaymentMode;
 
   // totalDue = unpaid utility/other bills only (not rent, as rent is tracked via pendingRentAmount)
   double get totalPendingBills => additionalCharges
-      .where((c) => c.billType != 'RENT')
+      .where((c) => c.billType != 'RENT' && (c.status == 'PENDING' || c.status == 'UNPAID'))
       .fold(0.0, (sum, c) => sum + c.amount);
+
+  // totalPaidBills = paid utility/other bills only
+  double get totalPaidBills => additionalCharges
+      .where((c) => c.billType != 'RENT' && c.status == 'PAID')
+      .fold(0.0, (sum, c) => sum + c.amount);
+
+  // totalExpectedBills = sum of pending + paid
+  double get totalExpectedBills => totalPendingBills + totalPaidBills;
 
   // Grand total owed: pending rent balance + pending utility bills
   double get totalDue => pendingRentAmount + totalPendingBills;
@@ -198,6 +211,7 @@ class Tenant {
     this.imageUrl,
     this.credentialsSent = false,
     String? password,
+    this.defaultPaymentMode,
   })  : additionalCharges = additionalCharges ?? [],
         password = password ?? generateEasyPassword();
 
@@ -219,6 +233,7 @@ class Tenant {
         'imageUrl': imageUrl,
         'credentialsSent': credentialsSent,
         'password': password,
+        'defaultPaymentMode': defaultPaymentMode,
       };
 
   factory Tenant.fromJson(Map<String, dynamic> json) => Tenant(
@@ -239,6 +254,7 @@ class Tenant {
         imageUrl: json['imageUrl'] as String?,
         credentialsSent: json['credentialsSent'] as bool? ?? false,
         password: json['password'] as String? ?? generateEasyPassword(),
+        defaultPaymentMode: json['defaultPaymentMode'] as String?,
       );
 }
 

@@ -103,6 +103,7 @@ class ApiService {
           paymentStatus
           rentDueDate
           pendingRentAmount
+          defaultPaymentMode
           bills {
             id
             amount
@@ -265,6 +266,43 @@ class ApiService {
       'rentAmount': rentAmount,
       'securityDeposit': securityDeposit,
       'moveInDate': moveInDate,
+    });
+  }
+
+  static Future<void> updateTenantFinancials({
+    required String tenantId,
+    double? rentAmount,
+    double? securityDeposit,
+    int? rentDueDay,
+    String? paymentMode,
+  }) async {
+    const String mutation = '''
+      mutation UpdateTenantFinancials(\$tenantId: ID!, \$rentAmount: Float, \$securityDeposit: Float, \$rentDueDay: Int, \$paymentMode: String) {
+        updateTenantFinancials(tenantId: \$tenantId, rentAmount: \$rentAmount, securityDeposit: \$securityDeposit, rentDueDay: \$rentDueDay, paymentMode: \$paymentMode) {
+          id
+        }
+      }
+    ''';
+    await performQuery(mutation, variables: {
+      'tenantId': tenantId,
+      'rentAmount': rentAmount,
+      'securityDeposit': securityDeposit,
+      'rentDueDay': rentDueDay,
+      'paymentMode': paymentMode,
+    });
+  }
+
+  static Future<void> updateBill(String billId, double amount) async {
+    const String mutation = '''
+      mutation UpdateBill(\$billId: ID!, \$amount: Float!) {
+        updateBill(billId: \$billId, amount: \$amount) {
+          id
+        }
+      }
+    ''';
+    await performQuery(mutation, variables: {
+      'billId': billId,
+      'amount': amount,
     });
   }
 }
