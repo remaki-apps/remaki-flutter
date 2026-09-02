@@ -13,7 +13,7 @@ class AdminLoginScreen extends StatefulWidget {
 }
 
 class _AdminLoginScreenState extends State<AdminLoginScreen> {
-  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -28,11 +28,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   }
 
   Future<void> _login() async {
-    final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
     final password = _passwordController.text.trim();
 
-    if (email.isEmpty || password.isEmpty) {
-      setState(() => _errorMessage = 'Please enter both email and password');
+    if (phone.isEmpty || password.isEmpty) {
+      setState(() => _errorMessage = 'Please enter phone number and password');
       return;
     }
 
@@ -58,7 +58,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         }
       ''', variables: {
         'input': {
-          'email': email,
+          'phoneNumber': phone,
           'password': password,
         }
       });

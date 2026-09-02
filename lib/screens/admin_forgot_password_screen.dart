@@ -11,17 +11,15 @@ class AdminForgotPasswordScreen extends StatefulWidget {
 }
 
 class _AdminForgotPasswordScreenState extends State<AdminForgotPasswordScreen> {
-  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   bool _isLoading = false;
   String _errorMessage = '';
 
   Future<void> _resetPassword() async {
-    final email = _emailController.text.trim();
     final phone = _phoneController.text.trim();
 
-    if (email.isEmpty || phone.isEmpty) {
-      setState(() => _errorMessage = 'Please enter email and phone number');
+    if (phone.isEmpty) {
+      setState(() => _errorMessage = 'Please enter phone number');
       return;
     }
 
@@ -37,7 +35,6 @@ class _AdminForgotPasswordScreenState extends State<AdminForgotPasswordScreen> {
         }
       ''', variables: {
         'input': {
-          'email': email,
           'phoneNumber': phone,
         }
       });
@@ -131,7 +128,7 @@ class _AdminForgotPasswordScreenState extends State<AdminForgotPasswordScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Enter your email and phone number to receive a temporary password.',
+                    'Enter your phone number to receive a temporary password.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: AppTheme.textSecondary),
                   ),
@@ -151,15 +148,7 @@ class _AdminForgotPasswordScreenState extends State<AdminForgotPasswordScreen> {
                     ),
                     const SizedBox(height: 16),
                   ],
-                  TextField(
-                    controller: _emailController,
-                    decoration: InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 16),
+
                   TextField(
                     controller: _phoneController,
                     decoration: InputDecoration(
