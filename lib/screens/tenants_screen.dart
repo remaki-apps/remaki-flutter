@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tenant_avatar.dart';
@@ -193,16 +195,43 @@ class _TenantsScreenState extends State<TenantsScreen> {
             Expanded(
               child: filteredTenants.isEmpty
                   ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.person_off_outlined, size: 48, color: Colors.grey[400]),
-                          const SizedBox(height: 12),
-                          Text(
-                            _searchQuery.isNotEmpty ? 'No tenants matching "$_searchQuery"' : 'No tenants found.',
-                            style: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
-                          ),
-                        ],
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.asset(
+                              'assets/images/no_tenant1.png',
+                              height: 180,
+                              fit: BoxFit.contain,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _searchQuery.isNotEmpty
+                                  ? 'No tenants matching "$_searchQuery"'
+                                  : 'No Tenants Found',
+                              style: GoogleFonts.outfit(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF0F172A),
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _searchQuery.isNotEmpty
+                                  ? 'Try searching for another name, phone number, or room.'
+                                  : 'Add tenants to track rent payments and bed allocations.',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF64748B),
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     )
                   : ListView.builder(
@@ -311,7 +340,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                 ),
                                 const SizedBox(width: 8),
 
-                                // Financial Dues & Date
+                                 // Financial Dues & Date
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [

@@ -5,6 +5,7 @@ import '../providers/app_provider.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_expandable_dropdown.dart';
+import '../widgets/fancy_toast.dart';
 
 class AddRoomScreen extends StatefulWidget {
   const AddRoomScreen({super.key});
@@ -107,25 +108,14 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Card 1: Room Number
-                _buildCardWrapper(
-                  icon: Icons.door_sliding_outlined,
-                  label: 'Room Number',
-                  isRequired: true,
-                  child: TextFormField(
-                    controller: _roomNumberController,
-                    decoration: _inputDecoration(hintText: 'Enter room number'),
-                    validator: (val) => val == null || val.trim().isEmpty ? 'Please enter room number' : null,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Card 2: Floor
+                // Card 1: Floor
                 CustomExpandableDropdown<String>(
                   label: 'Floor *',
                   value: _selectedFloor,
                   hintText: 'Select Floor',
                   icon: Icons.domain_outlined,
+                  iconColor: AppTheme.primaryColor,
+                  iconBgColor: const Color(0xFFEEF2FF),
                   items: _floorOptions.map((f) => DropdownOption(value: f, label: f)).toList(),
                   onChanged: (val) {
                     setState(() => _selectedFloor = val);
@@ -133,11 +123,24 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                 ),
                 const SizedBox(height: 12),
 
+                // Card 2: Room Number or Name
+                _buildCardWrapper(
+                  icon: Icons.door_sliding_outlined,
+                  label: 'Room Number or Name',
+                  isRequired: true,
+                  child: TextFormField(
+                    controller: _roomNumberController,
+                    decoration: _inputDecoration(hintText: 'Enter room number or name'),
+                    validator: (val) => val == null || val.trim().isEmpty ? 'Please enter room number or name' : null,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
                 // Bed Names Section (Expanded, only bed list scrolls)
                 Expanded(
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
@@ -149,66 +152,71 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text(
-                                'Bed Names',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F172A),
-                                ),
-                              ),
-                              SizedBox(height: 2),
-                              Text(
-                                'Enter names for each bed in this room',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF64748B),
-                                ),
-                              ),
-                            ],
-                          ),
-                          InkWell(
-                            onTap: () {
-                              setState(() {
-                                _capacity++;
-                                _updateBedControllers();
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(20),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEEF2FF),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: const Color(0xFFC7D2FE)),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: const [
-                                  Icon(Icons.add_rounded, color: AppTheme.primaryColor, size: 16),
-                                  SizedBox(width: 4),
                                   Text(
-                                    'Add Bed',
+                                    'Bed Names',
                                     style: TextStyle(
-                                      color: AppTheme.primaryColor,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.bold,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Enter names for each bed in this room',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
                                       fontSize: 12,
+                                      color: Color(0xFF64748B),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Expanded(
+                            const SizedBox(width: 8),
+                            InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _capacity++;
+                                  _updateBedControllers();
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEEF2FF),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: const Color(0xFFC7D2FE)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: const [
+                                    Icon(Icons.add_rounded, color: AppTheme.primaryColor, size: 16),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Add Bed',
+                                      style: TextStyle(
+                                        color: AppTheme.primaryColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Expanded(
                         child: SingleChildScrollView(
                           physics: const BouncingScrollPhysics(),
                           child: Column(
@@ -452,10 +460,15 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
         )),
       );
 
+      final roomNum = _roomNumberController.text.trim();
+      final flr = _selectedFloor;
+
       provider.addRoom(newRoom);
       context.pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Room Added Successfully!')),
+      FancyToast.showSuccess(
+        context,
+        'Room Added Successfully!',
+        message: 'Room $roomNum has been added to $flr.',
       );
     }
   }

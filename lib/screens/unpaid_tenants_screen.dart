@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tenant_avatar.dart';
@@ -20,7 +21,42 @@ class UnpaidTenantsScreen extends StatelessWidget {
         title: const Text('Unpaid Tenants'),
       ),
       body: unpaidTenants.isEmpty
-          ? const Center(child: Text('No unpaid tenants!', style: TextStyle(color: AppTheme.textSecondary)))
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/images/no_tenant1.png',
+                      height: 180,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No Unpaid Tenants!',
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF0F172A),
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'All dues are clear for this month.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF64748B),
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
           : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: unpaidTenants.length,
@@ -54,7 +90,7 @@ class UnpaidTenantsScreen extends StatelessWidget {
                           onPressed: () async {
                             final sanitizedPhone = tenant.phone.replaceAll(RegExp(r'\D'), '');
                             final phoneNum = sanitizedPhone.startsWith('91') ? sanitizedPhone : '91$sanitizedPhone';
-                            final message = Uri.encodeComponent('Hi ${tenant.name}, a gentle reminder that your rent and dues of ₹${tenant.totalDue.toStringAsFixed(0)} for Room $roomNumber are pending.');
+                            final message = tenant.buildDetailedRentBillMessage(roomNumber: roomNumber);
                             final url = Uri.parse('https://wa.me/$phoneNum?text=$message');
                             if (await canLaunchUrl(url)) {
                               await launchUrl(url, mode: LaunchMode.externalApplication);

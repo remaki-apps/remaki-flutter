@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../models/models.dart';
+import '../widgets/fancy_toast.dart';
 
 class AllocateTenantScreen extends StatefulWidget {
   final String roomId;
@@ -61,16 +63,49 @@ class _AllocateTenantScreenState extends State<AllocateTenantScreen> {
       ),
       body: unallocatedTenants.isEmpty
           ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('No unallocated tenants found.', style: TextStyle(color: AppTheme.textSecondary)),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => context.push('/add_tenant?roomId=${widget.roomId}&bedId=${widget.bedId}'),
-                    child: const Text('Create New Tenant'),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/images/no_tenant1.png',
+                      height: 180,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No Unallocated Tenants Found',
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF0F172A),
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Create a new tenant to allocate to this bed.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF64748B),
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () => context.push('/add_tenant?roomId=${widget.roomId}&bedId=${widget.bedId}'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Create New Tenant', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
               ),
             )
           : Stepper(
@@ -92,8 +127,12 @@ class _AllocateTenantScreenState extends State<AllocateTenantScreen> {
                     securityDeposit: double.tryParse(_securityController.text) ?? 0.0,
                     moveInDate: _moveInDate,
                   );
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tenant allocated successfully!')));
                   context.pop();
+                  FancyToast.showSuccess(
+                    context,
+                    'Tenant Allocated!',
+                    message: 'Tenant successfully assigned to bed.',
+                  );
                 }
               },
               onStepCancel: () {

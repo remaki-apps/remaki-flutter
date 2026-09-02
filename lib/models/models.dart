@@ -1,3 +1,14 @@
+import 'dart:math';
+import 'package:intl/intl.dart';
+
+String generateEasyPassword() {
+  final random = Random();
+  final prefixes = ['rem', 'pg', 'sun', 'stay', 'rm'];
+  final prefix = prefixes[random.nextInt(prefixes.length)];
+  final number = 100 + random.nextInt(900);
+  return '$prefix$number';
+}
+
 class Bed {
   String id;
   String name;
@@ -105,6 +116,8 @@ class Tenant {
   double pendingRentAmount;
   List<AdditionalCharge> additionalCharges;
   String? imageUrl;
+  bool credentialsSent;
+  String password;
 
   // totalDue = unpaid utility/other bills only (not rent, as rent is tracked via pendingRentAmount)
   double get totalPendingBills => additionalCharges
@@ -113,6 +126,59 @@ class Tenant {
 
   // Grand total owed: pending rent balance + pending utility bills
   double get totalDue => pendingRentAmount + totalPendingBills;
+
+  String buildDetailedRentBillMessage({String roomNumber = '', String floorName = ''}) {
+    final dueDateStr = DateFormat('dd MMM yyyy').format(rentDueDate);
+    final List<String> itemLines = [];
+
+    // 1. Rent Amount
+    final rentVal = pendingRentAmount > 0 ? pendingRentAmount : rentAmount;
+    if (rentVal > 0) {
+      itemLines.add('• *Monthly Rent:* ₹${rentVal.toStringAsFixed(0)}');
+    }
+
+    // 2. Additional Charges & Bills (Electricity, Water, Maintenance, EB etc.)
+    for (var charge in additionalCharges) {
+      if (charge.billType != 'RENT' && charge.amount > 0) {
+        String label = charge.description.trim();
+        if (label.isEmpty) {
+          label = charge.billType == 'CURRENT' ? 'Electricity / EB Bill' : 'Utility Charge';
+        }
+        itemLines.add('• *$label:* ₹${charge.amount.toStringAsFixed(0)}');
+      }
+    }
+
+    if (itemLines.isEmpty) {
+      itemLines.add('• *Total Rent Balance:* ₹${totalDue.toStringAsFixed(0)}');
+    }
+
+    final itemsText = itemLines.join('\n');
+    final totalStr = (totalDue > 0 ? totalDue : rentAmount).toStringAsFixed(0);
+
+    final roomDetailStr = roomNumber.isNotEmpty
+        ? 'Room $roomNumber${floorName.isNotEmpty ? ' ($floorName)' : ''}'
+        : 'Assigned Room';
+
+    return Uri.encodeComponent(
+      '🧾 *RENT & BILL STATEMENT* 🧾\n'
+      '🏢 *Sunshine PG*\n'
+      '────────────────────────────\n'
+      '👤 *Tenant Name:* $name\n'
+      '📱 *Mobile Number:* $phone\n'
+      '🏠 *Room Details:* $roomDetailStr\n'
+      '📅 *Due Date:* $dueDateStr\n'
+      '────────────────────────────\n'
+      '📋 *Detailed Bill Breakdown:*\n'
+      '$itemsText\n'
+      '────────────────────────────\n'
+      '💰 *Total Amount Payable:* *₹$totalStr*\n'
+      '────────────────────────────\n\n'
+      '📲 Track payments & receipts anytime on the *Remaki* app.\n'
+      'Kindly clear your pending bill balance on or before the due date.\n\n'
+      'Best regards,\n'
+      '*Sunshine PG Management*'
+    );
+  }
 
   Tenant({
     required this.id,
@@ -130,7 +196,10 @@ class Tenant {
     this.pendingRentAmount = 0,
     List<AdditionalCharge>? additionalCharges,
     this.imageUrl,
-  }) : additionalCharges = additionalCharges ?? [];
+    this.credentialsSent = false,
+    String? password,
+  })  : additionalCharges = additionalCharges ?? [],
+        password = password ?? generateEasyPassword();
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -148,6 +217,8 @@ class Tenant {
         'pendingRentAmount': pendingRentAmount,
         'additionalCharges': additionalCharges.map((c) => c.toJson()).toList(),
         'imageUrl': imageUrl,
+        'credentialsSent': credentialsSent,
+        'password': password,
       };
 
   factory Tenant.fromJson(Map<String, dynamic> json) => Tenant(
@@ -166,6 +237,8 @@ class Tenant {
         pendingRentAmount: (json['pendingRentAmount'] as num?)?.toDouble() ?? 0,
         additionalCharges: (json['additionalCharges'] as List<dynamic>?)?.map((e) => AdditionalCharge.fromJson(e as Map<String, dynamic>)).toList() ?? [],
         imageUrl: json['imageUrl'] as String?,
+        credentialsSent: json['credentialsSent'] as bool? ?? false,
+        password: json['password'] as String? ?? generateEasyPassword(),
       );
 }
 

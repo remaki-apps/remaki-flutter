@@ -629,14 +629,13 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
     );
 
     var room = provider.rooms.firstWhere((r) => r.id == _selectedRoomId);
-    var bed = room.beds.firstWhere((b) => b.id == _selectedBedId);
 
     _selectedBedId = null;
     _selectedRoomId = null;
 
     provider.addTenant(tenant);
 
-    context.go('/tenant_added_success?name=${Uri.encodeComponent(tenant.name)}&phone=${Uri.encodeComponent(tenant.phone)}&roomBed=${Uri.encodeComponent('Room ${room.number} - ${bed.name}')}&rent=${tenant.rentAmount}&moveIn=${Uri.encodeComponent(_moveInController.text)}');
+    context.go('/tenant_added_success?tenantId=${tenant.id}&password=${Uri.encodeComponent(tenant.password)}&name=${Uri.encodeComponent(tenant.name)}&phone=${Uri.encodeComponent(tenant.phone)}&roomNumber=${Uri.encodeComponent(room.number)}&floor=${Uri.encodeComponent(room.floor)}&roomBed=${Uri.encodeComponent('Room ${room.number}')}&rent=${tenant.rentAmount}&moveIn=${Uri.encodeComponent(_moveInController.text)}');
   }
 }
 

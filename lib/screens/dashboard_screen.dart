@@ -26,14 +26,14 @@ class DashboardScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Dashboard',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
-                      letterSpacing: -0.5,
-                    ),
+                  Row(
+                    children: [
+                      Image.asset(
+                        'assets/logo/logo_word.png',
+                        height: 28,
+                        fit: BoxFit.contain,
+                      ),
+                    ],
                   ),
                   Container(
                     width: 36,
