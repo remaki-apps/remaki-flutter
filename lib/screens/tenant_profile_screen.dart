@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tenant_avatar.dart';
+import '../widgets/fancy_toast.dart';
 
 class TenantProfileScreen extends StatelessWidget {
   final String tenantId;
@@ -56,6 +57,7 @@ class TenantProfileScreen extends StatelessWidget {
     final tenant = appProvider.tenants[tenantIndex];
     final roomIndex = appProvider.rooms.indexWhere((r) => r.id == tenant.roomId);
     final roomNumber = roomIndex != -1 ? appProvider.rooms[roomIndex].number : 'N/A';
+    final floorName = roomIndex != -1 ? appProvider.rooms[roomIndex].floor : 'N/A';
     final bedName = (roomIndex != -1)
         ? appProvider.rooms[roomIndex].beds.firstWhere((b) => b.id == tenant.bedId, orElse: () => appProvider.rooms[roomIndex].beds.first).name
         : 'N/A';
@@ -194,14 +196,14 @@ class TenantProfileScreen extends StatelessWidget {
                                   onTap: () async {
                                     final sanitizedPhone = tenant.phone.replaceAll(RegExp(r'\D'), '');
                                     final phoneNum = sanitizedPhone.startsWith('91') ? sanitizedPhone : '91$sanitizedPhone';
-                                    final message = Uri.encodeComponent('Hi ${tenant.name}, a gentle reminder that your rent of ₹${tenant.totalDue.toStringAsFixed(0)} for Room $roomNumber is due.');
+                                    final message = tenant.buildDetailedRentBillMessage(roomNumber: roomNumber, floorName: floorName);
                                     final url = Uri.parse('https://wa.me/$phoneNum?text=$message');
                                     if (await canLaunchUrl(url)) {
                                       await launchUrl(url, mode: LaunchMode.externalApplication);
                                     }
                                   },
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFDCFCE7),
                                       borderRadius: BorderRadius.circular(12),
@@ -212,18 +214,20 @@ class TenantProfileScreen extends StatelessWidget {
                                       children: [
                                         Image.asset(
                                           'assets/icons/whatsapp.png',
-                                          width: 18,
-                                          height: 18,
+                                          width: 16,
+                                          height: 16,
                                         ),
                                         const SizedBox(width: 4),
-                                        const FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Text(
-                                            'WhatsApp',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF15803D),
+                                        const Flexible(
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Text(
+                                              'WhatsApp',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xFF15803D),
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -232,7 +236,7 @@ class TenantProfileScreen extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 6),
                               Expanded(
                                 child: GestureDetector(
                                   onTap: () async {
@@ -249,7 +253,7 @@ class TenantProfileScreen extends StatelessWidget {
                                     }
                                   },
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFF1F5F9),
                                       borderRadius: BorderRadius.circular(12),
@@ -260,14 +264,16 @@ class TenantProfileScreen extends StatelessWidget {
                                       children: [
                                         Icon(Icons.phone_outlined, color: Color(0xFF475569), size: 16),
                                         SizedBox(width: 4),
-                                        FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Text(
-                                            'Call',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF334155),
+                                        Flexible(
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Text(
+                                              'Call',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xFF334155),
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -276,12 +282,12 @@ class TenantProfileScreen extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 6),
                               Expanded(
                                 child: GestureDetector(
                                   onTap: () => context.push('/record_payment/${tenant.id}'),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFEEF2FF),
                                       borderRadius: BorderRadius.circular(12),
@@ -292,14 +298,16 @@ class TenantProfileScreen extends StatelessWidget {
                                       children: [
                                         Icon(Icons.payments_outlined, color: AppTheme.primaryColor, size: 16),
                                         SizedBox(width: 4),
-                                        FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Text(
-                                            'Collect Rent',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppTheme.primaryColor,
+                                        Flexible(
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Text(
+                                              'Collect Rent',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppTheme.primaryColor,
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -310,48 +318,63 @@ class TenantProfileScreen extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 10),
-                          GestureDetector(
-                            onTap: () async {
-                              final sanitizedPhone = tenant.phone.replaceAll(RegExp(r'\D'), '');
-                              final phoneNum = sanitizedPhone.startsWith('91') ? sanitizedPhone : '91$sanitizedPhone';
-                              final message = Uri.encodeComponent(
-                                'Hello ${tenant.name},\n\n'
-                                'Here are your Sunshine PG app login credentials:\n'
-                                '📱 Phone: ${tenant.phone}\n'
-                                '🔑 Password: hi123\n\n'
-                                'Log in to view your rent dues and receipts.'
-                              );
-                              final url = Uri.parse('https://wa.me/$phoneNum?text=$message');
-                              if (await canLaunchUrl(url)) {
-                                await launchUrl(url, mode: LaunchMode.externalApplication);
-                              }
-                            },
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF0FDF4),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFFBBF7D0)),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Image.asset(
-                                    'assets/icons/whatsapp.png',
-                                    width: 18,
-                                    height: 18,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  const Text(
-                                    'Share Login Credentials via WhatsApp',
-                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
-                                  ),
-                                ],
+                          if (!tenant.credentialsSent) ...[
+                            const SizedBox(height: 10),
+                            GestureDetector(
+                              onTap: () async {
+                                final sanitizedPhone = tenant.phone.replaceAll(RegExp(r'\D'), '');
+                                final phoneNum = sanitizedPhone.startsWith('91') ? sanitizedPhone : '91$sanitizedPhone';
+                                final message = Uri.encodeComponent(
+                                  '🌟 *Welcome to Sunshine PG!* 🌟\n\n'
+                                  'Dear ${tenant.name},\n\n'
+                                  'Your tenant portal account is ready on the *Remaki* app. You can now use the app to track your rent payments, view payment receipts, and manage your stay.\n\n'
+                                  '🏠 *Stay Details:*\n'
+                                  '• *Room:* Room $roomNumber\n'
+                                  '• *Floor:* $floorName\n\n'
+                                  '🔐 *Your Remaki App Login Credentials:*\n'
+                                  '────────────────────────────\n'
+                                  '📱 *Mobile Number:* ${tenant.phone}\n'
+                                  '🔑 *Password:* ${tenant.password}\n'
+                                  '────────────────────────────\n\n'
+                                  '📲 *Next Steps:*\n'
+                                  '1️⃣ Download & open the *Remaki* app.\n'
+                                  '2️⃣ Log in using your registered mobile number and password above.\n\n'
+                                  'If you have any questions, please reach out to the management.\n\n'
+                                  'Best regards,\n'
+                                  '*Sunshine PG Management*'
+                                );
+                                final url = Uri.parse('https://wa.me/$phoneNum?text=$message');
+                                if (await canLaunchUrl(url)) {
+                                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                                  appProvider.markCredentialsSent(tenant.id);
+                                }
+                              },
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF0FDF4),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: const Color(0xFFBBF7D0)),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.asset(
+                                      'assets/icons/whatsapp.png',
+                                      width: 18,
+                                      height: 18,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    const Text(
+                                      'Send Remaki Credentials via WhatsApp',
+                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ),
@@ -745,11 +768,10 @@ class TenantProfileScreen extends StatelessWidget {
                         appProvider.vacateTenant(tenant.id);
                         Navigator.of(ctx).pop();
                         context.pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${tenant.name} has been vacated from Room $roomNumber - $bedName.'),
-                            backgroundColor: const Color(0xFFEF4444),
-                          ),
+                        FancyToast.showSuccess(
+                          context,
+                          'Tenant Vacated!',
+                          message: '${tenant.name} has been vacated from Room $roomNumber - $bedName.',
                         );
                       },
                       child: const Text(

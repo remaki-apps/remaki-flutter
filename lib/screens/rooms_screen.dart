@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../providers/app_provider.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
@@ -154,109 +155,135 @@ class _RoomsScreenState extends State<RoomsScreen> {
                     ),
             ),
 
-            // Main Scrollable Area
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  children: [
-                    // KPI Stats Cards Row
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildKpiCard(
-                            title: 'Total',
-                            value: '$totalCount',
-                            activeColor: AppTheme.primaryColor,
-                            cardBg: const Color(0xFFF8FAFC),
-                            valueColor: const Color(0xFF0F172A),
-                            filterValue: 'All',
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildKpiCard(
-                            title: 'Full',
-                            value: '$fullCount',
-                            activeColor: const Color(0xFF16A34A),
-                            cardBg: const Color(0xFFF0FDF4),
-                            valueColor: const Color(0xFF15803D),
-                            filterValue: 'Full',
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildKpiCard(
-                            title: 'Partial',
-                            value: '$partialCount',
-                            activeColor: const Color(0xFFEA580C),
-                            cardBg: const Color(0xFFFFF7ED),
-                            valueColor: const Color(0xFFC2410C),
-                            filterValue: 'Partial',
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildKpiCard(
-                            title: 'Empty',
-                            value: '$emptyCount',
-                            activeColor: const Color(0xFFEF4444),
-                            cardBg: const Color(0xFFFEF2F2),
-                            valueColor: const Color(0xFFB91C1C),
-                            filterValue: 'Empty',
-                          ),
-                        ),
-                      ],
+            // KPI Stats Cards Row
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildKpiCard(
+                      title: 'Total',
+                      value: '$totalCount',
+                      activeColor: AppTheme.primaryColor,
+                      cardBg: const Color(0xFFF8FAFC),
+                      valueColor: const Color(0xFF0F172A),
+                      filterValue: 'All',
                     ),
-                    const SizedBox(height: 16),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildKpiCard(
+                      title: 'Full',
+                      value: '$fullCount',
+                      activeColor: const Color(0xFF16A34A),
+                      cardBg: const Color(0xFFF0FDF4),
+                      valueColor: const Color(0xFF15803D),
+                      filterValue: 'Full',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildKpiCard(
+                      title: 'Partial',
+                      value: '$partialCount',
+                      activeColor: const Color(0xFFEA580C),
+                      cardBg: const Color(0xFFFFF7ED),
+                      valueColor: const Color(0xFFC2410C),
+                      filterValue: 'Partial',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildKpiCard(
+                      title: 'Empty',
+                      value: '$emptyCount',
+                      activeColor: const Color(0xFFEF4444),
+                      cardBg: const Color(0xFFFEF2F2),
+                      valueColor: const Color(0xFFB91C1C),
+                      filterValue: 'Empty',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
 
-                    // Floor Cards List
-                    if (floors.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 40),
-                        child: Text('No rooms added yet.', style: TextStyle(color: Color(0xFF64748B))),
-                      )
-                    else
-                      ...List.generate(floors.length, (floorIndex) {
+            // Floor Cards List or Centered Empty State
+            Expanded(
+              child: floors.isEmpty
+                  ? Center(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.asset(
+                              'assets/images/no_rooms1.png',
+                              height: 180,
+                              fit: BoxFit.contain,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _searchQuery.isNotEmpty
+                                  ? 'No rooms matching "$_searchQuery"'
+                                  : 'No Rooms Available',
+                              style: GoogleFonts.outfit(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF0F172A),
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _searchQuery.isNotEmpty
+                                  ? 'Try searching with a different room number or floor.'
+                                  : 'Add rooms to manage beds, tenants, and occupancy.',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF64748B),
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+                      itemCount: floors.length,
+                      itemBuilder: (context, floorIndex) {
                         final floor = floors[floorIndex];
                         final roomsInFloor = roomsByFloor[floor]!;
                         final isCollapsed = _collapsedFloors.contains(floor);
 
-                        return GestureDetector(
-                          onTap: isCollapsed
-                              ? () {
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
                                   setState(() {
-                                    _collapsedFloors.remove(floor);
+                                    if (isCollapsed) {
+                                      _collapsedFloors.remove(floor);
+                                    } else {
+                                      _collapsedFloors.add(floor);
+                                    }
                                   });
-                                }
-                              : null,
-                          behavior: HitTestBehavior.opaque,
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF5F6FF),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: const Color(0xFFEEF2FF)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Floor Header
-                                GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      if (isCollapsed) {
-                                        _collapsedFloors.remove(floor);
-                                      } else {
-                                        _collapsedFloors.add(floor);
-                                      }
-                                    });
-                                  },
-                                  behavior: HitTestBehavior.opaque,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                                },
+                                behavior: HitTestBehavior.opaque,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(14),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
@@ -298,90 +325,88 @@ class _RoomsScreenState extends State<RoomsScreen> {
                                           ),
                                         ],
                                       ),
-                                      if (!isCollapsed)
-                                        const Icon(
-                                          Icons.keyboard_arrow_up_rounded,
-                                          color: Color(0xFF475569),
-                                          size: 22,
-                                        ),
+                                      Icon(
+                                        isCollapsed
+                                            ? Icons.keyboard_arrow_down_rounded
+                                            : Icons.keyboard_arrow_up_rounded,
+                                        color: const Color(0xFF475569),
+                                        size: 22,
+                                      ),
                                     ],
                                   ),
                                 ),
                               ),
-
-                              // Rooms belonging to this floor (when expanded)
                               if (!isCollapsed) ...[
-                                const SizedBox(height: 8),
-                                ...roomsInFloor.map((room) {
-                                  return GestureDetector(
-                                    onTap: () => context.push('/room_details/${room.id}'),
-                                    child: Container(
-                                      margin: const EdgeInsets.only(bottom: 8),
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(14),
-                                        boxShadow: const [
-                                          BoxShadow(color: Color(0x04000000), blurRadius: 6, offset: Offset(0, 2)),
-                                        ],
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Row(
+                                const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                                Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    children: roomsInFloor.map((room) {
+                                      return GestureDetector(
+                                        onTap: () => context.push('/room_details/${room.id}'),
+                                        child: Container(
+                                          margin: const EdgeInsets.only(bottom: 8),
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF8FAFC),
+                                            borderRadius: BorderRadius.circular(14),
+                                            border: Border.all(color: const Color(0xFFF1F5F9)),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
-                                              Container(
-                                                width: 38,
-                                                height: 38,
-                                                decoration: BoxDecoration(
-                                                  color: const Color(0xFFF3F0FF),
-                                                  borderRadius: BorderRadius.circular(10),
-                                                ),
-                                                child: const Icon(Icons.door_sliding_outlined, color: AppTheme.primaryColor, size: 18),
-                                              ),
-                                              const SizedBox(width: 10),
-                                              Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                              Row(
                                                 children: [
-                                                  Text(
-                                                    'Room ${room.number}',
-                                                    style: const TextStyle(
-                                                      fontSize: 15,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: Color(0xFF0F172A),
+                                                  Container(
+                                                    width: 38,
+                                                    height: 38,
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(0xFFF3F0FF),
+                                                      borderRadius: BorderRadius.circular(10),
                                                     ),
+                                                    child: const Icon(Icons.door_sliding_outlined, color: AppTheme.primaryColor, size: 18),
                                                   ),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    '${room.capacity} Beds Total',
-                                                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                                  const SizedBox(width: 10),
+                                                  Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        'Room ${room.number}',
+                                                        style: const TextStyle(
+                                                          fontSize: 15,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: Color(0xFF0F172A),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 2),
+                                                      Text(
+                                                        '${room.capacity} Beds Total',
+                                                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                                      ),
+                                                    ],
                                                   ),
+                                                ],
+                                              ),
+                                              Row(
+                                                children: [
+                                                  _buildStatusBadge(room),
+                                                  const SizedBox(width: 8),
+                                                  const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8), size: 20),
                                                 ],
                                               ),
                                             ],
                                           ),
-                                          Row(
-                                            children: [
-                                              _buildStatusBadge(room),
-                                              const SizedBox(width: 8),
-                                              const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8), size: 20),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                }),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
                               ],
                             ],
                           ),
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 80),
-                  ],
-                ),
-              ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
@@ -395,8 +420,6 @@ class _RoomsScreenState extends State<RoomsScreen> {
       ),
     );
   }
-
-
 
   Widget _buildKpiCard({
     required String title,
@@ -486,4 +509,3 @@ class _RoomsScreenState extends State<RoomsScreen> {
     }
   }
 }
-

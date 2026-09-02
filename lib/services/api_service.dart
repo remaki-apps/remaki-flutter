@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static const String _baseUrl = 'https://remaki-backend.onrender.com/graphql';
@@ -7,8 +9,37 @@ class ApiService {
 
   static String? _token;
 
-  static void setAuthToken(String token) {
+  static String? get token => _token;
+
+  static bool get isLoggedIn => _token != null && _token!.isNotEmpty;
+
+  static Future<void> initToken() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _token = prefs.getString('auth_token');
+    } catch (e) {
+      debugPrint('ApiService initToken error: $e');
+    }
+  }
+
+  static Future<void> setAuthToken(String token) async {
     _token = token;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_token', token);
+    } catch (e) {
+      debugPrint('ApiService setAuthToken error: $e');
+    }
+  }
+
+  static Future<void> clearAuthToken() async {
+    _token = null;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('auth_token');
+    } catch (e) {
+      debugPrint('ApiService clearAuthToken error: $e');
+    }
   }
 
   static Future<Map<String, dynamic>> performQuery(String query, {Map<String, dynamic>? variables}) async {
@@ -33,7 +64,7 @@ class ApiService {
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         if (data.containsKey('errors')) {
-          print('GraphQL Errors: ${data['errors']}');
+          debugPrint('GraphQL Errors: ${data['errors']}');
           throw Exception(data['errors'][0]['message']);
         }
         return data['data'];
@@ -41,8 +72,8 @@ class ApiService {
         throw Exception('Failed to load data: ${response.statusCode}');
       }
     } catch (e) {
-      print('ApiService Error: $e');
-      throw e;
+      debugPrint('ApiService Error: $e');
+      rethrow;
     }
   }
 

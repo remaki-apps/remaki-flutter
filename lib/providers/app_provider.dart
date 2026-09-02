@@ -200,6 +200,28 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void markCredentialsSent(String tenantId) {
+    final index = tenants.indexWhere((t) => t.id == tenantId);
+    if (index != -1) {
+      tenants[index].credentialsSent = true;
+      saveToStorage();
+      notifyListeners();
+    }
+  }
+
+  void markCredentialsSentByPhone(String phone) {
+    final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+    final index = tenants.indexWhere((t) {
+      final tPhone = t.phone.replaceAll(RegExp(r'\D'), '');
+      return tPhone.isNotEmpty && cleanPhone.isNotEmpty && (tPhone.endsWith(cleanPhone) || cleanPhone.endsWith(tPhone));
+    });
+    if (index != -1) {
+      tenants[index].credentialsSent = true;
+      saveToStorage();
+      notifyListeners();
+    }
+  }
+
   void addRoom(Room room) {
     rooms.add(room);
     

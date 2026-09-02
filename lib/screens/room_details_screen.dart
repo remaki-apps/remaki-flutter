@@ -5,6 +5,7 @@ import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../models/models.dart';
 import '../widgets/tenant_avatar.dart';
+import '../widgets/fancy_toast.dart';
 
 class RoomDetailsScreen extends StatelessWidget {
   final String roomId;
@@ -443,8 +444,10 @@ class RoomDetailsScreen extends StatelessWidget {
       },
       onDismissed: (direction) {
         Provider.of<AppProvider>(context, listen: false).removeBed(room.id, bed.id);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${bed.name} removed from Room ${room.number}')),
+        FancyToast.showSuccess(
+          context,
+          'Bed Removed!',
+          message: '${bed.name} has been removed from Room ${room.number}.',
         );
       },
       child: cardContent,

@@ -12,6 +12,8 @@ class CustomExpandableDropdown<T> extends StatefulWidget {
   final T? value;
   final String hintText;
   final IconData icon;
+  final Color? iconColor;
+  final Color? iconBgColor;
   final List<DropdownOption<T>> items;
   final ValueChanged<T> onChanged;
 
@@ -21,6 +23,8 @@ class CustomExpandableDropdown<T> extends StatefulWidget {
     required this.value,
     required this.hintText,
     required this.icon,
+    this.iconColor,
+    this.iconBgColor,
     required this.items,
     required this.onChanged,
   });
@@ -43,6 +47,9 @@ class _CustomExpandableDropdownState<T> extends State<CustomExpandableDropdown<T
     const itemHeight = 44.0;
     const maxVisibleItems = 4;
     final listHeight = (itemCount > maxVisibleItems ? maxVisibleItems : itemCount) * itemHeight;
+
+    final color = widget.iconColor ?? AppTheme.primaryColor;
+    final bgColor = widget.iconBgColor ?? const Color(0xFFEEF2FF);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -74,10 +81,18 @@ class _CustomExpandableDropdownState<T> extends State<CustomExpandableDropdown<T
               onTap: () => setState(() => _isExpanded = !_isExpanded),
               borderRadius: BorderRadius.circular(14),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 child: Row(
                   children: [
-                    Icon(widget.icon, color: const Color(0xFF64748B), size: 20),
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: bgColor,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(widget.icon, color: color, size: 20),
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(

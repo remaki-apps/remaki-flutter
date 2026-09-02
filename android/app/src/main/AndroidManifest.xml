@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="sunshine_pg_app"
+        android:label="Remaki"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

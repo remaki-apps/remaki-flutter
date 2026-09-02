@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
 import 'providers/app_provider.dart';
+import 'services/api_service.dart';
 import 'theme/app_theme.dart';
 import 'screens/main_shell.dart';
 import 'screens/dashboard_screen.dart';
@@ -23,8 +24,9 @@ import 'screens/add_room_screen.dart';
 import 'screens/admin_login_screen.dart';
 import 'screens/admin_forgot_password_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ApiService.initToken();
   runApp(
     MultiProvider(
       providers: [
@@ -40,7 +42,7 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: '/admin_login',
+  initialLocation: ApiService.isLoggedIn ? '/' : '/admin_login',
   routes: [
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
@@ -109,8 +111,12 @@ final router = GoRouter(
       path: '/tenant_added_success',
       builder: (context, state) {
         return TenantAddedSuccessScreen(
+          tenantId: state.uri.queryParameters['tenantId'],
+          password: state.uri.queryParameters['password'],
           name: state.uri.queryParameters['name'] ?? '',
           phone: state.uri.queryParameters['phone'] ?? '',
+          roomNumber: state.uri.queryParameters['roomNumber'],
+          floor: state.uri.queryParameters['floor'],
           roomBed: state.uri.queryParameters['roomBed'] ?? '',
           rent: state.uri.queryParameters['rent'] ?? '',
           moveIn: state.uri.queryParameters['moveIn'] ?? '',
@@ -178,7 +184,7 @@ class SunshinePGApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Sunshine PG',
+      title: 'Remaki',
       theme: AppTheme.lightTheme,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
