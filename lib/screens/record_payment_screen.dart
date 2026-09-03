@@ -131,19 +131,9 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
             ),
             const SizedBox(height: 24),
 
-            const Text('Payment For', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(child: _buildTypeRadio('Both', 'BOTH')),
-                Expanded(child: _buildTypeRadio('Rent Only', 'RENT')),
-              ],
-            ),
-            Row(
-              children: [
-                Expanded(child: _buildTypeRadio('Bills Only', 'BILLS')),
-                const Expanded(child: SizedBox()),
-              ],
+            const Text(
+              'Payment For: Rent + Bills',
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey),
             ),
             const SizedBox(height: 24),
 

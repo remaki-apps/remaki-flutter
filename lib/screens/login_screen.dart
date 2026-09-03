@@ -67,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final role = result['customLogin']['user']['role'];
       
       // Save token in ApiService (persisted via SharedPreferences)
-      await ApiService.setAuthToken(token);
+      await ApiService.setAuthToken(token, role);
       
       // Load initial data
       await appProvider.loadFromAPI();

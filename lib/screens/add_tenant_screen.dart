@@ -643,13 +643,36 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
 
     setState(() => _isLoading = true);
     
-    final tempPassword = await provider.addTenant(tenant);
+    try {
+      final tempPassword = await provider.addTenant(tenant);
 
-    if (!mounted) return;
-    
-    setState(() => _isLoading = false);
+      if (!mounted) return;
+      
+      setState(() => _isLoading = false);
 
-    context.go('/tenant_added_success?tenantId=${tenant.id}&password=${Uri.encodeComponent(tempPassword ?? '')}&name=${Uri.encodeComponent(tenant.name)}&phone=${Uri.encodeComponent(tenant.phone)}&roomNumber=${Uri.encodeComponent(room.number)}&floor=${Uri.encodeComponent(room.floor)}&roomBed=${Uri.encodeComponent('Room ${room.number}')}&rent=${tenant.rentAmount}&moveIn=${Uri.encodeComponent(_moveInController.text)}');
+      context.go('/tenant_added_success?tenantId=${tenant.id}&password=${Uri.encodeComponent(tempPassword ?? '')}&name=${Uri.encodeComponent(tenant.name)}&phone=${Uri.encodeComponent(tenant.phone)}&roomNumber=${Uri.encodeComponent(room.number)}&floor=${Uri.encodeComponent(room.floor)}&roomBed=${Uri.encodeComponent('Room ${room.number}')}&rent=${tenant.rentAmount}&moveIn=${Uri.encodeComponent(_moveInController.text)}');
+    } catch (e) {
+      if (!mounted) return;
+      
+      final errorMsg = e.toString().replaceAll('Exception: ', '');
+      
+      setState(() {
+        _isLoading = false;
+        if (errorMsg.toLowerCase().contains('phone number')) {
+          _currentStep = 0; // Go back to Personal Details step
+        }
+        _inlineError = errorMsg;
+      });
+
+      // Show error as a popup (SnackBar) as requested
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMsg),
+          backgroundColor: Colors.red.shade600,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 }
 

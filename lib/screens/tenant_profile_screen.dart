@@ -197,7 +197,7 @@ class TenantProfileScreen extends StatelessWidget {
                                   onTap: () async {
                                     final sanitizedPhone = tenant.phone.replaceAll(RegExp(r'\D'), '');
                                     final phoneNum = sanitizedPhone.startsWith('91') ? sanitizedPhone : '91$sanitizedPhone';
-                                    final message = tenant.buildDetailedRentBillMessage(roomNumber: roomNumber, floorName: floorName);
+                                    final message = tenant.buildDetailedRentBillMessage(roomNumber: roomNumber, floorName: floorName, pgName: appProvider.pgName);
                                     final url = Uri.parse('https://wa.me/$phoneNum?text=$message');
                                     if (await canLaunchUrl(url)) {
                                       await launchUrl(url, mode: LaunchMode.externalApplication);
@@ -326,7 +326,7 @@ class TenantProfileScreen extends StatelessWidget {
                                 final sanitizedPhone = tenant.phone.replaceAll(RegExp(r'\D'), '');
                                 final phoneNum = sanitizedPhone.startsWith('91') ? sanitizedPhone : '91$sanitizedPhone';
                                 final message = Uri.encodeComponent(
-                                  '🌟 *Welcome to Sunshine PG!* 🌟\n\n'
+                                  '🌟 *Welcome to ${appProvider.pgName}!* 🌟\n\n'
                                   'Dear ${tenant.name},\n\n'
                                   'Your tenant portal account is ready on the *Remaki* app. You can now use the app to track your rent payments, view payment receipts, and manage your stay.\n\n'
                                   '🏠 *Stay Details:*\n'
@@ -342,7 +342,7 @@ class TenantProfileScreen extends StatelessWidget {
                                   '2️⃣ Log in using your registered mobile number and password above.\n\n'
                                   'If you have any questions, please reach out to the management.\n\n'
                                   'Best regards,\n'
-                                  '*Sunshine PG Management*'
+                                  '*${appProvider.pgName} Management*'
                                 );
                                 final url = Uri.parse('https://wa.me/$phoneNum?text=$message');
                                 if (await canLaunchUrl(url)) {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../providers/app_provider.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 
@@ -69,8 +71,9 @@ class MoreScreen extends StatelessWidget {
         elevation: 0,
         backgroundColor: Colors.white,
       ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      body: Consumer<AppProvider>(
+        builder: (context, appProvider, _) => ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         children: [
           // Profile Card Header
           Container(
@@ -107,22 +110,22 @@ class MoreScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 14),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Sunshine Admin',
-                        style: TextStyle(
+                        appProvider.adminName,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
-                        'Super Admin • Property Manager',
-                        style: TextStyle(
+                        '${appProvider.pgName} • Property Manager',
+                        style: const TextStyle(
                           color: Color(0xFFE0E7FF),
                           fontSize: 13,
                         ),
@@ -200,6 +203,7 @@ class MoreScreen extends StatelessWidget {
           const SizedBox(height: 32),
         ],
       ),
+    ),  // Consumer
     );
   }
 

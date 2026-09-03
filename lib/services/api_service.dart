@@ -8,8 +8,10 @@ class ApiService {
   // Note: Appending /graphql as this is a GraphQL backend
 
   static String? _token;
+  static String? _role;
 
   static String? get token => _token;
+  static String? get role => _role;
 
   static bool get isLoggedIn => _token != null && _token!.isNotEmpty;
 
@@ -17,16 +19,19 @@ class ApiService {
     try {
       final prefs = await SharedPreferences.getInstance();
       _token = prefs.getString('auth_token');
+      _role = prefs.getString('user_role');
     } catch (e) {
       debugPrint('ApiService initToken error: $e');
     }
   }
 
-  static Future<void> setAuthToken(String token) async {
+  static Future<void> setAuthToken(String token, String role) async {
     _token = token;
+    _role = role;
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('auth_token', token);
+      await prefs.setString('user_role', role);
     } catch (e) {
       debugPrint('ApiService setAuthToken error: $e');
     }
@@ -34,9 +39,11 @@ class ApiService {
 
   static Future<void> clearAuthToken() async {
     _token = null;
+    _role = null;
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('auth_token');
+      await prefs.remove('user_role');
     } catch (e) {
       debugPrint('ApiService clearAuthToken error: $e');
     }
@@ -118,6 +125,55 @@ class ApiService {
     ''';
     final data = await performQuery(query);
     return data['tenants'] ?? [];
+  }
+
+  static Future<Map<String, dynamic>?> fetchCurrentTenantProfile() async {
+    const query = '''
+      query {
+        currentTenantProfile {
+          id
+          name
+          phone
+          status
+          paymentStatus
+          pendingRentAmount
+          latestRejectionReason
+          latestRejectionDate
+          bills {
+            id
+            amount
+            status
+            type
+          }
+        }
+      }
+    ''';
+    try {
+      final data = await performQuery(query);
+      return data['currentTenantProfile'];
+    } catch (e) {
+      debugPrint('Error fetching current tenant profile: $e');
+      return null;
+    }
+  }
+
+  static Future<Map<String, dynamic>?> fetchAdminProfile() async {
+    const query = '''
+      query {
+        adminProfile {
+          adminName
+          pgName
+          pgAddress
+        }
+      }
+    ''';
+    try {
+      final data = await performQuery(query);
+      return data['adminProfile'];
+    } catch (e) {
+      debugPrint('Error fetching admin profile: $e');
+      return null;
+    }
   }
 
   static Future<List<dynamic>> fetchPayments({String? tenantId}) async {
@@ -303,6 +359,43 @@ class ApiService {
     await performQuery(mutation, variables: {
       'billId': billId,
       'amount': amount,
+    });
+  }
+
+  static Future<List<dynamic>> fetchPendingPaymentRequests() async {
+    const String query = '''
+      query {
+        pendingPaymentRequests {
+          id
+          tenantProfileId
+          tenantName
+          amount
+          paymentType
+          method
+          proofImageBase64
+          status
+          createdAt
+        }
+      }
+    ''';
+    final data = await performQuery(query);
+    return data['pendingPaymentRequests'] ?? [];
+  }
+
+  static Future<void> resolvePaymentRequest(String requestId, String action, {String? rejectionReason}) async {
+    const String mutation = '''
+      mutation ResolvePaymentRequest(\$input: ResolvePaymentRequestInput!) {
+        resolvePaymentRequest(input: \$input) {
+          id
+        }
+      }
+    ''';
+    await performQuery(mutation, variables: {
+      'input': {
+        'requestId': requestId,
+        'action': action,
+        'rejectionReason': rejectionReason,
+      }
     });
   }
 }

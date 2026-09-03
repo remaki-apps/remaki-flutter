@@ -140,7 +140,7 @@ class Tenant {
   // Grand total owed: pending rent balance + pending utility bills
   double get totalDue => pendingRentAmount + totalPendingBills;
 
-  String buildDetailedRentBillMessage({String roomNumber = '', String floorName = ''}) {
+  String buildDetailedRentBillMessage({String roomNumber = '', String floorName = '', String pgName = ''}) {
     final dueDateStr = DateFormat('dd MMM yyyy').format(rentDueDate);
     final List<String> itemLines = [];
 
@@ -174,7 +174,7 @@ class Tenant {
 
     return Uri.encodeComponent(
       '🧾 *RENT & BILL STATEMENT* 🧾\n'
-      '🏢 *Sunshine PG*\n'
+      '🏢 *${pgName.isNotEmpty ? pgName : 'Your PG'}*\n'
       '────────────────────────────\n'
       '👤 *Tenant Name:* $name\n'
       '📱 *Mobile Number:* $phone\n'
@@ -189,7 +189,7 @@ class Tenant {
       '📲 Track payments & receipts anytime on the *Remaki* app.\n'
       'Kindly clear your pending bill balance on or before the due date.\n\n'
       'Best regards,\n'
-      '*Sunshine PG Management*'
+      '*${pgName.isNotEmpty ? pgName : 'Your PG'} Management*'
     );
   }
 

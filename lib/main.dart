@@ -24,6 +24,7 @@ import 'screens/add_room_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/tenant_home_screen.dart';
+import 'screens/pending_approvals_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,7 +44,7 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: ApiService.isLoggedIn ? '/' : '/login',
+  initialLocation: ApiService.isLoggedIn ? (ApiService.role == 'TENANT' ? '/tenant_home' : '/') : '/login',
   routes: [
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
@@ -140,6 +141,11 @@ final router = GoRouter(
           dateMethod: state.uri.queryParameters['dateMethod'] ?? '',
         );
       },
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/approvals',
+      builder: (context, state) => const PendingApprovalsScreen(),
     ),
     ShellRoute(
       navigatorKey: _shellNavigatorKey,

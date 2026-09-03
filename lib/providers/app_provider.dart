@@ -9,6 +9,11 @@ class AppProvider with ChangeNotifier {
   List<Tenant> tenants = [];
   List<Payment> payments = [];
 
+  // Admin/PG identity — fetched from backend, replaces hardcoded strings
+  String pgName = 'Your PG';
+  String adminName = 'Admin';
+  String pgAddress = '';
+
   static const String _roomsKey = 'sunshine_pg_rooms';
   static const String _tenantsKey = 'sunshine_pg_tenants';
   static const String _paymentsKey = 'sunshine_pg_payments';
@@ -22,6 +27,16 @@ class AppProvider with ChangeNotifier {
       final tenantsData = await ApiService.fetchTenants();
       final roomsData = await ApiService.fetchRooms();
       final paymentsData = await ApiService.fetchPayments();
+
+      // Fetch admin profile for dynamic PG name (only if logged in as ADMIN)
+      if (ApiService.role == 'ADMIN') {
+        final adminData = await ApiService.fetchAdminProfile();
+        if (adminData != null) {
+          pgName = adminData['pgName'] ?? 'Your PG';
+          adminName = adminData['adminName'] ?? 'Admin';
+          pgAddress = adminData['pgAddress'] ?? '';
+        }
+      }
       
       rooms = roomsData.map((e) {
         return Room(
@@ -184,7 +199,7 @@ class AppProvider with ChangeNotifier {
     } catch (e) {
       debugPrint('Error creating tenant: $e');
       await loadFromAPI();
-      return null;
+      rethrow;
     }
   }
 

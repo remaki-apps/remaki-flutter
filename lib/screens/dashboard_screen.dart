@@ -35,26 +35,55 @@ class DashboardScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFF1F5F9)),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x0A000000),
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => context.push('/approvals'),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFF1F5F9)),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x0A000000),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.fact_check_outlined,
+                            color: AppTheme.primaryColor,
+                            size: 20,
+                          ),
                         ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.notifications_none_rounded,
-                      color: AppTheme.primaryColor,
-                      size: 20,
-                    ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFF1F5F9)),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x0A000000),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.notifications_none_rounded,
+                          color: AppTheme.primaryColor,
+                          size: 20,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -153,31 +182,31 @@ class DashboardScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Sunshine PG',
-                            style: TextStyle(
+                            appProvider.pgName,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF0F172A),
                             ),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.location_on_outlined,
                                 size: 12,
                                 color: Color(0xFF64748B),
                               ),
-                              SizedBox(width: 2),
+                              const SizedBox(width: 2),
                               Expanded(
                                 child: Text(
-                                  'Koramangala, Bengaluru',
-                                  style: TextStyle(
+                                  appProvider.pgAddress.isNotEmpty ? appProvider.pgAddress : 'Your PG Location',
+                                  style: const TextStyle(
                                     fontSize: 11,
                                     color: Color(0xFF64748B),
                                   ),

@@ -265,7 +265,7 @@ class _TenantAddedSuccessScreenState extends State<TenantAddedSuccessScreen> {
       : '';
 
     final message = Uri.encodeComponent(
-      '🌟 *Welcome to Sunshine PG!* 🌟\n\n'
+      '🌟 *Welcome to ${provider.pgName}!* 🌟\n\n'
       'Dear ${widget.name},\n\n'
       'Your tenant portal account is ready on the *Remaki* app. You can now use the app to track your rent payments, view payment receipts, and manage your stay.\n\n'
       '$stayDetailsText'
@@ -279,7 +279,7 @@ class _TenantAddedSuccessScreenState extends State<TenantAddedSuccessScreen> {
       '2️⃣ Log in using your registered mobile number and password above.\n\n'
       'If you have any questions, please reach out to the management.\n\n'
       'Best regards,\n'
-      '*Sunshine PG Management*'
+      '*${provider.pgName} Management*'
     );
     final url = Uri.parse('https://wa.me/$formattedPhone?text=$message');
     if (await canLaunchUrl(url)) {
