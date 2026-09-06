@@ -373,6 +373,7 @@ class ApiService {
           paymentType
           method
           proofImageBase64
+          description
           status
           createdAt
         }

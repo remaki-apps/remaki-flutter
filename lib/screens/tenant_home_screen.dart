@@ -20,6 +20,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   double _totalDue = 0;
   String? _rejectionReason;
   Uint8List? _selectedImageBytes;
+  final TextEditingController _descriptionController = TextEditingController();
 
   @override
   void initState() {
@@ -83,22 +84,26 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       final base64Image = base64Encode(_selectedImageBytes!);
 
       await ApiService.performQuery('''
-        mutation {
-          submitPaymentRequest(input: {
-            tenantId: "WILL_BE_FILLED_BY_BACKEND_USING_AUTH_TOKEN_BUT_SCHEMA_NEEDS_IT",
-            amount: $_totalDue,
-            paymentType: "$_paymentType",
-            proofImageBase64: "$base64Image"
-          }) {
+        mutation SubmitPaymentRequest(\$input: SubmitPaymentRequestInput!) {
+          submitPaymentRequest(input: \$input) {
             id
           }
         }
-      '''); 
+      ''', variables: {
+        'input': {
+          'tenantId': "WILL_BE_FILLED_BY_BACKEND_USING_AUTH_TOKEN_BUT_SCHEMA_NEEDS_IT",
+          'amount': _totalDue,
+          'paymentType': _paymentType,
+          'proofImageBase64': base64Image,
+          'description': _descriptionController.text.trim().isNotEmpty ? _descriptionController.text.trim() : null,
+        }
+      }); 
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment Request Submitted Successfully!')));
         setState(() {
           _selectedImageBytes = null;
+          _descriptionController.clear();
           _totalDue = 0; // Optimistically clear amount, though real sync needs refresh
         });
         _fetchProfile();
@@ -211,6 +216,16 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   onPressed: _isLoading ? null : _pickImage,
                   icon: const Icon(Icons.refresh),
                   label: const Text('Change Screenshot'),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _descriptionController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: 'Description (Optional)',
+                    alignLabelWithHint: true,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(

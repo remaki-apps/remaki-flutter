@@ -114,6 +114,11 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                         Text("Tenant: ${req['tenantName']}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                         Text("Amount: ₹${req['amount']}"),
                         Text("Type: ${req['paymentType']}"),
+                        if (req['description'] != null && req['description'].toString().trim().isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4.0),
+                            child: Text("Description: ${req['description']}", style: const TextStyle(fontStyle: FontStyle.italic)),
+                          ),
                         const SizedBox(height: 8),
                         if (req['proofImageBase64'] != null && req['proofImageBase64'].isNotEmpty)
                           Container(
