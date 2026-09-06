@@ -146,11 +146,26 @@ class ApiService {
           id
           name
           phone
+          email
+          imageUrl
+          emergencyContact
           status
           paymentStatus
           pendingRentAmount
+          monthlyRent
+          securityDeposit
+          moveInDate
+          rentDueDate
           latestRejectionReason
           latestRejectionDate
+          room {
+            id
+            roomNumber
+          }
+          bed {
+            id
+            bedLabel
+          }
           bills {
             id
             amount
@@ -167,6 +182,23 @@ class ApiService {
       debugPrint('Error fetching current tenant profile: $e');
       return null;
     }
+  }
+
+  /// Tenant updates their own profile — uses the auth token identity (no ID needed)
+  static Future<void> updateMyProfile(Map<String, dynamic> input) async {
+    const mutation = '''
+      mutation UpdateMyProfile(\$input: UpdateTenantInput!) {
+        updateMyProfile(input: \$input) {
+          id
+          name
+          email
+          imageUrl
+          emergencyContact
+          phone
+        }
+      }
+    ''';
+    await performQuery(mutation, variables: {'input': input});
   }
 
   static Future<Map<String, dynamic>?> fetchAdminProfile() async {

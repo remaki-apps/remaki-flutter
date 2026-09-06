@@ -77,7 +77,7 @@ class _EditPersonalInfoDialogState extends State<EditPersonalInfoDialog> {
         base64Image = 'data:image/jpeg;base64,' + base64Encode(_selectedImageBytes!);
       }
 
-      final input = {
+      final input = <String, dynamic>{
         'name': _nameController.text.trim(),
         'phone': _phoneController.text.trim(),
         'email': _emailController.text.trim().isNotEmpty ? _emailController.text.trim() : null,
@@ -88,16 +88,22 @@ class _EditPersonalInfoDialogState extends State<EditPersonalInfoDialog> {
         input['photoUrl'] = base64Image;
       }
 
-      await ApiService.performQuery('''
-        mutation UpdateTenant(\$id: ID!, \$input: UpdateTenantInput!) {
-          updateTenant(id: \$id, input: \$input) {
-            id
+      if (widget.isAdmin) {
+        // Admin editing a tenant profile — pass the tenant ID
+        await ApiService.performQuery('''
+          mutation UpdateTenant(\$id: ID!, \$input: UpdateTenantInput!) {
+            updateTenant(id: \$id, input: \$input) {
+              id
+            }
           }
-        }
-      ''', variables: {
-        'id': widget.tenant.id,
-        'input': input,
-      });
+        ''', variables: {
+          'id': widget.tenant.id,
+          'input': input,
+        });
+      } else {
+        // Tenant editing their own profile — uses auth token identity
+        await ApiService.updateMyProfile(input);
+      }
 
       if (mounted) {
         context.pop(true); // Return true to indicate success
