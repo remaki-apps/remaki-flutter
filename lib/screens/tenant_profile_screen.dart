@@ -62,7 +62,9 @@ class TenantProfileScreen extends StatelessWidget {
     final roomNumber = roomIndex != -1 ? appProvider.rooms[roomIndex].number : 'N/A';
     final floorName = roomIndex != -1 ? appProvider.rooms[roomIndex].floor : 'N/A';
     final bedName = (roomIndex != -1)
-        ? appProvider.rooms[roomIndex].beds.firstWhere((b) => b.id == tenant.bedId, orElse: () => appProvider.rooms[roomIndex].beds.first).name
+        ? (appProvider.rooms[roomIndex].beds.where((b) => b.id == tenant.bedId).isNotEmpty
+            ? appProvider.rooms[roomIndex].beds.firstWhere((b) => b.id == tenant.bedId).name
+            : 'N/A')
         : 'N/A';
 
     final tenantPayments = appProvider.payments.where((p) => p.tenantId == tenantId).toList()
