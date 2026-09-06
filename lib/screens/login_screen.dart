@@ -188,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 16),
                       const Text(
-                        'SUNSHINE PG',
+                        'REMAKI',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w900,

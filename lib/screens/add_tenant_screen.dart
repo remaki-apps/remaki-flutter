@@ -8,6 +8,7 @@ import '../models/models.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_expandable_dropdown.dart';
 import '../widgets/custom_date_picker.dart';
+import '../widgets/fancy_toast.dart';
 
 class AddTenantScreen extends StatefulWidget {
   final String? initialRoomId;
@@ -664,14 +665,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
         _inlineError = errorMsg;
       });
 
-      // Show error as a popup (SnackBar) as requested
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMsg),
-          backgroundColor: Colors.red.shade600,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      FancyToast.showError(context, 'Failed to Add Tenant', message: errorMsg);
     }
   }
 }

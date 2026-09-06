@@ -34,7 +34,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AppProvider()),
       ],
-      child: const SunshinePGApp(),
+      child: const RemakiApp(),
     ),
   );
 }
@@ -190,8 +190,8 @@ final router = GoRouter(
   ],
 );
 
-class SunshinePGApp extends StatelessWidget {
-  const SunshinePGApp({super.key});
+class RemakiApp extends StatelessWidget {
+  const RemakiApp({super.key});
 
   @override
   Widget build(BuildContext context) {

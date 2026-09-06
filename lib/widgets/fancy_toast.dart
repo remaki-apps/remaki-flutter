@@ -22,6 +22,33 @@ class FancyToast {
           }
         },
         duration: duration,
+        isError: false,
+      ),
+    );
+
+    overlay.insert(entry);
+  }
+
+  static void showError(
+    BuildContext context,
+    String title, {
+    String? message,
+    Duration duration = const Duration(seconds: 4),
+  }) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry entry;
+
+    entry = OverlayEntry(
+      builder: (context) => _FancyToastWidget(
+        title: title,
+        message: message,
+        onDismiss: () {
+          if (entry.mounted) {
+            entry.remove();
+          }
+        },
+        duration: duration,
+        isError: true,
       ),
     );
 
@@ -34,12 +61,14 @@ class _FancyToastWidget extends StatefulWidget {
   final String? message;
   final VoidCallback onDismiss;
   final Duration duration;
+  final bool isError;
 
   const _FancyToastWidget({
     required this.title,
     this.message,
     required this.onDismiss,
     required this.duration,
+    this.isError = false,
   });
 
   @override
@@ -99,17 +128,20 @@ class _FancyToastWidgetState extends State<_FancyToastWidget> with SingleTickerP
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: widget.isError ? const Color(0xFFFEF2F2) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2), width: 1.5),
-                boxShadow: const [
+                border: Border.all(
+                  color: widget.isError ? const Color(0xFFFCA5A5) : AppTheme.primaryColor.withValues(alpha: 0.2), 
+                  width: 1.5
+                ),
+                boxShadow: [
                   BoxShadow(
-                    color: Color(0x145B32E4),
+                    color: widget.isError ? const Color(0x14EF4444) : const Color(0x145B32E4),
                     blurRadius: 18,
                     spreadRadius: 2,
-                    offset: Offset(0, 6),
+                    offset: const Offset(0, 6),
                   ),
-                  BoxShadow(
+                  const BoxShadow(
                     color: Color(0x0A000000),
                     blurRadius: 8,
                     offset: Offset(0, 2),
@@ -122,12 +154,12 @@ class _FancyToastWidgetState extends State<_FancyToastWidget> with SingleTickerP
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
+                      color: widget.isError ? const Color(0xFFFEE2E2) : const Color(0xFFEEF2FF),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
-                      Icons.check_circle_rounded,
-                      color: AppTheme.primaryColor,
+                    child: Icon(
+                      widget.isError ? Icons.error_outline_rounded : Icons.check_circle_rounded,
+                      color: widget.isError ? const Color(0xFFEF4444) : AppTheme.primaryColor,
                       size: 22,
                     ),
                   ),

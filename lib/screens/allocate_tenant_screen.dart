@@ -114,7 +114,7 @@ class _AllocateTenantScreenState extends State<AllocateTenantScreen> {
               onStepContinue: () {
                 if (_currentStep == 0) {
                   if (_selectedTenantId == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a tenant.')));
+                    FancyToast.showError(context, 'Missing Selection', message: 'Please select a tenant.');
                     return;
                   }
                   setState(() => _currentStep += 1);

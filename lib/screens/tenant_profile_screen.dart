@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -8,6 +9,7 @@ import '../theme/app_theme.dart';
 import '../widgets/tenant_avatar.dart';
 import '../widgets/fancy_toast.dart';
 import 'edit_financials_dialog.dart';
+import 'edit_personal_info_dialog.dart';
 
 class TenantProfileScreen extends StatelessWidget {
   final String tenantId;
@@ -459,7 +461,7 @@ class TenantProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
 
-                    // Details Card
+                    // Personal Information Card
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -478,6 +480,55 @@ class TenantProfileScreen extends StatelessWidget {
                             children: [
                               const Text(
                                 'Personal Information',
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                              ),
+                              GestureDetector(
+                                onTap: () => _showEditPersonalInfoDialog(context, appProvider, tenant),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Row(
+                                    children: [
+                                      Icon(Icons.edit_outlined, size: 14, color: AppTheme.primaryColor),
+                                      SizedBox(width: 4),
+                                      Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          _buildModernDetailItem(Icons.phone_outlined, 'Phone', tenant.phone),
+                          _buildModernDetailItem(Icons.email_outlined, 'Email', tenant.email != null && tenant.email!.isNotEmpty ? tenant.email! : '-'),
+                          _buildModernDetailItem(Icons.contact_phone_outlined, 'Emergency Contact', tenant.emergencyContact != null && tenant.emergencyContact!.isNotEmpty ? tenant.emergencyContact! : '-'),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Financial Information Card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFF1F5F9)),
+                        boxShadow: const [
+                          BoxShadow(color: Color(0x04000000), blurRadius: 8, offset: Offset(0, 2)),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Financial Information',
                                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
                               ),
                               GestureDetector(
@@ -500,8 +551,6 @@ class TenantProfileScreen extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          _buildModernDetailItem(Icons.phone_outlined, 'Phone', tenant.phone),
-                          _buildModernDetailItem(Icons.email_outlined, 'Email', tenant.email),
                           _buildModernDetailItem(Icons.calendar_today_outlined, 'Move-in Date', DateFormat('dd/MM/yyyy').format(tenant.moveInDate)),
                           _buildModernDetailItem(Icons.payments_outlined, 'Monthly Rent', '₹${tenant.rentAmount.toStringAsFixed(0)}'),
                           if (!tenant.isPaid && tenant.pendingRentAmount > 0 && tenant.pendingRentAmount < tenant.rentAmount)
@@ -820,5 +869,20 @@ class TenantProfileScreen extends StatelessWidget {
         tenant: tenant,
       ),
     );
+  }
+
+  void _showEditPersonalInfoDialog(BuildContext context, AppProvider appProvider, dynamic tenant) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => EditPersonalInfoDialog(
+        tenant: tenant,
+        isAdmin: true,
+      ),
+    );
+    if (result == true) {
+      // Refresh tenant list if needed, or appProvider already handles it if we call fetch inside.
+      // We can trigger a refresh from the provider.
+      appProvider.loadFromAPI();
+    }
   }
 }

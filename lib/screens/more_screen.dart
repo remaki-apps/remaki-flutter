@@ -156,7 +156,7 @@ class MoreScreen extends StatelessWidget {
             _buildMenuItem(Icons.cloud_upload_outlined, 'Backup & Export Data', onTap: () {}),
             _buildMenuItem(Icons.settings_outlined, 'App Settings', onTap: () {}),
             _buildMenuItem(Icons.help_outline_rounded, 'Help & Support', onTap: () {}),
-            _buildMenuItem(Icons.info_outline_rounded, 'About Sunshine PG', onTap: () {}),
+            _buildMenuItem(Icons.info_outline_rounded, 'About Remaki', onTap: () {}),
           ]),
           const SizedBox(height: 24),
 

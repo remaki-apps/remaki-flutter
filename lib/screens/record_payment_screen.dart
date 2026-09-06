@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../providers/app_provider.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
+import '../widgets/fancy_toast.dart';
 import '../widgets/tenant_avatar.dart';
 import '../widgets/custom_date_picker.dart';
 
@@ -190,7 +191,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                     } catch (e) {
                       setState(() => _isLoading = false);
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to record payment: $e')));
+                        FancyToast.showError(context, 'Payment Failed', message: e.toString());
                       }
                     }
                   }

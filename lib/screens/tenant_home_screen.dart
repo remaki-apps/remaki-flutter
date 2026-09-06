@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import '../models/models.dart';
+import '../widgets/fancy_toast.dart';
+import 'edit_personal_info_dialog.dart';
 
 class TenantHomeScreen extends StatefulWidget {
   const TenantHomeScreen({super.key});
@@ -18,6 +21,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   bool _isLoading = false;
   bool _isFetchingProfile = true;
   double _totalDue = 0;
+  Map<String, dynamic>? _profileData;
   String? _rejectionReason;
   Uint8List? _selectedImageBytes;
   final TextEditingController _descriptionController = TextEditingController();
@@ -45,6 +49,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       if (mounted) {
         setState(() {
           _totalDue = pendingRent + pendingBills;
+          _profileData = profile;
           _rejectionReason = (rejectionReason != null && rejectionReason.isNotEmpty) ? rejectionReason : null;
           _isFetchingProfile = false;
         });
@@ -52,7 +57,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     } else {
       if (mounted) {
         setState(() => _isFetchingProfile = false);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to load profile details.')));
+        FancyToast.showError(context, 'Failed to Load', message: 'Failed to load profile details.');
       }
     }
   }
@@ -71,11 +76,11 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
   Future<void> _submitRequest() async {
     if (_totalDue <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No due amount to pay.')));
+      FancyToast.showError(context, 'No Dues', message: 'No due amount to pay.');
       return;
     }
     if (_selectedImageBytes == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please upload a screenshot first.')));
+      FancyToast.showError(context, 'Screenshot Required', message: 'Please upload a screenshot first.');
       return;
     }
 
@@ -100,7 +105,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       }); 
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment Request Submitted Successfully!')));
+        FancyToast.showSuccess(context, 'Payment Request Submitted Successfully!');
         setState(() {
           _selectedImageBytes = null;
           _descriptionController.clear();
@@ -110,7 +115,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        FancyToast.showError(context, 'Payment Failed', message: e.toString());
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -140,6 +145,11 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (_profileData != null) ...[
+                _buildProfileSection(_profileData!),
+                const SizedBox(height: 24),
+              ],
+              
               // Rejection reason banner
               if (_rejectionReason != null) ...[
                 Container(
@@ -258,5 +268,127 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildProfileSection(Map<String, dynamic> profile) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(color: Color(0x08000000), blurRadius: 12, offset: Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                radius: 35,
+                backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                backgroundImage: profile['imageUrl'] != null ? NetworkImage(profile['imageUrl']) : null,
+                child: profile['imageUrl'] == null
+                    ? Text(
+                        profile['name'][0].toUpperCase(),
+                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      profile['name'] ?? 'Tenant',
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Room ${profile['room']?['roomNumber'] ?? '-'} • Bed ${profile['bed']?['bedLabel'] ?? '-'}',
+                      style: const TextStyle(fontSize: 14, color: Color(0xFF475569)),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.edit_outlined, color: AppTheme.primaryColor),
+                onPressed: () => _openEditDialog(profile),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Divider(color: Color(0xFFE2E8F0), height: 1),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(child: _buildInfoItem(Icons.phone_outlined, 'Phone', profile['phone'] ?? '-')),
+              Expanded(child: _buildInfoItem(Icons.email_outlined, 'Email', (profile['email'] != null && profile['email'].toString().isNotEmpty) ? profile['email'] : '-')),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(child: _buildInfoItem(Icons.contact_phone_outlined, 'Emergency', (profile['emergencyContact'] != null && profile['emergencyContact'].toString().isNotEmpty) ? profile['emergencyContact'] : '-')),
+              Expanded(child: _buildInfoItem(Icons.payments_outlined, 'Rent', '₹${profile['monthlyRent']?.toString() ?? '-'}')),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoItem(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: const Color(0xFF94A3B8)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
+              const SizedBox(height: 2),
+              Text(value, style: const TextStyle(fontSize: 13, color: Color(0xFF334155), fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openEditDialog(Map<String, dynamic> profileData) async {
+    // Create a dummy Tenant object since EditPersonalInfoDialog expects it
+    // Or we just adapt it
+    final dummyTenant = Tenant(
+      id: profileData['id'],
+      name: profileData['name'],
+      phone: profileData['phone'],
+      email: profileData['email'] ?? '',
+      emergencyContact: profileData['emergencyContact'],
+      imageUrl: profileData['imageUrl'],
+      roomId: '',
+      bedId: '',
+      moveInDate: DateTime.now(),
+      rentAmount: 0,
+      securityDeposit: 0,
+      rentDueDate: DateTime.now(),
+    );
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => EditPersonalInfoDialog(
+        tenant: dummyTenant,
+        isAdmin: false,
+      ),
+    );
+
+    if (result == true) {
+      _fetchProfile(); // refresh
+    }
   }
 }

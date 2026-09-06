@@ -13,7 +13,7 @@ void main() {
         providers: [
           ChangeNotifierProvider(create: (_) => AppProvider()),
         ],
-        child: const SunshinePGApp(),
+        child: const RemakiApp(),
       ),
     );
 

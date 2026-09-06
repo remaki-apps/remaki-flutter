@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/fancy_toast.dart';
 
 class EditFinancialsDialog extends StatefulWidget {
   final AppProvider provider;
@@ -78,21 +80,11 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
 
       if (mounted) {
         context.pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Financials updated successfully!'),
-            backgroundColor: AppTheme.primaryColor,
-          ),
-        );
+        FancyToast.showSuccess(context, 'Financials updated successfully!');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update: \$e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        FancyToast.showError(context, 'Update Failed', message: e.toString());
       }
     } finally {
       if (mounted) {

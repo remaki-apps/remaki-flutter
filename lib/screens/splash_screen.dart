@@ -106,7 +106,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                                   Icon(Icons.wb_sunny_rounded, size: 72, color: Colors.amber.shade400),
                                   const SizedBox(height: 12),
                                   const Text(
-                                    'SUNSHINE PG',
+                                    'REMAKI',
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 24,

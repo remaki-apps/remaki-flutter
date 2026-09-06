@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
 import '../providers/app_provider.dart';
+import '../widgets/fancy_toast.dart';
 
 class PendingApprovalsScreen extends StatefulWidget {
   const PendingApprovalsScreen({super.key});
@@ -28,7 +29,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
       final reqs = await ApiService.fetchPendingPaymentRequests();
       setState(() => _requests = reqs);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: \$e')));
+      if (mounted) FancyToast.showError(context, 'Error', message: e.toString());
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -40,11 +41,11 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
       if (mounted) {
         // Refresh app provider to reflect paid rent
         await Provider.of<AppProvider>(context, listen: false).loadFromAPI();
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment Accepted')));
+        FancyToast.showSuccess(context, 'Payment Accepted');
         _loadRequests();
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: \$e')));
+      if (mounted) FancyToast.showError(context, 'Error', message: e.toString());
     }
   }
 
@@ -83,11 +84,11 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
         }
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment Declined')));
+          FancyToast.showSuccess(context, 'Payment Declined');
           _loadRequests();
         }
       } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: \$e')));
+        if (mounted) FancyToast.showError(context, 'Error', message: e.toString());
       }
     }
   }

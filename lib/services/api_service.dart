@@ -1,7 +1,16 @@
+import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
+class ApiException implements Exception {
+  final String message;
+  ApiException(this.message);
+
+  @override
+  String toString() => message;
+}
 
 class ApiService {
   static const String _baseUrl = 'https://remaki-backend.onrender.com/graphql';
@@ -72,15 +81,18 @@ class ApiService {
         final Map<String, dynamic> data = jsonDecode(response.body);
         if (data.containsKey('errors')) {
           debugPrint('GraphQL Errors: ${data['errors']}');
-          throw Exception(data['errors'][0]['message']);
+          throw ApiException(data['errors'][0]['message'] ?? 'An unknown backend error occurred.');
         }
         return data['data'];
       } else {
-        throw Exception('Failed to load data: ${response.statusCode}');
+        throw ApiException('Failed to load data: ${response.statusCode}. Please try again later.');
       }
+    } on SocketException catch (_) {
+      throw ApiException('No internet connection. Please check your network and try again.');
     } catch (e) {
       debugPrint('ApiService Error: $e');
-      rethrow;
+      if (e is ApiException) rethrow;
+      throw ApiException('An unexpected error occurred: $e');
     }
   }
 
