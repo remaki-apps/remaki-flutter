@@ -21,6 +21,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Remaki - PG Management App">
 
+  <!-- Prevent browser from caching index.html itself -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
   <!-- iOS PWA meta tags -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -43,6 +48,46 @@
 
   <title>Remaki</title>
   <link rel="manifest" href="manifest.json">
+
+  <script>
+    // ──────────────────────────────────────────────────────────────────────────
+    // Service Worker Update Detector
+    // When a new version of the app is deployed, the new service worker is
+    // installed but stays in "waiting" state. This script detects that and
+    // automatically reloads the page so users always see the latest version
+    // without manually clearing their cache.
+    // ──────────────────────────────────────────────────────────────────────────
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        // New SW has taken control — reload once to get the latest assets
+        window.location.reload();
+      });
+
+      navigator.serviceWorker.ready.then(function (registration) {
+        // Check for updates every 60 seconds while the app is open
+        setInterval(function () {
+          registration.update().catch(function () {});
+        }, 60 * 1000);
+
+        if (registration.waiting) {
+          // A new SW is already waiting — skip waiting and activate immediately
+          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+
+        registration.addEventListener('updatefound', function () {
+          var newWorker = registration.installing;
+          if (!newWorker) return;
+
+          newWorker.addEventListener('statechange', function () {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // New version installed and old SW is in control — activate new one immediately
+              newWorker.postMessage({ type: 'SKIP_WAITING' });
+            }
+          });
+        });
+      });
+    }
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
