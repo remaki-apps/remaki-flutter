@@ -132,6 +132,7 @@ class ApiService {
             description
             createdAt
           }
+          totalConvenienceFee
         }
       }
     ''';
@@ -184,6 +185,7 @@ class ApiService {
             status
             type
           }
+          totalConvenienceFee
         }
       }
     ''';

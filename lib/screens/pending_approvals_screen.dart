@@ -129,7 +129,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                               border: Border.all(color: Colors.grey.shade300),
                             ),
                             child: Image.memory(
-                              base64Decode(req['proofImageBase64']),
+                              base64Decode(req['proofImageBase64'].toString().split(',').last),
                               fit: BoxFit.contain,
                               errorBuilder: (_, __, ___) => const Center(child: Text('Invalid Image')),
                             ),

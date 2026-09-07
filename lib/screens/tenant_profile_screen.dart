@@ -590,6 +590,8 @@ class TenantProfileScreen extends StatelessWidget {
                           ),
                           if (tenant.additionalCharges.where((c) => c.billType != 'RENT').isNotEmpty)
                             _buildModernDetailItem(Icons.account_balance_wallet_outlined, 'Total Due', '₹${tenant.totalDue.toStringAsFixed(0)}', isHighlight: true),
+                          if (tenant.totalConvenienceFee > 0)
+                            _buildModernDetailItem(Icons.local_atm_outlined, 'Platform Fees Collected', '₹${tenant.totalConvenienceFee.toStringAsFixed(0)}', isHighlight: false),
                         ],
                       ),
                     ),
