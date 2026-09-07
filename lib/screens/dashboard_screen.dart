@@ -3,15 +3,36 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../providers/app_provider.dart';
+import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  Map<String, dynamic>? _feeSummary;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFeeSummary();
+  }
+
+  Future<void> _loadFeeSummary() async {
+    final summary = await ApiService.fetchConvenienceFeeSummary();
+    if (mounted) setState(() => _feeSummary = summary);
+  }
 
   @override
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
     final monthYear = DateFormat('MMM yyyy').format(DateTime.now());
+    final totalFees = (_feeSummary?['totalFees'] as num?)?.toDouble() ?? 0;
+    final pendingFees = (_feeSummary?['pendingFees'] as num?)?.toDouble() ?? 0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
@@ -274,7 +295,66 @@ class DashboardScreen extends StatelessWidget {
                 ],
               ),
 
-              // 4. Occupancy Card
+              // ─── Platform Fee Summary Card (Remaki Org) ──────────────────────────
+              GestureDetector(
+                onTap: _loadFeeSummary,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF6D28D9), Color(0xFF4F46E5)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: const [
+                      BoxShadow(color: Color(0x336D28D9), blurRadius: 12, offset: Offset(0, 4)),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.account_balance_wallet_outlined, color: Colors.white, size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Platform Fee to Submit', style: TextStyle(fontSize: 11, color: Colors.white70, fontWeight: FontWeight.w500)),
+                            const SizedBox(height: 2),
+                            Text(
+                              '₹${pendingFees.toStringAsFixed(0)}',
+                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                            Text(
+                              'Total collected: ₹${totalFees.toStringAsFixed(0)}',
+                              style: const TextStyle(fontSize: 11, color: Colors.white60),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text('Submit to\nRemaki', textAlign: TextAlign.center, style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),

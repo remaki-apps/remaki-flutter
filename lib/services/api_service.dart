@@ -220,6 +220,30 @@ class ApiService {
     }
   }
 
+  /// Fetches the ₹9 convenience fee summary for the logged-in admin.
+  /// Returns {totalFees, pendingFees, submittedFees, totalCount, pendingCount, submittedCount}
+  static Future<Map<String, dynamic>?> fetchConvenienceFeeSummary() async {
+    const query = '''
+      query {
+        convenienceFeeSummary {
+          totalFees
+          pendingFees
+          submittedFees
+          totalCount
+          pendingCount
+          submittedCount
+        }
+      }
+    ''';
+    try {
+      final data = await performQuery(query);
+      return data['convenienceFeeSummary'] as Map<String, dynamic>?;
+    } catch (e) {
+      debugPrint('Error fetching convenience fee summary: $e');
+      return null;
+    }
+  }
+
   static Future<List<dynamic>> fetchPayments({String? tenantId}) async {
     String query;
     if (tenantId != null) {

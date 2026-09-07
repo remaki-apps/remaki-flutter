@@ -17,6 +17,7 @@ class TenantHomeScreen extends StatefulWidget {
 }
 
 class _TenantHomeScreenState extends State<TenantHomeScreen> {
+  static const double _convenienceFee = 9.0; // ₹9 platform fee per payment
   final String _paymentType = 'BOTH';
   bool _isLoading = false;
   bool _isFetchingProfile = true;
@@ -48,7 +49,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       final rejectionReason = profile['latestRejectionReason'] as String?;
       if (mounted) {
         setState(() {
-          _totalDue = pendingRent + pendingBills;
+      // _totalDue = rent + bills + ₹9 convenience fee (charged on every payment submission)
+          _totalDue = pendingRent + pendingBills + _convenienceFee;
           _profileData = profile;
           _rejectionReason = (rejectionReason != null && rejectionReason.isNotEmpty) ? rejectionReason : null;
           _isFetchingProfile = false;
@@ -99,7 +101,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           'tenantId': "WILL_BE_FILLED_BY_BACKEND_USING_AUTH_TOKEN_BUT_SCHEMA_NEEDS_IT",
           'amount': _totalDue,
           'paymentType': _paymentType,
-          'proofImageBase64': base64Image,
+          'proofImageBase64': 'data:image/jpeg;base64,$base64Image',
           'description': _descriptionController.text.trim().isNotEmpty ? _descriptionController.text.trim() : null,
         }
       }); 
@@ -195,12 +197,55 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Total Amount Due', style: TextStyle(fontSize: 16, color: Colors.blueGrey, fontWeight: FontWeight.w500)),
+                      const Center(child: Text('Total Amount Due', style: TextStyle(fontSize: 16, color: Colors.blueGrey, fontWeight: FontWeight.w500))),
                       const SizedBox(height: 8),
-                      Text('₹${_totalDue.toStringAsFixed(0)}', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: _totalDue > 0 ? AppTheme.danger : AppTheme.success)),
+                      Center(
+                        child: Text(
+                          '₹${_totalDue.toStringAsFixed(0)}',
+                          style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: _totalDue > 0 ? AppTheme.danger : AppTheme.success),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Divider(),
                       const SizedBox(height: 8),
-                      const Text('Payment Type: Rent + Bills', style: TextStyle(fontSize: 14, color: Colors.blueGrey)),
+                      // Convenience fee breakdown
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Rent + Bills', style: TextStyle(fontSize: 13, color: Colors.blueGrey)),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFEF3C7),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: const Color(0xFFF59E0B)),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.info_outline, size: 12, color: Color(0xFFB45309)),
+                                          SizedBox(width: 4),
+                                          Text('+ ₹9 Platform Fee', style: TextStyle(fontSize: 12, color: Color(0xFF92400E), fontWeight: FontWeight.w600)),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                const Text('A ₹9 convenience fee is added per payment to maintain the platform.', style: TextStyle(fontSize: 11, color: Color(0xFF78716C))),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
