@@ -158,6 +158,18 @@ class ApiService {
           rentDueDate
           latestRejectionReason
           latestRejectionDate
+          occupation
+          dateOfBirth
+          maritalStatus
+          fatherName
+          permanentAddress
+          villageOrTown
+          houseNo
+          wardNo
+          district
+          state
+          nationality
+          pinCode
           room {
             id
             roomNumber
@@ -242,6 +254,47 @@ class ApiService {
       debugPrint('Error fetching convenience fee summary: $e');
       return null;
     }
+  }
+
+  static Future<List<dynamic>> fetchAnnouncements(bool isAdmin) async {
+    final queryName = isAdmin ? 'adminAnnouncements' : 'tenantAnnouncements';
+    final query = '''
+      query {
+        $queryName {
+          id
+          heading
+          description
+          imageUrl
+          createdAt
+        }
+      }
+    ''';
+    try {
+      final data = await performQuery(query);
+      return data[queryName] ?? [];
+    } catch (e) {
+      debugPrint('Error fetching announcements: $e');
+      return [];
+    }
+  }
+
+  static Future<void> createAnnouncement({
+    required String heading,
+    required String description,
+    String? imageBase64,
+  }) async {
+    const mutation = '''
+      mutation CreateAnnouncement(\$heading: String!, \$description: String!, \$imageBase64: String) {
+        createAnnouncement(heading: \$heading, description: \$description, imageBase64: \$imageBase64) {
+          id
+        }
+      }
+    ''';
+    await performQuery(mutation, variables: {
+      'heading': heading,
+      'description': description,
+      'imageBase64': imageBase64,
+    });
   }
 
   static Future<List<dynamic>> fetchPayments({String? tenantId}) async {

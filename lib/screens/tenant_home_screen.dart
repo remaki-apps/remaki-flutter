@@ -8,6 +8,7 @@ import '../theme/app_theme.dart';
 import '../models/models.dart';
 import '../widgets/fancy_toast.dart';
 import 'edit_personal_info_dialog.dart';
+import 'complete_profile_dialog.dart';
 
 class TenantHomeScreen extends StatefulWidget {
   const TenantHomeScreen({super.key});
@@ -26,11 +27,22 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   String? _rejectionReason;
   Uint8List? _selectedImageBytes;
   final TextEditingController _descriptionController = TextEditingController();
+  List<dynamic> _announcements = [];
 
   @override
   void initState() {
     super.initState();
     _fetchProfile();
+    _fetchAnnouncements();
+  }
+
+  Future<void> _fetchAnnouncements() async {
+    final announcements = await ApiService.fetchAnnouncements(false);
+    if (mounted) {
+      setState(() {
+        _announcements = announcements;
+      });
+    }
   }
 
   Future<void> _fetchProfile() async {
@@ -149,6 +161,13 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             children: [
               if (_profileData != null) ...[
                 _buildProfileSection(_profileData!),
+                const SizedBox(height: 16),
+                _buildCompleteProfileBanner(),
+                const SizedBox(height: 24),
+              ],
+              
+              if (_announcements.isNotEmpty) ...[
+                _buildAnnouncementsSection(),
                 const SizedBox(height: 24),
               ],
               
@@ -466,5 +485,129 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     if (result == true) {
       _fetchProfile(); // refresh
     }
+  }
+
+  Widget _buildCompleteProfileBanner() {
+    if (_profileData == null) return const SizedBox.shrink();
+    
+    // Check if key fields are missing to consider it incomplete
+    final isComplete = _profileData!['permanentAddress'] != null && 
+                       _profileData!['district'] != null &&
+                       _profileData!['nationality'] != null;
+                       
+    if (isComplete) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFBBF7D0)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline, color: Color(0xFF166534), size: 24),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Complete Your Profile', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF166534), fontSize: 14)),
+                SizedBox(height: 2),
+                Text('Add more details to complete your tenant profile.', style: TextStyle(color: Color(0xFF14532D), fontSize: 12)),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => _openCompleteProfileDialog(_profileData!),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF166534),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              minimumSize: const Size(0, 0),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Complete', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnnouncementsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Announcements', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+        const SizedBox(height: 16),
+        ..._announcements.map((a) {
+          return Card(
+            elevation: 2,
+            margin: const EdgeInsets.only(bottom: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(a['heading'] ?? '', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                  const SizedBox(height: 8),
+                  Text(a['description'] ?? '', style: const TextStyle(fontSize: 14, color: Color(0xFF475569))),
+                  if (a['imageUrl'] != null) ...[
+                    const SizedBox(height: 12),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(a['imageUrl'], height: 150, width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Future<void> _openCompleteProfileDialog(Map<String, dynamic> profileData) async {
+    final dummyTenant = Tenant(
+      id: profileData['id'],
+      name: profileData['name'],
+      phone: profileData['phone'],
+      email: profileData['email'] ?? '',
+      emergencyContact: profileData['emergencyContact'],
+      imageUrl: profileData['imageUrl'],
+      roomId: '',
+      bedId: '',
+      moveInDate: DateTime.now(),
+      rentAmount: 0,
+      securityDeposit: 0,
+      rentDueDate: DateTime.now(),
+      dateOfBirth: profileData['dateOfBirth'],
+      maritalStatus: profileData['maritalStatus'],
+      fatherName: profileData['fatherName'],
+      permanentAddress: profileData['permanentAddress'],
+      villageOrTown: profileData['villageOrTown'],
+      houseNo: profileData['houseNo'],
+      wardNo: profileData['wardNo'],
+      district: profileData['district'],
+      state: profileData['state'],
+      nationality: profileData['nationality'],
+      pinCode: profileData['pinCode'],
+      occupation: profileData['occupation'],
+    );
+
+    // This uses complete_profile_dialog.dart which we will import
+    // Note: ensure we import it at the top
+    await showDialog(
+      context: context,
+      builder: (ctx) => CompleteProfileDialog(
+        tenant: dummyTenant,
+        onProfileUpdated: () {
+          _fetchProfile();
+        },
+      ),
+    );
   }
 }

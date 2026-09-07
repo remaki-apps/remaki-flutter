@@ -98,10 +98,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.notifications_none_rounded,
-                          color: AppTheme.primaryColor,
-                          size: 20,
+                        child: GestureDetector(
+                          onTap: () => context.push('/announcements'),
+                          child: const Icon(
+                            Icons.campaign_outlined,
+                            color: AppTheme.primaryColor,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ],

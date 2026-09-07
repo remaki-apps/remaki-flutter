@@ -124,6 +124,19 @@ class Tenant {
   String password;
   String? defaultPaymentMode;
 
+  String? occupation;
+  String? dateOfBirth;
+  String? maritalStatus;
+  String? fatherName;
+  String? permanentAddress;
+  String? villageOrTown;
+  String? houseNo;
+  String? wardNo;
+  String? district;
+  String? state;
+  String? nationality;
+  String? pinCode;
+
   // totalDue = unpaid utility/other bills only (not rent, as rent is tracked via pendingRentAmount)
   double get totalPendingBills => additionalCharges
       .where((c) => c.billType != 'RENT' && (c.status == 'PENDING' || c.status == 'UNPAID'))
@@ -200,6 +213,19 @@ class Tenant {
     required this.email,
     this.emergencyContact,
     required this.roomId,
+    
+    this.occupation,
+    this.dateOfBirth,
+    this.maritalStatus,
+    this.fatherName,
+    this.permanentAddress,
+    this.villageOrTown,
+    this.houseNo,
+    this.wardNo,
+    this.district,
+    this.state,
+    this.nationality,
+    this.pinCode,
     required this.bedId,
     required this.moveInDate,
     required this.rentAmount,
@@ -234,6 +260,18 @@ class Tenant {
         'credentialsSent': credentialsSent,
         'password': password,
         'defaultPaymentMode': defaultPaymentMode,
+        'occupation': occupation,
+        'dateOfBirth': dateOfBirth,
+        'maritalStatus': maritalStatus,
+        'fatherName': fatherName,
+        'permanentAddress': permanentAddress,
+        'villageOrTown': villageOrTown,
+        'houseNo': houseNo,
+        'wardNo': wardNo,
+        'district': district,
+        'state': state,
+        'nationality': nationality,
+        'pinCode': pinCode,
       };
 
   factory Tenant.fromJson(Map<String, dynamic> json) => Tenant(
@@ -255,6 +293,18 @@ class Tenant {
         credentialsSent: json['credentialsSent'] as bool? ?? false,
         password: json['password'] as String? ?? generateEasyPassword(),
         defaultPaymentMode: json['defaultPaymentMode'] as String?,
+        occupation: json['occupation'] as String?,
+        dateOfBirth: json['dateOfBirth'] as String?,
+        maritalStatus: json['maritalStatus'] as String?,
+        fatherName: json['fatherName'] as String?,
+        permanentAddress: json['permanentAddress'] as String?,
+        villageOrTown: json['villageOrTown'] as String?,
+        houseNo: json['houseNo'] as String?,
+        wardNo: json['wardNo'] as String?,
+        district: json['district'] as String?,
+        state: json['state'] as String?,
+        nationality: json['nationality'] as String?,
+        pinCode: json['pinCode'] as String?,
       );
 }
 

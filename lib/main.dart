@@ -25,6 +25,7 @@ import 'screens/login_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/tenant_home_screen.dart';
 import 'screens/pending_approvals_screen.dart';
+import 'screens/announcements_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -146,6 +147,11 @@ final router = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/approvals',
       builder: (context, state) => const PendingApprovalsScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/announcements',
+      builder: (context, state) => const AnnouncementsScreen(),
     ),
     ShellRoute(
       navigatorKey: _shellNavigatorKey,

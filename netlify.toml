@@ -37,6 +37,11 @@
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
 
+[[headers]]
+  for = "/main.dart.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
 # ── Hashed assets: cache forever (content-addressed, safe to cache) ──────────
 [[headers]]
   for = "/*.js"
