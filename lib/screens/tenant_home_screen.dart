@@ -270,6 +270,47 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     );
   }
 
+  Widget _buildProfileAvatar(Map<String, dynamic> profile, double radius) {
+    final imageUrl = profile['imageUrl'] as String?;
+    final name = profile['name'] as String? ?? 'T';
+    final initial = name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : 'T';
+    final bg = AppTheme.primaryColor.withValues(alpha: 0.1);
+
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return CircleAvatar(
+        radius: radius,
+        backgroundColor: bg,
+        child: Text(initial, style: TextStyle(fontSize: radius * 0.68, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+      );
+    }
+
+    if (imageUrl.startsWith('data:')) {
+      try {
+        final commaIdx = imageUrl.indexOf(',');
+        if (commaIdx != -1) {
+          final bytes = base64Decode(imageUrl.substring(commaIdx + 1));
+          return CircleAvatar(
+            radius: radius,
+            backgroundColor: bg,
+            child: ClipOval(
+              child: Image.memory(bytes, width: radius * 2, height: radius * 2, fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Text(initial, style: TextStyle(fontSize: radius * 0.68, fontWeight: FontWeight.bold, color: AppTheme.primaryColor))),
+            ),
+          );
+        }
+      } catch (_) {}
+    }
+
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: bg,
+      child: ClipOval(
+        child: Image.network(imageUrl, width: radius * 2, height: radius * 2, fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Text(initial, style: TextStyle(fontSize: radius * 0.68, fontWeight: FontWeight.bold, color: AppTheme.primaryColor))),
+      ),
+    );
+  }
+
   Widget _buildProfileSection(Map<String, dynamic> profile) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -286,17 +327,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 35,
-                backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-                backgroundImage: profile['imageUrl'] != null ? NetworkImage(profile['imageUrl']) : null,
-                child: profile['imageUrl'] == null
-                    ? Text(
-                        profile['name'][0].toUpperCase(),
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
-                      )
-                    : null,
-              ),
+              _buildProfileAvatar(profile, 35),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(

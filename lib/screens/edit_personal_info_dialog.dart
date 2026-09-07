@@ -53,7 +53,12 @@ class _EditPersonalInfoDialogState extends State<EditPersonalInfoDialog> {
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 20);
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 40,
+      maxWidth: 400,
+      maxHeight: 400,
+    );
     
     if (image == null) return;
 

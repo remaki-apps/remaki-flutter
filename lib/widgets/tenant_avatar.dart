@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
@@ -19,7 +21,21 @@ class TenantAvatar extends StatelessWidget {
     this.enablePreview = true,
   });
 
-  void _showImagePreview(BuildContext context, String avatarUrl, String initial) {
+  bool get _isBase64 => imageUrl != null && imageUrl!.startsWith('data:');
+  bool get _hasImage => imageUrl != null && imageUrl!.trim().isNotEmpty;
+
+  Uint8List? get _base64Bytes {
+    if (!_isBase64) return null;
+    try {
+      final commaIndex = imageUrl!.indexOf(',');
+      if (commaIndex == -1) return null;
+      return base64Decode(imageUrl!.substring(commaIndex + 1));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _showImagePreview(BuildContext context, String initial) {
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
@@ -41,7 +57,6 @@ class TenantAvatar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 child: Stack(
                   children: [
-                    // Image Container with Zoom support
                     Container(
                       width: double.infinity,
                       height: 340,
@@ -49,45 +64,9 @@ class TenantAvatar extends StatelessWidget {
                       child: InteractiveViewer(
                         minScale: 0.8,
                         maxScale: 4.0,
-                        child: Image.network(
-                          avatarUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                              alignment: Alignment.center,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  CircleAvatar(
-                                    radius: 40,
-                                    backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.2),
-                                    child: Text(
-                                      initial,
-                                      style: const TextStyle(
-                                        fontSize: 36,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppTheme.primaryColor,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    name,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: AppTheme.textPrimary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
+                        child: _buildLargeImage(context, initial),
                       ),
                     ),
-                    // Floating Overlay Close Button
                     Positioned(
                       top: 12,
                       right: 12,
@@ -114,49 +93,140 @@ class TenantAvatar extends StatelessWidget {
     );
   }
 
+  Widget _buildLargeImage(BuildContext context, String initial) {
+    if (!_hasImage) return _buildInitialWidget(initial, 40);
+
+    if (_isBase64) {
+      final bytes = _base64Bytes;
+      if (bytes == null) return _buildInitialWidget(initial, 40);
+      return Image.memory(
+        bytes,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _buildInitialWidget(initial, 40),
+      );
+    }
+
+    return Image.network(
+      imageUrl!,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => _buildInitialWidget(initial, 40),
+    );
+  }
+
+  Widget _buildInitialWidget(String initial, double size) {
+    final bg = backgroundColor ?? AppTheme.primaryColor.withValues(alpha: 0.1);
+    final fg = textColor ?? AppTheme.primaryColor;
+    return Container(
+      color: bg,
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircleAvatar(
+            radius: size,
+            backgroundColor: bg,
+            child: Text(
+              initial,
+              style: TextStyle(
+                fontSize: size * 0.9,
+                fontWeight: FontWeight.bold,
+                color: fg,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            name,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final effectiveBg = backgroundColor ?? AppTheme.primaryColor.withValues(alpha: 0.1);
     final effectiveFg = textColor ?? AppTheme.primaryColor;
     final initial = name.trim().isNotEmpty ? name.trim().substring(0, 1).toUpperCase() : 'T';
 
-    final avatarUrl = (imageUrl != null && imageUrl!.trim().isNotEmpty)
-        ? imageUrl!.trim()
-        : 'https://i.pravatar.cc/300?u=${Uri.encodeComponent(name)}';
+    Widget avatarContent;
 
-    Widget avatarContent = CircleAvatar(
-      radius: radius,
-      backgroundColor: effectiveBg,
-      child: ClipOval(
-        child: Image.network(
-          avatarUrl,
-          width: radius * 2,
-          height: radius * 2,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              width: radius * 2,
-              height: radius * 2,
-              color: effectiveBg,
-              alignment: Alignment.center,
-              child: Text(
-                initial,
-                style: TextStyle(
-                  color: effectiveFg,
-                  fontWeight: FontWeight.bold,
-                  fontSize: radius * 0.85,
-                ),
-              ),
-            );
-          },
+    if (!_hasImage) {
+      avatarContent = CircleAvatar(
+        radius: radius,
+        backgroundColor: effectiveBg,
+        child: Text(
+          initial,
+          style: TextStyle(
+            color: effectiveFg,
+            fontWeight: FontWeight.bold,
+            fontSize: radius * 0.85,
+          ),
         ),
-      ),
-    );
+      );
+    } else if (_isBase64) {
+      final bytes = _base64Bytes;
+      avatarContent = CircleAvatar(
+        radius: radius,
+        backgroundColor: effectiveBg,
+        child: ClipOval(
+          child: bytes != null
+              ? Image.memory(
+                  bytes,
+                  width: radius * 2,
+                  height: radius * 2,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Text(
+                    initial,
+                    style: TextStyle(
+                      color: effectiveFg,
+                      fontWeight: FontWeight.bold,
+                      fontSize: radius * 0.85,
+                    ),
+                  ),
+                )
+              : Text(
+                  initial,
+                  style: TextStyle(
+                    color: effectiveFg,
+                    fontWeight: FontWeight.bold,
+                    fontSize: radius * 0.85,
+                  ),
+                ),
+        ),
+      );
+    } else {
+      avatarContent = CircleAvatar(
+        radius: radius,
+        backgroundColor: effectiveBg,
+        child: ClipOval(
+          child: Image.network(
+            imageUrl!,
+            width: radius * 2,
+            height: radius * 2,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Text(
+              initial,
+              style: TextStyle(
+                color: effectiveFg,
+                fontWeight: FontWeight.bold,
+                fontSize: radius * 0.85,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     if (!enablePreview) return avatarContent;
 
     return GestureDetector(
-      onTap: () => _showImagePreview(context, avatarUrl, initial),
+      onTap: () => _showImagePreview(context, initial),
       child: avatarContent,
     );
   }
