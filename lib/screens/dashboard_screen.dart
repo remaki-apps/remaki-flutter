@@ -59,7 +59,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Row(
                     children: [
                       GestureDetector(
-                        onTap: () => context.push('/approvals'),
+                        onTap: () async {
+                          await context.push('/approvals');
+                          _loadFeeSummary();
+                        },
                         child: Container(
                           width: 36,
                           height: 36,
