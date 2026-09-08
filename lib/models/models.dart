@@ -136,7 +136,7 @@ class Tenant {
   String? state;
   String? nationality;
   String? pinCode;
-  double totalConvenienceFee;
+  double pendingConvenienceFee;
 
   // totalDue = unpaid utility/other bills only (not rent, as rent is tracked via pendingRentAmount)
   double get totalPendingBills => additionalCharges
@@ -239,7 +239,7 @@ class Tenant {
     this.credentialsSent = false,
     String? password,
     this.defaultPaymentMode,
-    this.totalConvenienceFee = 0.0,
+    this.pendingConvenienceFee = 0.0,
   })  : additionalCharges = additionalCharges ?? [],
         password = password ?? generateEasyPassword();
 
@@ -274,7 +274,7 @@ class Tenant {
         'state': state,
         'nationality': nationality,
         'pinCode': pinCode,
-        'totalConvenienceFee': totalConvenienceFee,
+        'pendingConvenienceFee': pendingConvenienceFee,
       };
 
   factory Tenant.fromJson(Map<String, dynamic> json) => Tenant(
@@ -308,7 +308,7 @@ class Tenant {
         state: json['state'] as String?,
         nationality: json['nationality'] as String?,
         pinCode: json['pinCode'] as String?,
-        totalConvenienceFee: (json['totalConvenienceFee'] as num?)?.toDouble() ?? 0.0,
+        pendingConvenienceFee: (json['pendingConvenienceFee'] as num?)?.toDouble() ?? 0.0,
       );
 }
 
