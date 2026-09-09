@@ -17,7 +17,8 @@ class AddRoomScreen extends StatefulWidget {
 class _AddRoomScreenState extends State<AddRoomScreen> {
   final _formKey = GlobalKey<FormState>();
   final _roomNumberController = TextEditingController();
-  String _selectedFloor = 'Ground Floor';
+  String? _selectedFloor;
+  String? _floorError;
   int _capacity = 2;
   final List<TextEditingController> _bedNameControllers = [];
   final List<bool> _isPrefilled = [];
@@ -116,9 +117,13 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                   icon: Icons.domain_outlined,
                   iconColor: AppTheme.primaryColor,
                   iconBgColor: const Color(0xFFEEF2FF),
+                  errorText: _floorError,
                   items: _floorOptions.map((f) => DropdownOption(value: f, label: f)).toList(),
                   onChanged: (val) {
-                    setState(() => _selectedFloor = val);
+                    setState(() {
+                      _selectedFloor = val;
+                      _floorError = null;
+                    });
                   },
                 ),
                 const SizedBox(height: 12),
@@ -446,13 +451,22 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
   }
 
   void _submitForm() {
-    if (_formKey.currentState!.validate()) {
+    bool isValid = _formKey.currentState!.validate();
+
+    if (_selectedFloor == null || _selectedFloor!.trim().isEmpty) {
+      setState(() {
+        _floorError = 'Please select a floor';
+      });
+      isValid = false;
+    }
+
+    if (isValid) {
       final provider = Provider.of<AppProvider>(context, listen: false);
 
       final newRoom = Room(
         id: 'r_${DateTime.now().millisecondsSinceEpoch}',
         number: _roomNumberController.text.trim(),
-        floor: _selectedFloor,
+        floor: _selectedFloor!,
         capacity: _capacity,
         beds: List.generate(_capacity, (i) => Bed(
           id: 'b_${DateTime.now().millisecondsSinceEpoch}_$i',
@@ -461,7 +475,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
       );
 
       final roomNum = _roomNumberController.text.trim();
-      final flr = _selectedFloor;
+      final flr = _selectedFloor!;
 
       provider.addRoom(newRoom);
       context.pop();

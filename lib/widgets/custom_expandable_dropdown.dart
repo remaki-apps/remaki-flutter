@@ -16,6 +16,7 @@ class CustomExpandableDropdown<T> extends StatefulWidget {
   final Color? iconBgColor;
   final List<DropdownOption<T>> items;
   final ValueChanged<T> onChanged;
+  final String? errorText;
 
   const CustomExpandableDropdown({
     super.key,
@@ -27,6 +28,7 @@ class CustomExpandableDropdown<T> extends StatefulWidget {
     this.iconBgColor,
     required this.items,
     required this.onChanged,
+    this.errorText,
   });
 
   @override
@@ -50,32 +52,39 @@ class _CustomExpandableDropdownState<T> extends State<CustomExpandableDropdown<T
 
     final color = widget.iconColor ?? AppTheme.primaryColor;
     final bgColor = widget.iconBgColor ?? const Color(0xFFEEF2FF);
+    final hasError = widget.errorText != null && widget.errorText!.isNotEmpty;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: _isExpanded ? AppTheme.primaryColor : const Color(0xFFE2E8F0),
-            width: _isExpanded ? 1.5 : 1.0,
-          ),
-          boxShadow: _isExpanded
-              ? [
-                  BoxShadow(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ]
-              : null,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: hasError
+                    ? const Color(0xFFEF4444)
+                    : (_isExpanded ? AppTheme.primaryColor : const Color(0xFFE2E8F0)),
+                width: (hasError || _isExpanded) ? 1.5 : 1.0,
+              ),
+              boxShadow: _isExpanded
+                  ? [
+                      BoxShadow(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
             // Header Bar (Click to Expand / Collapse container)
             InkWell(
               onTap: () => setState(() => _isExpanded = !_isExpanded),
@@ -172,6 +181,20 @@ class _CustomExpandableDropdownState<T> extends State<CustomExpandableDropdown<T
             ],
           ],
         ),
+      ),
+          if (hasError)
+            Padding(
+              padding: const EdgeInsets.only(left: 14, top: 5),
+              child: Text(
+                widget.errorText!,
+                style: const TextStyle(
+                  color: Color(0xFFEF4444),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

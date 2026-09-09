@@ -153,6 +153,16 @@ final router = GoRouter(
       path: '/announcements',
       builder: (context, state) => const AnnouncementsScreen(),
     ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/unpaid_tenants',
+      builder: (context, state) => UnpaidTenantsScreen(filter: state.uri.queryParameters['filter']),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/available_beds',
+      builder: (context, state) => const AvailableBedsScreen(),
+    ),
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) {
@@ -166,14 +176,6 @@ final router = GoRouter(
         GoRoute(
           path: '/dashboard',
           builder: (context, state) => const DashboardScreen(),
-        ),
-        GoRoute(
-          path: '/unpaid_tenants',
-          builder: (context, state) => UnpaidTenantsScreen(filter: state.uri.queryParameters['filter']),
-        ),
-        GoRoute(
-          path: '/available_beds',
-          builder: (context, state) => const AvailableBedsScreen(),
         ),
         GoRoute(
           path: '/rooms',
