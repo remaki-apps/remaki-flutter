@@ -169,27 +169,51 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   double _calculateProfileCompletion() {
     if (_profileData == null) return 0.0;
     int filled = 0;
-    int total = 10;
-    if (_profileData!['name'] != null && _profileData!['name'].toString().isNotEmpty) filled++;
-    if (_profileData!['phone'] != null && _profileData!['phone'].toString().isNotEmpty) filled++;
-    if (_profileData!['email'] != null && _profileData!['email'].toString().isNotEmpty) filled++;
-    if (_profileData!['emergencyContact'] != null && _profileData!['emergencyContact'].toString().isNotEmpty) filled++;
-    if (_profileData!['dateOfBirth'] != null && _profileData!['dateOfBirth'].toString().isNotEmpty) filled++;
-    if (_profileData!['fatherName'] != null && _profileData!['fatherName'].toString().isNotEmpty) filled++;
-    if (_profileData!['permanentAddress'] != null && _profileData!['permanentAddress'].toString().isNotEmpty) filled++;
-    if (_profileData!['district'] != null && _profileData!['district'].toString().isNotEmpty) filled++;
-    if (_profileData!['pinCode'] != null && _profileData!['pinCode'].toString().isNotEmpty) filled++;
-    if (_profileData!['imageUrl'] != null && _profileData!['imageUrl'].toString().isNotEmpty) filled++;
-    return filled / total;
+    final keysToCheck = [
+      'name',
+      'phone',
+      'email',
+      'emergencyContact',
+      'dateOfBirth',
+      'fatherName',
+      'occupation',
+      'permanentAddress',
+      'district',
+      'pinCode',
+    ];
+    for (final key in keysToCheck) {
+      final val = _profileData![key];
+      if (val != null && val.toString().trim().isNotEmpty && val.toString().trim() != 'Not Provided' && val.toString().trim() != '-') {
+        filled++;
+      }
+    }
+    return (filled / keysToCheck.length).clamp(0.0, 1.0);
   }
 
   String _formatDate(dynamic dateStr) {
-    if (dateStr == null || dateStr.toString().isEmpty) return '-';
+    if (dateStr == null || dateStr.toString().trim().isEmpty) return 'Not Provided';
+    final str = dateStr.toString().trim();
+    if (str == 'Not Provided' || str == '-') return str;
     try {
-      final dt = DateTime.parse(dateStr.toString());
+      final dt = DateTime.parse(str);
       return DateFormat('dd MMM yyyy').format(dt);
     } catch (_) {
-      return dateStr.toString();
+      try {
+        if (str.contains('/')) {
+          final parts = str.split('/');
+          if (parts.length == 3) {
+            final dt = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+            return DateFormat('dd MMM yyyy').format(dt);
+          }
+        } else if (str.contains('-')) {
+          final parts = str.split('-');
+          if (parts.length == 3 && parts[0].length <= 2) {
+            final dt = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+            return DateFormat('dd MMM yyyy').format(dt);
+          }
+        }
+      } catch (_) {}
+      return str;
     }
   }
 
@@ -1966,13 +1990,21 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     final email = _profileData?['email'] ?? 'Not Provided';
     final emergency = _profileData?['emergencyContact'] ?? 'Not Provided';
     final dob = _formatDate(_profileData?['dateOfBirth']);
+    final marital = _profileData?['maritalStatus'] ?? 'Not Provided';
     final father = _profileData?['fatherName'] ?? 'Not Provided';
     final occupation = _profileData?['occupation'] ?? 'Not Provided';
+    final nationality = _profileData?['nationality'] ?? 'Not Provided';
+
     final address = _profileData?['permanentAddress'] ?? 'Not Provided';
+    final houseNo = _profileData?['houseNo'];
+    final wardNo = _profileData?['wardNo'];
+    final village = _profileData?['villageOrTown'] ?? _profileData?['village'];
     final district = _profileData?['district'] ?? 'Not Provided';
+    final state = _profileData?['state'] ?? 'Not Provided';
     final pinCode = _profileData?['pinCode'] ?? 'Not Provided';
 
     final completion = _calculateProfileCompletion();
+    final isKycComplete = completion >= 1.0;
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
@@ -2053,13 +2085,43 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'KYC Profile Completion',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: TenantTheme.textSecondary),
+                        Row(
+                          children: [
+                            Text(
+                              'KYC Profile Completion',
+                              style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: TenantTheme.textSecondary),
+                            ),
+                            if (isKycComplete) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFDCFCE7),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: const Color(0xFF86EFAC), width: 0.8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.check_circle_rounded, size: 12, color: Color(0xFF16A34A)),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      'Verified',
+                                      style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: const Color(0xFF16A34A)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                         Text(
                           '${(completion * 100).toInt()}%',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w800, color: TenantTheme.primary),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: isKycComplete ? const Color(0xFF16A34A) : TenantTheme.primary,
+                          ),
                         ),
                       ],
                     ),
@@ -2070,7 +2132,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         value: completion,
                         minHeight: 7,
                         backgroundColor: TenantTheme.background,
-                        valueColor: const AlwaysStoppedAnimation<Color>(TenantTheme.primary),
+                        valueColor: AlwaysStoppedAnimation<Color>(isKycComplete ? const Color(0xFF16A34A) : TenantTheme.primary),
                       ),
                     ),
                   ],
@@ -2099,14 +2161,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       child: ElevatedButton(
                         onPressed: () => _openCompleteKycDialog(),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: TenantTheme.primary,
+                          backgroundColor: isKycComplete ? const Color(0xFF16A34A) : TenantTheme.primary,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         child: Text(
-                          'Complete KYC',
+                          isKycComplete ? 'Update KYC' : 'Complete KYC',
                           style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800),
                         ),
                       ),
@@ -2128,6 +2190,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               _buildProfileRow('Date of Birth', dob),
               _buildProfileRow('Father\'s Name', father),
               _buildProfileRow('Occupation', occupation),
+              _buildProfileRow('Marital Status', marital),
+              _buildProfileRow('Nationality', nationality),
             ],
           ),
           const SizedBox(height: 14),
@@ -2138,7 +2202,11 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             icon: Icons.location_on_rounded,
             items: [
               _buildProfileRow('Address', address),
+              if (houseNo != null && houseNo.toString().isNotEmpty) _buildProfileRow('House No.', houseNo.toString()),
+              if (wardNo != null && wardNo.toString().isNotEmpty) _buildProfileRow('Ward No.', wardNo.toString()),
+              if (village != null && village.toString().isNotEmpty) _buildProfileRow('Village / Town', village.toString()),
               _buildProfileRow('District', district),
+              _buildProfileRow('State', state),
               _buildProfileRow('PIN Code', pinCode),
             ],
           ),
@@ -2241,7 +2309,6 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       builder: (ctx) => CompleteProfileDialog(
         tenant: _buildTenantModel(),
         onProfileUpdated: () {
-          FancyToast.showSuccess(context, 'KYC details updated!');
           _loadAllData();
         },
       ),

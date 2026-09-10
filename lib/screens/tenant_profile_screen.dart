@@ -142,9 +142,12 @@ class TenantProfileScreen extends StatelessWidget {
 
             // Scrollable Content
             Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: RefreshIndicator(
+                onRefresh: () => appProvider.loadFromAPI(),
+                color: AppTheme.primaryColor,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   children: [
                     // Hero Profile Card
@@ -696,7 +699,8 @@ class TenantProfileScreen extends StatelessWidget {
                 ),
               ),
             ),
-          ],
+          ),
+        ],
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
@@ -65,6 +66,35 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
     super.dispose();
   }
 
+  Future<void> _pickDateOfBirth() async {
+    DateTime initial = DateTime(2000, 1, 1);
+    try {
+      if (_dateOfBirthCtrl.text.isNotEmpty) {
+        final parts = _dateOfBirthCtrl.text.split(RegExp(r'[-/]'));
+        if (parts.length == 3) {
+          if (parts[0].length == 4) {
+            initial = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+          } else {
+            initial = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+          }
+        }
+      }
+    } catch (_) {}
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(1930),
+      lastDate: DateTime.now(),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _dateOfBirthCtrl.text = DateFormat('dd/MM/yyyy').format(picked);
+      });
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     
@@ -88,7 +118,7 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
       widget.onProfileUpdated();
       if (mounted) {
         Navigator.pop(context);
-        FancyToast.showSuccess(context, 'Profile updated successfully!');
+        FancyToast.showSuccess(context, 'KYC details updated successfully!');
       }
     } catch (e) {
       if (mounted) FancyToast.showError(context, 'Error', message: e.toString());
@@ -142,7 +172,17 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                 child: ListView(
                   padding: const EdgeInsets.all(24),
                   children: [
-                    _buildTextField('Date of Birth', _dateOfBirthCtrl, 'e.g. DD/MM/YYYY'),
+                    _buildTextField(
+                      'Date of Birth',
+                      _dateOfBirthCtrl,
+                      'DD/MM/YYYY',
+                      readOnly: true,
+                      onTap: _pickDateOfBirth,
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.calendar_month_rounded, color: AppTheme.primaryColor, size: 20),
+                        onPressed: _pickDateOfBirth,
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     _buildDropdown('Marital Status', ['Single', 'Married'], _maritalStatus, (val) => setState(() => _maritalStatus = val)),
                     const SizedBox(height: 16),
@@ -204,7 +244,16 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, String hint, {int maxLines = 1, TextInputType? keyboardType}) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller,
+    String hint, {
+    int maxLines = 1,
+    TextInputType? keyboardType,
+    bool readOnly = false,
+    VoidCallback? onTap,
+    Widget? suffixIcon,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -214,6 +263,8 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
           controller: controller,
           maxLines: maxLines,
           keyboardType: keyboardType,
+          readOnly: readOnly,
+          onTap: onTap,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
@@ -221,6 +272,7 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
             fillColor: const Color(0xFFF8FAFC),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            suffixIcon: suffixIcon,
           ),
         ),
       ],
@@ -234,7 +286,7 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
         Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: value,
+          initialValue: (value != null && options.contains(value)) ? value : null,
           items: options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
           onChanged: onChanged,
           decoration: InputDecoration(

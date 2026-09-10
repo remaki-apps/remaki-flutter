@@ -106,6 +106,7 @@ class ApiService {
           name
           phone
           email
+          imageUrl
           emergencyContact
           room {
             id
@@ -133,6 +134,18 @@ class ApiService {
             createdAt
           }
           pendingConvenienceFee
+          occupation
+          dateOfBirth
+          maritalStatus
+          fatherName
+          permanentAddress
+          villageOrTown
+          houseNo
+          wardNo
+          district
+          state
+          nationality
+          pinCode
         }
       }
     ''';
@@ -203,7 +216,7 @@ class ApiService {
   }
 
   /// Tenant updates their own profile — uses the auth token identity (no ID needed)
-  static Future<void> updateMyProfile(Map<String, dynamic> input) async {
+  static Future<Map<String, dynamic>?> updateMyProfile(Map<String, dynamic> input) async {
     const mutation = '''
       mutation UpdateMyProfile(\$input: UpdateTenantInput!) {
         updateMyProfile(input: \$input) {
@@ -213,10 +226,23 @@ class ApiService {
           imageUrl
           emergencyContact
           phone
+          occupation
+          dateOfBirth
+          maritalStatus
+          fatherName
+          permanentAddress
+          villageOrTown
+          houseNo
+          wardNo
+          district
+          state
+          nationality
+          pinCode
         }
       }
     ''';
-    await performQuery(mutation, variables: {'input': input});
+    final data = await performQuery(mutation, variables: {'input': input});
+    return data['updateMyProfile'];
   }
 
   static Future<Map<String, dynamic>?> fetchAdminProfile() async {
