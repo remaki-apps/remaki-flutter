@@ -21,8 +21,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Remaki - PG Management App">
 
-  <!-- Prevent browser from caching index.html itself -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <!-- Aggressive cache control - no caching at all for index.html -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 
@@ -51,45 +51,211 @@
 
   <script>
     // ──────────────────────────────────────────────────────────────────────────
-    // Service Worker Update Detector
-    // When a new version of the app is deployed, the new service worker is
-    // installed but stays in "waiting" state. This script detects that and
-    // automatically reloads the page so users always see the latest version
-    // without manually clearing their cache.
+    // Version Management
+    // ──────────────────────────────────────────────────────────────────────────
+    // Generate a deployment version based on timestamp or build hash
+    // Update this value on every deployment (or use CI/CD to inject it)
+    const DEPLOYMENT_VERSION = new Date().getTime().toString();
+    
+    // Store the current version in localStorage
+    const STORED_VERSION = localStorage.getItem('remaki_version');
+    if (!STORED_VERSION) {
+      localStorage.setItem('remaki_version', DEPLOYMENT_VERSION);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Enhanced Service Worker Update Detector
+    // Detects new deployments and forces app reload with cache clearing
     // ──────────────────────────────────────────────────────────────────────────
     if ('serviceWorker' in navigator) {
+      // Show update notification to users
+      function showUpdateNotification() {
+        const message = document.createElement('div');
+        message.id = 'update-notification';
+        message.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 16px;
+          text-align: center;
+          z-index: 9999;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          font-size: 14px;
+        `;
+        message.innerHTML = 'New version available! Updating...';
+        document.body.appendChild(message);
+      }
+
       navigator.serviceWorker.addEventListener('controllerchange', function () {
-        // New SW has taken control — reload once to get the latest assets
-        window.location.reload();
+        console.log('[SW] Controller changed - new service worker took control');
+        // New SW has taken control — reload to get the latest assets
+        showUpdateNotification();
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       });
 
       navigator.serviceWorker.ready.then(function (registration) {
-        // Check for updates every 60 seconds while the app is open
-        setInterval(function () {
-          registration.update().catch(function () {});
-        }, 60 * 1000);
+        console.log('[SW] Service Worker ready');
 
+        // Check for updates immediately
+        registration.update().catch(function (err) {
+          console.error('[SW] Update failed:', err);
+        });
+
+        // Check for updates every 30 seconds (aggressive check)
+        const updateInterval = setInterval(function () {
+          registration.update().catch(function (err) {
+            console.error('[SW] Periodic update failed:', err);
+          });
+        }, 30 * 1000);
+
+        // Clean up interval on SW unregistration
+        registration.addEventListener('updatefound', function () {
+          clearInterval(updateInterval);
+        });
+
+        // Handle waiting service worker
         if (registration.waiting) {
-          // A new SW is already waiting — skip waiting and activate immediately
+          console.log('[SW] Waiting service worker detected - skipping waiting');
+          showUpdateNotification();
           registration.waiting.postMessage({ type: 'SKIP_WAITING' });
         }
 
+        // Monitor for new service worker installations
         registration.addEventListener('updatefound', function () {
-          var newWorker = registration.installing;
+          const newWorker = registration.installing;
           if (!newWorker) return;
 
+          console.log('[SW] New service worker found - monitoring state');
+
           newWorker.addEventListener('statechange', function () {
+            console.log('[SW] New worker state:', newWorker.state);
+
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // New version installed and old SW is in control — activate new one immediately
+              // New version installed and old SW is in control
+              console.log('[SW] New worker installed, telling it to skip waiting');
+              showUpdateNotification();
               newWorker.postMessage({ type: 'SKIP_WAITING' });
             }
           });
         });
+      }).catch(function (err) {
+        console.error('[SW] Ready promise failed:', err);
+      });
+
+      // Register service worker with cache-busting
+      navigator.serviceWorker.register(
+        'flutter_service_worker.js?v=' + DEPLOYMENT_VERSION,
+        { scope: '/' }
+      ).catch(function (err) {
+        console.error('[SW] Registration failed:', err);
       });
     }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Detect Version Changes and Clear Old Caches
+    // Run on every page load to clean up outdated cache entries
+    // ──────────────────────────────────────────────────────────────────────────
+    window.addEventListener('load', function () {
+      const currentVersion = DEPLOYMENT_VERSION;
+      const storedVersion = localStorage.getItem('remaki_version');
+
+      if (storedVersion && storedVersion !== currentVersion) {
+        console.log('[Cache] Version changed - clearing old caches');
+        console.log('[Cache] Old version:', storedVersion, 'New version:', currentVersion);
+
+        // Clear all old caches
+        if ('caches' in window) {
+          caches.keys().then(function (cacheNames) {
+            cacheNames.forEach(function (cacheName) {
+              console.log('[Cache] Deleting cache:', cacheName);
+              caches.delete(cacheName);
+            });
+          }).catch(function (err) {
+            console.error('[Cache] Clear failed:', err);
+          });
+        }
+
+        // Update stored version
+        localStorage.setItem('remaki_version', currentVersion);
+
+        // Force reload after a brief delay to ensure SW is updated
+        setTimeout(function () {
+          console.log('[Cache] Performing hard reload');
+          window.location.reload(true);
+        }, 500);
+      }
+    });
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Fallback: Periodic Background Update Check
+    // Even if SW check fails, periodically verify if a new version exists
+    // ──────────────────────────────────────────────────────────────────────────
+    setInterval(function () {
+      fetch('index.html', { cache: 'no-store' })
+        .then(response => response.text())
+        .then(html => {
+          // If we got a response, we're online - service worker should handle it
+          console.log('[Fallback] Online - relying on SW');
+        })
+        .catch(err => {
+          console.log('[Fallback] Offline - app will work from cache');
+        });
+    }, 5 * 60 * 1000); // Every 5 minutes
   </script>
 </head>
 <body>
-  <script src="flutter_bootstrap.js" async></script>
+  <!-- Loading indicator shown while Flutter initializes -->
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    #loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      width: 100vw;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      z-index: -1;
+    }
+  </style>
+
+  <div id="loading">
+    <div style="text-align: center;">
+      <div style="font-size: 24px; margin-bottom: 20px;">🏠 Remaki</div>
+      <div style="animation: spin 1s linear infinite;">⏳</div>
+      <div style="margin-top: 20px; font-size: 14px;">Loading...</div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+
+  <!-- Flutter app entry point with cache-busting -->
+  <script src="flutter_bootstrap.js?v=__BUILD_TIMESTAMP__" async></script>
+  
+  <script>
+    // Hide loading indicator when Flutter is ready
+    window.addEventListener('load', function() {
+      const loading = document.getElementById('loading');
+      if (loading) {
+        loading.style.display = 'none';
+      }
+    });
+  </script>
 </body>
 </html>

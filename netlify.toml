@@ -1,66 +1,30 @@
 [build]
-  command = "if [ ! -d \"flutter\" ]; then git clone https://github.com/flutter/flutter.git -b stable --depth 1; fi && export PATH=\"$PATH:$(pwd)/flutter/bin\" && flutter pub get && flutter build web --release --pwa-strategy=none"
+  command = "flutter build web --release"
   publish = "build/web"
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-# ── Entry point files: NEVER cache these ─────────────────────────────────────
-# index.html and the service worker must always be fetched fresh so that
-# the browser can detect new deployments and auto-update.
 [[headers]]
   for = "/index.html"
   [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
+    Cache-Control = "no-cache, no-store, must-revalidate, max-age=0"
     Pragma = "no-cache"
     Expires = "0"
 
 [[headers]]
   for = "/flutter_service_worker.js"
   [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
+    Cache-Control = "no-cache, must-revalidate"
+
+[[headers]]
+  for = "/*.dart.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
   for = "/flutter_bootstrap.js"
-  [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
-
-[[headers]]
-  for = "/manifest.json"
-  [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
-
-[[headers]]
-  for = "/version.json"
-  [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
-
-[[headers]]
-  for = "/main.dart.js"
-  [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
-
-# ── Hashed assets: cache forever (content-addressed, safe to cache) ──────────
-[[headers]]
-  for = "/*.js"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
   for = "/assets/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/canvaskit/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-# ── Security headers ──────────────────────────────────────────────────────────
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
+    Cache-Control = "public, max-age=604800"
