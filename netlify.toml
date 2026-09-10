@@ -1,6 +1,11 @@
 [build]
-  command = "chmod +x build.sh && ./build.sh"
+  command = "bash build.sh"
   publish = "build/web"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
 
 [[headers]]
   for = "/index.html"
