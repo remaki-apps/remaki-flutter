@@ -1,12 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Remaki Flutter Service Worker - Enhanced with Cache Management
+// Remaki Flutter Service Worker
+// Strategy:
+//   - App shell (HTML, JS, assets): cache-first with background update
+//   - API calls: always network, never cached
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Update this on every deployment for cache busting
-const CACHE_VERSION = 'remaki-cache-v' + new Date().getTime();
-const CACHE_NAME = CACHE_VERSION;
+const CACHE_NAME = 'remaki-cache-v1';
 
-// List of URLs to precache
+// App shell files to precache
 const PRECACHE_URLS = [
   '/',
   '/index.html',
@@ -27,12 +28,11 @@ self.addEventListener('install', (event) => {
       console.log('[SW] Pre-caching app shell');
       return cache.addAll(PRECACHE_URLS).catch((err) => {
         console.warn('[SW] Pre-cache failed (non-critical):', err);
-        // Don't fail installation if precache fails - app can work online
       });
     })
   );
-  // Force activation immediately
-  self.skipWaiting();
+  // Activate immediately but do NOT skipWaiting to avoid reload loops
+  // Use self.skipWaiting() only if you explicitly want to force the new SW
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -42,7 +42,6 @@ self.addEventListener('activate', (event) => {
   console.log('[SW] Activating...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
-      console.log('[SW] Found caches:', cacheNames);
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
@@ -53,117 +52,76 @@ self.addEventListener('activate', (event) => {
       );
     }).then(() => {
       console.log('[SW] Activation complete - claiming clients');
-      return self.clients.claim(); // Take control immediately
+      return self.clients.claim();
     })
   );
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Fetch Event: Network-first strategy with fallback to cache
+// Fetch Event
 // ─────────────────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip chrome extensions and other schemes
+  // Skip non-http requests (chrome-extension, etc.)
   if (!url.protocol.startsWith('http')) {
     return;
   }
 
-  // For navigation requests (HTML), use network-first
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          // Cache the new response
+  // ── API calls: always go to network, never use cache ──────────────────────
+  // Covers any path with /api/ in it, or calls to external API hosts
+  const isApiCall =
+    url.pathname.includes('/api/') ||
+    url.hostname !== self.location.hostname;
+
+  if (isApiCall || request.method !== 'GET') {
+    // Pass through to network directly, no caching
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // ── App shell: cache-first ─────────────────────────────────────────────────
+  event.respondWith(
+    caches.match(request).then((cached) => {
+      if (cached) {
+        // Serve from cache; update in background (stale-while-revalidate)
+        fetch(request)
+          .then((response) => {
+            if (response && response.status === 200) {
+              caches.open(CACHE_NAME).then((cache) => {
+                cache.put(request, response);
+              });
+            }
+          })
+          .catch(() => { /* Network unavailable - cache is fine */ });
+        return cached;
+      }
+
+      // Not in cache — fetch from network and cache it
+      return fetch(request).then((response) => {
+        if (response && response.status === 200) {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(request, responseToCache);
           });
-          return response;
-        })
-        .catch(() => {
-          // Fall back to cache if offline
-          return caches.match(request).then((cached) => {
-            if (cached) {
-              console.log('[SW] Serving from cache (offline):', request.url);
-              return cached;
-            }
-            // If no cache, return offline page if needed
-            return fetch(request);
-          });
-        })
-    );
-    return;
-  }
-
-  // For assets and API calls, use cache-first with network fallback
-  if (request.method === 'GET') {
-    event.respondWith(
-      caches.match(request).then((cached) => {
-        if (cached) {
-          // Check for updates in background
-          fetch(request)
-            .then((response) => {
-              if (response && response.status === 200) {
-                caches.open(CACHE_NAME).then((cache) => {
-                  cache.put(request, response);
-                });
-              }
-            })
-            .catch(() => {
-              // Network failed, use cache
-            });
-          return cached;
         }
-
-        // Not in cache, fetch from network
-        return fetch(request)
-          .then((response) => {
-            // Cache successful responses
-            if (response && response.status === 200) {
-              const responseToCache = response.clone();
-              caches.open(CACHE_NAME).then((cache) => {
-                cache.put(request, responseToCache);
-              });
-            }
-            return response;
-          })
-          .catch((err) => {
-            console.error('[SW] Fetch failed:', request.url, err);
-            // Try cache as last resort
-            return caches.match(request);
-          });
-      })
-    );
-    return;
-  }
-
-  // For non-GET requests, go straight to network
-  event.respondWith(fetch(request));
+        return response;
+      }).catch((err) => {
+        console.error('[SW] Fetch failed:', request.url, err);
+        return caches.match(request);
+      });
+    })
+  );
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Message Handler: Support SKIP_WAITING from index.html
+// Message Handler
 // ─────────────────────────────────────────────────────────────────────────────
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     console.log('[SW] Received SKIP_WAITING message');
     self.skipWaiting();
-  }
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Periodic Background Sync (optional - update app periodically)
-// ─────────────────────────────────────────────────────────────────────────────
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'remaki-sync') {
-    console.log('[SW] Background sync triggered');
-    event.waitUntil(
-      fetch('/api/health')
-        .then(() => console.log('[SW] Sync successful'))
-        .catch((err) => console.log('[SW] Sync failed (offline):', err))
-    );
   }
 });
 
