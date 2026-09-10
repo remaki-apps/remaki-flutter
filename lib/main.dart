@@ -64,6 +64,11 @@ final router = GoRouter(
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
+      path: '/tenant_my_profile',
+      builder: (context, state) => const TenantHomeScreen(initialTab: 2),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
       path: '/add_room',
       builder: (context, state) => const AddRoomScreen(),
     ),

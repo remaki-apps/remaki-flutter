@@ -179,11 +179,15 @@ class ApiService {
             id
             bedLabel
           }
+          defaultPaymentMode
           bills {
             id
             amount
             status
             type
+            dueDate
+            description
+            createdAt
           }
           pendingConvenienceFee
         }
