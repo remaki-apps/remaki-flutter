@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
@@ -36,14 +37,13 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
   }
 
   Future<void> _handleAccept(String requestId) async {
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
     try {
       await ApiService.resolvePaymentRequest(requestId, 'APPROVE');
-      if (mounted) {
-        // Refresh app provider to reflect paid rent
-        await Provider.of<AppProvider>(context, listen: false).loadFromAPI();
-        FancyToast.showSuccess(context, 'Payment Accepted');
-        _loadRequests();
-      }
+      await appProvider.loadFromAPI();
+      if (!mounted) return;
+      FancyToast.showSuccess(context, 'Payment Accepted');
+      _loadRequests();
     } catch (e) {
       if (mounted) FancyToast.showError(context, 'Error', message: e.toString());
     }
@@ -67,26 +67,24 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
     );
 
     if (reason != null) {
+      if (!mounted) return;
+      final appProvider = Provider.of<AppProvider>(context, listen: false);
       try {
         await ApiService.resolvePaymentRequest(requestId, 'REJECT', rejectionReason: reason);
         
         // Launch WhatsApp
-        // Assuming we have tenant phone number or we just launch whatsapp generically.
-        // We didn't fetch phone number in query, so we'll just open standard wa.me link.
-        // In a real app we would fetch the phone number. Let's try to find it in AppProvider.
         final req = _requests.firstWhere((r) => r['id'] == requestId);
-        final tenant = Provider.of<AppProvider>(context, listen: false).tenants.firstWhere((t) => t.id == req['tenantProfileId']);
+        final tenant = appProvider.tenants.firstWhere((t) => t.id == req['tenantProfileId']);
         
-        final msg = Uri.encodeComponent('Your request for marking rent payment as paid is rejected. \$reason. Kindly upload a proper and valid screenshot.');
-        final url = Uri.parse('https://wa.me/\${tenant.phone}?text=\$msg');
+        final msg = Uri.encodeComponent('Your request for marking rent payment as paid is rejected. $reason. Kindly upload a proper and valid screenshot.');
+        final url = Uri.parse('https://wa.me/${tenant.phone}?text=$msg');
         if (await canLaunchUrl(url)) {
           await launchUrl(url);
         }
 
-        if (mounted) {
-          FancyToast.showSuccess(context, 'Payment Declined');
-          _loadRequests();
-        }
+        if (!mounted) return;
+        FancyToast.showSuccess(context, 'Payment Declined');
+        _loadRequests();
       } catch (e) {
         if (mounted) FancyToast.showError(context, 'Error', message: e.toString());
       }
@@ -96,11 +94,56 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Pending Approvals')),
+      backgroundColor: const Color(0xFFF8F9FD),
+      appBar: AppBar(
+        title: Text(
+          'Pending Approvals',
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w700,
+            fontSize: 20,
+          ),
+        ),
+      ),
       body: _isLoading 
         ? const Center(child: CircularProgressIndicator())
         : _requests.isEmpty
-          ? const Center(child: Text('No pending approvals'))
+          ? Center(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/images/no_pending_approvals.png',
+                      height: 180,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No Pending Approvals',
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF0F172A),
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'All tenant rent and payment requests have been reviewed.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF64748B),
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
           : ListView.builder(
               itemCount: _requests.length,
               itemBuilder: (context, index) {

@@ -770,9 +770,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           const SizedBox(height: 12),
           Container(
             width: double.infinity,
-            padding: _announcements.isNotEmpty
-                ? const EdgeInsets.all(18)
-                : const EdgeInsets.symmetric(vertical: 24, horizontal: 18),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
@@ -783,58 +781,129 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        _announcements.first['heading'] ?? 'Notice',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w700,
-                          color: TenantTheme.textPrimary,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: TenantTheme.primarySoft,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.verified_rounded, size: 12, color: TenantTheme.primary),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Official Notice',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: TenantTheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (_announcements.first['createdAt'] != null)
+                            Row(
+                              children: [
+                                const Icon(Icons.schedule_rounded, size: 12, color: TenantTheme.textMuted),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _formatDate(_announcements.first['createdAt']),
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    color: TenantTheme.textMuted,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        _announcements.first['description'] ?? '',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13,
-                          color: TenantTheme.textSecondary,
-                          height: 1.45,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      const SizedBox(height: 12),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEEF2FF),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.campaign_rounded,
+                              size: 18,
+                              color: TenantTheme.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _announcements.first['heading'] ?? 'Notice',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 15.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: TenantTheme.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _announcements.first['description'] ?? '',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13,
+                                    color: TenantTheme.textSecondary,
+                                    height: 1.45,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   )
                 : Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.asset(
-                          'assets/images/no_notices.png',
-                          height: 130,
-                          fit: BoxFit.contain,
-                        ),
-                        const SizedBox(height: 14),
-                        Text(
-                          'No Notices Yet',
-                          style: GoogleFonts.outfit(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF0F172A),
-                            letterSpacing: -0.3,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/images/no_notices.png',
+                            height: 120,
+                            fit: BoxFit.contain,
                           ),
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          'Official PG notices will appear here once posted by management.',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w500,
-                            color: const Color(0xFF64748B),
-                            height: 1.4,
+                          const SizedBox(height: 12),
+                          Text(
+                            'No Notices Yet',
+                            style: GoogleFonts.outfit(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF0F172A),
+                              letterSpacing: -0.3,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 4),
+                          Text(
+                            'Official PG notices will appear here once posted by management.',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF64748B),
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
           ),
@@ -1910,63 +1979,121 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: TenantTheme.borderLight, width: 1.2),
-                    boxShadow: TenantTheme.cardShadow,
+                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.4),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF0F172A).withValues(alpha: 0.035),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Container(
+                            padding: const EdgeInsets.all(9),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEEF2FF),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.campaign_rounded,
+                              size: 20,
+                              color: TenantTheme.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
                           Expanded(
-                            child: Text(
-                              heading,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 15.5,
-                                fontWeight: FontWeight.w800,
-                                color: TenantTheme.textPrimary,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  heading,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF0F172A),
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                                if (date.isNotEmpty) ...[
+                                  const SizedBox(height: 3),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.schedule_rounded,
+                                        size: 12,
+                                        color: Color(0xFF94A3B8),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        date,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 11.5,
+                                          color: const Color(0xFF64748B),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                             decoration: BoxDecoration(
-                              color: TenantTheme.primarySoft,
+                              color: const Color(0xFFEEF2FF),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: TenantTheme.primaryBorder),
                             ),
-                            child: Text(
-                              'Official',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: TenantTheme.primary,
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.verified_rounded, size: 12, color: TenantTheme.primary),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Official',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: TenantTheme.primary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        date,
-                        style: GoogleFonts.plusJakartaSans(fontSize: 12, color: TenantTheme.textMuted),
-                      ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
                       Text(
                         desc,
-                        style: GoogleFonts.plusJakartaSans(fontSize: 13.5, color: TenantTheme.textSecondary, height: 1.45),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.5,
+                          height: 1.5,
+                          color: const Color(0xFF334155),
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
                       if (imgUrl != null && imgUrl.isNotEmpty) ...[
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 14),
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            imgUrl,
-                            height: 160,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (ctx, err, st) => const SizedBox(),
+                          borderRadius: BorderRadius.circular(14),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: const Color(0xFFF1F5F9)),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Image.network(
+                              imgUrl,
+                              height: 170,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (ctx, err, st) => const SizedBox(),
+                            ),
                           ),
                         ),
                       ],

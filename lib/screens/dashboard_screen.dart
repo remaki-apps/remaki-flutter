@@ -571,53 +571,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
               ),
-
-              // 6. Quick Actions
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Quick Actions',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      _buildQuickActionCard(
-                        context: context,
-                        label: 'Add Tenant',
-                        icon: Icons.person_add_outlined,
-                        onTap: () => context.push('/add_tenant'),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildQuickActionCard(
-                        context: context,
-                        label: 'Add Room',
-                        icon: Icons.add_home_outlined,
-                        onTap: () => context.push('/add_room'),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildQuickActionCard(
-                        context: context,
-                        label: 'Record Payment',
-                        icon: Icons.credit_card_outlined,
-                        onTap: () => context.push('/tenants'),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildQuickActionCard(
-                        context: context,
-                        label: 'View Reports',
-                        icon: Icons.bar_chart_rounded,
-                        onTap: () => context.push('/rent'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
             ],
           ),
         ),
@@ -762,57 +715,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             overflow: TextOverflow.ellipsis,
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActionCard({
-    required BuildContext context,
-    required String label,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          height: 66,
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFF1F5F9)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x06000000),
-                blurRadius: 8,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                color: AppTheme.primaryColor,
-                size: 20,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF0F172A),
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

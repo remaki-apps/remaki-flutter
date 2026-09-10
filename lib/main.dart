@@ -26,6 +26,10 @@ import 'screens/forgot_password_screen.dart';
 import 'screens/tenant_home_screen.dart';
 import 'screens/pending_approvals_screen.dart';
 import 'screens/announcements_screen.dart';
+import 'screens/about_remaki_screen.dart';
+import 'screens/terms_of_service_screen.dart';
+import 'screens/privacy_policy_screen.dart';
+import 'screens/help_support_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -167,6 +171,26 @@ final router = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/available_beds',
       builder: (context, state) => const AvailableBedsScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/about',
+      builder: (context, state) => const AboutRemakiScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/terms',
+      builder: (context, state) => const TermsOfServiceScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/privacy',
+      builder: (context, state) => const PrivacyPolicyScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/help_support',
+      builder: (context, state) => const HelpSupportScreen(),
     ),
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
