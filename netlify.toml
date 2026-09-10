@@ -1,5 +1,5 @@
 [build]
-  command = "flutter build web --release"
+  command = "chmod +x build.sh && ./build.sh"
   publish = "build/web"
 
 [[headers]]
