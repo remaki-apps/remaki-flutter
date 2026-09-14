@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -10,20 +11,24 @@ class SuccessScreen extends StatelessWidget {
   final String title;
   final String subtitle;
   final Widget details;
-  final String primaryButtonText;
-  final VoidCallback onPrimaryPressed;
+  final String? primaryButtonText;
+  final VoidCallback? onPrimaryPressed;
   final String? secondaryButtonText;
   final VoidCallback? onSecondaryPressed;
+  final VoidCallback? onBackPressed;
+  final Widget? bottomContent;
 
   const SuccessScreen({
     super.key,
     required this.title,
     required this.subtitle,
     required this.details,
-    required this.primaryButtonText,
-    required this.onPrimaryPressed,
+    this.primaryButtonText,
+    this.onPrimaryPressed,
     this.secondaryButtonText,
     this.onSecondaryPressed,
+    this.onBackPressed,
+    this.bottomContent,
   });
 
   @override
@@ -35,7 +40,7 @@ class SuccessScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF0F172A)),
-          onPressed: () => context.go('/tenants'),
+          onPressed: onBackPressed ?? () => context.go('/tenants'),
         ),
       ),
       body: SafeArea(
@@ -134,70 +139,73 @@ class SuccessScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 12),
-
-              // Bottom Action Buttons
-              Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF4F46E5), Color(0xFF4338CA)],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF4F46E5).withValues(alpha: 0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: onPrimaryPressed,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              primaryButtonText,
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
-                            ),
-                            const SizedBox(width: 8),
-                            const Icon(Icons.arrow_forward_rounded, size: 18, color: Colors.white),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (secondaryButtonText != null) ...[
-                    const SizedBox(height: 10),
+              if (bottomContent != null) ...[
+                const SizedBox(height: 12),
+                bottomContent!,
+              ] else if (primaryButtonText != null && onPrimaryPressed != null) ...[
+                const SizedBox(height: 12),
+                Column(
+                  children: [
                     SizedBox(
                       width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: onSecondaryPressed,
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: const BorderSide(color: Color(0xFFCBD5E1)),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF4F46E5), Color(0xFF4338CA)],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF4F46E5).withValues(alpha: 0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                        child: Text(
-                          secondaryButtonText!,
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                        child: ElevatedButton(
+                          onPressed: onPrimaryPressed,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                primaryButtonText!,
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.arrow_forward_rounded, size: 18, color: Colors.white),
+                            ],
+                          ),
                         ),
                       ),
                     ),
+                    if (secondaryButtonText != null) ...[
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: onSecondaryPressed,
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          child: Text(
+                            secondaryButtonText!,
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
-                ],
-              ),
+                ),
+              ],
             ],
           ),
         ),
@@ -739,11 +747,12 @@ class _TenantAddedSuccessScreenState extends State<TenantAddedSuccessScreen> {
   }
 }
 
-class PaymentSuccessScreen extends StatelessWidget {
+class PaymentSuccessScreen extends StatefulWidget {
   final String amount;
   final String name;
   final String roomBed;
   final String dateMethod;
+  final String? tenantId;
 
   const PaymentSuccessScreen({
     super.key,
@@ -751,88 +760,153 @@ class PaymentSuccessScreen extends StatelessWidget {
     required this.name,
     required this.roomBed,
     required this.dateMethod,
+    this.tenantId,
   });
 
   @override
+  State<PaymentSuccessScreen> createState() => _PaymentSuccessScreenState();
+}
+
+class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-navigate to previous screen after brief confirmation
+    _timer = Timer(const Duration(milliseconds: 2000), () {
+      if (mounted) {
+        _navigateBack();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _navigateBack() {
+    _timer?.cancel();
+    if (!mounted) return;
+    if (context.canPop()) {
+      context.pop();
+    } else if (widget.tenantId != null && widget.tenantId!.isNotEmpty) {
+      context.go('/tenant_profile/${widget.tenantId}');
+    } else {
+      context.go('/tenants');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SuccessScreen(
-      title: 'Payment Recorded Successfully!',
-      subtitle: 'Rent payment has been credited',
-      details: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            // Amount Banner
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFECFDF5),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFA7F3D0)),
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        _timer?.cancel();
+      },
+      child: SuccessScreen(
+        title: 'Payment Recorded Successfully!',
+        subtitle: 'Rent payment has been credited',
+        onBackPressed: _navigateBack,
+        bottomContent: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF64748B)),
+                ),
               ),
-              child: Column(
+              SizedBox(width: 8),
+              Text(
+                'Returning to previous screen...',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+        ),
+        details: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // Amount Banner
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFECFDF5),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFA7F3D0)),
+                ),
+                child: Column(
+                  children: [
+                    const Text(
+                      'AMOUNT RECEIVED',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF047857), letterSpacing: 0.5),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '₹${widget.amount}',
+                      style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Tenant Row
+              Row(
                 children: [
-                  const Text(
-                    'AMOUNT RECEIVED',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF047857), letterSpacing: 0.5),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '₹$amount',
-                    style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
+                  TenantAvatar(name: widget.name, radius: 22),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.name,
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.roomBed,
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        ),
+                        Text(
+                          widget.dateMethod,
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppTheme.primaryColor),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 16),
-
-            // Tenant Row
-            Row(
-              children: [
-                TenantAvatar(name: name, radius: 22),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        roomBed,
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                      ),
-                      Text(
-                        dateMethod,
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppTheme.primaryColor),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-      primaryButtonText: 'Go to Tenants List',
-      onPrimaryPressed: () => context.go('/tenants'),
-      secondaryButtonText: 'Back to Dashboard',
-      onSecondaryPressed: () => context.go('/'),
     );
   }
 }

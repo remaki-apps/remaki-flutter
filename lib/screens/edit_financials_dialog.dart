@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/fancy_toast.dart';
@@ -10,10 +9,10 @@ class EditFinancialsDialog extends StatefulWidget {
   final dynamic tenant; // Tenant model
 
   const EditFinancialsDialog({
-    Key? key,
+    super.key,
     required this.provider,
     required this.tenant,
-  }) : super(key: key);
+  });
 
   @override
   State<EditFinancialsDialog> createState() => _EditFinancialsDialogState();
@@ -168,7 +167,7 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('\$label (₹)', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF475569))),
+                        Text('$label (₹)', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF475569))),
                         const SizedBox(height: 6),
                         TextField(
                           controller: _billControllers[bill.id],

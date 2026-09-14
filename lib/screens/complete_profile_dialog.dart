@@ -286,7 +286,7 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
         Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          initialValue: (value != null && options.contains(value)) ? value : null,
+          value: (value != null && options.contains(value)) ? value : null,
           items: options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
           onChanged: onChanged,
           decoration: InputDecoration(

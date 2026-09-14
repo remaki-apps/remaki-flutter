@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -508,7 +507,7 @@ class TenantProfileScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           _buildModernDetailItem(Icons.phone_outlined, 'Phone', tenant.phone),
-                          _buildModernDetailItem(Icons.email_outlined, 'Email', tenant.email != null && tenant.email!.isNotEmpty ? tenant.email! : '-'),
+                          _buildModernDetailItem(Icons.email_outlined, 'Email', tenant.email.isNotEmpty ? tenant.email : '-'),
                           _buildModernDetailItem(Icons.contact_phone_outlined, 'Emergency Contact', tenant.emergencyContact != null && tenant.emergencyContact!.isNotEmpty ? tenant.emergencyContact! : '-'),
                           if (tenant.dateOfBirth != null && tenant.dateOfBirth!.isNotEmpty) _buildModernDetailItem(Icons.cake_outlined, 'Date of Birth', tenant.dateOfBirth!),
                           if (tenant.maritalStatus != null && tenant.maritalStatus!.isNotEmpty) _buildModernDetailItem(Icons.favorite_border, 'Marital Status', tenant.maritalStatus!),

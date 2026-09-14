@@ -304,10 +304,6 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void _syncTotals() {
-    // Already recalculating dynamically on getter. We can leave this.
-  }
-
   Future<void> editTenantFinancials(String tenantId, double? rentAmount, double? securityDeposit, int? rentDueDay, String? paymentMode) async {
     try {
       await ApiService.updateTenantFinancials(
@@ -352,7 +348,9 @@ class AppProvider with ChangeNotifier {
           // Reload from API so the newly created bills appear correctly
           // (they are now PENDING in the DB and will come back from fetchTenants)
           loadFromAPI();
-        }).catchError((e) => debugPrint('Error generating bill: $e'));
+        }).catchError((e) {
+          debugPrint('Error generating bill: $e');
+        });
       }
     }
 

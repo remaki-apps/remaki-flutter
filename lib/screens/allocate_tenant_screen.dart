@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
-import '../models/models.dart';
 import '../widgets/fancy_toast.dart';
 
 class AllocateTenantScreen extends StatefulWidget {

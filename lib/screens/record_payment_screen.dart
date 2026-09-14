@@ -477,15 +477,16 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                       final bedDisplay = bedName.isNotEmpty ? ' - Bed $bedName' : '';
                                       final fullRoomBed = 'Room $roomNumber$bedDisplay';
 
-                                      if (context.mounted) {
-                                        context.go(
-                                          '/payment_success'
-                                          '?amount=${currentAmount.toStringAsFixed(0)}'
-                                          '&name=${Uri.encodeComponent(tenant.name)}'
-                                          '&roomBed=${Uri.encodeComponent(fullRoomBed)}'
-                                          '&dateMethod=${Uri.encodeComponent('$dateStr • $_paymentMethod')}',
-                                        );
-                                      }
+                                       if (context.mounted) {
+                                         context.pushReplacement(
+                                           '/payment_success'
+                                           '?amount=${currentAmount.toStringAsFixed(0)}'
+                                           '&name=${Uri.encodeComponent(tenant.name)}'
+                                           '&roomBed=${Uri.encodeComponent(fullRoomBed)}'
+                                           '&dateMethod=${Uri.encodeComponent('$dateStr • $_paymentMethod')}'
+                                           '&tenantId=${widget.tenantId}',
+                                         );
+                                       }
                                     } catch (e) {
                                       setState(() => _isLoading = false);
                                       if (context.mounted) {

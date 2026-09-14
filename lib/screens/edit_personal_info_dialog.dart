@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/api_service.dart';
 import '../widgets/fancy_toast.dart';
@@ -14,10 +13,10 @@ class EditPersonalInfoDialog extends StatefulWidget {
   final bool isAdmin; // if true, use AppProvider, else use ApiService directly for self
 
   const EditPersonalInfoDialog({
-    Key? key,
+    super.key,
     required this.tenant,
     this.isAdmin = true,
-  }) : super(key: key);
+  });
 
   @override
   State<EditPersonalInfoDialog> createState() => _EditPersonalInfoDialogState();
@@ -79,7 +78,7 @@ class _EditPersonalInfoDialogState extends State<EditPersonalInfoDialog> {
     try {
       String? base64Image;
       if (_selectedImageBytes != null) {
-        base64Image = 'data:image/jpeg;base64,' + base64Encode(_selectedImageBytes!);
+        base64Image = 'data:image/jpeg;base64,${base64Encode(_selectedImageBytes!)}';
       }
 
       final input = <String, dynamic>{

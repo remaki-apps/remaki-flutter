@@ -81,9 +81,17 @@ class ApiService {
         final Map<String, dynamic> data = jsonDecode(response.body);
         if (data.containsKey('errors')) {
           debugPrint('GraphQL Errors: ${data['errors']}');
-          throw ApiException(data['errors'][0]['message'] ?? 'An unknown backend error occurred.');
+          final msg = data['errors'][0]['message'] ?? 'An unknown backend error occurred.';
+          final lower = msg.toString().toLowerCase();
+          if (lower.contains('unauthorized') || lower.contains('unauthenticated') || lower.contains('jwt expired')) {
+            await clearAuthToken();
+          }
+          throw ApiException(msg);
         }
         return data['data'];
+      } else if (response.statusCode == 401) {
+        await clearAuthToken();
+        throw ApiException('Session expired. Please log in again.');
       } else {
         throw ApiException('Failed to load data: ${response.statusCode}. Please try again later.');
       }

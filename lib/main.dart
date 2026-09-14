@@ -149,6 +149,7 @@ final router = GoRouter(
           name: state.uri.queryParameters['name'] ?? '',
           roomBed: state.uri.queryParameters['roomBed'] ?? '',
           dateMethod: state.uri.queryParameters['dateMethod'] ?? '',
+          tenantId: state.uri.queryParameters['tenantId'],
         );
       },
     ),
