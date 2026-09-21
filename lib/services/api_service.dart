@@ -338,34 +338,39 @@ class ApiService {
   }
 
   static Future<List<dynamic>> fetchPayments({String? tenantId}) async {
-    String query;
-    if (tenantId != null) {
-      query = '''
-        query {
-          payments(tenantId: "$tenantId") {
-            id
-            tenantId
-            amount
-            method
-            date
+    try {
+      String query;
+      if (tenantId != null) {
+        query = '''
+          query {
+            payments(tenantId: "$tenantId") {
+              id
+              tenantId
+              amount
+              method
+              date
+            }
           }
-        }
-      ''';
-    } else {
-      query = '''
-        query {
-          payments {
-            id
-            tenantId
-            amount
-            method
-            date
+        ''';
+      } else {
+        query = '''
+          query {
+            payments {
+              id
+              tenantId
+              amount
+              method
+              date
+            }
           }
-        }
-      ''';
+        ''';
+      }
+      final response = await performQuery(query);
+      return response['payments'] ?? [];
+    } catch (e) {
+      debugPrint('fetchPayments error: $e');
+      return [];
     }
-    final response = await performQuery(query);
-    return response['payments'] ?? [];
   }
 
   static Future<List<dynamic>> fetchRooms() async {

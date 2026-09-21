@@ -95,12 +95,36 @@ class AppProvider with ChangeNotifier {
       }).toList();
 
       payments = paymentsData.map((e) {
+        final tId = e['tenantId']?.toString() ?? '';
+        Tenant? matchedTenant;
+        try {
+          matchedTenant = tenants.firstWhere((t) => t.id == tId);
+        } catch (_) {}
+
+        String? roomInfo = e['roomNumber'];
+        if (roomInfo == null && matchedTenant != null && matchedTenant.roomId.isNotEmpty) {
+          try {
+            final r = rooms.firstWhere((room) => room.id == matchedTenant!.roomId);
+            String label = 'Room ${r.number}';
+            if (matchedTenant.bedId.isNotEmpty) {
+              try {
+                final b = r.beds.firstWhere((bed) => bed.id == matchedTenant!.bedId);
+                label = 'Room ${r.number} (${b.name})';
+              } catch (_) {}
+            }
+            roomInfo = label;
+          } catch (_) {}
+        }
+
         return Payment(
-          id: e['id'],
-          tenantId: e['tenantId'],
-          amount: (e['amount'] as num).toDouble(),
-          method: e['method'],
+          id: e['id'] ?? '',
+          tenantId: tId,
+          amount: (e['amount'] as num?)?.toDouble() ?? 0.0,
+          method: e['method'] ?? 'UPI',
           date: e['date'] != null ? DateTime.tryParse(e['date']) ?? DateTime.now() : DateTime.now(),
+          tenantName: e['tenantName'] ?? matchedTenant?.name ?? 'Tenant',
+          roomNumber: roomInfo,
+          notes: e['notes'],
         );
       }).toList();
 

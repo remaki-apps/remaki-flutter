@@ -37,6 +37,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   Uint8List? _selectedImageBytes;
   final TextEditingController _descriptionController = TextEditingController();
   List<dynamic> _announcements = [];
+  List<dynamic> _payments = [];
 
   @override
   void initState() {
@@ -56,8 +57,18 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     await Future.wait([
       _fetchProfile(),
       _fetchAnnouncements(),
+      _fetchPayments(),
     ]);
     if (mounted) setState(() => _isFetching = false);
+  }
+
+  Future<void> _fetchPayments() async {
+    final payments = await ApiService.fetchPayments();
+    if (mounted) {
+      setState(() {
+        _payments = payments;
+      });
+    }
   }
 
   Future<void> _fetchAnnouncements() async {
@@ -1616,9 +1627,25 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     );
   }
 
+  String _formatPaymentDateTime(dynamic dateVal) {
+    if (dateVal == null) return '-';
+    try {
+      final dt = dateVal is DateTime ? dateVal : DateTime.parse(dateVal.toString());
+      if (dt.hour == 0 && dt.minute == 0 && dt.second == 0) {
+        return DateFormat('dd MMM yyyy').format(dt);
+      }
+      return DateFormat('dd MMM yyyy, hh:mm a').format(dt);
+    } catch (_) {
+      return _formatDate(dateVal);
+    }
+  }
+
   Widget _buildPaymentHistoryList(String currentMonthStr, double monthlyRentVal, bool isPaid, List<dynamic> bills) {
-    // If no bills and rent not recorded, show empty state
-    if (!isPaid && bills.isEmpty && monthlyRentVal <= 0) {
+    final hasRecordedPayments = _payments.isNotEmpty;
+    final hasPaidBills = bills.any((b) => b['status'] == 'PAID');
+    final hasPaidCycle = isPaid && monthlyRentVal > 0;
+
+    if (!hasRecordedPayments && !hasPaidBills && !hasPaidCycle) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
@@ -1655,17 +1682,45 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       ),
       child: Column(
         children: [
-          // If current cycle is paid, show it as verified paid rent history item
-          if (isPaid && monthlyRentVal > 0) ...[
-            _buildHistoryTile(
-              title: currentMonthStr,
+          // 1. If backend payments exist, display each payment record with exact paid date
+          if (hasRecordedPayments) ...[
+            ..._payments.asMap().entries.map((entry) {
+              final idx = entry.key;
+              final p = entry.value;
+              final amount = (p['amount'] as num?)?.toDouble() ?? 0.0;
+              final dateStr = _formatPaymentDateTime(p['date']);
+              final method = p['method']?.toString() ?? 'UPI';
+              final notes = p['notes']?.toString();
+              final isLast = idx == _payments.length - 1 && bills.isEmpty;
+
+              return Column(
+                children: [
+                  _buildPaymentRecordTile(
+                    title: notes != null && notes.isNotEmpty ? notes : 'Rent Payment',
+                    amount: '₹${NumberFormat('#,##,###').format(amount)}',
+                    dateStr: dateStr,
+                    method: method,
+                    status: 'Paid',
+                    isSuccess: true,
+                  ),
+                  if (!isLast) const Divider(height: 1, color: TenantTheme.borderLight, indent: 16, endIndent: 16),
+                ],
+              );
+            }),
+          ] else if (hasPaidCycle) ...[
+            // Fallback if backend payments list is empty but profile is marked PAID
+            _buildPaymentRecordTile(
+              title: '$currentMonthStr Rent',
               amount: '₹${NumberFormat('#,##,###').format(monthlyRentVal)}',
+              dateStr: _formatPaymentDateTime(DateTime.now()),
+              method: 'UPI',
               status: 'Paid',
               isSuccess: true,
             ),
             if (bills.isNotEmpty) const Divider(height: 1, color: TenantTheme.borderLight, indent: 16, endIndent: 16),
           ],
-          // Real bills from API
+
+          // 2. Bills history
           ...bills.asMap().entries.map((entry) {
             final idx = entry.key;
             final b = entry.value;
@@ -1674,12 +1729,17 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             final title = b['description'] != null && b['description'].toString().isNotEmpty
                 ? b['description'].toString()
                 : (b['type'] != null ? '${b['type']} Bill' : 'Utility Bill');
+            final billDate = isBillPaid
+                ? _formatPaymentDateTime(b['createdAt'] ?? b['dueDate'])
+                : _formatDate(b['dueDate'] ?? b['createdAt']);
 
             return Column(
               children: [
-                _buildHistoryTile(
+                _buildPaymentRecordTile(
                   title: title,
                   amount: '₹${NumberFormat('#,##,###').format(amount)}',
+                  dateStr: billDate,
+                  method: isBillPaid ? 'PAID' : 'PENDING',
                   status: isBillPaid ? 'Paid' : 'Pending',
                   isSuccess: isBillPaid,
                 ),
@@ -1693,60 +1753,148 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     );
   }
 
-  Widget _buildHistoryTile({
+  Widget _buildPaymentRecordTile({
     required String title,
     required String amount,
+    required String dateStr,
+    required String method,
     required String status,
     required bool isSuccess,
+    String? notes,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(
-              title,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w700,
-                color: TenantTheme.textPrimary,
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: isSuccess ? const Color(0xFFF0FDF4) : const Color(0xFFFFFBEB),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSuccess ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            ),
+            child: Icon(
+              isSuccess ? Icons.check_circle_rounded : Icons.pending_rounded,
+              color: isSuccess ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+              size: 20,
             ),
           ),
           const SizedBox(width: 12),
-          Row(
-            children: [
-              Text(
-                amount,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
-                  color: TenantTheme.textPrimary,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: TenantTheme.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      amount,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                        color: TenantTheme.textPrimary,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                decoration: BoxDecoration(
-                  color: isSuccess ? TenantTheme.successBg : TenantTheme.warningBg,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isSuccess ? TenantTheme.successBorder : TenantTheme.warningBorder,
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_rounded,
+                          size: 11.5,
+                          color: isSuccess ? const Color(0xFF16A34A) : TenantTheme.textMuted,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          isSuccess ? 'Paid on $dateStr' : 'Due by $dateStr',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isSuccess ? const Color(0xFF16A34A) : TenantTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isSuccess ? TenantTheme.successBg : TenantTheme.warningBg,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: isSuccess ? TenantTheme.successBorder : TenantTheme.warningBorder,
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Text(
+                        status,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: isSuccess ? TenantTheme.success : TenantTheme.warning,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (method.isNotEmpty || (notes != null && notes.isNotEmpty)) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      if (method.isNotEmpty && method != 'PAID' && method != 'PENDING')
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            method.toUpperCase(),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF475569),
+                            ),
+                          ),
+                        ),
+                      if (method.isNotEmpty && notes != null && notes.isNotEmpty)
+                        const SizedBox(width: 6),
+                      if (notes != null && notes.isNotEmpty)
+                        Expanded(
+                          child: Text(
+                            notes,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              color: TenantTheme.textMuted,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
                   ),
-                ),
-                child: Text(
-                  status,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w800,
-                    color: isSuccess ? TenantTheme.success : TenantTheme.warning,
-                  ),
-                ),
-              ),
-            ],
+                ],
+              ],
+            ),
           ),
         ],
       ),

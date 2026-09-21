@@ -632,7 +632,9 @@ class TenantProfileScreen extends StatelessWidget {
                       )
                     else
                       ...tenantPayments.map((payment) {
-                        final dateStr = DateFormat('dd MMM yyyy').format(payment.date);
+                        final dateStr = (payment.date.hour == 0 && payment.date.minute == 0 && payment.date.second == 0)
+                            ? DateFormat('dd MMM yyyy').format(payment.date)
+                            : DateFormat('dd MMM yyyy, hh:mm a').format(payment.date);
                         return Container(
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -650,19 +652,25 @@ class TenantProfileScreen extends StatelessWidget {
                                     width: 36,
                                     height: 36,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF8FAFC),
+                                      color: const Color(0xFFF0FDF4),
                                       borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                                      border: Border.all(color: const Color(0xFFDCFCE7)),
                                     ),
-                                    child: const Icon(Icons.receipt_outlined, color: Color(0xFF475569), size: 18),
+                                    child: const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 18),
                                   ),
                                   const SizedBox(width: 10),
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        dateStr,
-                                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.calendar_today_rounded, size: 11.5, color: Color(0xFF16A34A)),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Paid on $dateStr',
+                                            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                          ),
+                                        ],
                                       ),
                                       const SizedBox(height: 2),
                                       Text(

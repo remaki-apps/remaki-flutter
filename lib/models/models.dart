@@ -318,8 +318,20 @@ class Payment {
   double amount;
   DateTime date;
   String method;
+  String? tenantName;
+  String? roomNumber;
+  String? notes;
 
-  Payment({required this.id, required this.tenantId, required this.amount, required this.date, required this.method});
+  Payment({
+    required this.id,
+    required this.tenantId,
+    required this.amount,
+    required this.date,
+    required this.method,
+    this.tenantName,
+    this.roomNumber,
+    this.notes,
+  });
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -327,14 +339,20 @@ class Payment {
         'amount': amount,
         'date': date.toIso8601String(),
         'method': method,
+        'tenantName': tenantName,
+        'roomNumber': roomNumber,
+        'notes': notes,
       };
 
   factory Payment.fromJson(Map<String, dynamic> json) => Payment(
-        id: json['id'] as String,
-        tenantId: json['tenantId'] as String,
-        amount: (json['amount'] as num).toDouble(),
-        date: DateTime.parse(json['date'] as String),
-        method: json['method'] as String,
+        id: json['id'] as String? ?? '',
+        tenantId: json['tenantId'] as String? ?? '',
+        amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+        date: json['date'] != null ? DateTime.tryParse(json['date'] as String) ?? DateTime.now() : DateTime.now(),
+        method: json['method'] as String? ?? 'UPI',
+        tenantName: json['tenantName'] as String?,
+        roomNumber: json['roomNumber'] as String?,
+        notes: json['notes'] as String?,
       );
 }
 
