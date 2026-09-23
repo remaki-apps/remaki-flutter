@@ -23,6 +23,11 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<void> loadFromAPI() async {
+    if (!ApiService.isLoggedIn) {
+      await loadFromStorage();
+      return;
+    }
+
     try {
       final tenantsData = await ApiService.fetchTenants();
       final roomsData = await ApiService.fetchRooms();
@@ -142,6 +147,7 @@ class AppProvider with ChangeNotifier {
       }
 
       notifyListeners();
+      await saveToStorage();
     } catch (e) {
       debugPrint('Error loading from API: $e');
       await loadFromStorage();
@@ -214,14 +220,6 @@ class AppProvider with ChangeNotifier {
   List<Tenant> get unpaidBillsTenants => tenants.where((t) => t.totalPendingBills > 0).toList();
 
   Future<String?> addTenant(Tenant tenant) async {
-    tenants.add(tenant);
-    // update bed status
-    var room = rooms.firstWhere((r) => r.id == tenant.roomId);
-    var bed = room.beds.firstWhere((b) => b.id == tenant.bedId);
-    bed.isAvailable = false;
-    bed.tenantId = tenant.id;
-    notifyListeners();
-    
     try {
       final tempPassword = await ApiService.createTenant({
         'name': tenant.name,
@@ -295,15 +293,13 @@ class AppProvider with ChangeNotifier {
     }
   }
 
-  Future<void> addRoom(Room room) async {
-    rooms.add(room);
-    notifyListeners();
-
+  Future<void> addRoom(Room room, {List<String>? bedLabels}) async {
     try {
       await ApiService.createRoom({
         'roomNumber': room.number,
         'floorNumber': room.floor,
         'capacity': room.capacity,
+        if (bedLabels != null && bedLabels.isNotEmpty) 'bedLabels': bedLabels,
       });
       await loadFromAPI();
     } catch (e) {
@@ -311,9 +307,6 @@ class AppProvider with ChangeNotifier {
       await loadFromAPI();
       rethrow;
     }
-
-    saveToStorage();
-    notifyListeners();
   }
 
   void addBed(String roomId, String bedName) {

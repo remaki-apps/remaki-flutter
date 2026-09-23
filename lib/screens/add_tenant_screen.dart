@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../providers/app_provider.dart';
+import '../services/api_service.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
 import '../widgets/custom_expandable_dropdown.dart';
@@ -51,6 +52,11 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
     _selectedRoomId = widget.initialRoomId;
     _selectedBedId = widget.initialBedId;
     _moveInController.text = DateFormat('dd-MM-yyyy').format(_moveInDate);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (ApiService.isLoggedIn) {
+        Provider.of<AppProvider>(context, listen: false).loadFromAPI();
+      }
+    });
   }
 
   @override
@@ -622,6 +628,19 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
       return;
     }
 
+    if (_selectedBedId != null && _selectedBedId!.startsWith('b_')) {
+      setState(() => _isLoading = true);
+      await provider.loadFromAPI();
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _inlineError = 'Rooms and beds were refreshed from the server. Please select an available bed.';
+        _currentStep = 1;
+        _selectedBedId = null;
+      });
+      return;
+    }
+
     var tenant = Tenant(
       id: 't_${DateTime.now().millisecondsSinceEpoch}',
       name: _nameController.text.trim(),
@@ -637,10 +656,10 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
       pendingRentAmount: double.tryParse(_rentController.text) ?? 0.0,
     );
 
-    var room = provider.rooms.firstWhere((r) => r.id == _selectedRoomId);
-
-    _selectedBedId = null;
-    _selectedRoomId = null;
+    final room = provider.rooms.firstWhere(
+      (r) => r.id == _selectedRoomId,
+      orElse: () => Room(id: '', number: '', floor: '', capacity: 0, beds: []),
+    );
 
     setState(() => _isLoading = true);
     
@@ -649,6 +668,8 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
 
       if (!mounted) return;
       
+      _selectedBedId = null;
+      _selectedRoomId = null;
       setState(() => _isLoading = false);
 
       context.go('/tenant_added_success?tenantId=${tenant.id}&password=${Uri.encodeComponent(tempPassword ?? '')}&name=${Uri.encodeComponent(tenant.name)}&phone=${Uri.encodeComponent(tenant.phone)}&roomNumber=${Uri.encodeComponent(room.number)}&floor=${Uri.encodeComponent(room.floor)}&roomBed=${Uri.encodeComponent('Room ${room.number}')}&rent=${tenant.rentAmount}&moveIn=${Uri.encodeComponent(_moveInController.text)}');

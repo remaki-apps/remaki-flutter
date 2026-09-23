@@ -328,29 +328,35 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                 SizedBox(
                   width: double.infinity,
                   height: 52,
-                  child: ElevatedButton.icon(
+                  child: ElevatedButton(
                     onPressed: _isLoading ? null : _submitForm,
-                    icon: _isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                          )
-                        : const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 20),
-                    label: Text(
-                      _isLoading ? 'Adding Room...' : 'Add Room',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       elevation: 2,
                       shadowColor: AppTheme.primaryColor.withValues(alpha: 0.3),
                     ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                          )
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                'Add Room',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
                 ),
               ],
@@ -470,28 +476,28 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
     }
 
     if (isValid) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      final provider = Provider.of<AppProvider>(context, listen: false);
-
-      final newRoom = Room(
-        id: 'r_${DateTime.now().millisecondsSinceEpoch}',
-        number: _roomNumberController.text.trim(),
-        floor: _selectedFloor!,
-        capacity: _capacity,
-        beds: List.generate(_capacity, (i) => Bed(
-          id: 'b_${DateTime.now().millisecondsSinceEpoch}_$i',
-          name: _bedNameControllers[i].text.trim(),
-        )),
-      );
-
-      final roomNum = _roomNumberController.text.trim();
-      final flr = _selectedFloor!;
-
+      setState(() => _isLoading = true);
       try {
-        await provider.addRoom(newRoom);
+        final provider = Provider.of<AppProvider>(context, listen: false);
+
+        final bedLabels = List.generate(
+          _capacity,
+          (i) => _bedNameControllers[i].text.trim(),
+        );
+
+        final newRoom = Room(
+          id: '',
+          number: _roomNumberController.text.trim(),
+          floor: _selectedFloor!,
+          capacity: _capacity,
+          beds: [],
+        );
+
+        final roomNum = _roomNumberController.text.trim();
+        final flr = _selectedFloor!;
+
+        await provider.addRoom(newRoom, bedLabels: bedLabels);
+
         if (!mounted) return;
         context.pop();
         FancyToast.showSuccess(
@@ -501,9 +507,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
         );
       } catch (e) {
         if (!mounted) return;
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
         FancyToast.showError(
           context,
           'Failed to Add Room',
