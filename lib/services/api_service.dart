@@ -78,22 +78,42 @@ class ApiService {
         }),
       ).timeout(const Duration(seconds: 30));
 
+      Map<String, dynamic>? data;
+      try {
+        data = jsonDecode(response.body);
+      } catch (_) {}
+
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body);
-        if (data.containsKey('errors')) {
+        if (data != null && data.containsKey('errors')) {
           debugPrint('GraphQL Errors: ${data['errors']}');
           final msg = data['errors'][0]['message'] ?? 'An unknown backend error occurred.';
           final lower = msg.toString().toLowerCase();
           if (lower.contains('unauthorized') || lower.contains('unauthenticated') || lower.contains('jwt expired')) {
             await clearAuthToken();
           }
-          throw ApiException(msg);
+          throw ApiException(msg.toString());
         }
-        return data['data'];
-      } else if (response.statusCode == 401) {
-        await clearAuthToken();
-        throw ApiException('Session expired. Please log in again.');
+        return data?['data'] ?? {};
       } else {
+        if (data != null && data.containsKey('errors') && (data['errors'] as List).isNotEmpty) {
+          final msg = data['errors'][0]['message']?.toString() ?? '';
+          final lower = msg.toLowerCase();
+          if (response.statusCode == 401 && _token != null && (lower.contains('unauthorized') || lower.contains('unauthenticated') || lower.contains('jwt expired') || lower.contains('token'))) {
+            await clearAuthToken();
+            throw ApiException('Session expired. Please log in again.');
+          }
+          throw ApiException(msg.isNotEmpty ? msg : 'An error occurred (${response.statusCode})');
+        }
+
+        if (response.statusCode == 401) {
+          if (_token != null) {
+            await clearAuthToken();
+            throw ApiException('Session expired. Please log in again.');
+          } else {
+            throw ApiException('Invalid credentials. Please check your phone number and password.');
+          }
+        }
+
         throw ApiException('Failed to load data: ${response.statusCode}. Please try again later.');
       }
     } on SocketException catch (_) {

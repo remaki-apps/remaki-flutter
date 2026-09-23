@@ -23,7 +23,7 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<void> loadFromAPI() async {
-    if (!ApiService.isLoggedIn) {
+    if (!ApiService.isLoggedIn || ApiService.role != 'ADMIN') {
       await loadFromStorage();
       return;
     }
