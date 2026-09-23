@@ -28,6 +28,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
     setState(() => _isLoading = true);
     try {
       final reqs = await ApiService.fetchPendingPaymentRequests();
+      if (!mounted) return;
       setState(() => _requests = reqs);
     } catch (e) {
       if (mounted) FancyToast.showError(context, 'Error', message: e.toString());

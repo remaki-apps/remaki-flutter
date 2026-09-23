@@ -488,7 +488,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                          );
                                        }
                                     } catch (e) {
-                                      setState(() => _isLoading = false);
+                                      if (mounted) setState(() => _isLoading = false);
                                       if (context.mounted) {
                                         FancyToast.showError(context, 'Payment Failed', message: e.toString());
                                       }

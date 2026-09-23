@@ -295,14 +295,22 @@ class AppProvider with ChangeNotifier {
     }
   }
 
-  void addRoom(Room room) {
+  Future<void> addRoom(Room room) async {
     rooms.add(room);
-    
-    ApiService.createRoom({
-      'roomNumber': room.number,
-      'floorNumber': room.floor,
-      'capacity': room.capacity,
-    }).catchError((e) => debugPrint('Error creating room: \$e'));
+    notifyListeners();
+
+    try {
+      await ApiService.createRoom({
+        'roomNumber': room.number,
+        'floorNumber': room.floor,
+        'capacity': room.capacity,
+      });
+      await loadFromAPI();
+    } catch (e) {
+      debugPrint('Error creating room: $e');
+      await loadFromAPI();
+      rethrow;
+    }
 
     saveToStorage();
     notifyListeners();
@@ -397,36 +405,51 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void allocateTenant(String tenantId, String roomId, String bedId, {
+  Future<void> allocateTenant(String tenantId, String roomId, String bedId, {
     double rentAmount = 0.0,
     double securityDeposit = 0.0,
     DateTime? moveInDate,
-  }) {
-    var tenant = tenants.firstWhere((t) => t.id == tenantId);
-    tenant.roomId = roomId;
-    tenant.bedId = bedId;
-    tenant.rentAmount = rentAmount;
-    tenant.securityDeposit = securityDeposit;
-    if (moveInDate != null) tenant.moveInDate = moveInDate;
+  }) async {
+    final tenantIdx = tenants.indexWhere((t) => t.id == tenantId);
+    if (tenantIdx != -1) {
+      final t = tenants[tenantIdx];
+      t.roomId = roomId;
+      t.bedId = bedId;
+      t.rentAmount = rentAmount;
+      t.securityDeposit = securityDeposit;
+      if (moveInDate != null) t.moveInDate = moveInDate;
+    }
 
-    var room = rooms.firstWhere((r) => r.id == roomId);
-    var bed = room.beds.firstWhere((b) => b.id == bedId);
-    bed.isAvailable = false;
-    bed.tenantId = tenantId;
+    final roomIdx = rooms.indexWhere((r) => r.id == roomId);
+    if (roomIdx != -1) {
+      final bedIdx = rooms[roomIdx].beds.indexWhere((b) => b.id == bedId);
+      if (bedIdx != -1) {
+        rooms[roomIdx].beds[bedIdx].isAvailable = false;
+        rooms[roomIdx].beds[bedIdx].tenantId = tenantId;
+      }
+    }
+    notifyListeners();
 
-    ApiService.allocateTenantToBed(
-      tenantId, 
-      bedId,
-      rentAmount: rentAmount,
-      securityDeposit: securityDeposit,
-      moveInDate: moveInDate?.toIso8601String(),
-    ).catchError((e) => debugPrint('Error allocating tenant: \$e'));
+    try {
+      await ApiService.allocateTenantToBed(
+        tenantId, 
+        bedId,
+        rentAmount: rentAmount,
+        securityDeposit: securityDeposit,
+        moveInDate: moveInDate?.toIso8601String(),
+      );
+      await loadFromAPI();
+    } catch (e) {
+      debugPrint('Error allocating tenant: $e');
+      await loadFromAPI();
+      rethrow;
+    }
 
     saveToStorage();
     notifyListeners();
   }
 
-  void vacateTenant(String tenantId) {
+  Future<void> vacateTenant(String tenantId) async {
     var tenantIndex = tenants.indexWhere((t) => t.id == tenantId);
     if (tenantIndex != -1) {
       var tenant = tenants[tenantIndex];

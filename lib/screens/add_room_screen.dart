@@ -19,6 +19,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
   final _roomNumberController = TextEditingController();
   String? _selectedFloor;
   String? _floorError;
+  bool _isLoading = false;
   int _capacity = 2;
   final List<TextEditingController> _bedNameControllers = [];
   final List<bool> _isPrefilled = [];
@@ -328,11 +329,17 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton.icon(
-                    onPressed: _submitForm,
-                    icon: const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 20),
-                    label: const Text(
-                      'Add Room',
-                      style: TextStyle(
+                    onPressed: _isLoading ? null : _submitForm,
+                    icon: _isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
+                        : const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 20),
+                    label: Text(
+                      _isLoading ? 'Adding Room...' : 'Add Room',
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -450,7 +457,9 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
     );
   }
 
-  void _submitForm() {
+  Future<void> _submitForm() async {
+    if (_isLoading) return;
+
     bool isValid = _formKey.currentState!.validate();
 
     if (_selectedFloor == null || _selectedFloor!.trim().isEmpty) {
@@ -461,6 +470,10 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
     }
 
     if (isValid) {
+      setState(() {
+        _isLoading = true;
+      });
+
       final provider = Provider.of<AppProvider>(context, listen: false);
 
       final newRoom = Room(
@@ -477,13 +490,26 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
       final roomNum = _roomNumberController.text.trim();
       final flr = _selectedFloor!;
 
-      provider.addRoom(newRoom);
-      context.pop();
-      FancyToast.showSuccess(
-        context,
-        'Room Added Successfully!',
-        message: 'Room $roomNum has been added to $flr.',
-      );
+      try {
+        await provider.addRoom(newRoom);
+        if (!mounted) return;
+        context.pop();
+        FancyToast.showSuccess(
+          context,
+          'Room Added Successfully!',
+          message: 'Room $roomNum has been added to $flr.',
+        );
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+        });
+        FancyToast.showError(
+          context,
+          'Failed to Add Room',
+          message: e.toString().replaceAll('Exception: ', ''),
+        );
+      }
     }
   }
 }

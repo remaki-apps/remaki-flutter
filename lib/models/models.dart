@@ -62,10 +62,10 @@ class AdditionalCharge {
       };
 
   factory AdditionalCharge.fromJson(Map<String, dynamic> json) => AdditionalCharge(
-        id: json['id'] as String,
-        description: json['description'] as String,
-        amount: (json['amount'] as num).toDouble(),
-        date: DateTime.parse(json['date'] as String),
+        id: json['id']?.toString() ?? '',
+        description: json['description']?.toString() ?? '',
+        amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+        date: DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now(),
         billType: json['billType'] as String? ?? 'OTHER',
         status: json['status'] as String? ?? 'PENDING',
         billDueDate: json['billDueDate'] != null ? DateTime.tryParse(json['billDueDate'] as String) : null,
@@ -94,10 +94,10 @@ class Room {
       };
 
   factory Room.fromJson(Map<String, dynamic> json) => Room(
-        id: json['id'] as String,
-        number: json['number'] as String,
-        floor: json['floor'] as String? ?? 'Ground Floor',
-        capacity: json['capacity'] as int,
+        id: json['id']?.toString() ?? '',
+        number: json['number']?.toString() ?? '',
+        floor: json['floor']?.toString() ?? 'Ground Floor',
+        capacity: (json['capacity'] as num?)?.toInt() ?? 0,
         beds: (json['beds'] as List<dynamic>?)?.map((e) => Bed.fromJson(e as Map<String, dynamic>)).toList() ?? [],
       );
 }
@@ -278,18 +278,18 @@ class Tenant {
       };
 
   factory Tenant.fromJson(Map<String, dynamic> json) => Tenant(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        phone: json['phone'] as String,
+        id: json['id']?.toString() ?? '',
+        name: json['name']?.toString() ?? 'Tenant',
+        phone: json['phone']?.toString() ?? '',
         email: json['email'] as String? ?? '',
         emergencyContact: json['emergencyContact'] as String?,
-        roomId: json['roomId'] as String,
-        bedId: json['bedId'] as String,
-        moveInDate: DateTime.parse(json['moveInDate'] as String),
-        rentAmount: (json['rentAmount'] as num).toDouble(),
-        securityDeposit: (json['securityDeposit'] as num).toDouble(),
+        roomId: json['roomId']?.toString() ?? '',
+        bedId: json['bedId']?.toString() ?? '',
+        moveInDate: DateTime.tryParse(json['moveInDate']?.toString() ?? '') ?? DateTime.now(),
+        rentAmount: (json['rentAmount'] as num?)?.toDouble() ?? 0.0,
+        securityDeposit: (json['securityDeposit'] as num?)?.toDouble() ?? 0.0,
         isPaid: json['isPaid'] as bool? ?? false,
-        rentDueDate: DateTime.parse(json['rentDueDate'] as String),
+        rentDueDate: DateTime.tryParse(json['rentDueDate']?.toString() ?? '') ?? DateTime.now(),
         pendingRentAmount: (json['pendingRentAmount'] as num?)?.toDouble() ?? 0,
         additionalCharges: (json['additionalCharges'] as List<dynamic>?)?.map((e) => AdditionalCharge.fromJson(e as Map<String, dynamic>)).toList() ?? [],
         imageUrl: json['imageUrl'] as String?,

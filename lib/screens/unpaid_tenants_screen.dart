@@ -12,11 +12,21 @@ class UnpaidTenantsScreen extends StatelessWidget {
   final String? filter;
   const UnpaidTenantsScreen({super.key, this.filter});
 
-  Future<void> _sendWhatsAppReminder(BuildContext context, Tenant tenant, String roomNumber) async {
+  Future<void> _sendWhatsAppReminder(
+    BuildContext context,
+    Tenant tenant,
+    String roomNumber, {
+    String floorName = '',
+    String pgName = '',
+  }) async {
     try {
       final sanitizedPhone = tenant.phone.replaceAll(RegExp(r'\D'), '');
       final phoneNum = sanitizedPhone.startsWith('91') ? sanitizedPhone : '91$sanitizedPhone';
-      final message = tenant.buildDetailedRentBillMessage(roomNumber: roomNumber);
+      final message = tenant.buildDetailedRentBillMessage(
+        roomNumber: roomNumber,
+        floorName: floorName,
+        pgName: pgName,
+      );
       final url = Uri.parse('https://wa.me/$phoneNum?text=$message');
       if (await canLaunchUrl(url)) {
         await launchUrl(url, mode: LaunchMode.externalApplication);
@@ -114,12 +124,14 @@ class UnpaidTenantsScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final tenant = unpaidTenants[index];
                 final roomIndex = appProvider.rooms.indexWhere((r) => r.id == tenant.roomId);
-                final roomNumber = roomIndex != -1 ? appProvider.rooms[roomIndex].number : 'N/A';
-                final bedName = (roomIndex != -1)
-                    ? appProvider.rooms[roomIndex].beds.firstWhere(
+                final room = roomIndex != -1 ? appProvider.rooms[roomIndex] : null;
+                final roomNumber = room != null ? room.number : 'N/A';
+                final floorName = room != null ? room.floor : '';
+                final bedName = (room != null)
+                    ? room.beds.firstWhere(
                         (b) => b.id == tenant.bedId,
-                        orElse: () => appProvider.rooms[roomIndex].beds.isNotEmpty
-                            ? appProvider.rooms[roomIndex].beds.first
+                        orElse: () => room.beds.isNotEmpty
+                            ? room.beds.first
                             : Bed(id: '', name: ''),
                       ).name
                     : 'N/A';
@@ -202,7 +214,13 @@ class UnpaidTenantsScreen extends StatelessWidget {
                             message: 'Send WhatsApp Reminder',
                             child: InkWell(
                               borderRadius: BorderRadius.circular(8),
-                              onTap: () => _sendWhatsAppReminder(context, tenant, roomNumber),
+                              onTap: () => _sendWhatsAppReminder(
+                                context,
+                                tenant,
+                                roomNumber,
+                                floorName: floorName,
+                                pgName: appProvider.pgName,
+                              ),
                               child: Container(
                                 width: 34,
                                 height: 34,

@@ -19,6 +19,7 @@ class AllocateTenantScreen extends StatefulWidget {
 class _AllocateTenantScreenState extends State<AllocateTenantScreen> {
   int _currentStep = 0;
   String? _selectedTenantId;
+  bool _isLoading = false;
 
   // Rent Details
   final _rentController = TextEditingController();
@@ -110,7 +111,38 @@ class _AllocateTenantScreenState extends State<AllocateTenantScreen> {
           : Stepper(
               type: StepperType.horizontal,
               currentStep: _currentStep,
-              onStepContinue: () {
+              controlsBuilder: (_, details) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 16.0),
+                  child: Row(
+                    children: [
+                      ElevatedButton(
+                        onPressed: _isLoading ? null : details.onStepContinue,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              )
+                            : Text(_currentStep == 1 ? 'Allocate Tenant' : 'Continue'),
+                      ),
+                      if (_currentStep > 0) ...[
+                        const SizedBox(width: 12),
+                        TextButton(
+                          onPressed: _isLoading ? null : details.onStepCancel,
+                          child: const Text('Back'),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              },
+              onStepContinue: () async {
+                if (_isLoading) return;
                 if (_currentStep == 0) {
                   if (_selectedTenantId == null) {
                     FancyToast.showError(context, 'Missing Selection', message: 'Please select a tenant.');
@@ -118,23 +150,36 @@ class _AllocateTenantScreenState extends State<AllocateTenantScreen> {
                   }
                   setState(() => _currentStep += 1);
                 } else {
-                  appProvider.allocateTenant(
-                    _selectedTenantId!,
-                    widget.roomId,
-                    widget.bedId,
-                    rentAmount: double.tryParse(_rentController.text) ?? 0.0,
-                    securityDeposit: double.tryParse(_securityController.text) ?? 0.0,
-                    moveInDate: _moveInDate,
-                  );
-                  context.pop();
-                  FancyToast.showSuccess(
-                    context,
-                    'Tenant Allocated!',
-                    message: 'Tenant successfully assigned to bed.',
-                  );
+                  setState(() => _isLoading = true);
+                  try {
+                    await appProvider.allocateTenant(
+                      _selectedTenantId!,
+                      widget.roomId,
+                      widget.bedId,
+                      rentAmount: double.tryParse(_rentController.text) ?? 0.0,
+                      securityDeposit: double.tryParse(_securityController.text) ?? 0.0,
+                      moveInDate: _moveInDate,
+                    );
+                    if (!context.mounted) return;
+                    context.pop();
+                    FancyToast.showSuccess(
+                      context,
+                      'Tenant Allocated!',
+                      message: 'Tenant successfully assigned to bed.',
+                    );
+                  } catch (e) {
+                    if (mounted) setState(() => _isLoading = false);
+                    if (!context.mounted) return;
+                    FancyToast.showError(
+                      context,
+                      'Allocation Failed',
+                      message: e.toString().replaceAll('Exception: ', ''),
+                    );
+                  }
                 }
               },
               onStepCancel: () {
+                if (_isLoading) return;
                 if (_currentStep > 0) setState(() => _currentStep -= 1);
               },
               steps: [

@@ -47,5 +47,16 @@
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Remaki requires access to your photo library to attach payment screenshots, tenant profile photos, and announcements.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>Remaki requires access to your camera to take payment receipt photos and profile pictures.</string>
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+			<string>whatsapp</string>
+			<string>tel</string>
+			<string>https</string>
+			<string>http</string>
+		</array>
 	</dict>
 </plist>

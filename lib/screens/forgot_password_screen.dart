@@ -78,9 +78,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         );
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = "Reset failed: \${e.toString().replaceAll('Exception:', '').trim()}";
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = "Reset failed: \${e.toString().replaceAll('Exception:', '').trim()}";
+        });
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

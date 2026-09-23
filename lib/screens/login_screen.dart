@@ -420,34 +420,40 @@ class _LoginScreenState extends State<LoginScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Row(
-                                  children: [
-                                    SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: Checkbox(
-                                        value: _keepLoggedIn,
-                                        activeColor: AppTheme.primaryColor,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(4),
+                                Flexible(
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: Checkbox(
+                                          value: _keepLoggedIn,
+                                          activeColor: AppTheme.primaryColor,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          onChanged: (val) {
+                                            if (val != null) {
+                                              setState(() => _keepLoggedIn = val);
+                                            }
+                                          },
                                         ),
-                                        onChanged: (val) {
-                                          if (val != null) {
-                                            setState(() => _keepLoggedIn = val);
-                                          }
-                                        },
                                       ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Text(
-                                      'Keep me signed in',
-                                      style: TextStyle(
-                                        fontSize: 12.5,
-                                        color: AppTheme.textSecondary,
-                                        fontWeight: FontWeight.w500,
+                                      const SizedBox(width: 8),
+                                      const Flexible(
+                                        child: Text(
+                                          'Keep me signed in',
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 12.5,
+                                            color: AppTheme.textSecondary,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                                 TextButton(
                                   onPressed: () => context.push('/forgot_password'),

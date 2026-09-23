@@ -34,12 +34,12 @@ class TenantTheme {
     Color(0xB3FFFFFF),
   ];
 
-  // Frosted Light Glass Surfaces
-  static const Color background = Color(0xFFF6F8FC); // Luminous soft light canvas
+  // Clean Modern Solid Card Surfaces
+  static const Color background = Color(0xFFF8FAFC); // Clean light modern canvas
   static const Color surface = Color(0xFFFFFFFF); // Pure white surface
-  static const Color glassFill = Color(0xD9FFFFFF); // 85% Translucent Frosted Glass
-  static const Color glassBorder = Color(0x66CBD5E1); // Specular crisp glass border
-  static const Color glassBorderBright = Color(0x99FFFFFF); // Specular bright top shine
+  static const Color glassFill = Color(0xFFFFFFFF); // Solid white card surface
+  static const Color glassBorder = Color(0xFFE2E8F0); // Clean subtle card border
+  static const Color glassBorderBright = Color(0xFFFFFFFF);
   static const Color borderLight = Color(0xFFF1F5F9); // Light divider
   static const Color borderMedium = Color(0xFFE2E8F0); // Subtle card outline
   static const Color borderDark = Color(0xFFCBD5E1);

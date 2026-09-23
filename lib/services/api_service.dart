@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
@@ -75,7 +76,7 @@ class ApiService {
           'query': query,
           'variables': variables ?? {},
         }),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
@@ -97,6 +98,10 @@ class ApiService {
       }
     } on SocketException catch (_) {
       throw ApiException('No internet connection. Please check your network and try again.');
+    } on http.ClientException catch (_) {
+      throw ApiException('Unable to connect to server. Please check your network connection.');
+    } on TimeoutException catch (_) {
+      throw ApiException('Request timed out. The server took too long to respond. Please try again.');
     } catch (e) {
       debugPrint('ApiService Error: $e');
       if (e is ApiException) rethrow;
@@ -441,15 +446,24 @@ class ApiService {
     return result['createTenant']['tempPassword'];
   }
 
-  static Future<void> createRoom(Map<String, dynamic> input) async {
+  static Future<Map<String, dynamic>?> createRoom(Map<String, dynamic> input) async {
     const String mutation = '''
       mutation CreateRoom(\$input: CreateRoomInput!) {
         createRoom(input: \$input) {
           id
+          roomNumber
+          floorNumber
+          capacity
+          beds {
+            id
+            bedLabel
+            status
+          }
         }
       }
     ''';
-    await performQuery(mutation, variables: {'input': input});
+    final result = await performQuery(mutation, variables: {'input': input});
+    return result['createRoom'] as Map<String, dynamic>?;
   }
 
   static Future<void> recordRentPayment(Map<String, dynamic> input) async {

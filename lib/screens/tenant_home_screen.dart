@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -39,6 +38,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   List<dynamic> _announcements = [];
   List<dynamic> _payments = [];
+  bool _isStayDetailsExpanded = false;
+  bool _isPersonalInfoExpanded = false;
+  bool _isAddressExpanded = false;
 
   @override
   void initState() {
@@ -276,27 +278,20 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       height: height,
       margin: margin,
       decoration: BoxDecoration(
+        color: customGlassFill ?? Colors.white,
         borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(
+          color: customBorderColor ?? const Color(0xFFE2E8F0),
+          width: borderWidth,
+        ),
         boxShadow: customShadow ?? TenantTheme.cardShadow,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
         clipBehavior: clipBehavior,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: Container(
-            padding: padding,
-            decoration: BoxDecoration(
-              color: customGlassFill ?? TenantTheme.glassFill,
-              borderRadius: BorderRadius.circular(borderRadius),
-              border: Border.all(
-                color: customBorderColor ?? TenantTheme.glassBorder,
-                width: borderWidth,
-              ),
-            ),
-            child: child,
-          ),
-        ),
+        child: padding != null
+            ? Padding(padding: padding, child: child)
+            : child,
       ),
     );
   }
@@ -305,79 +300,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: TenantTheme.background,
-      body: Stack(
-        children: [
-          // Ambient Neon Glow Orb 1 (Top-Right Soft Pastel Indigo Glow)
-          Positioned(
-            top: -60,
-            right: -60,
-            child: IgnorePointer(
-              child: Container(
-                width: 320,
-                height: 320,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFFC7D2FE).withValues(alpha: 0.45),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
+      body: SafeArea(
+        child: _isFetching
+            ? const Center(child: CircularProgressIndicator(color: TenantTheme.primary))
+            : RefreshIndicator(
+                onRefresh: _loadAllData,
+                color: TenantTheme.primary,
+                child: _buildCurrentPage(),
               ),
-            ),
-          ),
-          // Ambient Neon Glow Orb 2 (Center-Left Soft Pastel Sky Glow)
-          Positioned(
-            top: MediaQuery.of(context).size.height * 0.35,
-            left: -80,
-            child: IgnorePointer(
-              child: Container(
-                width: 280,
-                height: 280,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFFBAE6FD).withValues(alpha: 0.40),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          // Ambient Neon Glow Orb 3 (Bottom-Right Soft Pastel Violet Glow)
-          Positioned(
-            bottom: 40,
-            right: -70,
-            child: IgnorePointer(
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFFDDD6FE).withValues(alpha: 0.45),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          // Content
-          SafeArea(
-            child: _isFetching
-                ? const Center(child: CircularProgressIndicator(color: TenantTheme.primary))
-                : RefreshIndicator(
-                    onRefresh: _loadAllData,
-                    color: TenantTheme.primary,
-                    child: _buildCurrentPage(),
-                  ),
-          ),
-        ],
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
@@ -400,36 +330,31 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   // BOTTOM NAVIGATION BAR (FROSTED LIGHT GLASS)
   // ===========================================================================
   Widget _buildBottomNavigationBar() {
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          decoration: BoxDecoration(
-            color: TenantTheme.surface.withValues(alpha: 0.90),
-            border: const Border(
-              top: BorderSide(color: TenantTheme.borderMedium, width: 1),
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x0A0F172A),
-                blurRadius: 20,
-                offset: Offset(0, -4),
-              ),
-            ],
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x060F172A),
+            blurRadius: 16,
+            offset: Offset(0, -4),
           ),
-          child: SafeArea(
-            child: Container(
-              height: 58,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Home'),
-                  _buildNavItem(1, Icons.account_balance_wallet_rounded, Icons.account_balance_wallet_outlined, 'Payments'),
-                  _buildNavItem(2, Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
-                ],
-              ),
-            ),
+        ],
+      ),
+      child: SafeArea(
+        child: Container(
+          height: 58,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Home'),
+              _buildNavItem(1, Icons.account_balance_wallet_rounded, Icons.account_balance_wallet_outlined, 'Payments'),
+              _buildNavItem(2, Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
+            ],
           ),
         ),
       ),
@@ -510,50 +435,44 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-              decoration: BoxDecoration(
-                color: TenantTheme.glassFill,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: TenantTheme.glassBorder, width: 1),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x080F172A),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x060F172A),
+                blurRadius: 8,
+                offset: Offset(0, 2),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: bgColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(icon, color: iconColor, size: 20),
-                  ),
-                  const SizedBox(height: 7),
-                  Text(
-                    label,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                      color: TenantTheme.textPrimary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconColor, size: 20),
               ),
-            ),
+              const SizedBox(height: 7),
+              Text(
+                label,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: TenantTheme.textPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
         ),
       ),
@@ -567,9 +486,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         builder: (ctx) => Scaffold(
           backgroundColor: TenantTheme.background,
           appBar: AppBar(
-            backgroundColor: TenantTheme.surface.withValues(alpha: 0.9),
+            backgroundColor: Colors.white,
             elevation: 0,
-            shape: const Border(bottom: BorderSide(color: TenantTheme.glassBorder, width: 1)),
+            shape: const Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded, color: TenantTheme.textPrimary, size: 20),
               onPressed: () => Navigator.pop(ctx),
@@ -603,9 +522,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         builder: (ctx) => Scaffold(
           backgroundColor: TenantTheme.background,
           appBar: AppBar(
-            backgroundColor: TenantTheme.surface.withValues(alpha: 0.9),
+            backgroundColor: Colors.white,
             elevation: 0,
-            shape: const Border(bottom: BorderSide(color: TenantTheme.glassBorder, width: 1)),
+            shape: const Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded, color: TenantTheme.textPrimary, size: 20),
               onPressed: () => Navigator.pop(ctx),
@@ -658,7 +577,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               ),
             ],
           ),
-          body: _buildMyStayScreen(hideHeaderTitle: true),
+          body: SafeArea(
+            child: _buildMyStayScreen(hideHeaderTitle: true),
+          ),
         ),
       ),
     );
@@ -891,7 +812,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 bgColor: TenantTheme.actionPayRentBg,
                 onTap: () => setState(() => _currentNavIndex = 1),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               _buildQuickActionTile(
                 icon: Icons.meeting_room_rounded,
                 label: 'My Stay',
@@ -899,21 +820,13 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 bgColor: TenantTheme.actionStayBg,
                 onTap: _openMyStayDetails,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               _buildQuickActionTile(
                 icon: Icons.campaign_rounded,
                 label: 'Notices',
                 iconColor: TenantTheme.actionNoticesIcon,
                 bgColor: TenantTheme.actionNoticesBg,
                 onTap: _openNoticesScreen,
-              ),
-              const SizedBox(width: 10),
-              _buildQuickActionTile(
-                icon: Icons.person_rounded,
-                label: 'Profile',
-                iconColor: TenantTheme.actionProfileIcon,
-                bgColor: TenantTheme.actionProfileBg,
-                onTap: () => setState(() => _currentNavIndex = 2),
               ),
             ],
           ),
@@ -1478,111 +1391,162 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Screen Title
-          Text(
-            'Rent & Payments',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: TenantTheme.textPrimary,
-              letterSpacing: -0.5,
-            ),
+          // Screen Title & Subtitle
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Rent & Payments',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: TenantTheme.textPrimary,
+                      letterSpacing: -0.6,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Manage monthly rent, utility bills & transactions',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      color: TenantTheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: TenantTheme.primarySoft,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: TenantTheme.primaryBorder.withValues(alpha: 0.5)),
+                ),
+                child: const Icon(Icons.account_balance_wallet_rounded, color: TenantTheme.primary, size: 20),
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
 
-          // 1. Month Hero Banner Card (Compact, Classic & Aesthetic)
+          // 1. Month Hero Banner Card (Modern Gradient & Subtle Float Shadow)
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF3722D3), Color(0xFF5034EA), Color(0xFF6C4DFA)],
+                colors: [Color(0xFF281E99), Color(0xFF3722D3), Color(0xFF5034EA)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(color: Colors.white.withValues(alpha: 0.22), width: 1.2),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF5034EA).withValues(alpha: 0.28),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
+                  color: const Color(0xFF5034EA).withValues(alpha: 0.32),
+                  blurRadius: 22,
+                  offset: const Offset(0, 10),
+                ),
+                BoxShadow(
+                  color: const Color(0xFF281E99).withValues(alpha: 0.20),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(24),
               child: Stack(
                 children: [
                   Positioned(
-                    right: -25,
-                    top: -25,
+                    right: -30,
+                    top: -30,
                     child: Container(
-                      width: 110,
-                      height: 110,
+                      width: 130,
+                      height: 130,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.white.withValues(alpha: 0.08),
                       ),
                     ),
                   ),
+                  Positioned(
+                    right: 40,
+                    bottom: -40,
+                    child: Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.05),
+                      ),
+                    ),
+                  ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Top Header Row: Month & Status Badge
+                        // Top Header Row: Month Pill & Status Pill
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.calendar_today_rounded,
-                                  size: 13,
-                                  color: Colors.white.withValues(alpha: 0.85),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  currentMonthStr,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white.withValues(alpha: 0.92),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.16),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 0.8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.calendar_month_rounded,
+                                    size: 13,
+                                    color: Colors.white,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    currentMonthStr,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(
                                 color: isPaid
-                                    ? const Color(0xFF10B981).withValues(alpha: 0.22)
-                                    : const Color(0xFFEF4444).withValues(alpha: 0.28),
+                                    ? const Color(0xFF10B981).withValues(alpha: 0.25)
+                                    : const Color(0xFFEF4444).withValues(alpha: 0.32),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
                                   color: isPaid
-                                      ? const Color(0xFF34D399).withValues(alpha: 0.45)
-                                      : const Color(0xFFF87171).withValues(alpha: 0.45),
-                                  width: 0.8,
+                                      ? const Color(0xFF6EE7B7).withValues(alpha: 0.6)
+                                      : const Color(0xFFFCA5A5).withValues(alpha: 0.6),
+                                  width: 1,
                                 ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Container(
-                                    width: 5.5,
-                                    height: 5.5,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: isPaid ? const Color(0xFF34D399) : const Color(0xFFFCA5A5),
-                                    ),
+                                  Icon(
+                                    isPaid ? Icons.check_circle_rounded : Icons.pending_rounded,
+                                    size: 13,
+                                    color: isPaid ? const Color(0xFF6EE7B7) : const Color(0xFFFECACA),
                                   ),
-                                  const SizedBox(width: 4.5),
+                                  const SizedBox(width: 5),
                                   Text(
-                                    isPaid ? 'Paid' : 'Due',
+                                    isPaid ? 'PAID & SETTLED' : 'PAYMENT DUE',
                                     style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.4,
                                       color: Colors.white,
                                     ),
                                   ),
@@ -1591,7 +1555,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 16),
 
                         // Amount & Receipt Action Row
                         Row(
@@ -1602,23 +1566,43 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
+                                  isPaid ? 'Cleared Rent' : 'Payable Amount',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white.withValues(alpha: 0.78),
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
                                   '₹${NumberFormat('#,##,###').format(displayRent)}',
                                   style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 26,
+                                    fontSize: 28,
                                     fontWeight: FontWeight.w800,
                                     color: Colors.white,
-                                    letterSpacing: -0.6,
+                                    letterSpacing: -0.8,
                                     height: 1.1,
                                   ),
                                 ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  isPaid ? 'All dues cleared for this cycle' : 'Due by $rentDueDateStr',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 11.5,
-                                    color: Colors.white.withValues(alpha: 0.80),
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      isPaid ? Icons.verified_rounded : Icons.schedule_rounded,
+                                      size: 13,
+                                      color: isPaid ? const Color(0xFF6EE7B7) : Colors.white.withValues(alpha: 0.82),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      isPaid ? 'All dues cleared for this cycle' : 'Due by $rentDueDateStr',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 11.5,
+                                        color: Colors.white.withValues(alpha: 0.85),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -1627,16 +1611,16 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 color: Colors.transparent,
                                 child: InkWell(
                                   onTap: () => _showReceiptDialog(currentMonthStr, monthlyRentVal, rentDueDateStr),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(14),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                     decoration: BoxDecoration(
-                                      color: TenantTheme.surface.withValues(alpha: 0.85),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: TenantTheme.glassBorder, width: 1),
+                                      color: Colors.white.withValues(alpha: 0.18),
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.2),
+                                          color: Colors.black.withValues(alpha: 0.12),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -1647,15 +1631,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                       children: [
                                         const Icon(
                                           Icons.receipt_long_rounded,
-                                          color: TenantTheme.primary,
-                                          size: 14,
+                                          color: Colors.white,
+                                          size: 15,
                                         ),
-                                        const SizedBox(width: 5),
+                                        const SizedBox(width: 6),
                                         Text(
                                           'Receipt',
                                           style: GoogleFonts.plusJakartaSans(
-                                            color: TenantTheme.primary,
-                                            fontSize: 12,
+                                            color: Colors.white,
+                                            fontSize: 12.5,
                                             fontWeight: FontWeight.w800,
                                           ),
                                         ),
@@ -1673,33 +1657,45 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
           // Rejection Banner if any
           if (_rejectionReason != null) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
               decoration: BoxDecoration(
-                color: TenantTheme.dangerBg,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: TenantTheme.dangerBorder),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFEF2F2), Color(0xFFFEE2E2)],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFFECACA), width: 1.2),
+                boxShadow: const [
+                  BoxShadow(color: Color(0x08EF4444), blurRadius: 10, offset: Offset(0, 3)),
+                ],
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline_rounded, color: TenantTheme.danger, size: 20),
-                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFCA5A5).withValues(alpha: 0.35),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.error_outline_rounded, color: Color(0xFFDC2626), size: 19),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Payment Proof Rejected',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: TenantTheme.danger, fontWeight: FontWeight.w800),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFFDC2626), fontWeight: FontWeight.w800),
                         ),
-                        const SizedBox(height: 1),
+                        const SizedBox(height: 2),
                         Text(
                           _rejectionReason!,
-                          style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: TenantTheme.textSecondary, height: 1.25),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF7F1D1D), height: 1.3),
                         ),
                       ],
                     ),
@@ -1707,105 +1703,183 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
           ],
 
-          // 2. Outstanding Dues Clearance Card (Only when dues > 0)
+          // 2. Outstanding Dues Clearance Card (Frosted Glass Container, only when dues > 0)
           if (_totalDue > 0) ...[
             _buildGlassContainer(
-              padding: const EdgeInsets.all(16),
+              borderRadius: 22,
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Card Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Clear Outstanding Dues',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w800,
-                          color: TenantTheme.textPrimary,
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEE2E2),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFFEF4444), size: 18),
+                          ),
+                          const SizedBox(width: 10),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Clear Outstanding Dues',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: TenantTheme.textPrimary,
+                                ),
+                              ),
+                              Text(
+                                'Pay now to settle rent & utility fees',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11.5,
+                                  color: TenantTheme.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: TenantTheme.dangerBg,
+                          color: const Color(0xFFFEE2E2),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: TenantTheme.dangerBorder, width: 0.8),
+                          border: Border.all(color: const Color(0xFFFECACA), width: 0.8),
                         ),
                         child: Text(
                           'Action Required',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            color: TenantTheme.danger,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFFDC2626),
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  _buildPaymentBreakdownRow('Pending Rent', '₹${_pendingRent.toStringAsFixed(0)}'),
-                  const SizedBox(height: 6),
-                  _buildPaymentBreakdownRow('Room & Utility Bills', '₹${_pendingBills.toStringAsFixed(0)}'),
-                  const SizedBox(height: 6),
-                  _buildPaymentBreakdownRow('Platform Convenience Fee', '₹${_convenienceFee.toStringAsFixed(0)}'),
-                  const Divider(height: 18, color: TenantTheme.borderLight),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Total Payable',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 13.5, fontWeight: FontWeight.w700, color: TenantTheme.textPrimary),
-                      ),
-                      Text(
-                        '₹${_totalDue.toStringAsFixed(0)}',
-                        style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w800, color: TenantTheme.primary),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
 
-                  // Compact Image upload button
+                  // Itemized Breakdown Box
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFEDF2F7), width: 1),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildPaymentBreakdownRow('Pending Rent', '₹${_pendingRent.toStringAsFixed(0)}', icon: Icons.door_sliding_outlined),
+                        const SizedBox(height: 8),
+                        _buildPaymentBreakdownRow('Room & Utility Bills', '₹${_pendingBills.toStringAsFixed(0)}', icon: Icons.receipt_long_outlined),
+                        const SizedBox(height: 8),
+                        _buildPaymentBreakdownRow('Platform Convenience Fee', '₹${_convenienceFee.toStringAsFixed(0)}', icon: Icons.verified_user_outlined),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 10),
+                          child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Total Payable',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: TenantTheme.textPrimary,
+                              ),
+                            ),
+                            Text(
+                              '₹${_totalDue.toStringAsFixed(0)}',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 19,
+                                fontWeight: FontWeight.w800,
+                                color: TenantTheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Compact / Clean Image Upload Button
                   GestureDetector(
                     onTap: _pickImage,
                     child: Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: _selectedImageBytes != null ? TenantTheme.successBg : TenantTheme.primarySoft,
-                        borderRadius: BorderRadius.circular(12),
+                        color: _selectedImageBytes != null ? const Color(0xFFF0FDF4) : const Color(0xFFF5F7FD),
+                        borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: _selectedImageBytes != null ? TenantTheme.successBorder : TenantTheme.primaryBorder,
-                          width: 1,
+                          color: _selectedImageBytes != null ? const Color(0xFF86EFAC) : const Color(0xFFC7D2FE),
+                          width: 1.2,
                         ),
                       ),
                       child: Row(
                         children: [
-                          Icon(
-                            _selectedImageBytes != null ? Icons.check_circle_rounded : Icons.add_photo_alternate_rounded,
-                            color: _selectedImageBytes != null ? TenantTheme.success : TenantTheme.primary,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _selectedImageBytes != null ? 'Screenshot Attached' : 'Attach UPI Screenshot',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: _selectedImageBytes != null ? TenantTheme.success : TenantTheme.primary,
-                              ),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: _selectedImageBytes != null ? const Color(0xFFDCFCE7) : TenantTheme.primarySoft,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              _selectedImageBytes != null ? Icons.check_circle_rounded : Icons.add_photo_alternate_rounded,
+                              color: _selectedImageBytes != null ? const Color(0xFF16A34A) : TenantTheme.primary,
+                              size: 19,
                             ),
                           ),
-                          Text(
-                            _selectedImageBytes != null ? 'Change' : 'Upload',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: _selectedImageBytes != null ? TenantTheme.success : TenantTheme.primary,
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _selectedImageBytes != null ? 'Screenshot Attached' : 'Attach UPI Screenshot',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: _selectedImageBytes != null ? const Color(0xFF15803D) : TenantTheme.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  _selectedImageBytes != null ? 'Tap to replace image' : 'Proof of transaction for admin approval',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    color: TenantTheme.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: _selectedImageBytes != null ? const Color(0xFF16A34A) : TenantTheme.primary,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              _selectedImageBytes != null ? 'Change' : 'Upload',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ],
@@ -1813,71 +1887,138 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     ),
                   ),
                   if (_selectedImageBytes != null) ...[
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.memory(_selectedImageBytes!, height: 80, width: double.infinity, fit: BoxFit.cover),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFF86EFAC)),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Image.memory(
+                          _selectedImageBytes!,
+                          height: 90,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
                   ],
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
+
+                  // Transaction Reference TextField
                   TextField(
                     controller: _descriptionController,
-                    style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: TenantTheme.textPrimary),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 13, color: TenantTheme.textPrimary),
                     decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.tag_rounded, size: 18, color: Color(0xFF94A3B8)),
                       hintText: 'UTR / Transaction Reference (optional)',
-                      hintStyle: GoogleFonts.plusJakartaSans(fontSize: 12, color: TenantTheme.textMuted),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      hintStyle: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF94A3B8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       isDense: true,
                       filled: true,
-                      fillColor: TenantTheme.surface,
+                      fillColor: const Color(0xFFF8FAFC),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: TenantTheme.glassBorder),
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: TenantTheme.glassBorder),
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: TenantTheme.primary),
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: TenantTheme.primary, width: 1.4),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
+                  const SizedBox(height: 14),
+
+                  // Submit Button
+                  Container(
                     width: double.infinity,
-                    height: 42,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      gradient: const LinearGradient(
+                        colors: [TenantTheme.primary, Color(0xFF4338CA)],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: TenantTheme.primary.withValues(alpha: 0.28),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _submitRequest,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: TenantTheme.primary,
+                        backgroundColor: Colors.transparent,
                         foregroundColor: Colors.white,
+                        shadowColor: Colors.transparent,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                       child: _isLoading
-                          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : Text('Submit Payment for Approval', style: GoogleFonts.plusJakartaSans(fontSize: 13.5, fontWeight: FontWeight.w800)),
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : Text(
+                              'Submit Payment for Approval',
+                              style: GoogleFonts.plusJakartaSans(fontSize: 13.5, fontWeight: FontWeight.w800),
+                            ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
           ],
 
           // 3. Payment History Section
-          Text(
-            'Payment History',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: TenantTheme.textPrimary,
-              letterSpacing: -0.3,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: TenantTheme.primarySoft,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.history_rounded, color: TenantTheme.primary, size: 17),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Payment History',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: TenantTheme.textPrimary,
+                      letterSpacing: -0.4,
+                    ),
+                  ),
+                ],
+              ),
+              if (_payments.isNotEmpty || bills.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${_payments.length + bills.where((b) => b['status'] == 'PAID').length} Records',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
+                ),
+            ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
 
           // Display Rent cycle record + bills dynamically from API
           _buildPaymentHistoryList(currentMonthStr, monthlyRentVal, isPaid, bills),
@@ -1907,18 +2048,38 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
     if (!hasRecordedPayments && !hasPaidBills && !hasPaidCycle) {
       return _buildGlassContainer(
-        padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+        borderRadius: 22,
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
         child: Center(
           child: Column(
             children: [
-              Icon(Icons.receipt_outlined, size: 36, color: TenantTheme.textMuted.withValues(alpha: 0.7)),
-              const SizedBox(height: 8),
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: const Icon(Icons.receipt_long_outlined, size: 26, color: Color(0xFF94A3B8)),
+              ),
+              const SizedBox(height: 12),
               Text(
-                'No past payment records found.',
+                'No Payment Records Found',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700,
+                  color: TenantTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Your payment history and rent clearances will be recorded here.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
                   color: TenantTheme.textSecondary,
-                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
@@ -1928,77 +2089,78 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     }
 
     return _buildGlassContainer(
+      borderRadius: 22,
       child: Column(
         children: [
-          // 1. If backend payments exist, display each payment record with exact paid date
-          if (hasRecordedPayments) ...[
-            ..._payments.asMap().entries.map((entry) {
+            // 1. If backend payments exist, display each payment record with exact paid date
+            if (hasRecordedPayments) ...[
+              ..._payments.asMap().entries.map((entry) {
+                final idx = entry.key;
+                final p = entry.value;
+                final amount = (p['amount'] as num?)?.toDouble() ?? 0.0;
+                final dateStr = _formatPaymentDateTime(p['date']);
+                final method = p['method']?.toString() ?? 'UPI';
+                final notes = p['notes']?.toString();
+                final isLast = idx == _payments.length - 1 && bills.isEmpty;
+
+                return Column(
+                  children: [
+                    _buildPaymentRecordTile(
+                      title: notes != null && notes.isNotEmpty ? notes : 'Rent Payment',
+                      amount: '₹${NumberFormat('#,##,###').format(amount)}',
+                      dateStr: dateStr,
+                      method: method,
+                      status: 'Paid',
+                      isSuccess: true,
+                    ),
+                    if (!isLast) const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
+                  ],
+                );
+              }),
+            ] else if (hasPaidCycle) ...[
+              // Fallback if backend payments list is empty but profile is marked PAID
+              _buildPaymentRecordTile(
+                title: '$currentMonthStr Rent',
+                amount: '₹${NumberFormat('#,##,###').format(monthlyRentVal)}',
+                dateStr: _formatPaymentDateTime(DateTime.now()),
+                method: 'UPI',
+                status: 'Paid',
+                isSuccess: true,
+              ),
+              if (bills.isNotEmpty) const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
+            ],
+
+            // 2. Bills history
+            ...bills.asMap().entries.map((entry) {
               final idx = entry.key;
-              final p = entry.value;
-              final amount = (p['amount'] as num?)?.toDouble() ?? 0.0;
-              final dateStr = _formatPaymentDateTime(p['date']);
-              final method = p['method']?.toString() ?? 'UPI';
-              final notes = p['notes']?.toString();
-              final isLast = idx == _payments.length - 1 && bills.isEmpty;
+              final b = entry.value;
+              final isBillPaid = b['status'] == 'PAID';
+              final amount = (b['amount'] as num?)?.toDouble() ?? 0;
+              final title = b['description'] != null && b['description'].toString().isNotEmpty
+                  ? b['description'].toString()
+                  : (b['type'] != null ? '${b['type']} Bill' : 'Utility Bill');
+              final billDate = isBillPaid
+                  ? _formatPaymentDateTime(b['createdAt'] ?? b['dueDate'])
+                  : _formatDate(b['dueDate'] ?? b['createdAt']);
 
               return Column(
                 children: [
                   _buildPaymentRecordTile(
-                    title: notes != null && notes.isNotEmpty ? notes : 'Rent Payment',
+                    title: title,
                     amount: '₹${NumberFormat('#,##,###').format(amount)}',
-                    dateStr: dateStr,
-                    method: method,
-                    status: 'Paid',
-                    isSuccess: true,
+                    dateStr: billDate,
+                    method: isBillPaid ? 'PAID' : 'PENDING',
+                    status: isBillPaid ? 'Paid' : 'Pending',
+                    isSuccess: isBillPaid,
                   ),
-                  if (!isLast) const Divider(height: 1, color: TenantTheme.borderLight, indent: 16, endIndent: 16),
+                  if (idx < bills.length - 1)
+                    const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
                 ],
               );
             }),
-          ] else if (hasPaidCycle) ...[
-            // Fallback if backend payments list is empty but profile is marked PAID
-            _buildPaymentRecordTile(
-              title: '$currentMonthStr Rent',
-              amount: '₹${NumberFormat('#,##,###').format(monthlyRentVal)}',
-              dateStr: _formatPaymentDateTime(DateTime.now()),
-              method: 'UPI',
-              status: 'Paid',
-              isSuccess: true,
-            ),
-            if (bills.isNotEmpty) const Divider(height: 1, color: TenantTheme.borderLight, indent: 16, endIndent: 16),
           ],
-
-          // 2. Bills history
-          ...bills.asMap().entries.map((entry) {
-            final idx = entry.key;
-            final b = entry.value;
-            final isBillPaid = b['status'] == 'PAID';
-            final amount = (b['amount'] as num?)?.toDouble() ?? 0;
-            final title = b['description'] != null && b['description'].toString().isNotEmpty
-                ? b['description'].toString()
-                : (b['type'] != null ? '${b['type']} Bill' : 'Utility Bill');
-            final billDate = isBillPaid
-                ? _formatPaymentDateTime(b['createdAt'] ?? b['dueDate'])
-                : _formatDate(b['dueDate'] ?? b['createdAt']);
-
-            return Column(
-              children: [
-                _buildPaymentRecordTile(
-                  title: title,
-                  amount: '₹${NumberFormat('#,##,###').format(amount)}',
-                  dateStr: billDate,
-                  method: isBillPaid ? 'PAID' : 'PENDING',
-                  status: isBillPaid ? 'Paid' : 'Pending',
-                  isSuccess: isBillPaid,
-                ),
-                if (idx < bills.length - 1)
-                  const Divider(height: 1, color: TenantTheme.borderLight, indent: 16, endIndent: 16),
-              ],
-            );
-          }),
-        ],
-      ),
-    );
+        ),
+      );
   }
 
   Widget _buildPaymentRecordTile({
@@ -2019,20 +2181,20 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
-              color: isSuccess ? TenantTheme.successBg : TenantTheme.warningBg,
-              borderRadius: BorderRadius.circular(10),
+              color: isSuccess ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSuccess ? TenantTheme.successBorder : TenantTheme.warningBorder,
-                width: 0.8,
+                color: isSuccess ? const Color(0xFFA7F3D0) : const Color(0xFFFDE68A),
+                width: 1,
               ),
             ),
             child: Icon(
-              isSuccess ? Icons.check_circle_rounded : Icons.pending_rounded,
-              color: isSuccess ? TenantTheme.success : TenantTheme.warning,
-              size: 19,
+              isSuccess ? Icons.check_circle_rounded : Icons.hourglass_top_rounded,
+              color: isSuccess ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+              size: 20,
             ),
           ),
           const SizedBox(width: 12),
@@ -2065,18 +2227,18 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 4),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
                       children: [
                         const Icon(
-                          Icons.access_time_rounded,
+                          Icons.calendar_today_outlined,
                           size: 11.5,
-                          color: TenantTheme.textMuted,
+                          color: Color(0xFF94A3B8),
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 4.5),
                         Text(
                           isSuccess ? 'Paid on $dateStr' : 'Due by $dateStr',
                           style: GoogleFonts.plusJakartaSans(
@@ -2092,16 +2254,16 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       children: [
                         if (method.isNotEmpty && method != 'PAID' && method != 'PENDING') ...[
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 6.5, vertical: 2),
                             decoration: BoxDecoration(
                               color: isUPI
                                   ? TenantTheme.primarySoft
-                                  : (isCash ? TenantTheme.warningBg : TenantTheme.surface),
-                              borderRadius: BorderRadius.circular(5),
+                                  : (isCash ? const Color(0xFFFEF3C7) : const Color(0xFFF1F5F9)),
+                              borderRadius: BorderRadius.circular(6),
                               border: Border.all(
                                 color: isUPI
-                                    ? TenantTheme.primaryBorder
-                                    : (isCash ? TenantTheme.warningBorder : TenantTheme.glassBorder),
+                                    ? TenantTheme.primaryBorder.withValues(alpha: 0.6)
+                                    : (isCash ? const Color(0xFFFDE68A) : const Color(0xFFE2E8F0)),
                                 width: 0.8,
                               ),
                             ),
@@ -2109,33 +2271,33 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               method.toUpperCase(),
                               style: TextStyle(
                                 fontSize: 9,
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w800,
                                 letterSpacing: 0.3,
                                 color: isUPI
                                     ? TenantTheme.primary
-                                    : (isCash ? TenantTheme.warning : TenantTheme.textSecondary),
+                                    : (isCash ? const Color(0xFFB45309) : const Color(0xFF64748B)),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: 5),
                         ],
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                           decoration: BoxDecoration(
-                            color: isSuccess ? TenantTheme.successBg : TenantTheme.dangerBg,
-                            borderRadius: BorderRadius.circular(5),
+                            color: isSuccess ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2),
+                            borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                              color: isSuccess ? TenantTheme.successBorder : TenantTheme.dangerBorder,
-                              width: 0.6,
+                              color: isSuccess ? const Color(0xFFA7F3D0) : const Color(0xFFFECACA),
+                              width: 0.8,
                             ),
                           ),
                           child: Text(
                             isSuccess ? 'PAID' : 'DUE',
                             style: TextStyle(
                               fontSize: 9,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w800,
                               letterSpacing: 0.3,
-                              color: isSuccess ? TenantTheme.success : TenantTheme.danger,
+                              color: isSuccess ? const Color(0xFF10B981) : const Color(0xFFEF4444),
                             ),
                           ),
                         ),
@@ -2147,10 +2309,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   const SizedBox(height: 3),
                   Text(
                     notes,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10.5,
-                      color: TenantTheme.textMuted,
-                    ),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 10.5, color: TenantTheme.textMuted),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -2171,60 +2330,86 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
-        backgroundColor: TenantTheme.surface,
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: const BorderSide(color: TenantTheme.glassBorder),
+          side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
         ),
-        insetPadding: const EdgeInsets.all(20),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 54,
-                height: 54,
-                decoration: const BoxDecoration(
-                  color: TenantTheme.successBg,
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFECFDF5),
                   shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFA7F3D0), width: 2),
+                  boxShadow: const [
+                    BoxShadow(color: Color(0x1A10B981), blurRadius: 12, offset: Offset(0, 4)),
+                  ],
                 ),
-                child: const Icon(Icons.check_circle_rounded, color: TenantTheme.success, size: 32),
+                child: const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 34),
               ),
               const SizedBox(height: 14),
               Text(
                 'Payment Receipt',
-                style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w800, color: TenantTheme.textPrimary),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                  color: TenantTheme.textPrimary,
+                  letterSpacing: -0.4,
+                ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 3),
               Text(
-                'Official Rent Statement',
-                style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: TenantTheme.textMuted),
+                'Official Rent & Utility Statement',
+                style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: TenantTheme.textSecondary),
               ),
               const SizedBox(height: 18),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: TenantTheme.background,
+                  color: const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: TenantTheme.glassBorder),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
                 child: Column(
                   children: [
                     _buildReceiptRow('Tenant Name', tenantName),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 9),
                     _buildReceiptRow('Room / Bed', 'Room $roomNumber • Bed $bedLabel'),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 9),
                     _buildReceiptRow('Billing Period', monthStr),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 9),
                     _buildReceiptRow('Payment Status', 'PAID & VERIFIED', isGreen: true),
-                    const Divider(height: 20, color: TenantTheme.borderLight),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 10),
+                      child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+                    ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Amount Paid', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w800, color: TenantTheme.textPrimary)),
-                        Text('₹${NumberFormat('#,##,###').format(amount)}', style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w800, color: TenantTheme.primary)),
+                        Text(
+                          'Amount Paid',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: TenantTheme.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          '₹${NumberFormat('#,##,###').format(amount)}',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 19,
+                            fontWeight: FontWeight.w800,
+                            color: TenantTheme.primary,
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -2233,15 +2418,19 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
-                height: 48,
+                height: 46,
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(ctx),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: TenantTheme.primary,
                     foregroundColor: Colors.white,
+                    elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
-                  child: Text('Close Receipt', style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w800)),
+                  child: Text(
+                    'Close Receipt',
+                    style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w800),
+                  ),
                 ),
               ),
             ],
@@ -2261,19 +2450,41 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 12.5,
             fontWeight: FontWeight.w700,
-            color: isGreen ? TenantTheme.success : TenantTheme.textPrimary,
+            color: isGreen ? const Color(0xFF10B981) : TenantTheme.textPrimary,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildPaymentBreakdownRow(String label, String value) {
+  Widget _buildPaymentBreakdownRow(String label, String value, {IconData? icon}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: TenantTheme.textSecondary)),
-        Text(value, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: TenantTheme.textPrimary)),
+        Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 15, color: const Color(0xFF64748B)),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12.5,
+                color: TenantTheme.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        Text(
+          value,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: TenantTheme.textPrimary,
+          ),
+        ),
       ],
     );
   }
@@ -2532,8 +2743,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     final state = _profileData?['state'] ?? 'Not Provided';
     final pinCode = _profileData?['pinCode'] ?? 'Not Provided';
 
-    final completion = _calculateProfileCompletion();
-    final isKycComplete = completion >= 1.0;
+    final roomNumber = _profileData?['room']?['roomNumber']?.toString();
+    final bedLabel = _profileData?['bed']?['bedLabel']?.toString();
+    final monthlyRent = _profileData?['monthlyRent'];
+    final monthlyRentStr = monthlyRent != null ? '₹${NumberFormat('#,##,###').format(monthlyRent)}' : null;
+    final moveInDateStr = _formatDate(_profileData?['moveInDate'] ?? _profileData?['joiningDate']);
+
+    final rawKycStatus = (_profileData?['kycStatus'] as String?)?.toUpperCase();
+    final isKycComplete = rawKycStatus == 'VERIFIED' || _calculateProfileCompletion() >= 1.0;
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
@@ -2553,147 +2770,185 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Profile Header Card (Frosted Glass)
+          // Profile Header Card (Frosted Glass Container with specular border & soft float shadow)
           _buildGlassContainer(
-            padding: const EdgeInsets.all(20),
+            borderRadius: 24,
+            padding: const EdgeInsets.all(22),
             child: Column(
               children: [
-                Stack(
-                  alignment: Alignment.bottomRight,
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: TenantTheme.cardShadow,
-                        border: Border.all(color: TenantTheme.primaryBorder, width: 2.5),
-                      ),
-                      child: TenantAvatar(
-                        name: name,
-                        imageUrl: _profileData?['imageUrl'],
-                        radius: 38,
-                        enablePreview: true,
-                        backgroundColor: TenantTheme.primarySoft,
-                        textColor: TenantTheme.primary,
-                      ),
+                Container(
+                  padding: const EdgeInsets.all(3.5),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      colors: [TenantTheme.primary, TenantTheme.primaryLight],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    GestureDetector(
-                      onTap: () => _openEditProfileDialog(),
-                      child: Container(
-                        padding: const EdgeInsets.all(7),
-                        decoration: const BoxDecoration(
-                          color: TenantTheme.primary,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.edit_rounded, color: Colors.white, size: 14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: TenantTheme.primary.withValues(alpha: 0.25),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: TenantAvatar(
+                      name: name,
+                      imageUrl: _profileData?['imageUrl'],
+                      radius: 40,
+                      enablePreview: true,
+                      backgroundColor: TenantTheme.primarySoft,
+                      textColor: TenantTheme.primary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  name,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 20.5,
+                    fontWeight: FontWeight.w800,
+                    color: TenantTheme.textPrimary,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.phone_iphone_rounded, size: 14, color: TenantTheme.textSecondary),
+                    const SizedBox(width: 4),
+                    Text(
+                      phone,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        color: TenantTheme.textSecondary,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 14),
-                Text(
-                  name,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 18.5, fontWeight: FontWeight.w800, color: TenantTheme.textPrimary),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  phone,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 13, color: TenantTheme.textSecondary, fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(height: 16),
 
-                // KYC Completion Bar
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                // Status Badges Row (Room/Bed info & KYC Verification Status)
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
+                    if (roomNumber != null && roomNumber.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5.5),
+                        decoration: BoxDecoration(
+                          color: TenantTheme.primarySoft,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: TenantTheme.primaryBorder.withValues(alpha: 0.7), width: 0.9),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
+                            const Icon(Icons.meeting_room_outlined, size: 13, color: TenantTheme.primary),
+                            const SizedBox(width: 4.5),
                             Text(
-                              'KYC Profile Completion',
-                              style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: TenantTheme.textSecondary),
-                            ),
-                            if (isKycComplete) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: TenantTheme.successBg,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: TenantTheme.successBorder, width: 0.8),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.check_circle_rounded, size: 12, color: TenantTheme.success),
-                                    const SizedBox(width: 3),
-                                    Text(
-                                      'Verified',
-                                      style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: TenantTheme.success),
-                                    ),
-                                  ],
-                                ),
+                              'Room $roomNumber${bedLabel != null && bedLabel.isNotEmpty ? ' • Bed $bedLabel' : ''}',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: TenantTheme.primary,
                               ),
-                            ],
+                            ),
                           ],
                         ),
-                        Text(
-                          '${(completion * 100).toInt()}%',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: isKycComplete ? TenantTheme.success : TenantTheme.primary,
-                          ),
+                      ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5.5),
+                      decoration: BoxDecoration(
+                        color: isKycComplete ? TenantTheme.successBg : const Color(0xFFFFFBEB),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isKycComplete ? TenantTheme.successBorder : const Color(0xFFFDE68A),
+                          width: 0.9,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: LinearProgressIndicator(
-                        value: completion,
-                        minHeight: 7,
-                        backgroundColor: TenantTheme.surface,
-                        valueColor: AlwaysStoppedAnimation<Color>(isKycComplete ? TenantTheme.success : TenantTheme.primary),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isKycComplete ? Icons.verified_rounded : Icons.pending_actions_rounded,
+                            size: 13,
+                            color: isKycComplete ? TenantTheme.success : const Color(0xFFD97706),
+                          ),
+                          const SizedBox(width: 4.5),
+                          Text(
+                            isKycComplete ? 'KYC Verified' : 'KYC Pending',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              color: isKycComplete ? TenantTheme.success : const Color(0xFFD97706),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 18),
 
-                // Action Buttons (Edit Info + Complete KYC)
+                // Action Buttons (Edit Profile + Complete/Update KYC)
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
+                      child: OutlinedButton.icon(
                         onPressed: () => _openEditProfileDialog(),
+                        icon: const Icon(Icons.edit_outlined, size: 16, color: TenantTheme.primary),
+                        label: Text(
+                          'Edit Profile',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: TenantTheme.primary,
+                          ),
+                        ),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: TenantTheme.primaryBorder),
-                          backgroundColor: TenantTheme.surface,
+                          side: const BorderSide(color: TenantTheme.primaryBorder, width: 1.2),
+                          backgroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: Text(
-                          'Edit Info',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800, color: TenantTheme.primary),
+                          elevation: 0,
                         ),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: ElevatedButton(
+                      child: ElevatedButton.icon(
                         onPressed: () => _openCompleteKycDialog(),
+                        icon: Icon(
+                          isKycComplete ? Icons.assignment_turned_in_outlined : Icons.verified_user_outlined,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                        label: Text(
+                          isKycComplete ? 'Update KYC' : 'Complete KYC',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: isKycComplete ? TenantTheme.success : TenantTheme.primary,
                           foregroundColor: Colors.white,
-                          elevation: 0,
+                          elevation: 1.5,
+                          shadowColor: (isKycComplete ? TenantTheme.success : TenantTheme.primary).withValues(alpha: 0.35),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: Text(
-                          isKycComplete ? 'Update KYC' : 'Complete KYC',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w800),
                         ),
                       ),
                     ),
@@ -2704,18 +2959,41 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           ),
           const SizedBox(height: 16),
 
+          // Stay / Tenancy Details Card (if room is assigned)
+          if (roomNumber != null && roomNumber.isNotEmpty) ...[
+            _buildProfileSectionCard(
+              title: 'Stay Details',
+              icon: Icons.home_work_outlined,
+              isExpanded: _isStayDetailsExpanded,
+              onToggle: () => setState(() => _isStayDetailsExpanded = !_isStayDetailsExpanded),
+              subtitle: 'Room $roomNumber${bedLabel != null && bedLabel.isNotEmpty ? ' • Bed $bedLabel' : ''}',
+              items: [
+                _buildProfileRow('Room & Bed', 'Room $roomNumber${bedLabel != null && bedLabel.isNotEmpty ? ' • Bed $bedLabel' : ''}', icon: Icons.door_sliding_outlined),
+                if (monthlyRentStr != null)
+                  _buildProfileRow('Monthly Rent', monthlyRentStr, icon: Icons.currency_rupee_rounded),
+                if (moveInDateStr.isNotEmpty && moveInDateStr != 'Not Provided')
+                  _buildProfileRow('Joining Date', moveInDateStr, icon: Icons.calendar_today_outlined),
+                _buildProfileRow('Stay Status', 'Active Resident', icon: Icons.verified_outlined),
+              ],
+            ),
+            const SizedBox(height: 14),
+          ],
+
           // Personal Details Section
           _buildProfileSectionCard(
             title: 'Personal Information',
             icon: Icons.person_rounded,
+            isExpanded: _isPersonalInfoExpanded,
+            onToggle: () => setState(() => _isPersonalInfoExpanded = !_isPersonalInfoExpanded),
+            subtitle: email != 'Not Provided' ? email : 'Tap to view details',
             items: [
-              _buildProfileRow('Email', email),
-              _buildProfileRow('Emergency Contact', emergency),
-              _buildProfileRow('Date of Birth', dob),
-              _buildProfileRow('Father\'s Name', father),
-              _buildProfileRow('Occupation', occupation),
-              _buildProfileRow('Marital Status', marital),
-              _buildProfileRow('Nationality', nationality),
+              _buildProfileRow('Email', email, icon: Icons.email_outlined),
+              _buildProfileRow('Emergency Contact', emergency, icon: Icons.contact_phone_outlined),
+              _buildProfileRow('Date of Birth', dob, icon: Icons.cake_outlined),
+              _buildProfileRow('Father\'s Name', father, icon: Icons.person_outline_rounded),
+              _buildProfileRow('Occupation', occupation, icon: Icons.work_outline_rounded),
+              _buildProfileRow('Marital Status', marital, icon: Icons.favorite_border_rounded),
+              _buildProfileRow('Nationality', nationality, icon: Icons.flag_outlined),
             ],
           ),
           const SizedBox(height: 14),
@@ -2724,33 +3002,55 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           _buildProfileSectionCard(
             title: 'Permanent Address',
             icon: Icons.location_on_rounded,
+            isExpanded: _isAddressExpanded,
+            onToggle: () => setState(() => _isAddressExpanded = !_isAddressExpanded),
+            subtitle: district != 'Not Provided' ? '$district, $state' : 'Tap to view address',
             items: [
-              _buildProfileRow('Address', address),
-              if (houseNo != null && houseNo.toString().isNotEmpty) _buildProfileRow('House No.', houseNo.toString()),
-              if (wardNo != null && wardNo.toString().isNotEmpty) _buildProfileRow('Ward No.', wardNo.toString()),
-              if (village != null && village.toString().isNotEmpty) _buildProfileRow('Village / Town', village.toString()),
-              _buildProfileRow('District', district),
-              _buildProfileRow('State', state),
-              _buildProfileRow('PIN Code', pinCode),
+              _buildProfileRow('Address', address, icon: Icons.home_outlined),
+              if (houseNo != null && houseNo.toString().isNotEmpty) _buildProfileRow('House No.', houseNo.toString(), icon: Icons.tag_rounded),
+              if (wardNo != null && wardNo.toString().isNotEmpty) _buildProfileRow('Ward No.', wardNo.toString(), icon: Icons.tag_rounded),
+              if (village != null && village.toString().isNotEmpty) _buildProfileRow('Village / Town', village.toString(), icon: Icons.location_city_outlined),
+              _buildProfileRow('District', district, icon: Icons.map_outlined),
+              _buildProfileRow('State', state, icon: Icons.public_outlined),
+              _buildProfileRow('PIN Code', pinCode, icon: Icons.pin_drop_outlined),
             ],
           ),
           const SizedBox(height: 20),
 
-          // Log Out Button
-          SizedBox(
+          // Log Out Button (Clean modern solid button)
+          _buildGlassContainer(
             width: double.infinity,
-            height: 50,
-            child: OutlinedButton.icon(
-              onPressed: () => _confirmLogout(),
-              icon: const Icon(Icons.logout_rounded, color: TenantTheme.danger, size: 18),
-              label: Text(
-                'Log Out',
-                style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w800, color: TenantTheme.danger),
+            height: 52,
+            borderRadius: 16,
+            customGlassFill: const Color(0xFFFEF2F2),
+            customBorderColor: const Color(0xFFFECACA),
+            customShadow: const [
+              BoxShadow(
+                color: Color(0x06EF4444),
+                blurRadius: 10,
+                offset: Offset(0, 3),
               ),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: TenantTheme.dangerBorder),
-                backgroundColor: TenantTheme.dangerBg,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ],
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => _confirmLogout(),
+                borderRadius: BorderRadius.circular(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.logout_rounded, color: TenantTheme.danger, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Log Out',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                        color: TenantTheme.danger,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -2764,43 +3064,174 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     required String title,
     required IconData icon,
     required List<Widget> items,
+    required bool isExpanded,
+    required VoidCallback onToggle,
+    String? subtitle,
   }) {
     return _buildGlassContainer(
+      borderRadius: 20,
+      customBorderColor: isExpanded ? TenantTheme.primaryBorder.withValues(alpha: 0.85) : TenantTheme.glassBorder,
+      customShadow: [
+        BoxShadow(
+          color: const Color(0x0A0F172A),
+          blurRadius: isExpanded ? 16 : 10,
+          offset: Offset(0, isExpanded ? 6 : 3),
+        ),
+        BoxShadow(
+          color: isExpanded ? TenantTheme.primary.withValues(alpha: 0.04) : const Color(0x040F172A),
+          blurRadius: 4,
+          offset: const Offset(0, 1),
+        ),
+      ],
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-            child: Row(
-              children: [
-                Icon(icon, color: TenantTheme.primary, size: 19),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 14.5, fontWeight: FontWeight.w800, color: TenantTheme.textPrimary),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onToggle,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isExpanded ? TenantTheme.primary : TenantTheme.primarySoft,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: isExpanded
+                              ? [
+                                  BoxShadow(
+                                    color: TenantTheme.primary.withValues(alpha: 0.28),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Icon(icon, color: isExpanded ? Colors.white : TenantTheme.primary, size: 19),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 15.5,
+                                fontWeight: FontWeight.w800,
+                                color: TenantTheme.textPrimary,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                            if (subtitle != null && !isExpanded) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                subtitle,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: TenantTheme.textSecondary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: isExpanded ? TenantTheme.primarySoft : const Color(0xFFF1F5F9),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isExpanded ? TenantTheme.primaryBorder.withValues(alpha: 0.6) : const Color(0xFFE2E8F0),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: AnimatedRotation(
+                          turns: isExpanded ? 0.5 : 0.0,
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeInOutCubic,
+                          child: Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: isExpanded ? TenantTheme.primary : const Color(0xFF64748B),
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ),
-          ),
-          const Divider(height: 1, color: TenantTheme.borderLight),
-          ...items,
-        ],
-      ),
-    );
+            AnimatedCrossFade(
+              firstChild: const SizedBox.shrink(),
+              secondChild: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 1,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    color: const Color(0xFFF1F5F9),
+                  ),
+                  const SizedBox(height: 4),
+                  ...items,
+                  const SizedBox(height: 8),
+                ],
+              ),
+              crossFadeState: isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+              duration: const Duration(milliseconds: 240),
+              firstCurve: Curves.easeIn,
+              secondCurve: Curves.easeOut,
+            ),
+          ],
+        ),
+      );
   }
 
-  Widget _buildProfileRow(String label, String value) {
+  Widget _buildProfileRow(String label, String value, {IconData? icon}) {
+    final isNotProvided = value.trim().isEmpty || value == 'Not Provided' || value == '-';
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: TenantTheme.textSecondary)),
-          Flexible(
+          if (icon != null) ...[
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(color: const Color(0xFFF1F5F9)),
+              ),
+              child: Icon(icon, size: 16, color: TenantTheme.primary.withValues(alpha: 0.85)),
+            ),
+            const SizedBox(width: 12),
+          ],
+          Text(
+            label,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: TenantTheme.textSecondary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
             child: Text(
-              value,
+              isNotProvided ? 'Not Provided' : value,
               textAlign: TextAlign.right,
-              style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: TenantTheme.textPrimary),
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: isNotProvided ? FontWeight.w500 : FontWeight.w700,
+                color: isNotProvided ? const Color(0xFF94A3B8) : TenantTheme.textPrimary,
+                fontStyle: isNotProvided ? FontStyle.italic : FontStyle.normal,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
