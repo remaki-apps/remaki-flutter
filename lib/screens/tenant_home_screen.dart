@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -257,18 +258,126 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     );
   }
 
+  Widget _buildGlassContainer({
+    required Widget child,
+    double borderRadius = 20,
+    EdgeInsetsGeometry? padding,
+    EdgeInsetsGeometry? margin,
+    double? width,
+    double? height,
+    Color? customGlassFill,
+    Color? customBorderColor,
+    double borderWidth = 1.0,
+    List<BoxShadow>? customShadow,
+    Clip clipBehavior = Clip.antiAlias,
+  }) {
+    return Container(
+      width: width,
+      height: height,
+      margin: margin,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(borderRadius),
+        boxShadow: customShadow ?? TenantTheme.cardShadow,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        clipBehavior: clipBehavior,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            padding: padding,
+            decoration: BoxDecoration(
+              color: customGlassFill ?? TenantTheme.glassFill,
+              borderRadius: BorderRadius.circular(borderRadius),
+              border: Border.all(
+                color: customBorderColor ?? TenantTheme.glassBorder,
+                width: borderWidth,
+              ),
+            ),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: TenantTheme.background,
-      body: SafeArea(
-        child: _isFetching
-            ? const Center(child: CircularProgressIndicator(color: TenantTheme.primary))
-            : RefreshIndicator(
-                onRefresh: _loadAllData,
-                color: TenantTheme.primary,
-                child: _buildCurrentPage(),
+      body: Stack(
+        children: [
+          // Ambient Neon Glow Orb 1 (Top-Right Soft Pastel Indigo Glow)
+          Positioned(
+            top: -60,
+            right: -60,
+            child: IgnorePointer(
+              child: Container(
+                width: 320,
+                height: 320,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFFC7D2FE).withValues(alpha: 0.45),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
               ),
+            ),
+          ),
+          // Ambient Neon Glow Orb 2 (Center-Left Soft Pastel Sky Glow)
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.35,
+            left: -80,
+            child: IgnorePointer(
+              child: Container(
+                width: 280,
+                height: 280,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFFBAE6FD).withValues(alpha: 0.40),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Ambient Neon Glow Orb 3 (Bottom-Right Soft Pastel Violet Glow)
+          Positioned(
+            bottom: 40,
+            right: -70,
+            child: IgnorePointer(
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFFDDD6FE).withValues(alpha: 0.45),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Content
+          SafeArea(
+            child: _isFetching
+                ? const Center(child: CircularProgressIndicator(color: TenantTheme.primary))
+                : RefreshIndicator(
+                    onRefresh: _loadAllData,
+                    color: TenantTheme.primary,
+                    child: _buildCurrentPage(),
+                  ),
+          ),
+        ],
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
@@ -288,35 +397,39 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   }
 
   // ===========================================================================
-  // BOTTOM NAVIGATION BAR
+  // BOTTOM NAVIGATION BAR (FROSTED LIGHT GLASS)
   // ===========================================================================
   Widget _buildBottomNavigationBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1E202B).withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, -6),
-          ),
-        ],
-      ),
-      child: SafeArea(
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
-          height: 64,
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(0, Icons.grid_view_rounded, Icons.grid_view_outlined, 'Home'),
-              _buildNavItem(1, Icons.account_balance_wallet_rounded, Icons.account_balance_wallet_outlined, 'Payments'),
-              _buildNavItem(2, Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
+          decoration: BoxDecoration(
+            color: TenantTheme.surface.withValues(alpha: 0.90),
+            border: const Border(
+              top: BorderSide(color: TenantTheme.borderMedium, width: 1),
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0A0F172A),
+                blurRadius: 20,
+                offset: Offset(0, -4),
+              ),
             ],
+          ),
+          child: SafeArea(
+            child: Container(
+              height: 58,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Home'),
+                  _buildNavItem(1, Icons.account_balance_wallet_rounded, Icons.account_balance_wallet_outlined, 'Payments'),
+                  _buildNavItem(2, Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -341,23 +454,24 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             clipBehavior: Clip.none,
             children: [
               AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
+                duration: const Duration(milliseconds: 200),
                 curve: Curves.easeOutCubic,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
                   color: isSelected ? TenantTheme.primarySoft : Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
+                  border: isSelected ? Border.all(color: TenantTheme.primaryBorder, width: 1) : null,
                 ),
                 child: Icon(
                   isSelected ? activeIcon : inactiveIcon,
                   color: isSelected ? TenantTheme.primary : TenantTheme.textMuted,
-                  size: 22,
+                  size: 21,
                 ),
               ),
               if (badgeCount > 0 && !isSelected)
                 Positioned(
-                  top: 0,
-                  right: 6,
+                  top: -2,
+                  right: 4,
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: const BoxDecoration(
@@ -372,16 +486,76 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 ),
             ],
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 2),
           Text(
             label,
             style: GoogleFonts.plusJakartaSans(
               fontSize: 10.5,
-              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-              color: isSelected ? TenantTheme.primary : TenantTheme.textMuted,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              color: isSelected ? TenantTheme.primary : TenantTheme.textSecondary,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionTile({
+    required IconData icon,
+    required String label,
+    required Color iconColor,
+    required Color bgColor,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+              decoration: BoxDecoration(
+                color: TenantTheme.glassFill,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: TenantTheme.glassBorder, width: 1),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x080F172A),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(icon, color: iconColor, size: 20),
+                  ),
+                  const SizedBox(height: 7),
+                  Text(
+                    label,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: TenantTheme.textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -393,8 +567,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         builder: (ctx) => Scaffold(
           backgroundColor: TenantTheme.background,
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: TenantTheme.surface.withValues(alpha: 0.9),
             elevation: 0,
+            shape: const Border(bottom: BorderSide(color: TenantTheme.glassBorder, width: 1)),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded, color: TenantTheme.textPrimary, size: 20),
               onPressed: () => Navigator.pop(ctx),
@@ -428,8 +603,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         builder: (ctx) => Scaffold(
           backgroundColor: TenantTheme.background,
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: TenantTheme.surface.withValues(alpha: 0.9),
             elevation: 0,
+            shape: const Border(bottom: BorderSide(color: TenantTheme.glassBorder, width: 1)),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded, color: TenantTheme.textPrimary, size: 20),
               onPressed: () => Navigator.pop(ctx),
@@ -526,7 +702,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   Text(
                     '${_getGreeting()},',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14.5,
+                      fontSize: 13.5,
                       fontWeight: FontWeight.w500,
                       color: TenantTheme.textSecondary,
                     ),
@@ -537,20 +713,20 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       Text(
                         '$firstName ',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 24,
+                          fontSize: 23,
                           fontWeight: FontWeight.w800,
                           color: TenantTheme.textPrimary,
                           letterSpacing: -0.6,
                         ),
                       ),
-                      const Text('👋', style: TextStyle(fontSize: 22)),
+                      const Text('👋', style: TextStyle(fontSize: 20)),
                     ],
                   ),
                   const SizedBox(height: 2),
                   Text(
                     'Welcome to your resident dashboard',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12.5,
+                      fontSize: 12,
                       color: TenantTheme.textMuted,
                       fontWeight: FontWeight.w500,
                     ),
@@ -562,19 +738,20 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
-                        color: TenantTheme.primary.withValues(alpha: 0.15),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
+                        color: Color(0x100F172A),
+                        blurRadius: 10,
+                        offset: Offset(0, 3),
                       ),
                     ],
-                    border: Border.all(color: Colors.white, width: 2.5),
+                    border: Border.all(color: TenantTheme.glassBorder, width: 2),
                   ),
                   child: TenantAvatar(
                     name: tenantName,
                     imageUrl: _profileData?['imageUrl'],
-                    radius: 24,
+                    radius: 23,
+                    enablePreview: true,
                     backgroundColor: TenantTheme.primarySoft,
                     textColor: TenantTheme.primary,
                   ),
@@ -582,7 +759,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
 
           // 2. Hero Room Card
           GestureDetector(
@@ -596,27 +773,28 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.22), width: 1.2),
                 boxShadow: TenantTheme.heroShadow,
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(20),
                 child: Stack(
                   children: [
                     Positioned(
-                      right: -25,
-                      top: -25,
+                      right: -20,
+                      top: -20,
                       child: Container(
-                        width: 120,
-                        height: 120,
+                        width: 110,
+                        height: 110,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withValues(alpha: 0.10),
+                          color: Colors.white.withValues(alpha: 0.08),
                         ),
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -624,20 +802,42 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(
-                                'Room $roomNumber',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 21,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                  letterSpacing: -0.4,
-                                ),
+                              Row(
+                                children: [
+                                  Text(
+                                    'Room $roomNumber',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                      letterSpacing: -0.4,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.18),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 0.8),
+                                    ),
+                                    child: Text(
+                                      'ACTIVE',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.4,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 'Bed $bedLabel',
                                 style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 13.5,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                   color: Colors.white.withValues(alpha: 0.88),
                                 ),
@@ -645,16 +845,30 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             ],
                           ),
                           Container(
-                            width: 38,
-                            height: 38,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.20),
-                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 0.8),
                             ),
-                            child: const Icon(
-                              Icons.arrow_forward_ios_rounded,
-                              color: Colors.white,
-                              size: 14,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'My Stay',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(
+                                  Icons.arrow_forward_rounded,
+                                  color: Colors.white,
+                                  size: 13,
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -665,20 +879,51 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
 
-          // 3. Rent Status Card
+          // 3. Quick Action Grid
+          Row(
+            children: [
+              _buildQuickActionTile(
+                icon: Icons.account_balance_wallet_rounded,
+                label: 'Pay Rent',
+                iconColor: TenantTheme.actionPayRentIcon,
+                bgColor: TenantTheme.actionPayRentBg,
+                onTap: () => setState(() => _currentNavIndex = 1),
+              ),
+              const SizedBox(width: 10),
+              _buildQuickActionTile(
+                icon: Icons.meeting_room_rounded,
+                label: 'My Stay',
+                iconColor: TenantTheme.actionStayIcon,
+                bgColor: TenantTheme.actionStayBg,
+                onTap: _openMyStayDetails,
+              ),
+              const SizedBox(width: 10),
+              _buildQuickActionTile(
+                icon: Icons.campaign_rounded,
+                label: 'Notices',
+                iconColor: TenantTheme.actionNoticesIcon,
+                bgColor: TenantTheme.actionNoticesBg,
+                onTap: _openNoticesScreen,
+              ),
+              const SizedBox(width: 10),
+              _buildQuickActionTile(
+                icon: Icons.person_rounded,
+                label: 'Profile',
+                iconColor: TenantTheme.actionProfileIcon,
+                bgColor: TenantTheme.actionProfileBg,
+                onTap: () => setState(() => _currentNavIndex = 2),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // 4. Rent Status Card (Frosted Glass)
           GestureDetector(
             onTap: () => setState(() => _currentNavIndex = 1), // Navigate to Payments
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: TenantTheme.borderLight, width: 1.2),
-                boxShadow: TenantTheme.cardShadow,
-              ),
+            child: _buildGlassContainer(
+              padding: const EdgeInsets.all(18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -688,37 +933,39 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       Text(
                         'Rent Status',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13.5,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: TenantTheme.textSecondary,
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4.5),
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                         decoration: BoxDecoration(
                           color: isPaid ? TenantTheme.successBg : TenantTheme.dangerBg,
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isPaid ? TenantTheme.successBorder : TenantTheme.dangerBorder,
+                            width: 0.8,
                           ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
-                              width: 6,
-                              height: 6,
+                              width: 5.5,
+                              height: 5.5,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: isPaid ? TenantTheme.success : TenantTheme.danger,
                               ),
                             ),
-                            const SizedBox(width: 5),
+                            const SizedBox(width: 4.5),
                             Text(
-                              isPaid ? 'Paid' : 'Due',
+                              isPaid ? 'PAID' : 'DUE',
                               style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
+                                fontSize: 10.5,
                                 fontWeight: FontWeight.w800,
+                                letterSpacing: 0.3,
                                 color: isPaid ? TenantTheme.success : TenantTheme.danger,
                               ),
                             ),
@@ -728,23 +975,64 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  Text(
-                    '₹${NumberFormat('#,##,###').format(displayRentAmount)}',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: TenantTheme.textPrimary,
-                      letterSpacing: -0.8,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    isPaid ? 'All dues cleared for this month' : 'Payment due on $rentDueDateStr',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
-                      color: TenantTheme.textMuted,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '₹${NumberFormat('#,##,###').format(displayRentAmount)}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              color: TenantTheme.textPrimary,
+                              letterSpacing: -0.6,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            isPaid ? 'All dues cleared for this month' : 'Payment due on $rentDueDateStr',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5,
+                              color: TenantTheme.textMuted,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isPaid ? TenantTheme.surface : TenantTheme.primarySoft,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isPaid ? TenantTheme.glassBorder : TenantTheme.primaryBorder,
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              isPaid ? 'History' : 'Pay Now',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                color: isPaid ? TenantTheme.textSecondary : TenantTheme.primary,
+                              ),
+                            ),
+                            const SizedBox(width: 3),
+                            Icon(
+                              Icons.arrow_forward_rounded,
+                              size: 13,
+                              color: isPaid ? TenantTheme.textSecondary : TenantTheme.primary,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -752,14 +1040,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           ),
           const SizedBox(height: 20),
 
-          // 4. Recent Notice Card
+          // 5. Recent Notice Card (Frosted Glass)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Recent Notice',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 17,
+                  fontSize: 16,
                   fontWeight: FontWeight.w800,
                   color: TenantTheme.textPrimary,
                   letterSpacing: -0.3,
@@ -770,8 +1058,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 child: Text(
                   'View All',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
                     color: TenantTheme.primary,
                   ),
                 ),
@@ -779,15 +1067,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
+          _buildGlassContainer(
             padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: TenantTheme.borderLight, width: 1.2),
-              boxShadow: TenantTheme.cardShadow,
-            ),
             child: _announcements.isNotEmpty
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -800,6 +1081,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             decoration: BoxDecoration(
                               color: TenantTheme.primarySoft,
                               borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: TenantTheme.primaryBorder, width: 0.8),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -841,8 +1123,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFEEF2FF),
+                              color: TenantTheme.primarySoft,
                               borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: TenantTheme.primaryBorder, width: 0.8),
                             ),
                             child: const Icon(
                               Icons.campaign_rounded,
@@ -857,7 +1140,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               children: [
                                 Text(
                                   _announcements.first['heading'] ?? 'Notice',
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 15.5,
                                     fontWeight: FontWeight.w700,
                                     color: TenantTheme.textPrimary,
@@ -895,10 +1178,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           const SizedBox(height: 12),
                           Text(
                             'No Notices Yet',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0F172A),
+                              color: TenantTheme.textPrimary,
                               letterSpacing: -0.3,
                             ),
                           ),
@@ -909,7 +1192,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: const Color(0xFF64748B),
+                              color: TenantTheme.textSecondary,
                               height: 1.4,
                             ),
                           ),
@@ -1004,14 +1287,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           ],
 
           // 1. Room & Bed Allocation Section Card
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: TenantTheme.borderLight, width: 1.2),
-              boxShadow: TenantTheme.cardShadow,
-            ),
+          _buildGlassContainer(
+            borderRadius: 24,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1053,14 +1330,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           const SizedBox(height: 18),
 
           // 2. Rent & Financial Agreement Section Card
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: TenantTheme.borderLight, width: 1.2),
-              boxShadow: TenantTheme.cardShadow,
-            ),
+          _buildGlassContainer(
+            borderRadius: 24,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1102,14 +1373,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           const SizedBox(height: 18),
 
           // 3. Resident Identity & Contact Card
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: TenantTheme.borderLight, width: 1.2),
-              boxShadow: TenantTheme.cardShadow,
-            ),
+          _buildGlassContainer(
+            borderRadius: 24,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1235,7 +1500,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.16), width: 1),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.22), width: 1.2),
               boxShadow: [
                 BoxShadow(
                   color: const Color(0xFF5034EA).withValues(alpha: 0.28),
@@ -1366,11 +1631,12 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                                     decoration: BoxDecoration(
-                                      color: Colors.white,
+                                      color: TenantTheme.surface.withValues(alpha: 0.85),
                                       borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: TenantTheme.glassBorder, width: 1),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.08),
+                                          color: Colors.black.withValues(alpha: 0.2),
                                           blurRadius: 8,
                                           offset: const Offset(0, 2),
                                         ),
@@ -1446,15 +1712,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
           // 2. Outstanding Dues Clearance Card (Only when dues > 0)
           if (_totalDue > 0) ...[
-            Container(
-              width: double.infinity,
+            _buildGlassContainer(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: TenantTheme.borderLight, width: 1.2),
-                boxShadow: TenantTheme.cardShadow,
-              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1474,6 +1733,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         decoration: BoxDecoration(
                           color: TenantTheme.dangerBg,
                           borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: TenantTheme.dangerBorder, width: 0.8),
                         ),
                         child: Text(
                           'Action Required',
@@ -1562,21 +1822,21 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   const SizedBox(height: 10),
                   TextField(
                     controller: _descriptionController,
-                    style: GoogleFonts.plusJakartaSans(fontSize: 12.5),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: TenantTheme.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'UTR / Transaction Reference (optional)',
                       hintStyle: GoogleFonts.plusJakartaSans(fontSize: 12, color: TenantTheme.textMuted),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       isDense: true,
                       filled: true,
-                      fillColor: TenantTheme.background,
+                      fillColor: TenantTheme.surface,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: TenantTheme.borderLight),
+                        borderSide: const BorderSide(color: TenantTheme.glassBorder),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: TenantTheme.borderLight),
+                        borderSide: const BorderSide(color: TenantTheme.glassBorder),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -1646,14 +1906,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     final hasPaidCycle = isPaid && monthlyRentVal > 0;
 
     if (!hasRecordedPayments && !hasPaidBills && !hasPaidCycle) {
-      return Container(
-        width: double.infinity,
+      return _buildGlassContainer(
         padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: TenantTheme.borderLight, width: 1.2),
-        ),
         child: Center(
           child: Column(
             children: [
@@ -1673,13 +1927,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       );
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: TenantTheme.borderLight, width: 1.2),
-        boxShadow: TenantTheme.cardShadow,
-      ),
+    return _buildGlassContainer(
       child: Column(
         children: [
           // 1. If backend payments exist, display each payment record with exact paid date
@@ -1762,25 +2010,29 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     required bool isSuccess,
     String? notes,
   }) {
+    final isUPI = method.toUpperCase().contains('UPI');
+    final isCash = method.toUpperCase().contains('CASH');
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color: isSuccess ? const Color(0xFFF0FDF4) : const Color(0xFFFFFBEB),
-              borderRadius: BorderRadius.circular(12),
+              color: isSuccess ? TenantTheme.successBg : TenantTheme.warningBg,
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: isSuccess ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
+                color: isSuccess ? TenantTheme.successBorder : TenantTheme.warningBorder,
+                width: 0.8,
               ),
             ),
             child: Icon(
               isSuccess ? Icons.check_circle_rounded : Icons.pending_rounded,
-              color: isSuccess ? const Color(0xFF16A34A) : const Color(0xFFD97706),
-              size: 20,
+              color: isSuccess ? TenantTheme.success : TenantTheme.warning,
+              size: 19,
             ),
           ),
           const SizedBox(width: 12),
@@ -1813,84 +2065,94 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.calendar_today_rounded,
+                        const Icon(
+                          Icons.access_time_rounded,
                           size: 11.5,
-                          color: isSuccess ? const Color(0xFF16A34A) : TenantTheme.textMuted,
+                          color: TenantTheme.textMuted,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           isSuccess ? 'Paid on $dateStr' : 'Due by $dateStr',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: isSuccess ? const Color(0xFF16A34A) : TenantTheme.textSecondary,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w500,
+                            color: TenantTheme.textSecondary,
                           ),
                         ),
                       ],
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: isSuccess ? TenantTheme.successBg : TenantTheme.warningBg,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: isSuccess ? TenantTheme.successBorder : TenantTheme.warningBorder,
-                          width: 0.8,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (method.isNotEmpty && method != 'PAID' && method != 'PENDING') ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isUPI
+                                  ? TenantTheme.primarySoft
+                                  : (isCash ? TenantTheme.warningBg : TenantTheme.surface),
+                              borderRadius: BorderRadius.circular(5),
+                              border: Border.all(
+                                color: isUPI
+                                    ? TenantTheme.primaryBorder
+                                    : (isCash ? TenantTheme.warningBorder : TenantTheme.glassBorder),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Text(
+                              method.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.3,
+                                color: isUPI
+                                    ? TenantTheme.primary
+                                    : (isCash ? TenantTheme.warning : TenantTheme.textSecondary),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                        ],
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isSuccess ? TenantTheme.successBg : TenantTheme.dangerBg,
+                            borderRadius: BorderRadius.circular(5),
+                            border: Border.all(
+                              color: isSuccess ? TenantTheme.successBorder : TenantTheme.dangerBorder,
+                              width: 0.6,
+                            ),
+                          ),
+                          child: Text(
+                            isSuccess ? 'PAID' : 'DUE',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.3,
+                              color: isSuccess ? TenantTheme.success : TenantTheme.danger,
+                            ),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        status,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: isSuccess ? TenantTheme.success : TenantTheme.warning,
-                        ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
-                if (method.isNotEmpty || (notes != null && notes.isNotEmpty)) ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      if (method.isNotEmpty && method != 'PAID' && method != 'PENDING')
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            method.toUpperCase(),
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF475569),
-                            ),
-                          ),
-                        ),
-                      if (method.isNotEmpty && notes != null && notes.isNotEmpty)
-                        const SizedBox(width: 6),
-                      if (notes != null && notes.isNotEmpty)
-                        Expanded(
-                          child: Text(
-                            notes,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11,
-                              color: TenantTheme.textMuted,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                    ],
+                if (notes != null && notes.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    notes,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10.5,
+                      color: TenantTheme.textMuted,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ],
@@ -1909,8 +2171,11 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: TenantTheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(color: TenantTheme.glassBorder),
+        ),
         insetPadding: const EdgeInsets.all(20),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -1943,7 +2208,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 decoration: BoxDecoration(
                   color: TenantTheme.background,
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: TenantTheme.borderLight),
+                  border: Border.all(color: TenantTheme.glassBorder),
                 ),
                 child: Column(
                   children: [
@@ -1954,7 +2219,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     _buildReceiptRow('Billing Period', monthStr),
                     const SizedBox(height: 8),
                     _buildReceiptRow('Payment Status', 'PAID & VERIFIED', isGreen: true),
-                    const Divider(height: 20, color: TenantTheme.borderMedium),
+                    const Divider(height: 20, color: TenantTheme.borderLight),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -2057,10 +2322,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 const SizedBox(height: 16),
                                 Text(
                                   'No Notices Found',
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF0F172A),
+                                    color: TenantTheme.textPrimary,
                                     letterSpacing: -0.3,
                                   ),
                                 ),
@@ -2071,7 +2336,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
-                                    color: const Color(0xFF64748B),
+                                    color: TenantTheme.textSecondary,
                                     height: 1.4,
                                   ),
                                 ),
@@ -2110,151 +2375,140 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             const SizedBox(height: 16),
           ],
           ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _announcements.length,
-              separatorBuilder: (ctx, i) => const SizedBox(height: 14),
-              itemBuilder: (ctx, i) {
-                final item = _announcements[i];
-                final heading = item['heading'] ?? 'Notice';
-                final desc = item['description'] ?? '';
-                final date = _formatDate(item['createdAt']);
-                final imgUrl = item['imageUrl'] as String?;
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _announcements.length,
+            separatorBuilder: (ctx, i) => const SizedBox(height: 14),
+            itemBuilder: (ctx, i) {
+              final item = _announcements[i];
+              final heading = item['heading'] ?? 'Notice';
+              final desc = item['description'] ?? '';
+              final date = _formatDate(item['createdAt']);
+              final imgUrl = item['imageUrl'] as String?;
 
-                return Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.4),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF0F172A).withValues(alpha: 0.035),
-                        blurRadius: 14,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(9),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEEF2FF),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.campaign_rounded,
-                              size: 20,
-                              color: TenantTheme.primary,
-                            ),
+              return _buildGlassContainer(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(9),
+                          decoration: BoxDecoration(
+                            color: TenantTheme.primarySoft,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: TenantTheme.primaryBorder, width: 0.8),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  heading,
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF0F172A),
-                                    letterSpacing: -0.2,
-                                  ),
-                                ),
-                                if (date.isNotEmpty) ...[
-                                  const SizedBox(height: 3),
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.schedule_rounded,
-                                        size: 12,
-                                        color: Color(0xFF94A3B8),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        date,
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 11.5,
-                                          color: const Color(0xFF64748B),
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ],
-                            ),
+                          child: const Icon(
+                            Icons.campaign_rounded,
+                            size: 20,
+                            color: TenantTheme.primary,
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEEF2FF),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.verified_rounded, size: 12, color: TenantTheme.primary),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Official',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: TenantTheme.primary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        desc,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13.5,
-                          height: 1.5,
-                          color: const Color(0xFF334155),
-                          fontWeight: FontWeight.w400,
                         ),
-                      ),
-                      if (imgUrl != null && imgUrl.isNotEmpty) ...[
-                        const SizedBox(height: 14),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(color: const Color(0xFFF1F5F9)),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Image.network(
-                              imgUrl,
-                              height: 170,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (ctx, err, st) => const SizedBox(),
-                            ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                heading,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: TenantTheme.textPrimary,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                              if (date.isNotEmpty) ...[
+                                const SizedBox(height: 3),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.schedule_rounded,
+                                      size: 12,
+                                      color: TenantTheme.textMuted,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      date,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 11.5,
+                                        color: TenantTheme.textMuted,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: TenantTheme.primarySoft,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: TenantTheme.primaryBorder, width: 0.8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.verified_rounded, size: 12, color: TenantTheme.primary),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Official',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: TenantTheme.primary,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      desc,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.5,
+                        height: 1.5,
+                        color: TenantTheme.textSecondary,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    if (imgUrl != null && imgUrl.isNotEmpty) ...[
+                      const SizedBox(height: 14),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: TenantTheme.glassBorder),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Image.network(
+                            imgUrl,
+                            height: 170,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (ctx, err, st) => const SizedBox(),
+                          ),
+                        ),
+                      ),
                     ],
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      );
-    }
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
 
   // ===========================================================================
   // SCREEN 5: PROFILE & KYC - STRICTLY API DATA ONLY
@@ -2299,16 +2553,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Profile Header Card
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: TenantTheme.borderLight, width: 1.2),
-              boxShadow: TenantTheme.cardShadow,
-            ),
+          // Profile Header Card (Frosted Glass)
+          _buildGlassContainer(
+            padding: const EdgeInsets.all(20),
             child: Column(
               children: [
                 Stack(
@@ -2318,12 +2565,13 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         boxShadow: TenantTheme.cardShadow,
-                        border: Border.all(color: TenantTheme.primaryBorder, width: 3),
+                        border: Border.all(color: TenantTheme.primaryBorder, width: 2.5),
                       ),
                       child: TenantAvatar(
                         name: name,
                         imageUrl: _profileData?['imageUrl'],
                         radius: 38,
+                        enablePreview: true,
                         backgroundColor: TenantTheme.primarySoft,
                         textColor: TenantTheme.primary,
                       ),
@@ -2371,18 +2619,18 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFDCFCE7),
+                                  color: TenantTheme.successBg,
                                   borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: const Color(0xFF86EFAC), width: 0.8),
+                                  border: Border.all(color: TenantTheme.successBorder, width: 0.8),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(Icons.check_circle_rounded, size: 12, color: Color(0xFF16A34A)),
+                                    const Icon(Icons.check_circle_rounded, size: 12, color: TenantTheme.success),
                                     const SizedBox(width: 3),
                                     Text(
                                       'Verified',
-                                      style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: const Color(0xFF16A34A)),
+                                      style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: TenantTheme.success),
                                     ),
                                   ],
                                 ),
@@ -2395,7 +2643,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
-                            color: isKycComplete ? const Color(0xFF16A34A) : TenantTheme.primary,
+                            color: isKycComplete ? TenantTheme.success : TenantTheme.primary,
                           ),
                         ),
                       ],
@@ -2406,8 +2654,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       child: LinearProgressIndicator(
                         value: completion,
                         minHeight: 7,
-                        backgroundColor: TenantTheme.background,
-                        valueColor: AlwaysStoppedAnimation<Color>(isKycComplete ? const Color(0xFF16A34A) : TenantTheme.primary),
+                        backgroundColor: TenantTheme.surface,
+                        valueColor: AlwaysStoppedAnimation<Color>(isKycComplete ? TenantTheme.success : TenantTheme.primary),
                       ),
                     ),
                   ],
@@ -2422,6 +2670,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         onPressed: () => _openEditProfileDialog(),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: TenantTheme.primaryBorder),
+                          backgroundColor: TenantTheme.surface,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
@@ -2436,7 +2685,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       child: ElevatedButton(
                         onPressed: () => _openCompleteKycDialog(),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isKycComplete ? const Color(0xFF16A34A) : TenantTheme.primary,
+                          backgroundColor: isKycComplete ? TenantTheme.success : TenantTheme.primary,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -2516,14 +2765,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     required IconData icon,
     required List<Widget> items,
   }) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: TenantTheme.borderLight, width: 1.2),
-        boxShadow: TenantTheme.cardShadow,
-      ),
+    return _buildGlassContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2594,9 +2836,12 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Log Out', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800)),
+        backgroundColor: TenantTheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: TenantTheme.glassBorder),
+        ),
+        title: Text('Log Out', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: TenantTheme.textPrimary)),
         content: Text(
           'Are you sure you want to log out of your tenant account?',
           style: GoogleFonts.plusJakartaSans(fontSize: 13.5, color: TenantTheme.textSecondary),

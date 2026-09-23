@@ -30,6 +30,7 @@ import 'screens/about_remaki_screen.dart';
 import 'screens/terms_of_service_screen.dart';
 import 'screens/privacy_policy_screen.dart';
 import 'screens/help_support_screen.dart';
+import 'screens/payment_history_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -172,6 +173,11 @@ final router = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/available_beds',
       builder: (context, state) => const AvailableBedsScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/payment_history',
+      builder: (context, state) => const PaymentHistoryScreen(),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
