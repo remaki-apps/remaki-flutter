@@ -43,70 +43,77 @@ class AppProvider with ChangeNotifier {
         }
       }
       
-      rooms = roomsData.map((e) {
+      rooms = roomsData.whereType<Map<String, dynamic>>().map((e) {
+        final rawBeds = (e['beds'] as List<dynamic>?) ?? [];
         return Room(
-          id: e['id'],
-          number: e['roomNumber'],
-          floor: e['floorNumber'] ?? 'Ground Floor',
-          capacity: e['capacity'],
-          beds: (e['beds'] as List).map((b) => Bed(
-            id: b['id'],
-            name: b['bedLabel'],
+          id: e['id']?.toString() ?? '',
+          number: e['roomNumber']?.toString() ?? '',
+          floor: e['floorNumber']?.toString() ?? 'Ground Floor',
+          capacity: (e['capacity'] as num?)?.toInt() ?? rawBeds.length,
+          beds: rawBeds.whereType<Map<String, dynamic>>().map((b) => Bed(
+            id: b['id']?.toString() ?? '',
+            name: b['bedLabel']?.toString() ?? 'Bed',
             isAvailable: b['status'] == 'AVAILABLE' || b['status'] == 'VACANT',
           )).toList(),
         );
       }).toList();
 
-      tenants = tenantsData.map((e) {
+      tenants = tenantsData.whereType<Map<String, dynamic>>().map((e) {
+        final roomMap = e['room'] as Map<String, dynamic>?;
+        final bedMap = e['bed'] as Map<String, dynamic>?;
+        final billsList = (e['bills'] as List<dynamic>?) ?? [];
+        final monthlyRent = (e['monthlyRent'] as num?)?.toDouble() ?? 0.0;
+        final pendingRent = (e['pendingRentAmount'] as num?)?.toDouble() ?? monthlyRent;
+
         return Tenant(
-          id: e['id'],
-          name: e['name'],
-          phone: e['phone'] ?? '',
-          email: e['email'] ?? '',
-          emergencyContact: e['emergencyContact'],
-          imageUrl: e['imageUrl'],
-          roomId: e['room'] != null ? e['room']['id'] : '',
-          bedId: e['bed'] != null ? e['bed']['id'] : '',
-          moveInDate: e['moveInDate'] != null ? DateTime.tryParse(e['moveInDate']) ?? DateTime.now() : DateTime.now(),
-          rentAmount: (e['monthlyRent'] ?? 0).toDouble(),
-          securityDeposit: (e['securityDeposit'] ?? 0).toDouble(),
+          id: e['id']?.toString() ?? '',
+          name: e['name']?.toString() ?? 'Tenant',
+          phone: e['phone']?.toString() ?? '',
+          email: e['email']?.toString() ?? '',
+          emergencyContact: e['emergencyContact']?.toString(),
+          imageUrl: e['imageUrl']?.toString(),
+          roomId: roomMap?['id']?.toString() ?? '',
+          bedId: bedMap?['id']?.toString() ?? '',
+          moveInDate: e['moveInDate'] != null ? DateTime.tryParse(e['moveInDate'].toString()) ?? DateTime.now() : DateTime.now(),
+          rentAmount: monthlyRent,
+          securityDeposit: (e['securityDeposit'] as num?)?.toDouble() ?? 0.0,
           isPaid: e['paymentStatus'] == 'PAID',
-          rentDueDate: e['rentDueDate'] != null ? DateTime.tryParse(e['rentDueDate']) ?? DateTime.now() : DateTime.now(),
-          pendingRentAmount: (e['pendingRentAmount'] as num?)?.toDouble() ?? (e['monthlyRent'] ?? 0).toDouble(),
-          defaultPaymentMode: e['defaultPaymentMode'],
-          occupation: e['occupation'],
-          dateOfBirth: e['dateOfBirth'],
-          maritalStatus: e['maritalStatus'],
-          fatherName: e['fatherName'],
-          permanentAddress: e['permanentAddress'],
-          villageOrTown: e['villageOrTown'],
-          houseNo: e['houseNo'],
-          wardNo: e['wardNo'],
-          district: e['district'],
-          state: e['state'],
-          nationality: e['nationality'],
-          pinCode: e['pinCode'],
+          rentDueDate: e['rentDueDate'] != null ? DateTime.tryParse(e['rentDueDate'].toString()) ?? DateTime.now() : DateTime.now(),
+          pendingRentAmount: pendingRent,
+          defaultPaymentMode: e['defaultPaymentMode']?.toString(),
+          occupation: e['occupation']?.toString(),
+          dateOfBirth: e['dateOfBirth']?.toString(),
+          maritalStatus: e['maritalStatus']?.toString(),
+          fatherName: e['fatherName']?.toString(),
+          permanentAddress: e['permanentAddress']?.toString(),
+          villageOrTown: e['villageOrTown']?.toString(),
+          houseNo: e['houseNo']?.toString(),
+          wardNo: e['wardNo']?.toString(),
+          district: e['district']?.toString(),
+          state: e['state']?.toString(),
+          nationality: e['nationality']?.toString(),
+          pinCode: e['pinCode']?.toString(),
           pendingConvenienceFee: (e['pendingConvenienceFee'] as num?)?.toDouble() ?? 0.0,
-          additionalCharges: (e['bills'] as List<dynamic>?)?.map((b) => AdditionalCharge(
-            id: b['id'],
-            description: b['description'] ?? 'Bill',
-            amount: (b['amount'] as num).toDouble(),
-            date: b['createdAt'] != null ? DateTime.tryParse(b['createdAt']) ?? DateTime.now() : DateTime.now(),
-            billType: b['type'] as String? ?? 'OTHER',
-            status: b['status'] as String? ?? 'PENDING',
-            billDueDate: b['dueDate'] != null ? DateTime.tryParse(b['dueDate'] as String) : null,
-          )).toList() ?? [],
+          additionalCharges: billsList.whereType<Map<String, dynamic>>().map((b) => AdditionalCharge(
+            id: b['id']?.toString() ?? '',
+            description: b['description']?.toString() ?? 'Bill',
+            amount: (b['amount'] as num?)?.toDouble() ?? 0.0,
+            date: b['createdAt'] != null ? DateTime.tryParse(b['createdAt'].toString()) ?? DateTime.now() : DateTime.now(),
+            billType: b['type']?.toString() ?? 'OTHER',
+            status: b['status']?.toString() ?? 'PENDING',
+            billDueDate: b['dueDate'] != null ? DateTime.tryParse(b['dueDate'].toString()) : null,
+          )).toList(),
         );
       }).toList();
 
-      payments = paymentsData.map((e) {
+      payments = paymentsData.whereType<Map<String, dynamic>>().map((e) {
         final tId = e['tenantId']?.toString() ?? '';
         Tenant? matchedTenant;
         try {
           matchedTenant = tenants.firstWhere((t) => t.id == tId);
         } catch (_) {}
 
-        String? roomInfo = e['roomNumber'];
+        String? roomInfo = e['roomNumber']?.toString();
         if (roomInfo == null && matchedTenant != null && matchedTenant.roomId.isNotEmpty) {
           try {
             final r = rooms.firstWhere((room) => room.id == matchedTenant!.roomId);
@@ -122,14 +129,14 @@ class AppProvider with ChangeNotifier {
         }
 
         return Payment(
-          id: e['id'] ?? '',
+          id: e['id']?.toString() ?? '',
           tenantId: tId,
           amount: (e['amount'] as num?)?.toDouble() ?? 0.0,
-          method: e['method'] ?? 'UPI',
-          date: e['date'] != null ? DateTime.tryParse(e['date']) ?? DateTime.now() : DateTime.now(),
-          tenantName: e['tenantName'] ?? matchedTenant?.name ?? 'Tenant',
+          method: e['method']?.toString() ?? 'UPI',
+          date: e['date'] != null ? DateTime.tryParse(e['date'].toString()) ?? DateTime.now() : DateTime.now(),
+          tenantName: e['tenantName']?.toString() ?? matchedTenant?.name ?? 'Tenant',
           roomNumber: roomInfo,
-          notes: e['notes'],
+          notes: e['notes']?.toString(),
         );
       }).toList();
 
@@ -222,11 +229,15 @@ class AppProvider with ChangeNotifier {
 
   Future<String?> addTenant(Tenant tenant) async {
     tenants.add(tenant);
-    // update bed status
-    var room = rooms.firstWhere((r) => r.id == tenant.roomId);
-    var bed = room.beds.firstWhere((b) => b.id == tenant.bedId);
-    bed.isAvailable = false;
-    bed.tenantId = tenant.id;
+    // update bed status if assigned
+    final roomIdx = rooms.indexWhere((r) => r.id == tenant.roomId);
+    if (roomIdx != -1) {
+      final bedIdx = rooms[roomIdx].beds.indexWhere((b) => b.id == tenant.bedId);
+      if (bedIdx != -1) {
+        rooms[roomIdx].beds[bedIdx].isAvailable = false;
+        rooms[roomIdx].beds[bedIdx].tenantId = tenant.id;
+      }
+    }
     notifyListeners();
     
     try {
@@ -235,7 +246,7 @@ class AppProvider with ChangeNotifier {
         'phone': tenant.phone,
         'email': tenant.email,
         'emergencyContact': tenant.emergencyContact,
-        'bedId': tenant.bedId,
+        'bedId': tenant.bedId.isNotEmpty ? tenant.bedId : null,
         'monthlyRent': tenant.rentAmount,
         'securityDeposit': tenant.securityDeposit,
         'dueDay': 5,
@@ -324,23 +335,27 @@ class AppProvider with ChangeNotifier {
   }
 
   void addBed(String roomId, String bedName) {
-    var room = rooms.firstWhere((r) => r.id == roomId);
-    var newBed = Bed(
-      id: 'b_${DateTime.now().millisecondsSinceEpoch}',
-      name: bedName,
-    );
-    room.beds.add(newBed);
-    room.capacity = room.beds.length;
-    saveToStorage();
-    notifyListeners();
+    final roomIdx = rooms.indexWhere((r) => r.id == roomId);
+    if (roomIdx != -1) {
+      var newBed = Bed(
+        id: 'b_${DateTime.now().millisecondsSinceEpoch}',
+        name: bedName,
+      );
+      rooms[roomIdx].beds.add(newBed);
+      rooms[roomIdx].capacity = rooms[roomIdx].beds.length;
+      saveToStorage();
+      notifyListeners();
+    }
   }
 
   void removeBed(String roomId, String bedId) {
-    var room = rooms.firstWhere((r) => r.id == roomId);
-    room.beds.removeWhere((b) => b.id == bedId);
-    room.capacity = room.beds.length;
-    saveToStorage();
-    notifyListeners();
+    final roomIdx = rooms.indexWhere((r) => r.id == roomId);
+    if (roomIdx != -1) {
+      rooms[roomIdx].beds.removeWhere((b) => b.id == bedId);
+      rooms[roomIdx].capacity = rooms[roomIdx].beds.length;
+      saveToStorage();
+      notifyListeners();
+    }
   }
 
   Future<void> editTenantFinancials(String tenantId, double? rentAmount, double? securityDeposit, int? rentDueDay, String? paymentMode) async {

@@ -17,6 +17,8 @@ class ApiService {
   static const String _baseUrl = 'https://remaki-backend.onrender.com/graphql';
   // Note: Appending /graphql as this is a GraphQL backend
 
+  static final ValueNotifier<bool> authNotifier = ValueNotifier<bool>(isLoggedIn);
+
   static String? _token;
   static String? _role;
 
@@ -30,6 +32,7 @@ class ApiService {
       final prefs = await SharedPreferences.getInstance();
       _token = prefs.getString('auth_token');
       _role = prefs.getString('user_role');
+      authNotifier.value = isLoggedIn;
     } catch (e) {
       debugPrint('ApiService initToken error: $e');
     }
@@ -38,6 +41,7 @@ class ApiService {
   static Future<void> setAuthToken(String token, String role) async {
     _token = token;
     _role = role;
+    authNotifier.value = isLoggedIn;
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('auth_token', token);
@@ -50,6 +54,7 @@ class ApiService {
   static Future<void> clearAuthToken() async {
     _token = null;
     _role = null;
+    authNotifier.value = false;
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('auth_token');
@@ -80,16 +85,26 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
-        if (data.containsKey('errors')) {
-          debugPrint('GraphQL Errors: ${data['errors']}');
-          final msg = data['errors'][0]['message'] ?? 'An unknown backend error occurred.';
-          final lower = msg.toString().toLowerCase();
-          if (lower.contains('unauthorized') || lower.contains('unauthenticated') || lower.contains('jwt expired')) {
-            await clearAuthToken();
+        if (data.containsKey('errors') && data['errors'] != null) {
+          final errorsList = data['errors'];
+          if (errorsList is List && errorsList.isNotEmpty) {
+            debugPrint('GraphQL Errors: $errorsList');
+            final firstErr = errorsList[0];
+            final msg = (firstErr is Map && firstErr['message'] != null)
+                ? firstErr['message'].toString()
+                : 'An unknown backend error occurred.';
+            final lower = msg.toLowerCase();
+            if (lower.contains('unauthorized') || lower.contains('unauthenticated') || lower.contains('jwt expired')) {
+              await clearAuthToken();
+            }
+            throw ApiException(msg);
           }
-          throw ApiException(msg);
         }
-        return data['data'];
+        final rootData = data['data'];
+        if (rootData is Map<String, dynamic>) {
+          return rootData;
+        }
+        return <String, dynamic>{};
       } else if (response.statusCode == 401) {
         await clearAuthToken();
         throw ApiException('Session expired. Please log in again.');

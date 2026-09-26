@@ -79,7 +79,23 @@ CustomTransitionPage<T> _buildPageWithTransition<T>({
 
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
+  refreshListenable: ApiService.authNotifier,
   initialLocation: ApiService.isLoggedIn ? (ApiService.role == 'TENANT' ? '/tenant_home' : '/') : '/login',
+  redirect: (context, state) {
+    final isLoggedIn = ApiService.isLoggedIn;
+    final location = state.matchedLocation;
+    final isLoggingIn = location == '/login' || location == '/forgot_password';
+
+    if (!isLoggedIn) {
+      return isLoggingIn ? null : '/login';
+    }
+
+    if (isLoggingIn) {
+      return ApiService.role == 'TENANT' ? '/tenant_home' : '/';
+    }
+
+    return null;
+  },
   routes: [
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

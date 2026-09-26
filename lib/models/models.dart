@@ -25,10 +25,10 @@ class Bed {
       };
 
   factory Bed.fromJson(Map<String, dynamic> json) => Bed(
-        id: json['id'] as String,
-        name: json['name'] as String,
+        id: json['id']?.toString() ?? '',
+        name: json['name']?.toString() ?? 'Bed',
         isAvailable: json['isAvailable'] as bool? ?? true,
-        tenantId: json['tenantId'] as String?,
+        tenantId: json['tenantId']?.toString(),
       );
 }
 
@@ -98,7 +98,10 @@ class Room {
         number: json['number']?.toString() ?? '',
         floor: json['floor']?.toString() ?? 'Ground Floor',
         capacity: (json['capacity'] as num?)?.toInt() ?? 0,
-        beds: (json['beds'] as List<dynamic>?)?.map((e) => Bed.fromJson(e as Map<String, dynamic>)).toList() ?? [],
+        beds: (json['beds'] as List<dynamic>?)
+            ?.whereType<Map<String, dynamic>>()
+            .map((e) => Bed.fromJson(e))
+            .toList() ?? [],
       );
 }
 
