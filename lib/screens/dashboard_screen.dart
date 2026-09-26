@@ -8,6 +8,7 @@ import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../models/models.dart';
 import '../widgets/tenant_avatar.dart';
+import '../widgets/app_shimmer.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -91,8 +92,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: RefreshIndicator(
           onRefresh: _handleRefresh,
           color: AppTheme.primaryColor,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          child: appProvider.isLoading
+              ? const DashboardSkeleton()
+              : SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -986,18 +989,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               child: Column(
                 children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE2E8F0),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.receipt_long_outlined,
-                      color: Color(0xFF64748B),
-                      size: 22,
-                    ),
+                  Image.asset(
+                    'assets/images/no_payment_history.png',
+                    height: 120,
+                    fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 10),
                   Text(

@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../providers/app_provider.dart';
 import '../widgets/tenant_avatar.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_shimmer.dart';
 
 class PaymentHistoryScreen extends StatefulWidget {
   const PaymentHistoryScreen({super.key});
@@ -129,8 +130,10 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
       body: RefreshIndicator(
         onRefresh: () => appProvider.loadFromAPI(),
         color: AppTheme.primaryColor,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        child: appProvider.isLoading
+            ? const PaymentHistorySkeleton()
+            : SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -338,14 +341,10 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                   ),
                   child: Column(
                     children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(Icons.receipt_long_outlined, size: 28, color: Color(0xFF94A3B8)),
+                      Image.asset(
+                        'assets/images/no_payment_history.png',
+                        height: 160,
+                        fit: BoxFit.contain,
                       ),
                       const SizedBox(height: 14),
                       Text(

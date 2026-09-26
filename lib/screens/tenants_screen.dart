@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tenant_avatar.dart';
+import '../widgets/app_shimmer.dart';
 
 class TenantsScreen extends StatefulWidget {
   const TenantsScreen({super.key});
@@ -50,8 +51,13 @@ class _TenantsScreenState extends State<TenantsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       body: SafeArea(
-        child: Column(
-          children: [
+        child: RefreshIndicator(
+          onRefresh: () => appProvider.loadFromAPI(),
+          color: AppTheme.primaryColor,
+          child: appProvider.isLoading
+              ? const TenantsListSkeleton()
+              : Column(
+                  children: [
             // Top Header & Search Bar
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -374,6 +380,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 

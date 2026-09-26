@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../models/models.dart';
 import '../widgets/tenant_avatar.dart';
 import '../widgets/fancy_toast.dart';
+import '../widgets/app_shimmer.dart';
 
 class RoomDetailsScreen extends StatelessWidget {
   final String roomId;
@@ -63,8 +64,13 @@ class RoomDetailsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       body: SafeArea(
-        child: Column(
-          children: [
+        child: RefreshIndicator(
+          onRefresh: () => appProvider.loadFromAPI(),
+          color: AppTheme.primaryColor,
+          child: appProvider.isLoading
+              ? const SimpleListSkeleton()
+              : Column(
+                  children: [
             // Top Header Row
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -259,6 +265,7 @@ class RoomDetailsScreen extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 

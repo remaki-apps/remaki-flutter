@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../providers/app_provider.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_shimmer.dart';
 
 class AvailableBedsScreen extends StatelessWidget {
   const AvailableBedsScreen({super.key});
@@ -57,8 +59,13 @@ class AvailableBedsScreen extends StatelessWidget {
         leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
         title: const Text('Available Beds'),
       ),
-      body: Column(
-        children: [
+      body: RefreshIndicator(
+        onRefresh: () => appProvider.loadFromAPI(),
+        color: AppTheme.primaryColor,
+        child: appProvider.isLoading
+            ? const SimpleListSkeleton()
+            : Column(
+                children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Align(
@@ -71,10 +78,39 @@ class AvailableBedsScreen extends StatelessWidget {
           ),
           Expanded(
             child: totalAvailableBeds == 0
-                ? const Center(
-                    child: Text(
-                      'No available beds found.',
-                      style: TextStyle(color: AppTheme.textSecondary),
+                ? Center(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/images/no_available_beds.png',
+                            height: 180,
+                            fit: BoxFit.contain,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No Available Beds',
+                            style: GoogleFonts.outfit(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF0F172A),
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'All beds are currently occupied or allocated.',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              color: const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   )
                 : ListView.builder(
@@ -182,6 +218,7 @@ class AvailableBedsScreen extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }

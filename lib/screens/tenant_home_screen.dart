@@ -13,6 +13,7 @@ import '../widgets/fancy_toast.dart';
 import '../widgets/tenant_avatar.dart';
 import 'edit_personal_info_dialog.dart';
 import 'complete_profile_dialog.dart';
+import '../widgets/app_shimmer.dart';
 
 class TenantHomeScreen extends StatefulWidget {
   final int initialTab;
@@ -301,16 +302,29 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     return Scaffold(
       backgroundColor: TenantTheme.background,
       body: SafeArea(
-        child: _isFetching
-            ? const Center(child: CircularProgressIndicator(color: TenantTheme.primary))
-            : RefreshIndicator(
-                onRefresh: _loadAllData,
-                color: TenantTheme.primary,
-                child: _buildCurrentPage(),
-              ),
+        child: RefreshIndicator(
+          onRefresh: _loadAllData,
+          color: TenantTheme.primary,
+          child: _isFetching
+              ? _buildSkeletonForTab()
+              : _buildCurrentPage(),
+        ),
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
+  }
+
+  Widget _buildSkeletonForTab() {
+    switch (_currentNavIndex) {
+      case 0:
+        return const TenantHomeSkeleton();
+      case 1:
+        return const RentOverviewSkeleton();
+      case 2:
+        return const ProfileSkeleton();
+      default:
+        return const TenantHomeSkeleton();
+    }
   }
 
   Widget _buildCurrentPage() {
@@ -2054,15 +2068,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         child: Center(
           child: Column(
             children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: const Icon(Icons.receipt_long_outlined, size: 26, color: Color(0xFF94A3B8)),
+              Image.asset(
+                'assets/images/no_payment_history.png',
+                height: 160,
+                fit: BoxFit.contain,
               ),
               const SizedBox(height: 12),
               Text(

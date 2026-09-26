@@ -9,6 +9,7 @@ import '../widgets/tenant_avatar.dart';
 import '../widgets/fancy_toast.dart';
 import 'edit_financials_dialog.dart';
 import 'edit_personal_info_dialog.dart';
+import '../widgets/app_shimmer.dart';
 
 class TenantProfileScreen extends StatelessWidget {
   final String tenantId;
@@ -72,8 +73,13 @@ class TenantProfileScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       body: SafeArea(
-        child: Column(
-          children: [
+        child: RefreshIndicator(
+          onRefresh: () => appProvider.loadFromAPI(),
+          color: AppTheme.primaryColor,
+          child: appProvider.isLoading
+              ? const ProfileSkeleton()
+              : Column(
+                  children: [
             // Top Header Bar
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -620,14 +626,34 @@ class TenantProfileScreen extends StatelessWidget {
                     if (tenantPayments.isEmpty)
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: const Color(0xFFF1F5F9)),
                         ),
-                        child: const Center(
-                          child: Text('No recorded payments yet.', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
+                        child: Column(
+                          children: [
+                            Image.asset(
+                              'assets/images/no_payment_history.png',
+                              height: 120,
+                              fit: BoxFit.contain,
+                            ),
+                            const SizedBox(height: 10),
+                            const Text(
+                              'No Recorded Payments Yet',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF334155),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Payment history for this tenant will appear here.',
+                              style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                            ),
+                          ],
                         ),
                       )
                     else
@@ -710,6 +736,7 @@ class TenantProfileScreen extends StatelessWidget {
         ],
         ),
       ),
+    ),
     );
   }
 

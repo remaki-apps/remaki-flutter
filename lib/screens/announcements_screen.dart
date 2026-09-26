@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/fancy_toast.dart';
+import '../widgets/app_shimmer.dart';
 
 class AnnouncementsScreen extends StatefulWidget {
   const AnnouncementsScreen({super.key});
@@ -463,8 +464,10 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       body: RefreshIndicator(
         onRefresh: _fetchAnnouncements,
         color: AppTheme.primaryColor,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        child: _isLoading
+            ? const AnnouncementsSkeleton()
+            : ListView(
+                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 80),
           children: [
             // Top Hero Banner

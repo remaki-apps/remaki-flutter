@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../providers/app_provider.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_shimmer.dart';
 
 class RoomsScreen extends StatefulWidget {
   const RoomsScreen({super.key});
@@ -76,8 +77,13 @@ class _RoomsScreenState extends State<RoomsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       body: SafeArea(
-        child: Column(
-          children: [
+        child: RefreshIndicator(
+          onRefresh: () => appProvider.loadFromAPI(),
+          color: AppTheme.primaryColor,
+          child: appProvider.isLoading
+              ? const RoomsGridSkeleton()
+              : Column(
+                  children: [
             // Top Header Bar
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -411,6 +417,7 @@ class _RoomsScreenState extends State<RoomsScreen> {
           ],
         ),
       ),
+    ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/add_room'),
         backgroundColor: AppTheme.primaryColor,

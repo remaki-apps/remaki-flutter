@@ -13,6 +13,7 @@ class AppProvider with ChangeNotifier {
   String pgName = 'Your PG';
   String adminName = 'Admin';
   String pgAddress = '';
+  bool isLoading = true;
 
   static const String _roomsKey = 'sunshine_pg_rooms';
   static const String _tenantsKey = 'sunshine_pg_tenants';
@@ -22,7 +23,11 @@ class AppProvider with ChangeNotifier {
     loadFromAPI();
   }
 
-  Future<void> loadFromAPI() async {
+  Future<void> loadFromAPI({bool showLoading = true}) async {
+    if (showLoading && rooms.isEmpty && tenants.isEmpty) {
+      isLoading = true;
+      notifyListeners();
+    }
     try {
       final tenantsData = await ApiService.fetchTenants();
       final roomsData = await ApiService.fetchRooms();
@@ -141,10 +146,12 @@ class AppProvider with ChangeNotifier {
         }
       }
 
-      notifyListeners();
     } catch (e) {
       debugPrint('Error loading from API: $e');
       await loadFromStorage();
+    } finally {
+      isLoading = false;
+      notifyListeners();
     }
   }
 

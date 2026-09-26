@@ -7,6 +7,7 @@ import '../providers/app_provider.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tenant_avatar.dart';
+import '../widgets/app_shimmer.dart';
 
 class UnpaidTenantsScreen extends StatelessWidget {
   final String? filter;
@@ -80,8 +81,13 @@ class UnpaidTenantsScreen extends StatelessWidget {
           child: Container(color: const Color(0xFFE2E8F0), height: 1),
         ),
       ),
-      body: unpaidTenants.isEmpty
-          ? Center(
+      body: RefreshIndicator(
+        onRefresh: () => appProvider.loadFromAPI(),
+        color: AppTheme.primaryColor,
+        child: appProvider.isLoading
+            ? const SimpleListSkeleton()
+            : unpaidTenants.isEmpty
+                ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
                 child: Column(
@@ -270,6 +276,7 @@ class UnpaidTenantsScreen extends StatelessWidget {
                 );
               },
             ),
+      ),
     );
   }
 }

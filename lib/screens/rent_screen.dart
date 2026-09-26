@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_shimmer.dart';
 
 class RentScreen extends StatefulWidget {
   const RentScreen({super.key});
@@ -74,8 +75,10 @@ class _RentScreenState extends State<RentScreen> {
       body: RefreshIndicator(
         onRefresh: () => appProvider.loadFromAPI(),
         color: AppTheme.primaryColor,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        child: appProvider.isLoading
+            ? const RentOverviewSkeleton()
+            : SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
 import '../providers/app_provider.dart';
 import '../widgets/fancy_toast.dart';
+import '../widgets/app_shimmer.dart';
 
 class PendingApprovalsScreen extends StatefulWidget {
   const PendingApprovalsScreen({super.key});
@@ -105,10 +106,12 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
           ),
         ),
       ),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator())
-        : _requests.isEmpty
-          ? Center(
+      body: RefreshIndicator(
+        onRefresh: _loadRequests,
+        child: _isLoading 
+          ? const PendingApprovalsSkeleton()
+          : _requests.isEmpty
+            ? Center(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
@@ -200,6 +203,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                 );
               },
             ),
+      ),
     );
   }
 }
