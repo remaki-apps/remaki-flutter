@@ -128,6 +128,88 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     });
   }
 
+  void _showImagePreviewDialog(BuildContext context, Uint8List imageBytes) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.transparent,
+      builder: (ctx) => Stack(
+        children: [
+          // Frosted White Blurred Backdrop
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: Container(
+                color: Colors.white.withValues(alpha: 0.75),
+              ),
+            ),
+          ),
+          Center(
+            child: Dialog(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              insetPadding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    constraints: const BoxConstraints(maxWidth: 420, maxHeight: 540),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+                      boxShadow: const [
+                        BoxShadow(color: Color(0x1F000000), blurRadius: 28, offset: Offset(0, 10)),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            height: 480,
+                            color: Colors.white,
+                            child: InteractiveViewer(
+                              minScale: 0.8,
+                              maxScale: 4.0,
+                              child: Image.memory(
+                                imageBytes,
+                                fit: BoxFit.contain,
+                                width: double.infinity,
+                                height: double.infinity,
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 14,
+                            right: 14,
+                            child: GestureDetector(
+                              onTap: () => Navigator.of(ctx).pop(),
+                              child: Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F5F9),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                                ),
+                                child: const Icon(Icons.close_rounded, color: Color(0xFF475569), size: 20),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _submitRequest() async {
     if (_totalDue <= 0) {
       FancyToast.showError(context, 'No Dues', message: 'No outstanding dues to pay.');
@@ -1449,39 +1531,25 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Screen Title & Subtitle
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Rent & Payments',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: TenantTheme.textPrimary,
-                      letterSpacing: -0.6,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Manage monthly rent, utility bills & transactions',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
-                      color: TenantTheme.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: TenantTheme.primarySoft,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: TenantTheme.primaryBorder.withValues(alpha: 0.5)),
+              Text(
+                'Rent & Payments',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: TenantTheme.textPrimary,
+                  letterSpacing: -0.6,
                 ),
-                child: const Icon(Icons.account_balance_wallet_rounded, color: TenantTheme.primary, size: 20),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Manage monthly rent, utility bills & transactions',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  color: TenantTheme.textSecondary,
+                ),
               ),
             ],
           ),
@@ -1945,18 +2013,21 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   ),
                   if (_selectedImageBytes != null) ...[
                     const SizedBox(height: 10),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: const Color(0xFF86EFAC)),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Image.memory(
-                          _selectedImageBytes!,
-                          height: 90,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
+                    GestureDetector(
+                      onTap: () => _showImagePreviewDialog(context, _selectedImageBytes!),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: const Color(0xFF86EFAC)),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Image.memory(
+                            _selectedImageBytes!,
+                            height: 90,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                     ),
@@ -1994,7 +2065,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   // Submit Button
                   Container(
                     width: double.infinity,
-                    height: 46,
+                    height: 50,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(14),
                       gradient: const LinearGradient(
@@ -2015,13 +2086,21 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         foregroundColor: Colors.white,
                         shadowColor: Colors.transparent,
                         elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                       child: _isLoading
                           ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : Text(
-                              'Submit Payment for Approval',
-                              style: GoogleFonts.plusJakartaSans(fontSize: 13.5, fontWeight: FontWeight.w800),
+                          : FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                'Submit Payment for Approval',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
                     ),
                   ),
