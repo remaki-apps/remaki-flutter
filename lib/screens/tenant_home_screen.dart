@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -301,16 +302,27 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: TenantTheme.background,
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _loadAllData,
-          color: TenantTheme.primary,
-          child: _isFetching
-              ? _buildSkeletonForTab()
-              : _buildCurrentPage(),
-        ),
+      resizeToAvoidBottomInset: false,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: SafeArea(
+              bottom: false,
+              child: RefreshIndicator(
+                onRefresh: _loadAllData,
+                color: TenantTheme.primary,
+                child: _isFetching
+                    ? _buildSkeletonForTab()
+                    : _buildCurrentPage(),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: _buildBottomNavigationBar(),
+          ),
+        ],
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
@@ -341,34 +353,47 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   }
 
   // ===========================================================================
-  // BOTTOM NAVIGATION BAR (FROSTED LIGHT GLASS)
+  // BOTTOM NAVIGATION BAR (FLOATING TRANSLUCENT GLASS DOCK)
   // ===========================================================================
   Widget _buildBottomNavigationBar() {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+    return SafeArea(
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFE2E8F0).withValues(alpha: 0.8), width: 1.2),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x140F172A),
+              blurRadius: 24,
+              spreadRadius: 0,
+              offset: Offset(0, 8),
+            ),
+            BoxShadow(
+              color: Color(0x0A4F46E5),
+              blurRadius: 10,
+              spreadRadius: 0,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x060F172A),
-            blurRadius: 16,
-            offset: Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Container(
-          height: 58,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Home'),
-              _buildNavItem(1, Icons.account_balance_wallet_rounded, Icons.account_balance_wallet_outlined, 'Payments'),
-              _buildNavItem(2, Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
-            ],
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Container(
+              height: 66,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              color: Colors.white.withValues(alpha: 0.82),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Home'),
+                  _buildNavItem(1, Icons.account_balance_wallet_rounded, Icons.account_balance_wallet_outlined, 'Payments'),
+                  _buildNavItem(2, Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -378,63 +403,66 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   Widget _buildNavItem(int index, IconData activeIcon, IconData inactiveIcon, String label, {int badgeCount = 0}) {
     final isSelected = _currentNavIndex == index;
 
-    return GestureDetector(
-      onTap: () {
-        if (_currentNavIndex != index) {
-          setState(() => _currentNavIndex = index);
-        }
-      },
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          if (_currentNavIndex != index) {
+            setState(() => _currentNavIndex = index);
+          }
+        },
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          decoration: BoxDecoration(
+            color: isSelected ? TenantTheme.primarySoft : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+            border: isSelected ? Border.all(color: TenantTheme.primaryBorder, width: 1) : null,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOutCubic,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isSelected ? TenantTheme.primarySoft : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                  border: isSelected ? Border.all(color: TenantTheme.primaryBorder, width: 1) : null,
-                ),
-                child: Icon(
-                  isSelected ? activeIcon : inactiveIcon,
-                  color: isSelected ? TenantTheme.primary : TenantTheme.textMuted,
-                  size: 21,
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(
+                    isSelected ? activeIcon : inactiveIcon,
+                    color: isSelected ? TenantTheme.primary : TenantTheme.textMuted,
+                    size: 21,
+                  ),
+                  if (badgeCount > 0 && !isSelected)
+                    Positioned(
+                      top: -2,
+                      right: -6,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: TenantTheme.danger,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          badgeCount > 9 ? '9+' : '$badgeCount',
+                          style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10.5,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                  color: isSelected ? TenantTheme.primary : TenantTheme.textSecondary,
+                  letterSpacing: -0.2,
                 ),
               ),
-              if (badgeCount > 0 && !isSelected)
-                Positioned(
-                  top: -2,
-                  right: 4,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: TenantTheme.danger,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      badgeCount > 9 ? '9+' : '$badgeCount',
-                      style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                  ),
-                ),
             ],
           ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 10.5,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected ? TenantTheme.primary : TenantTheme.textSecondary,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -622,7 +650,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+      padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 95.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1160,7 +1188,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+      padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 95.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1401,7 +1429,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+      padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 95.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2577,7 +2605,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+      padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 95.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2763,7 +2791,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+      padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 95.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

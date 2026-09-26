@@ -1,5 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 
 class MainShell extends StatelessWidget {
@@ -11,69 +13,104 @@ class MainShell extends StatelessWidget {
     final int selectedIndex = _calculateSelectedIndex(context);
 
     return Scaffold(
-      body: child,
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Color(0xFFF1F5F9), width: 1)),
-          boxShadow: [
-            BoxShadow(
-              color: Color(0x05000000),
-              blurRadius: 10,
-              offset: Offset(0, -3),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Container(
-            height: 52,
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(context, 0, Icons.home_rounded, Icons.home_outlined, 'Dashboard', selectedIndex == 0),
-                _buildNavItem(context, 1, Icons.bed_rounded, Icons.bed_outlined, 'Rooms', selectedIndex == 1),
-                _buildNavItem(context, 2, Icons.people_rounded, Icons.people_outline_rounded, 'Tenants', selectedIndex == 2),
-                _buildNavItem(context, 3, Icons.account_balance_wallet_rounded, Icons.account_balance_wallet_outlined, 'Payments', selectedIndex == 3),
-                _buildNavItem(context, 4, Icons.grid_view_rounded, Icons.grid_view_outlined, 'More', selectedIndex == 4),
-              ],
+      resizeToAvoidBottomInset: false,
+      body: Stack(
+        children: [
+          // 1. Full height page content extending behind floating nav bar
+          Positioned.fill(
+            child: child,
+          ),
+
+          // 2. Translucent Frosted Glass Floating Navigation Bar Dock
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: SafeArea(
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFE2E8F0).withValues(alpha: 0.8), width: 1.2),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x180F172A),
+                      blurRadius: 24,
+                      spreadRadius: 0,
+                      offset: Offset(0, 8),
+                    ),
+                    BoxShadow(
+                      color: Color(0x0A4F46E5),
+                      blurRadius: 10,
+                      spreadRadius: 0,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                    child: Container(
+                      height: 66,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      color: Colors.white.withValues(alpha: 0.72),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildNavItem(context, 0, Icons.dashboard_rounded, Icons.dashboard_outlined, 'Dashboard', selectedIndex == 0),
+                          _buildNavItem(context, 1, Icons.bed_rounded, Icons.bed_outlined, 'Rooms', selectedIndex == 1),
+                          _buildNavItem(context, 2, Icons.people_rounded, Icons.people_outline_rounded, 'Tenants', selectedIndex == 2),
+                          _buildNavItem(context, 3, Icons.account_balance_wallet_rounded, Icons.account_balance_wallet_outlined, 'Payments', selectedIndex == 3),
+                          _buildNavItem(context, 4, Icons.grid_view_rounded, Icons.grid_view_outlined, 'More', selectedIndex == 4),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildNavItem(BuildContext context, int index, IconData activeIcon, IconData inactiveIcon, String label, bool isSelected) {
-    return GestureDetector(
-      onTap: () => _onItemTapped(index, context),
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
-            decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFFEEF2FF) : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              isSelected ? activeIcon : inactiveIcon,
-              color: isSelected ? AppTheme.primaryColor : const Color(0xFF64748B),
-              size: 20,
-            ),
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _onItemTapped(index, context),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFEEF2FF) : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
           ),
-          const SizedBox(height: 1),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              color: isSelected ? AppTheme.primaryColor : const Color(0xFF64748B),
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isSelected ? activeIcon : inactiveIcon,
+                color: isSelected ? AppTheme.primaryColor : const Color(0xFF64748B),
+                size: 20,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10.5,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                  color: isSelected ? AppTheme.primaryColor : const Color(0xFF64748B),
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

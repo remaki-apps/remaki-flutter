@@ -241,7 +241,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                     )
                   : ListView.builder(
                       physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
                       itemCount: filteredTenants.length,
                       itemBuilder: (context, index) {
                         var tenant = filteredTenants[index];

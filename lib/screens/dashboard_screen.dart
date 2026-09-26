@@ -96,7 +96,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ? const DashboardSkeleton()
               : SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 90.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

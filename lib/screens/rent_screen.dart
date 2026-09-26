@@ -79,7 +79,7 @@ class _RentScreenState extends State<RentScreen> {
             ? const RentOverviewSkeleton()
             : SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 90),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -413,35 +413,6 @@ class _RentScreenState extends State<RentScreen> {
                     ),
                   ),
                 ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // 5. Direct Action Button
-            SizedBox(
-              height: 48,
-              child: ElevatedButton(
-                onPressed: () => context.push('/unpaid_tenants?filter=${_showBills ? 'bills' : 'rent'}'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.people_outline_rounded, size: 18, color: Colors.white),
-                    const SizedBox(width: 8),
-                    Text(
-                      _showBills ? 'View Tenants with Unpaid Bills' : 'View Tenants with Unpaid Rent',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ),
           ],

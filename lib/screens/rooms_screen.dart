@@ -260,7 +260,7 @@ class _RoomsScreenState extends State<RoomsScreen> {
                     )
                   : ListView.builder(
                       physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 95),
                       itemCount: floors.length,
                       itemBuilder: (context, floorIndex) {
                         final floor = floors[floorIndex];
@@ -418,12 +418,15 @@ class _RoomsScreenState extends State<RoomsScreen> {
         ),
       ),
     ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/add_room'),
-        backgroundColor: AppTheme.primaryColor,
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.add, color: Colors.white, size: 24),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 78),
+        child: FloatingActionButton(
+          onPressed: () => context.push('/add_room'),
+          backgroundColor: AppTheme.primaryColor,
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: const Icon(Icons.add, color: Colors.white, size: 24),
+        ),
       ),
     );
   }

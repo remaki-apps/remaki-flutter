@@ -107,10 +107,10 @@ class MoreScreen extends StatelessWidget {
         builder: (context, provider, _) {
           final totalBeds = provider.rooms.fold(0, (sum, r) => sum + r.capacity);
 
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 95),
+            child: Column(
                 children: [
                   // 1. Property Overview Header Card (App Signature Purple Gradient)
                   Container(
@@ -302,7 +302,7 @@ class MoreScreen extends StatelessWidget {
                     onTap: () => _showLogoutDialog(context),
                   ),
 
-                  const Spacer(),
+                  const SizedBox(height: 16),
 
                   // 4. Subtle System Status Footer
                   Row(
@@ -323,11 +323,10 @@ class MoreScreen extends StatelessWidget {
                   const SizedBox(height: 6),
                 ],
               ),
-            ),
-          );
-        },
-      ),
-    );
+            );
+          },
+        ),
+      );
   }
 
   Widget _buildMiniStat(String value, String label) {
