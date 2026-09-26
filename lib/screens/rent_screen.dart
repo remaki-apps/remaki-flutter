@@ -113,9 +113,20 @@ class _RentScreenState extends State<RentScreen> {
               ),
               const SizedBox(height: 16),
 
-              // 2. Three Metric Cards (Expected, Collected, Pending)
-              Row(
-                children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 240),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                child: KeyedSubtree(
+                  key: ValueKey<bool>(_showBills),
+                  child: Column(
+                    children: [
+                      // 2. Three Metric Cards (Expected, Collected, Pending)
+                      Row(
+                        children: [
                   _buildMetricCard(
                     title: 'Expected',
                     amount: expectedAmount,
@@ -419,7 +430,11 @@ class _RentScreenState extends State<RentScreen> {
         ),
       ),
     ),
-  );
+  ],
+),
+),
+),
+);
 }
 
   Widget _buildSegmentButton({

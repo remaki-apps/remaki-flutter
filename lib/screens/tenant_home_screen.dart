@@ -311,9 +311,24 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               child: RefreshIndicator(
                 onRefresh: _loadAllData,
                 color: TenantTheme.primary,
-                child: _isFetching
-                    ? _buildSkeletonForTab()
-                    : _buildCurrentPage(),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 240),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder: (Widget child, Animation<double> animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: ScaleTransition(
+                        scale: Tween<double>(begin: 0.98, end: 1.0).animate(animation),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: KeyedSubtree(
+                    key: ValueKey<int>(_currentNavIndex),
+                    child: _isFetching ? _buildSkeletonForTab() : _buildCurrentPage(),
+                  ),
+                ),
               ),
             ),
           ),

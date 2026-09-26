@@ -48,6 +48,35 @@ void main() async {
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
+CustomTransitionPage<T> _buildPageWithTransition<T>({
+  required BuildContext context,
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage<T>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 260),
+    reverseTransitionDuration: const Duration(milliseconds: 220),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      const begin = Offset(0.04, 0.0);
+      const end = Offset.zero;
+      const curve = Curves.easeOutCubic;
+
+      var slideTween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+      var fadeTween = Tween<double>(begin: 0.0, end: 1.0).chain(CurveTween(curve: curve));
+
+      return SlideTransition(
+        position: animation.drive(slideTween),
+        child: FadeTransition(
+          opacity: animation.drive(fadeTween),
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: ApiService.isLoggedIn ? (ApiService.role == 'TENANT' ? '/tenant_home' : '/') : '/login',
@@ -55,53 +84,83 @@ final router = GoRouter(
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/login',
-      builder: (context, state) => const LoginScreen(),
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: const LoginScreen(),
+      ),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/forgot_password',
-      builder: (context, state) => const ForgotPasswordScreen(),
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: const ForgotPasswordScreen(),
+      ),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/tenant_home',
-      builder: (context, state) => const TenantHomeScreen(),
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: const TenantHomeScreen(),
+      ),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/tenant_my_profile',
-      builder: (context, state) => const TenantHomeScreen(initialTab: 2),
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: const TenantHomeScreen(initialTab: 2),
+      ),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/add_room',
-      builder: (context, state) => const AddRoomScreen(),
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: const AddRoomScreen(),
+      ),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/room_details/:roomId',
-      builder: (context, state) => RoomDetailsScreen(roomId: state.pathParameters['roomId']!),
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: RoomDetailsScreen(roomId: state.pathParameters['roomId']!),
+      ),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/add_room_bill/:roomId',
-      builder: (context, state) => AddRoomBillScreen(roomId: state.pathParameters['roomId']!),
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: AddRoomBillScreen(roomId: state.pathParameters['roomId']!),
+      ),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/tenant_profile/:id',
-      builder: (context, state) {
-        final id = state.pathParameters['id']!;
-        return TenantProfileScreen(tenantId: id);
-      },
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: TenantProfileScreen(tenantId: state.pathParameters['id']!),
+      ),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/record_payment/:id',
-      builder: (context, state) {
-        final id = state.pathParameters['id']!;
-        return RecordPaymentScreen(tenantId: id);
-      },
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: RecordPaymentScreen(tenantId: state.pathParameters['id']!),
+      ),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
