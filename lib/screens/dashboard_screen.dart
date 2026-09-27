@@ -287,6 +287,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildQuickActionsSection(BuildContext context, AppProvider appProvider) {
+    final unpaidRentCount = appProvider.unpaidRentTenants.length;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -302,37 +304,84 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 letterSpacing: 0.9,
               ),
             ),
-            if (_pendingApprovalsCount > 0)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF2F2),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFFECACA)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 5,
-                      height: 5,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFDC2626),
-                        shape: BoxShape.circle,
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              alignment: WrapAlignment.end,
+              children: [
+                if (unpaidRentCount > 0)
+                  GestureDetector(
+                    onTap: () => context.push('/unpaid_tenants?filter=rent'),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF1F2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFFECDD3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 5,
+                            height: 5,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFE11D48),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$unpaidRentCount Pending Rent',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFFBE123C),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$_pendingApprovalsCount Pending Approval',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFFDC2626),
+                  ),
+                if (_pendingApprovalsCount > 0)
+                  GestureDetector(
+                    onTap: () async {
+                      await context.push('/approvals');
+                      _loadPendingApprovals();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFFECACA)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 5,
+                            height: 5,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFDC2626),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$_pendingApprovalsCount Pending Approval',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFFDC2626),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
+                  ),
+              ],
+            ),
           ],
         ),
         const SizedBox(height: 10),
@@ -603,7 +652,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: borderColor, width: 1),
+            border: Border.all(color: borderColor, width: onTap != null ? 1.5 : 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -613,10 +662,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   Icon(icon, size: 15, color: iconColor),
                   if (onTap != null)
-                    const Icon(
-                      Icons.arrow_forward_rounded,
-                      size: 13,
-                      color: Color(0xFF16A34A),
+                    const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'View',
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+                        ),
+                        SizedBox(width: 2),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 11,
+                          color: Color(0xFF16A34A),
+                        ),
+                      ],
                     ),
                 ],
               ),
@@ -772,48 +831,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ],
           ),
-          if (unpaidCount > 0) ...[
-            const SizedBox(height: 12),
-            GestureDetector(
-              onTap: () => context.push('/unpaid_tenants?filter=rent'),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF1F2),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFFECDD3), width: 1),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.info_outline_rounded,
-                          size: 14,
-                          color: Color(0xFFE11D48),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '$unpaidCount tenants with pending rent',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFFBE123C),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Icon(
-                      Icons.arrow_forward_rounded,
-                      size: 13,
-                      color: Color(0xFFBE123C),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -1082,159 +1099,175 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .where((t) => t.id == payment.tenantId)
         .firstOrNull;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Tenant Profile Avatar with clean border
-        Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+    return GestureDetector(
+      onTap: () {
+        if (payment.tenantId.isNotEmpty) {
+          context.push('/tenant_profile/${payment.tenantId}');
+        } else {
+          context.push('/payment_history');
+        }
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Tenant Profile Avatar with clean border
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+            ),
+            child: TenantAvatar(
+              name: payment.tenantName ?? tenant?.name ?? 'Tenant',
+              imageUrl: tenant?.imageUrl,
+              radius: 19,
+              enablePreview: true,
+            ),
           ),
-          child: TenantAvatar(
-            name: payment.tenantName ?? tenant?.name ?? 'Tenant',
-            imageUrl: tenant?.imageUrl,
-            radius: 19,
-            enablePreview: true,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      payment.tenantName ?? tenant?.name ?? 'Tenant',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF0F172A),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (payment.roomNumber != null && payment.roomNumber!.isNotEmpty) ...[
-                    const SizedBox(width: 5),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: const Color(0xFFE2E8F0), width: 0.5),
-                      ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
                       child: Text(
-                        payment.roomNumber!,
+                        payment.tenantName ?? tenant?.name ?? 'Tenant',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 9.5,
+                          fontSize: 13.5,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF475569),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 2),
-              Row(
-                children: [
-                  Text(
-                    paidDateStr,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
-                  if (payment.notes != null && payment.notes!.isNotEmpty) ...[
-                    const SizedBox(width: 4),
-                    const Text('•', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 10)),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        payment.notes!,
-                        style: const TextStyle(
-                          fontSize: 10.5,
-                          color: Color(0xFF94A3B8),
+                          color: const Color(0xFF0F172A),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    if (payment.roomNumber != null && payment.roomNumber!.isNotEmpty) ...[
+                      const SizedBox(width: 5),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: const Color(0xFFE2E8F0), width: 0.5),
+                        ),
+                        child: Text(
+                          payment.roomNumber!,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF475569),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Text(
+                      paidDateStr,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                    if (payment.notes != null && payment.notes!.isNotEmpty) ...[
+                      const SizedBox(width: 4),
+                      const Text('•', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 10)),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          payment.notes!,
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            color: Color(0xFF94A3B8),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '₹${_formatCurrency(payment.amount)}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.3,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 3),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isUPI
+                          ? const Color(0xFFEEF2FF)
+                          : (isCash ? const Color(0xFFFFFBEB) : const Color(0xFFF1F5F9)),
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(
+                        color: isUPI
+                            ? const Color(0xFFE0E7FF)
+                            : (isCash ? const Color(0xFFFEF3C7) : const Color(0xFFE2E8F0)),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Text(
+                      payment.method.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
+                        color: isUPI
+                            ? const Color(0xFF4F46E5)
+                            : (isCash ? const Color(0xFFD97706) : const Color(0xFF475569)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5.5, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDCFCE7),
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(color: const Color(0xFFBBF7D0), width: 0.6),
+                    ),
+                    child: const Text(
+                      'PAID',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
+                        color: Color(0xFF16A34A),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ],
           ),
-        ),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              '₹${_formatCurrency(payment.amount)}',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 14.5,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.3,
-                color: const Color(0xFF0F172A),
-              ),
-            ),
-            const SizedBox(height: 3),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: isUPI
-                        ? const Color(0xFFEEF2FF)
-                        : (isCash ? const Color(0xFFFFFBEB) : const Color(0xFFF1F5F9)),
-                    borderRadius: BorderRadius.circular(5),
-                    border: Border.all(
-                      color: isUPI
-                          ? const Color(0xFFE0E7FF)
-                          : (isCash ? const Color(0xFFFEF3C7) : const Color(0xFFE2E8F0)),
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Text(
-                    payment.method.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.3,
-                      color: isUPI
-                          ? const Color(0xFF4F46E5)
-                          : (isCash ? const Color(0xFFD97706) : const Color(0xFF475569)),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5.5, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDCFCE7),
-                    borderRadius: BorderRadius.circular(5),
-                    border: Border.all(color: const Color(0xFFBBF7D0), width: 0.6),
-                  ),
-                  child: const Text(
-                    'PAID',
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.3,
-                      color: Color(0xFF16A34A),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ],
+          const SizedBox(width: 4),
+          const Icon(
+            Icons.chevron_right_rounded,
+            size: 18,
+            color: Color(0xFFCBD5E1),
+          ),
+        ],
+      ),
     );
   }
 }

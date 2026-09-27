@@ -22,8 +22,8 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
   final _amountController = TextEditingController();
   final _notesController = TextEditingController();
 
-  // Payment method and type preserved for backend recording
-  final String _paymentMethod = 'UPI';
+  // Payment method state defaulted to Cash
+  String _paymentMethod = 'Cash';
   String _paymentType = 'BOTH';
   DateTime _paymentDate = DateTime.now();
   bool _isLoading = false;
@@ -320,9 +320,67 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                             ],
                           ),
                         ),
+                        // 3. Payment Method Selection Card
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x04000000),
+                                blurRadius: 6,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'PAYMENT METHOD',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF64748B),
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildPaymentMethodTile(
+                                      label: 'Cash',
+                                      icon: Icons.payments_rounded,
+                                      value: 'Cash',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: _buildPaymentMethodTile(
+                                      label: 'UPI',
+                                      icon: Icons.qr_code_scanner_rounded,
+                                      value: 'UPI',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: _buildPaymentMethodTile(
+                                      label: 'Bank',
+                                      icon: Icons.account_balance_rounded,
+                                      value: 'Bank',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                         const SizedBox(height: 16),
 
-                        // 3. Classic Details Card (Date & Notes)
+                        // 4. Classic Details Card (Date & Notes)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
@@ -389,7 +447,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // 4. Classic Summary / Receipt Card
+                        // 5. Classic Summary / Receipt Card
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -413,6 +471,8 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                               _buildSummaryRow('Tenant', tenant.name),
                               const SizedBox(height: 6),
                               _buildSummaryRow('Space', roomBedString),
+                              const SizedBox(height: 6),
+                              _buildSummaryRow('Payment Method', _paymentMethod),
                               const SizedBox(height: 6),
                               _buildSummaryRow('Current Balance', '₹${totalDue.toStringAsFixed(0)}'),
                               const SizedBox(height: 6),
@@ -569,6 +629,49 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
             fontWeight: FontWeight.w600,
             color: isSelected ? Colors.white : const Color(0xFF475569),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodTile({
+    required String label,
+    required IconData icon,
+    required String value,
+  }) {
+    final isSelected = _paymentMethod == value;
+    return InkWell(
+      onTap: () => setState(() => _paymentMethod = value),
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.primaryColor.withValues(alpha: 0.08) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? AppTheme.primaryColor : const Color(0xFFE2E8F0),
+            width: isSelected ? 1.8 : 1.0,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 22,
+              color: isSelected ? AppTheme.primaryColor : const Color(0xFF64748B),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                color: isSelected ? AppTheme.primaryColor : const Color(0xFF334155),
+              ),
+            ),
+          ],
         ),
       ),
     );
