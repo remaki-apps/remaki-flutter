@@ -134,7 +134,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
             ? const PaymentHistorySkeleton()
             : SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 32 + MediaQuery.of(context).padding.bottom),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

@@ -31,6 +31,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
   bool _isLoading = false;
   bool _isFetching = true;
+  bool _hasSubmittedForApproval = false;
   double _totalDue = 0;
   double _pendingRent = 0;
   double _pendingBills = 0;
@@ -101,6 +102,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           ? (pendingRent + pendingBills + _convenienceFee)
           : 0;
 
+      bool isPendingApproval = profile['paymentStatus'] == 'PENDING' ||
+          profile['hasPendingRequest'] == true ||
+          profile['hasSubmittedRequest'] == true;
+
       if (mounted) {
         setState(() {
           _pendingRent = pendingRent;
@@ -108,6 +113,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           _totalDue = totalDueAmount;
           _profileData = profile;
           _rejectionReason = (rejectionReason != null && rejectionReason.isNotEmpty) ? rejectionReason : null;
+          if (isPendingApproval) {
+            _hasSubmittedForApproval = true;
+          }
         });
       }
     } else {
@@ -245,6 +253,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         setState(() {
           _selectedImageBytes = null;
           _descriptionController.clear();
+          _hasSubmittedForApproval = true;
         });
         _loadAllData();
       }
@@ -1831,8 +1840,99 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             const SizedBox(height: 18),
           ],
 
-          // 2. Outstanding Dues Clearance Card (Frosted Glass Container, only when dues > 0)
-          if (_totalDue > 0) ...[
+          // 2. Outstanding Dues Clearance Card OR Pending Approval Card
+          if (_hasSubmittedForApproval || _profileData?['paymentStatus'] == 'PENDING' || _profileData?['hasPendingRequest'] == true) ...[
+            _buildGlassContainer(
+              borderRadius: 22,
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEF3C7),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.hourglass_top_rounded, color: Color(0xFFD97706), size: 20),
+                          ),
+                          const SizedBox(width: 10),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Payment Pending Approval',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: TenantTheme.textPrimary,
+                                ),
+                              ),
+                              Text(
+                                'Proof of payment submitted for review',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11.5,
+                                  color: TenantTheme.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFFCD34D), width: 0.8),
+                        ),
+                        child: Text(
+                          'Under Review',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFFD97706),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFFBEB),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFFDE68A)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline_rounded, color: Color(0xFFD97706), size: 18),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Your payment transaction proof has been submitted to your property manager. Account balance will update automatically upon verification.',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              color: const Color(0xFF92400E),
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+          ] else if (_totalDue > 0) ...[
             _buildGlassContainer(
               borderRadius: 22,
               padding: const EdgeInsets.all(20),

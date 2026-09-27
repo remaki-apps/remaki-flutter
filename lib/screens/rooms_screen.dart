@@ -260,7 +260,7 @@ class _RoomsScreenState extends State<RoomsScreen> {
                     )
                   : ListView.builder(
                       physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 95),
+                      padding: EdgeInsets.fromLTRB(16, 0, 16, 95 + MediaQuery.of(context).padding.bottom),
                       itemCount: floors.length,
                       itemBuilder: (context, floorIndex) {
                         final floor = floors[floorIndex];

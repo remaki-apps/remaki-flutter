@@ -103,6 +103,8 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         return StatefulBuilder(

@@ -79,7 +79,7 @@ class _RentScreenState extends State<RentScreen> {
             ? const RentOverviewSkeleton()
             : SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 90),
+          padding: EdgeInsets.fromLTRB(16, 14, 16, 95 + MediaQuery.of(context).padding.bottom),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -508,14 +508,17 @@ class _RentScreenState extends State<RentScreen> {
               child: Icon(icon, color: color, size: 16),
             ),
             const SizedBox(height: 8),
-            Text(
-              '₹${amount.toStringAsFixed(0)}',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: color,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                '₹${amount.toStringAsFixed(0)}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
-              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 2),
             Text(

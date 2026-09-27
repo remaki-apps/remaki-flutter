@@ -109,7 +109,7 @@ class MoreScreen extends StatelessWidget {
 
           return SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 95),
+            padding: EdgeInsets.fromLTRB(16, 12, 16, 95 + MediaQuery.of(context).padding.bottom),
             child: Column(
                 children: [
                   // 1. Property Overview Header Card (App Signature Purple Gradient)

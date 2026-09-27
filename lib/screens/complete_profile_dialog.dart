@@ -129,12 +129,23 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      backgroundColor: Colors.white,
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 400, maxHeight: 650),
-        child: Column(
+    final mediaQuery = MediaQuery.of(context);
+    final availableHeight = mediaQuery.size.height;
+    final keyboardPadding = mediaQuery.viewInsets.bottom;
+
+    return AnimatedPadding(
+      padding: EdgeInsets.only(bottom: keyboardPadding),
+      duration: const Duration(milliseconds: 150),
+      child: Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: 450,
+            maxHeight: (availableHeight * 0.85).clamp(300.0, 700.0),
+          ),
+          child: Column(
           children: [
             Container(
               padding: const EdgeInsets.all(20),
@@ -241,8 +252,9 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildTextField(
     String label,

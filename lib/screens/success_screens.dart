@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -306,6 +307,25 @@ class _TenantAddedSuccessScreenState extends State<TenantAddedSuccessScreen> {
     }
   }
 
+  void _copyPasswordToClipboard(String pwd) {
+    Clipboard.setData(ClipboardData(text: pwd));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+            SizedBox(width: 8),
+            Text('Password copied to clipboard', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          ],
+        ),
+        backgroundColor: const Color(0xFF1E293B),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<AppProvider>(context);
@@ -342,89 +362,34 @@ class _TenantAddedSuccessScreenState extends State<TenantAddedSuccessScreen> {
     }
     if (displayPassword.isEmpty) displayPassword = 'hi123';
 
+    final String roomDisplay = currentRoom.isNotEmpty
+        ? 'Room $currentRoom${currentFloor.isNotEmpty ? ' ($currentFloor)' : ''}'
+        : widget.roomBed;
+
     return SuccessScreen(
       title: 'Tenant Onboarded Successfully!',
-      subtitle: 'Tenant profile and room allocation are active',
+      subtitle: 'Profile created & room allocation active',
       details: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: const Color(0xFFE2E8F0)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 20,
-              offset: const Offset(0, 6),
+              color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Tags
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEEF2FF),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFC7D2FE)),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.stars_rounded, size: 14, color: AppTheme.primaryColor),
-                      SizedBox(width: 5),
-                      Text(
-                        'NEW TENANT PROFILE',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryColor,
-                          letterSpacing: 0.6,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFECFDF5),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFA7F3D0)),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.circle, size: 6, color: Color(0xFF10B981)),
-                      SizedBox(width: 5),
-                      Text(
-                        'Active Stay',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF047857)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            const Divider(height: 1, color: Color(0xFFF1F5F9)),
-            const SizedBox(height: 18),
-
-            // Tenant Main Hero Info Row
+            // Tenant Avatar & Header Row
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
-                    ),
-                  ),
-                  child: TenantAvatar(name: widget.name, radius: 26),
-                ),
+                TenantAvatar(name: widget.name, radius: 24),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -434,155 +399,113 @@ class _TenantAddedSuccessScreenState extends State<TenantAddedSuccessScreen> {
                         widget.name,
                         style: const TextStyle(
                           fontSize: 18,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.bold,
                           color: Color(0xFF0F172A),
-                          letterSpacing: -0.3,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.meeting_room_outlined, size: 12, color: Color(0xFF475569)),
-                                const SizedBox(width: 4),
-                                Text(
-                                  (currentRoom.isNotEmpty) ? 'Room $currentRoom' : widget.roomBed,
-                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
-                                ),
-                              ],
-                            ),
+                      if (widget.phone.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.phone,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF64748B),
+                            fontWeight: FontWeight.w500,
                           ),
-                          if (widget.phone.isNotEmpty)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF8FAFC),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.phone_outlined, size: 12, color: Color(0xFF64748B)),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    widget.phone,
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                  ),
+                  child: const Text(
+                    'Active',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF047857),
+                    ),
                   ),
                 ),
               ],
             ),
 
             const SizedBox(height: 18),
+            const Divider(height: 1, color: Color(0xFFF1F5F9)),
+            const SizedBox(height: 14),
 
-            // Remaki App Credentials Box
+            // Classic Key-Value List
+            _buildDetailRow(
+              label: 'Room & Floor',
+              value: roomDisplay,
+            ),
+            const SizedBox(height: 10),
+            _buildDetailRow(
+              label: 'Monthly Rent',
+              value: '₹${widget.rent}',
+              valueColor: const Color(0xFF047857),
+            ),
+            const SizedBox(height: 10),
+            _buildDetailRow(
+              label: 'Move-in Date',
+              value: widget.moveIn.isEmpty ? 'Today' : widget.moveIn,
+            ),
+
+            const SizedBox(height: 14),
+            const Divider(height: 1, color: Color(0xFFF1F5F9)),
+            const SizedBox(height: 14),
+
+            // Remaki App Credentials Row
             Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFF8FAFC), Color(0xFFEEF2FF)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFC7D2FE)),
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.vpn_key_rounded, size: 15, color: AppTheme.primaryColor),
-                          SizedBox(width: 6),
-                          Text(
-                            'REMAKI APP CREDENTIALS',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.primaryColor,
-                              letterSpacing: 0.8,
-                            ),
+                  const Icon(Icons.vpn_key_rounded, size: 18, color: AppTheme.primaryColor),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Remaki App Password',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF64748B),
                           ),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: const Color(0xFFC7D2FE)),
                         ),
-                        child: const Text(
-                          'DEFAULT',
-                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF6366F1)),
+                        const SizedBox(height: 2),
+                        Text(
+                          displayPassword,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                            letterSpacing: 0.5,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.smartphone_rounded, size: 14, color: Color(0xFF64748B)),
-                          const SizedBox(width: 4),
-                          Text(
-                            widget.phone.isNotEmpty ? widget.phone : 'Registered Mobile',
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF4F46E5),
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF4F46E5).withValues(alpha: 0.25),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.lock_outline_rounded, size: 12, color: Colors.white),
-                            const SizedBox(width: 4),
-                            Text(
-                              displayPassword,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  IconButton(
+                    icon: const Icon(Icons.copy_rounded, size: 18, color: AppTheme.primaryColor),
+                    onPressed: () => _copyPasswordToClipboard(displayPassword),
+                    tooltip: 'Copy password',
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.all(6),
                   ),
                 ],
               ),
@@ -594,45 +517,31 @@ class _TenantAddedSuccessScreenState extends State<TenantAddedSuccessScreen> {
             if (!isCredentialsSent)
               SizedBox(
                 width: double.infinity,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF25D366), Color(0xFF16A34A)],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF25D366).withValues(alpha: 0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                child: ElevatedButton.icon(
+                  onPressed: _sendWhatsAppCredentials,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF25D366),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: ElevatedButton.icon(
-                    onPressed: _sendWhatsAppCredentials,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    icon: Image.asset(
-                      'assets/icons/whatsapp.png',
-                      width: 22,
-                      height: 22,
-                    ),
-                    label: const Text(
-                      'Send Credentials via WhatsApp',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 0.2),
-                    ),
+                  icon: Image.asset(
+                    'assets/icons/whatsapp.png',
+                    width: 20,
+                    height: 20,
+                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.send_rounded, size: 18, color: Colors.white),
+                  ),
+                  label: const Text(
+                    'Send Credentials via WhatsApp',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                 ),
               )
             else
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                 decoration: BoxDecoration(
                   color: const Color(0xFFECFDF5),
                   borderRadius: BorderRadius.circular(12),
@@ -645,60 +554,11 @@ class _TenantAddedSuccessScreenState extends State<TenantAddedSuccessScreen> {
                     SizedBox(width: 6),
                     Text(
                       'Credentials Sent via WhatsApp',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF047857)),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF047857)),
                     ),
                   ],
                 ),
               ),
-
-            const SizedBox(height: 18),
-            const Divider(height: 1, color: Color(0xFFF1F5F9)),
-            const SizedBox(height: 18),
-
-            // 2x2 Details Grid
-            Row(
-              children: [
-                Expanded(
-                  child: _buildDetailCard(
-                    label: 'MONTHLY RENT',
-                    value: '₹${widget.rent}',
-                    icon: Icons.payments_outlined,
-                    accentColor: AppTheme.primaryColor,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _buildDetailCard(
-                    label: 'MOVE-IN DATE',
-                    value: widget.moveIn.isEmpty ? 'Today' : widget.moveIn,
-                    icon: Icons.calendar_month_outlined,
-                    accentColor: const Color(0xFF0F172A),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildDetailCard(
-                    label: 'ROOM & FLOOR',
-                    value: currentRoom.isNotEmpty ? 'Room $currentRoom${currentFloor.isNotEmpty ? ' ($currentFloor)' : ''}' : widget.roomBed,
-                    icon: Icons.apartment_rounded,
-                    accentColor: const Color(0xFF0284C7),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _buildDetailCard(
-                    label: 'TENANT PORTAL',
-                    value: 'Remaki App',
-                    icon: Icons.verified_user_outlined,
-                    accentColor: const Color(0xFF16A34A),
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       ),
@@ -709,40 +569,31 @@ class _TenantAddedSuccessScreenState extends State<TenantAddedSuccessScreen> {
     );
   }
 
-  static Widget _buildDetailCard({
+  static Widget _buildDetailRow({
     required String label,
     required String value,
-    required IconData icon,
-    required Color accentColor,
+    Color? valueColor,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 13, color: const Color(0xFF64748B)),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Color(0xFF64748B), letterSpacing: 0.5),
-              ),
-            ],
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF64748B),
           ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: accentColor),
-            overflow: TextOverflow.ellipsis,
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: valueColor ?? const Color(0xFF0F172A),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

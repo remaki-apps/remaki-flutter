@@ -14,6 +14,8 @@ class ExportDataModal extends StatefulWidget {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useRootNavigator: true,
+      useSafeArea: true,
       builder: (ctx) => const ExportDataModal(),
     );
   }

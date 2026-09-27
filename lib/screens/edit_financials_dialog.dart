@@ -94,33 +94,51 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      backgroundColor: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    final mediaQuery = MediaQuery.of(context);
+    final availableHeight = mediaQuery.size.height;
+    final keyboardPadding = mediaQuery.viewInsets.bottom;
+
+    return AnimatedPadding(
+      padding: EdgeInsets.only(bottom: keyboardPadding),
+      duration: const Duration(milliseconds: 150),
+      child: Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: 450,
+            maxHeight: (availableHeight * 0.85).clamp(300.0, 700.0),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Edit Financials',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Edit Financials',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => context.pop(),
+                        child: const Icon(Icons.close, color: Color(0xFF64748B)),
+                      ),
+                    ],
                   ),
-                  GestureDetector(
-                    onTap: () => context.pop(),
-                    child: const Icon(Icons.close, color: Color(0xFF64748B)),
-                  ),
-                ],
-              ),
               const SizedBox(height: 20),
               
               const Text('Monthly Rent (₹)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF334155))),
@@ -199,8 +217,10 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 
   InputDecoration _inputDecoration() {
     return InputDecoration(

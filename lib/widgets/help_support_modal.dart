@@ -14,20 +14,23 @@ class HelpSupportModal {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          boxShadow: [
-            BoxShadow(
-              color: Color(0x1F000000),
-              blurRadius: 30,
-              offset: Offset(0, -6),
-            ),
-          ],
-        ),
-        child: Column(
+      useRootNavigator: true,
+      useSafeArea: true,
+      builder: (ctx) => SafeArea(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x1F000000),
+                blurRadius: 30,
+                offset: Offset(0, -6),
+              ),
+            ],
+          ),
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -217,8 +220,9 @@ class HelpSupportModal {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   static Widget _buildContactTile({
     required IconData icon,

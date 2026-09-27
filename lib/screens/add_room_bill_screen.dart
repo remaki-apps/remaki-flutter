@@ -583,7 +583,7 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
 
             // Sticky Bottom Summary & Split Bill Button
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
               decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),

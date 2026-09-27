@@ -124,7 +124,7 @@ class UnpaidTenantsScreen extends StatelessWidget {
               ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+              padding: EdgeInsets.fromLTRB(16, 12, 16, 30 + MediaQuery.of(context).padding.bottom),
               physics: const BouncingScrollPhysics(),
               itemCount: unpaidTenants.length,
               itemBuilder: (context, index) {
