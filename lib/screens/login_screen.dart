@@ -36,6 +36,15 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    String cleanPhone = phone.replaceAll(RegExp(r'\s+'), '').replaceAll('-', '');
+    if (cleanPhone.startsWith('+91')) {
+      cleanPhone = cleanPhone.substring(3);
+    } else if (cleanPhone.startsWith('91') && cleanPhone.length == 12) {
+      cleanPhone = cleanPhone.substring(2);
+    } else if (cleanPhone.startsWith('0') && cleanPhone.length == 11) {
+      cleanPhone = cleanPhone.substring(1);
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = '';
@@ -58,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       ''', variables: {
         'input': {
-          'phoneNumber': phone,
+          'phoneNumber': cleanPhone,
           'password': password,
         }
       });
@@ -69,13 +78,13 @@ class _LoginScreenState extends State<LoginScreen> {
       // Save token in ApiService (persisted via SharedPreferences)
       await ApiService.setAuthToken(token, role);
       
-      // Load initial data
-      await appProvider.loadFromAPI();
-      
       if (mounted) {
         if (role == 'ADMIN') {
-          context.go('/');
+          // Load initial admin data
+          await appProvider.loadFromAPI();
+          if (mounted) context.go('/');
         } else {
+          // Tenants navigate directly to tenant portal
           context.go('/tenant_home');
         }
       }

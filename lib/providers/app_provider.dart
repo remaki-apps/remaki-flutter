@@ -313,15 +313,13 @@ class AppProvider with ChangeNotifier {
     }
   }
 
-  Future<void> addRoom(Room room) async {
-    rooms.add(room);
-    notifyListeners();
-
+  Future<void> addRoom(Room room, {List<String>? bedLabels}) async {
     try {
       await ApiService.createRoom({
         'roomNumber': room.number,
         'floorNumber': room.floor,
         'capacity': room.capacity,
+        if (bedLabels != null && bedLabels.isNotEmpty) 'bedLabels': bedLabels,
       });
       await loadFromAPI();
     } catch (e) {
@@ -329,9 +327,6 @@ class AppProvider with ChangeNotifier {
       await loadFromAPI();
       rethrow;
     }
-
-    saveToStorage();
-    notifyListeners();
   }
 
   void addBed(String roomId, String bedName) {

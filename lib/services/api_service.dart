@@ -83,6 +83,11 @@ class ApiService {
         }),
       ).timeout(const Duration(seconds: 30));
 
+      Map<String, dynamic>? data;
+      try {
+        data = jsonDecode(response.body);
+      } catch (_) {}
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         if (data.containsKey('errors') && data['errors'] != null) {
