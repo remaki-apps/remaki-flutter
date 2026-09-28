@@ -83,7 +83,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final collectedRent = appProvider.collectedRentOnly;
     final pendingRent = appProvider.pendingRentOnly;
 
-    final sortedPayments = [...appProvider.payments]..sort((a, b) => b.date.compareTo(a.date));
+    final sortedPayments = [...appProvider.currentPayments]..sort((a, b) => b.date.compareTo(a.date));
     final recentPayments = sortedPayments.take(5).toList();
 
     return Scaffold(
@@ -128,7 +128,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   context: context,
                   appProvider: appProvider,
                   payments: recentPayments,
-                  totalCount: appProvider.payments.length,
+                  totalCount: appProvider.currentPayments.length,
                 ),
                 const SizedBox(height: 24),
               ],

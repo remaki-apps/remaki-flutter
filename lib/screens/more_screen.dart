@@ -105,7 +105,7 @@ class MoreScreen extends StatelessWidget {
       ),
       body: Consumer<AppProvider>(
         builder: (context, provider, _) {
-          final totalBeds = provider.rooms.fold(0, (sum, r) => sum + r.capacity);
+          final totalBeds = provider.totalBeds;
 
           return SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
@@ -157,19 +157,136 @@ class MoreScreen extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    provider.pgName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 16.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
+                                  if (provider.properties.length > 1) ...[
+                                    PopupMenuButton<String>(
+                                      tooltip: 'Switch Property',
+                                      initialValue: provider.selectedPropertyId,
+                                      onSelected: (String propId) {
+                                        provider.selectProperty(propId);
+                                      },
+                                      position: PopupMenuPosition.under,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              provider.selectedPropertyId == 'ALL' ? 'All Properties' : provider.pgName,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: GoogleFonts.outfit(
+                                                fontSize: 16.5,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Container(
+                                            padding: const EdgeInsets.all(2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withValues(alpha: 0.2),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: const Icon(
+                                              Icons.keyboard_arrow_down_rounded,
+                                              size: 16,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      itemBuilder: (BuildContext context) {
+                                        return [
+                                          ...provider.properties.map((prop) {
+                                            final isSelected = prop.id == provider.selectedPropertyId;
+                                            return PopupMenuItem<String>(
+                                              value: prop.id,
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.business_rounded,
+                                                    size: 18,
+                                                    color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
+                                                  ),
+                                                  const SizedBox(width: 10),
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Text(
+                                                          prop.name,
+                                                          style: TextStyle(
+                                                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                                            color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFF0F172A),
+                                                            fontSize: 14,
+                                                          ),
+                                                        ),
+                                                        if (prop.city.isNotEmpty || prop.address.isNotEmpty)
+                                                          Text(
+                                                            prop.city.isNotEmpty ? prop.city : prop.address,
+                                                            style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  if (isSelected)
+                                                    const Icon(Icons.check_circle_rounded, size: 18, color: Color(0xFF4F46E5)),
+                                                ],
+                                              ),
+                                            );
+                                          }),
+                                          const PopupMenuDivider(),
+                                          PopupMenuItem<String>(
+                                            value: 'ALL',
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.all_inclusive_rounded,
+                                                  size: 18,
+                                                  color: provider.selectedPropertyId == 'ALL' ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
+                                                ),
+                                                const SizedBox(width: 10),
+                                                Text(
+                                                  'All Properties',
+                                                  style: TextStyle(
+                                                    fontWeight: provider.selectedPropertyId == 'ALL' ? FontWeight.bold : FontWeight.w600,
+                                                    color: provider.selectedPropertyId == 'ALL' ? const Color(0xFF4F46E5) : const Color(0xFF0F172A),
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                if (provider.selectedPropertyId == 'ALL') ...[
+                                                  const Spacer(),
+                                                  const Icon(Icons.check_circle_rounded, size: 18, color: Color(0xFF4F46E5)),
+                                                ],
+                                              ],
+                                            ),
+                                          ),
+                                        ];
+                                      },
                                     ),
-                                  ),
+                                  ] else ...[
+                                    Text(
+                                      provider.pgName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 16.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
                                   const SizedBox(height: 2),
                                   Text(
-                                    '${provider.adminName} • Property Manager',
+                                    provider.pgAddress.isNotEmpty
+                                        ? provider.pgAddress
+                                        : '${provider.adminName} • Property Manager',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 11.5,
                                       color: const Color(0xFFE0E7FF),
@@ -227,11 +344,11 @@ class MoreScreen extends StatelessWidget {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              _buildMiniStat('${provider.rooms.length}', 'Rooms'),
+                              _buildMiniStat('${provider.currentRooms.length}', 'Rooms'),
                               Container(width: 1, height: 14, color: Colors.white24),
                               _buildMiniStat('$totalBeds', 'Total Beds'),
                               Container(width: 1, height: 14, color: Colors.white24),
-                              _buildMiniStat('${provider.tenants.length}', 'Residents'),
+                              _buildMiniStat('${provider.currentTenants.length}', 'Residents'),
                             ],
                           ),
                         ),

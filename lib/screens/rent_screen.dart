@@ -32,12 +32,12 @@ class _RentScreenState extends State<RentScreen> {
         : 0.0;
 
     final int paidCount = _showBills
-        ? appProvider.tenants.where((t) => t.totalPendingBills == 0 && t.additionalCharges.any((c) => c.billType != 'RENT')).length
-        : appProvider.tenants.where((t) => t.pendingRentAmount == 0 && t.rentAmount > 0).length;
+        ? appProvider.currentTenants.where((t) => t.totalPendingBills == 0 && t.additionalCharges.any((c) => c.billType != 'RENT')).length
+        : appProvider.currentTenants.where((t) => t.pendingRentAmount == 0 && t.rentAmount > 0).length;
 
     final int unpaidCount = _showBills
-        ? appProvider.tenants.where((t) => t.totalPendingBills > 0).length
-        : appProvider.tenants.where((t) => t.pendingRentAmount > 0).length;
+        ? appProvider.currentTenants.where((t) => t.totalPendingBills > 0).length
+        : appProvider.currentTenants.where((t) => t.pendingRentAmount > 0).length;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),

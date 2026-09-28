@@ -188,6 +188,96 @@ void main() {
       expect(provider.currentRooms.length, 2);
       expect(provider.currentTenants.length, 2);
     });
+
+    test('Filters currentPayments correctly by property and tenant', () async {
+      SharedPreferences.setMockInitialValues({});
+      final provider = AppProvider();
+
+      provider.properties = [
+        PropertyItem(id: 'prop-1', name: 'Sunshine PG 1'),
+        PropertyItem(id: 'prop-2', name: 'Sunshine PG 2'),
+      ];
+
+      provider.rooms = [
+        Room(id: 'r1', number: '101', floor: '1', capacity: 2, propertyId: 'prop-1', beds: []),
+        Room(id: 'r2', number: '201', floor: '2', capacity: 2, propertyId: 'prop-2', beds: []),
+      ];
+
+      provider.tenants = [
+        Tenant(
+          id: 't1',
+          name: 'Alice',
+          phone: '1111111111',
+          email: 'alice@test.com',
+          roomId: 'r1',
+          bedId: 'b1',
+          propertyId: 'prop-1',
+          moveInDate: DateTime.now(),
+          rentAmount: 8000,
+          securityDeposit: 0,
+          rentDueDate: DateTime.now(),
+          pendingRentAmount: 0,
+        ),
+        Tenant(
+          id: 't2',
+          name: 'Bob',
+          phone: '2222222222',
+          email: 'bob@test.com',
+          roomId: 'r2',
+          bedId: 'b2',
+          propertyId: 'prop-2',
+          moveInDate: DateTime.now(),
+          rentAmount: 6000,
+          securityDeposit: 0,
+          rentDueDate: DateTime.now(),
+          pendingRentAmount: 2000,
+        ),
+      ];
+
+      provider.payments = [
+        Payment(
+          id: 'p1',
+          tenantId: 't1',
+          amount: 8000,
+          date: DateTime.now(),
+          method: 'UPI',
+          propertyId: 'prop-1',
+        ),
+        Payment(
+          id: 'p2',
+          tenantId: 't2',
+          amount: 4000,
+          date: DateTime.now(),
+          method: 'CASH',
+          propertyId: 'prop-2',
+        ),
+      ];
+
+      // All properties
+      expect(provider.currentPayments.length, 2);
+
+      // Switch to prop-1
+      provider.selectProperty('prop-1');
+      expect(provider.currentPayments.length, 1);
+      expect(provider.currentPayments.first.id, 'p1');
+      expect(provider.currentPayments.first.amount, 8000);
+      expect(provider.pgName, 'Sunshine PG 1');
+
+      // Switch to prop-2
+      provider.selectProperty('prop-2');
+      expect(provider.currentPayments.length, 1);
+      expect(provider.currentPayments.first.id, 'p2');
+      expect(provider.currentPayments.first.amount, 4000);
+      expect(provider.pgName, 'Sunshine PG 2');
+
+      // Unpaid tenants in prop-2
+      expect(provider.unpaidRentTenants.length, 1);
+      expect(provider.unpaidRentTenants.first.name, 'Bob');
+
+      // Switch back to prop-1, no unpaid tenants
+      provider.selectProperty('prop-1');
+      expect(provider.unpaidRentTenants.length, 0);
+    });
   });
 }
 

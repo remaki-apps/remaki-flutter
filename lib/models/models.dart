@@ -173,6 +173,7 @@ class Tenant {
   bool isPaid;
   String paymentStatus;
   double platformFee;
+  String propertyId;
   bool get isUnpaid => !isPaid && !isPartiallyPaid;
   bool get isPartiallyPaid => paymentStatus == 'PARTIAL' || (pendingRentAmount > 0 && pendingRentAmount < rentAmount);
   DateTime rentDueDate;
@@ -294,6 +295,7 @@ class Tenant {
     this.isPaid = false,
     this.paymentStatus = 'UNPAID',
     this.platformFee = 9.0,
+    this.propertyId = '',
     required this.rentDueDate,
     this.pendingRentAmount = 0,
     List<AdditionalCharge>? additionalCharges,
@@ -319,6 +321,7 @@ class Tenant {
         'isPaid': isPaid,
         'paymentStatus': paymentStatus,
         'platformFee': platformFee,
+        'propertyId': propertyId,
         'rentDueDate': rentDueDate.toIso8601String(),
         'pendingRentAmount': pendingRentAmount,
         'additionalCharges': additionalCharges.map((c) => c.toJson()).toList(),
@@ -355,6 +358,7 @@ class Tenant {
         isPaid: json['isPaid'] as bool? ?? false,
         paymentStatus: json['paymentStatus']?.toString() ?? (json['isPaid'] == true ? 'PAID' : 'UNPAID'),
         platformFee: (json['platformFee'] as num?)?.toDouble() ?? 9.0,
+        propertyId: json['propertyId'] as String? ?? (json['room'] != null && json['room']['propertyId'] != null ? json['room']['propertyId'].toString() : ''),
         rentDueDate: DateTime.tryParse(json['rentDueDate']?.toString() ?? '') ?? DateTime.now(),
         pendingRentAmount: (json['pendingRentAmount'] as num?)?.toDouble() ?? 0,
         additionalCharges: (json['additionalCharges'] as List<dynamic>?)?.map((e) => AdditionalCharge.fromJson(e as Map<String, dynamic>)).toList() ?? [],
@@ -387,6 +391,7 @@ class Payment {
   String? tenantName;
   String? roomNumber;
   String? notes;
+  String? propertyId;
 
   Payment({
     required this.id,
@@ -397,6 +402,7 @@ class Payment {
     this.tenantName,
     this.roomNumber,
     this.notes,
+    this.propertyId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -408,6 +414,7 @@ class Payment {
         'tenantName': tenantName,
         'roomNumber': roomNumber,
         'notes': notes,
+        'propertyId': propertyId,
       };
 
   factory Payment.fromJson(Map<String, dynamic> json) => Payment(
@@ -419,6 +426,7 @@ class Payment {
         tenantName: json['tenantName'] as String?,
         roomNumber: json['roomNumber'] as String?,
         notes: json['notes'] as String?,
+        propertyId: json['propertyId'] as String?,
       );
 }
 

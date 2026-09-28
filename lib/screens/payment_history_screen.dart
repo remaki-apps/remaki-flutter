@@ -39,7 +39,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
-    final sortedPayments = [...appProvider.payments]..sort((a, b) => b.date.compareTo(a.date));
+    final sortedPayments = [...appProvider.currentPayments]..sort((a, b) => b.date.compareTo(a.date));
 
     // Calculate total amount collected from all payments
     final double totalCollected = sortedPayments.fold(0.0, (sum, p) => sum + p.amount);

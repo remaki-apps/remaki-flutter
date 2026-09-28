@@ -137,9 +137,11 @@ class ApiService {
           imageUrl
           emergencyContact
           tempPassword
+          propertyId
           room {
             id
             roomNumber
+            propertyId
           }
           bed {
             id
@@ -403,6 +405,7 @@ class ApiService {
               amount
               method
               date
+              propertyId
             }
           }
         ''';
@@ -415,6 +418,7 @@ class ApiService {
               amount
               method
               date
+              propertyId
             }
           }
         ''';
