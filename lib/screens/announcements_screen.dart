@@ -8,6 +8,7 @@ import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/app_shimmer.dart';
+import '../utils/image_compress_util.dart';
 
 class AnnouncementsScreen extends StatefulWidget {
   const AnnouncementsScreen({super.key});
@@ -50,13 +51,14 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
 
   Future<void> _pickImage(StateSetter modalSetState) async {
     final picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 10);
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     
     if (image == null) return;
 
     final bytes = await image.readAsBytes();
-    setState(() => _selectedImageBytes = bytes);
-    modalSetState(() => _selectedImageBytes = bytes);
+    final compressed = await ImageCompressUtil.compressDocumentOrBill(bytes);
+    setState(() => _selectedImageBytes = compressed);
+    modalSetState(() => _selectedImageBytes = compressed);
   }
 
   Future<void> _sendAnnouncement(StateSetter modalSetState) async {

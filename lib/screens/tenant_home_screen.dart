@@ -15,6 +15,7 @@ import '../widgets/tenant_avatar.dart';
 import 'edit_personal_info_dialog.dart';
 import 'complete_profile_dialog.dart';
 import '../widgets/app_shimmer.dart';
+import '../utils/image_compress_util.dart';
 
 class TenantHomeScreen extends StatefulWidget {
   final int initialTab;
@@ -148,12 +149,13 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 20);
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (image == null) return;
 
     final bytes = await image.readAsBytes();
+    final compressed = await ImageCompressUtil.compressDocumentOrBill(bytes);
     setState(() {
-      _selectedImageBytes = bytes;
+      _selectedImageBytes = compressed;
     });
   }
 

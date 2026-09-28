@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../services/api_service.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/tenant_avatar.dart';
+import '../utils/image_compress_util.dart';
 
 class EditPersonalInfoDialog extends StatefulWidget {
   final dynamic tenant;
@@ -62,8 +63,9 @@ class _EditPersonalInfoDialogState extends State<EditPersonalInfoDialog> {
     if (image == null) return;
 
     final bytes = await image.readAsBytes();
+    final compressed = await ImageCompressUtil.compressProfileImage(bytes);
     setState(() {
-      _selectedImageBytes = bytes;
+      _selectedImageBytes = compressed;
     });
   }
 
