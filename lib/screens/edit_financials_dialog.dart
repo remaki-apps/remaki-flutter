@@ -163,7 +163,7 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
               const Text('Default Payment Mode', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF334155))),
               const SizedBox(height: 6),
               DropdownButtonFormField<String>(
-                value: _paymentMode,
+                initialValue: _paymentMode,
                 decoration: _inputDecoration(),
                 items: ['CASH', 'UPI', 'BANK_TRANSFER', 'CARD', 'OTHER']
                     .map((mode) => DropdownMenuItem(value: mode, child: Text(mode)))
