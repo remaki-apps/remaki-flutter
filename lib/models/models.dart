@@ -72,14 +72,66 @@ class AdditionalCharge {
       );
 }
 
+class PropertyItem {
+  final String id;
+  final String name;
+  final String address;
+  final String city;
+  final String state;
+  final String pincode;
+  final String? description;
+  final int totalFloors;
+
+  PropertyItem({
+    required this.id,
+    required this.name,
+    this.address = '',
+    this.city = '',
+    this.state = '',
+    this.pincode = '',
+    this.description,
+    this.totalFloors = 0,
+  });
+
+  factory PropertyItem.fromJson(Map<String, dynamic> json) => PropertyItem(
+        id: json['id']?.toString() ?? '',
+        name: json['name']?.toString() ?? '',
+        address: json['address']?.toString() ?? '',
+        city: json['city']?.toString() ?? '',
+        state: json['state']?.toString() ?? '',
+        pincode: json['pincode']?.toString() ?? '',
+        description: json['description']?.toString(),
+        totalFloors: (json['totalFloors'] as num?)?.toInt() ?? 0,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'address': address,
+        'city': city,
+        'state': state,
+        'pincode': pincode,
+        'description': description,
+        'totalFloors': totalFloors,
+      };
+}
+
 class Room {
   String id;
   String number;
   String floor;
   int capacity;
   List<Bed> beds;
+  String propertyId;
 
-  Room({required this.id, required this.number, this.floor = 'Ground Floor', required this.capacity, required this.beds});
+  Room({
+    required this.id,
+    required this.number,
+    this.floor = 'Ground Floor',
+    required this.capacity,
+    required this.beds,
+    this.propertyId = '',
+  });
 
   int get availableBeds => beds.where((b) => b.isAvailable).length;
   bool get isFull => availableBeds == 0;
@@ -91,6 +143,7 @@ class Room {
         'floor': floor,
         'capacity': capacity,
         'beds': beds.map((b) => b.toJson()).toList(),
+        'propertyId': propertyId,
       };
 
   factory Room.fromJson(Map<String, dynamic> json) => Room(
@@ -98,6 +151,7 @@ class Room {
         number: json['number']?.toString() ?? '',
         floor: json['floor']?.toString() ?? 'Ground Floor',
         capacity: (json['capacity'] as num?)?.toInt() ?? 0,
+        propertyId: json['propertyId']?.toString() ?? '',
         beds: (json['beds'] as List<dynamic>?)
             ?.whereType<Map<String, dynamic>>()
             .map((e) => Bed.fromJson(e))
@@ -117,7 +171,10 @@ class Tenant {
   double rentAmount;
   double securityDeposit;
   bool isPaid;
-  bool get isUnpaid => !isPaid;
+  String paymentStatus;
+  double platformFee;
+  bool get isUnpaid => !isPaid && !isPartiallyPaid;
+  bool get isPartiallyPaid => paymentStatus == 'PARTIAL' || (pendingRentAmount > 0 && pendingRentAmount < rentAmount);
   DateTime rentDueDate;
   // Amount still owed on rent this cycle (0 if fully paid, partial if partially paid)
   double pendingRentAmount;
@@ -235,6 +292,8 @@ class Tenant {
     required this.rentAmount,
     required this.securityDeposit,
     this.isPaid = false,
+    this.paymentStatus = 'UNPAID',
+    this.platformFee = 9.0,
     required this.rentDueDate,
     this.pendingRentAmount = 0,
     List<AdditionalCharge>? additionalCharges,
@@ -258,6 +317,8 @@ class Tenant {
         'rentAmount': rentAmount,
         'securityDeposit': securityDeposit,
         'isPaid': isPaid,
+        'paymentStatus': paymentStatus,
+        'platformFee': platformFee,
         'rentDueDate': rentDueDate.toIso8601String(),
         'pendingRentAmount': pendingRentAmount,
         'additionalCharges': additionalCharges.map((c) => c.toJson()).toList(),
@@ -292,6 +353,8 @@ class Tenant {
         rentAmount: (json['rentAmount'] as num?)?.toDouble() ?? 0.0,
         securityDeposit: (json['securityDeposit'] as num?)?.toDouble() ?? 0.0,
         isPaid: json['isPaid'] as bool? ?? false,
+        paymentStatus: json['paymentStatus']?.toString() ?? (json['isPaid'] == true ? 'PAID' : 'UNPAID'),
+        platformFee: (json['platformFee'] as num?)?.toDouble() ?? 9.0,
         rentDueDate: DateTime.tryParse(json['rentDueDate']?.toString() ?? '') ?? DateTime.now(),
         pendingRentAmount: (json['pendingRentAmount'] as num?)?.toDouble() ?? 0,
         additionalCharges: (json['additionalCharges'] as List<dynamic>?)?.map((e) => AdditionalCharge.fromJson(e as Map<String, dynamic>)).toList() ?? [],

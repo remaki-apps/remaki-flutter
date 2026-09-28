@@ -898,15 +898,28 @@ class TenantProfileScreen extends StatelessWidget {
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      onPressed: () {
-                        appProvider.vacateTenant(tenant.id);
-                        Navigator.of(ctx).pop();
-                        context.pop();
-                        FancyToast.showSuccess(
-                          context,
-                          'Tenant Vacated!',
-                          message: '${tenant.name} has been vacated from Room $roomNumber - $bedName.',
-                        );
+                      onPressed: () async {
+                        try {
+                          await appProvider.vacateTenant(tenant.id);
+                          if (ctx.mounted) Navigator.of(ctx).pop();
+                          if (context.mounted) {
+                            context.pop();
+                            FancyToast.showSuccess(
+                              context,
+                              'Tenant Vacated!',
+                              message: '${tenant.name} has been vacated from Room $roomNumber - $bedName.',
+                            );
+                          }
+                        } catch (e) {
+                          if (ctx.mounted) Navigator.of(ctx).pop();
+                          if (context.mounted) {
+                            FancyToast.showError(
+                              context,
+                              'Vacate Failed',
+                              message: e.toString().replaceAll('Exception: ', ''),
+                            );
+                          }
+                        }
                       },
                       child: const Text(
                         'Vacate Tenant',

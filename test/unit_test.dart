@@ -99,5 +99,95 @@ void main() {
       expect(provider.collectedRentOnly, 6000);
       expect(provider.pendingRentOnly, 2000);
     });
+
+    test('Filters rooms and tenants when property is selected', () async {
+      SharedPreferences.setMockInitialValues({});
+      final provider = AppProvider();
+
+      provider.properties = [
+        PropertyItem(id: 'prop-1', name: 'Sunshine PG 1'),
+        PropertyItem(id: 'prop-2', name: 'Sunshine PG 2'),
+      ];
+
+      provider.rooms = [
+        Room(id: 'r1', number: '101', floor: '1', capacity: 2, propertyId: 'prop-1', beds: [
+          Bed(id: 'b1', name: 'B1', isAvailable: false),
+          Bed(id: 'b2', name: 'B2', isAvailable: true),
+        ]),
+        Room(id: 'r2', number: '201', floor: '2', capacity: 1, propertyId: 'prop-2', beds: [
+          Bed(id: 'b3', name: 'B3', isAvailable: false),
+        ]),
+      ];
+
+      provider.tenants = [
+        Tenant(
+          id: 't1',
+          name: 'Alice',
+          phone: '1111111111',
+          email: 'alice@test.com',
+          roomId: 'r1',
+          bedId: 'b1',
+          moveInDate: DateTime.now(),
+          rentAmount: 8000,
+          securityDeposit: 0,
+          rentDueDate: DateTime.now(),
+          pendingRentAmount: 3000,
+          paymentStatus: 'PARTIAL',
+        ),
+        Tenant(
+          id: 't2',
+          name: 'Bob',
+          phone: '2222222222',
+          email: 'bob@test.com',
+          roomId: 'r2',
+          bedId: 'b3',
+          moveInDate: DateTime.now(),
+          rentAmount: 6000,
+          securityDeposit: 0,
+          rentDueDate: DateTime.now(),
+          pendingRentAmount: 0,
+          paymentStatus: 'PAID',
+        ),
+      ];
+
+      // Default (All properties)
+      expect(provider.currentRooms.length, 2);
+      expect(provider.currentTenants.length, 2);
+      expect(provider.totalBeds, 3);
+      expect(provider.occupiedBeds, 2);
+
+      // Select prop-1
+      provider.selectProperty('prop-1');
+      expect(provider.selectedPropertyId, 'prop-1');
+      expect(provider.currentRooms.length, 1);
+      expect(provider.currentRooms.first.id, 'r1');
+      expect(provider.currentTenants.length, 1);
+      expect(provider.currentTenants.first.name, 'Alice');
+      expect(provider.currentTenants.first.isPartiallyPaid, isTrue);
+      expect(provider.totalBeds, 2);
+      expect(provider.occupiedBeds, 1);
+      expect(provider.expectedRentOnly, 8000);
+      expect(provider.collectedRentOnly, 5000);
+      expect(provider.pendingRentOnly, 3000);
+
+      // Select prop-2
+      provider.selectProperty('prop-2');
+      expect(provider.currentRooms.length, 1);
+      expect(provider.currentRooms.first.id, 'r2');
+      expect(provider.currentTenants.length, 1);
+      expect(provider.currentTenants.first.name, 'Bob');
+      expect(provider.currentTenants.first.isPartiallyPaid, isFalse);
+      expect(provider.totalBeds, 1);
+      expect(provider.occupiedBeds, 1);
+      expect(provider.expectedRentOnly, 6000);
+      expect(provider.collectedRentOnly, 6000);
+      expect(provider.pendingRentOnly, 0);
+
+      // Deselect back to all
+      provider.selectProperty(null);
+      expect(provider.currentRooms.length, 2);
+      expect(provider.currentTenants.length, 2);
+    });
   });
 }
+

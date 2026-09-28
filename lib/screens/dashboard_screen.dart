@@ -211,17 +211,131 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  pgName,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.3,
-                    color: const Color(0xFF0F172A),
+                if (appProvider.properties.length > 1) ...[
+                  PopupMenuButton<String>(
+                    tooltip: 'Switch Property',
+                    initialValue: appProvider.selectedPropertyId,
+                    onSelected: (String propId) {
+                      appProvider.selectProperty(propId);
+                    },
+                    position: PopupMenuPosition.under,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            appProvider.selectedPropertyId == 'ALL' ? 'All Properties' : pgName,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.3,
+                              color: const Color(0xFF0F172A),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEEF2FF),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 16,
+                            color: Color(0xFF4F46E5),
+                          ),
+                        ),
+                      ],
+                    ),
+                    itemBuilder: (BuildContext context) {
+                      return [
+                        ...appProvider.properties.map((prop) {
+                          final isSelected = prop.id == appProvider.selectedPropertyId;
+                          return PopupMenuItem<String>(
+                            value: prop.id,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.business_rounded,
+                                  size: 18,
+                                  color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        prop.name,
+                                        style: TextStyle(
+                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                          color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFF0F172A),
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      if (prop.city.isNotEmpty || prop.address.isNotEmpty)
+                                        Text(
+                                          prop.city.isNotEmpty ? prop.city : prop.address,
+                                          style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                if (isSelected)
+                                  const Icon(Icons.check_circle_rounded, size: 18, color: Color(0xFF4F46E5)),
+                              ],
+                            ),
+                          );
+                        }),
+                        const PopupMenuDivider(),
+                        PopupMenuItem<String>(
+                          value: 'ALL',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.all_inclusive_rounded,
+                                size: 18,
+                                color: appProvider.selectedPropertyId == 'ALL' ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                'All Properties',
+                                style: TextStyle(
+                                  fontWeight: appProvider.selectedPropertyId == 'ALL' ? FontWeight.bold : FontWeight.w600,
+                                  color: appProvider.selectedPropertyId == 'ALL' ? const Color(0xFF4F46E5) : const Color(0xFF0F172A),
+                                  fontSize: 14,
+                                ),
+                              ),
+                              if (appProvider.selectedPropertyId == 'ALL') ...[
+                                const Spacer(),
+                                const Icon(Icons.check_circle_rounded, size: 18, color: Color(0xFF4F46E5)),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ];
+                    },
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                ] else ...[
+                  Text(
+                    pgName,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3,
+                      color: const Color(0xFF0F172A),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
                 if (pgAddress.isNotEmpty) ...[
                   const SizedBox(height: 3),
                   Row(

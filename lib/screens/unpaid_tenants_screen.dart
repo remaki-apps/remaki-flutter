@@ -188,28 +188,51 @@ class UnpaidTenantsScreen extends StatelessWidget {
                                     color: Color(0xFF64748B),
                                   ),
                                 ),
-                                const SizedBox(height: 3),
-                                Text.rich(
-                                  TextSpan(
-                                    children: [
-                                      const TextSpan(
-                                        text: 'Pending: ',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Color(0xFF64748B),
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
+                                 const SizedBox(height: 3),
+                                Row(
+                                  children: [
+                                    Text.rich(
                                       TextSpan(
-                                        text: '₹${totalPending.toStringAsFixed(0)}',
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.danger,
+                                        children: [
+                                          const TextSpan(
+                                            text: 'Pending: ',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Color(0xFF64748B),
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text: '₹${totalPending.toStringAsFixed(0)}',
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppTheme.danger,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (tenant.isPartiallyPaid) ...[
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFEF3C7),
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(color: const Color(0xFFFDE68A)),
+                                        ),
+                                        child: const Text(
+                                          'Partial',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFFD97706),
+                                          ),
                                         ),
                                       ),
                                     ],
-                                  ),
+                                  ],
                                 ),
                               ],
                             ),

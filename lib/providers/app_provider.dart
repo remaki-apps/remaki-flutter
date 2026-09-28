@@ -13,6 +13,9 @@ class AppProvider with ChangeNotifier {
   String pgName = 'Your PG';
   String adminName = 'Admin';
   String pgAddress = '';
+  List<PropertyItem> properties = [];
+  String? selectedPropertyId;
+  double platformFee = 9.0;
   bool isLoading = true;
 
   static const String _roomsKey = 'sunshine_pg_rooms';
@@ -21,6 +24,20 @@ class AppProvider with ChangeNotifier {
 
   AppProvider() {
     loadFromAPI();
+  }
+
+  void selectProperty(String? propertyId) {
+    selectedPropertyId = propertyId;
+    if (properties.isNotEmpty) {
+      final currentProp = properties.firstWhere(
+        (p) => p.id == propertyId,
+        orElse: () => properties.first,
+      );
+      pgName = currentProp.name;
+      final parts = [currentProp.city, currentProp.state].where((s) => s.isNotEmpty).toList();
+      pgAddress = parts.isNotEmpty ? parts.join(', ') : currentProp.address;
+    }
+    notifyListeners();
   }
 
   Future<void> loadFromAPI({bool showLoading = true}) async {
@@ -33,13 +50,34 @@ class AppProvider with ChangeNotifier {
       final roomsData = await ApiService.fetchRooms();
       final paymentsData = await ApiService.fetchPayments();
 
-      // Fetch admin profile for dynamic PG name (only if logged in as ADMIN)
+      // Fetch admin profile for dynamic PG name & multi-PG support
       if (ApiService.role == 'ADMIN') {
         final adminData = await ApiService.fetchAdminProfile();
         if (adminData != null) {
-          pgName = adminData['pgName'] ?? 'Your PG';
           adminName = adminData['adminName'] ?? 'Admin';
-          pgAddress = adminData['pgAddress'] ?? '';
+          platformFee = (adminData['platformFee'] as num?)?.toDouble() ?? 9.0;
+
+          final rawProps = (adminData['properties'] as List<dynamic>?) ?? [];
+          properties = rawProps
+              .whereType<Map<String, dynamic>>()
+              .map((p) => PropertyItem.fromJson(p))
+              .toList();
+
+          if (properties.isNotEmpty) {
+            if (selectedPropertyId == null || !properties.any((p) => p.id == selectedPropertyId)) {
+              selectedPropertyId = properties.first.id;
+            }
+            final currentProp = properties.firstWhere(
+              (p) => p.id == selectedPropertyId,
+              orElse: () => properties.first,
+            );
+            pgName = currentProp.name;
+            final parts = [currentProp.city, currentProp.state].where((s) => s.isNotEmpty).toList();
+            pgAddress = parts.isNotEmpty ? parts.join(', ') : currentProp.address;
+          } else {
+            pgName = adminData['pgName'] ?? 'Your PG';
+            pgAddress = adminData['pgAddress'] ?? '';
+          }
         }
       }
       
@@ -47,6 +85,7 @@ class AppProvider with ChangeNotifier {
         final rawBeds = (e['beds'] as List<dynamic>?) ?? [];
         return Room(
           id: e['id']?.toString() ?? '',
+          propertyId: e['propertyId']?.toString() ?? '',
           number: e['roomNumber']?.toString() ?? '',
           floor: e['floorNumber']?.toString() ?? 'Ground Floor',
           capacity: (e['capacity'] as num?)?.toInt() ?? rawBeds.length,
@@ -58,7 +97,7 @@ class AppProvider with ChangeNotifier {
         );
       }).toList();
 
-      tenants = tenantsData.whereType<Map<String, dynamic>>().map((e) {
+      tenants = tenantsData.whereType<Map<String, dynamic>>().where((e) => e['status'] != 'MOVED_OUT').map((e) {
         final roomMap = e['room'] as Map<String, dynamic>?;
         final bedMap = e['bed'] as Map<String, dynamic>?;
         final billsList = (e['bills'] as List<dynamic>?) ?? [];
@@ -78,6 +117,8 @@ class AppProvider with ChangeNotifier {
           rentAmount: monthlyRent,
           securityDeposit: (e['securityDeposit'] as num?)?.toDouble() ?? 0.0,
           isPaid: e['paymentStatus'] == 'PAID',
+          paymentStatus: e['paymentStatus']?.toString() ?? 'UNPAID',
+          platformFee: (e['platformFee'] as num?)?.toDouble() ?? 9.0,
           rentDueDate: e['rentDueDate'] != null ? DateTime.tryParse(e['rentDueDate'].toString()) ?? DateTime.now() : DateTime.now(),
           pendingRentAmount: pendingRent,
           defaultPaymentMode: e['defaultPaymentMode']?.toString(),
@@ -153,6 +194,7 @@ class AppProvider with ChangeNotifier {
         }
       }
 
+      await saveToStorage();
     } catch (e) {
       debugPrint('Error loading from API: $e');
       await loadFromStorage();
@@ -201,31 +243,47 @@ class AppProvider with ChangeNotifier {
     }
   }
 
-  int get totalBeds => rooms.fold(0, (sum, room) => sum + room.capacity);
+  // Filtered rooms and tenants for currently selected PG
+  List<Room> get currentRooms {
+    if (selectedPropertyId == null || selectedPropertyId == 'ALL' || properties.length <= 1) {
+      return rooms;
+    }
+    return rooms.where((r) => r.propertyId == selectedPropertyId).toList();
+  }
+
+  List<Tenant> get currentTenants {
+    if (selectedPropertyId == null || selectedPropertyId == 'ALL' || properties.length <= 1) {
+      return tenants;
+    }
+    final roomIds = currentRooms.map((r) => r.id).toSet();
+    return tenants.where((t) => t.roomId.isEmpty || roomIds.contains(t.roomId)).toList();
+  }
+
+  int get totalBeds => currentRooms.fold(0, (sum, room) => sum + room.capacity);
   int get occupiedBeds => totalBeds - availableBeds;
-  int get availableBeds => rooms.fold(0, (sum, room) => sum + room.availableBeds);
+  int get availableBeds => currentRooms.fold(0, (sum, room) => sum + room.availableBeds);
   double get occupancyRate => totalBeds == 0 ? 0 : occupiedBeds / totalBeds;
 
   // Expected is total rent of all tenants + any pending bills
   // --- Combined Metrics (if needed elsewhere) ---
-  double get expectedRent => tenants.fold(0.0, (sum, t) => sum + t.rentAmount + t.totalExpectedBills);
-  double get collectedRent => tenants.fold(0.0, (sum, t) => sum + (t.rentAmount - t.pendingRentAmount) + t.totalPaidBills);
+  double get expectedRent => currentTenants.fold(0.0, (sum, t) => sum + t.rentAmount + t.totalExpectedBills);
+  double get collectedRent => currentTenants.fold(0.0, (sum, t) => sum + (t.rentAmount - t.pendingRentAmount) + t.totalPaidBills);
   double get pendingRent => expectedRent - collectedRent;
 
   // --- Rent Only Metrics ---
-  double get expectedRentOnly => tenants.fold(0.0, (sum, t) => sum + t.rentAmount);
-  double get collectedRentOnly => tenants.fold(0.0, (sum, t) => sum + (t.rentAmount - t.pendingRentAmount));
+  double get expectedRentOnly => currentTenants.fold(0.0, (sum, t) => sum + t.rentAmount);
+  double get collectedRentOnly => currentTenants.fold(0.0, (sum, t) => sum + (t.rentAmount - t.pendingRentAmount));
   double get pendingRentOnly => expectedRentOnly - collectedRentOnly;
 
   // --- Bills Only Metrics ---
-  double get expectedBillsOnly => tenants.fold(0.0, (sum, t) => sum + t.totalExpectedBills);
-  double get collectedBillsOnly => tenants.fold(0.0, (sum, t) => sum + t.totalPaidBills);
-  double get pendingBillsOnly => tenants.fold(0.0, (sum, t) => sum + t.totalPendingBills);
+  double get expectedBillsOnly => currentTenants.fold(0.0, (sum, t) => sum + t.totalExpectedBills);
+  double get collectedBillsOnly => currentTenants.fold(0.0, (sum, t) => sum + t.totalPaidBills);
+  double get pendingBillsOnly => currentTenants.fold(0.0, (sum, t) => sum + t.totalPendingBills);
 
-  List<Tenant> get newTenantsThisMonth => tenants.where((t) => t.moveInDate.month == DateTime.now().month).toList();
-  List<Tenant> get unpaidTenants => tenants.where((t) => t.totalDue > 0).toList();
-  List<Tenant> get unpaidRentTenants => tenants.where((t) => t.pendingRentAmount > 0).toList();
-  List<Tenant> get unpaidBillsTenants => tenants.where((t) => t.totalPendingBills > 0).toList();
+  List<Tenant> get newTenantsThisMonth => currentTenants.where((t) => t.moveInDate.month == DateTime.now().month).toList();
+  List<Tenant> get unpaidTenants => currentTenants.where((t) => t.totalDue > 0).toList();
+  List<Tenant> get unpaidRentTenants => currentTenants.where((t) => t.pendingRentAmount > 0).toList();
+  List<Tenant> get unpaidBillsTenants => currentTenants.where((t) => t.totalPendingBills > 0).toList();
 
   Future<String?> addTenant(Tenant tenant) async {
     tenants.add(tenant);
@@ -322,6 +380,7 @@ class AppProvider with ChangeNotifier {
         if (bedLabels != null && bedLabels.isNotEmpty) 'bedLabels': bedLabels,
       });
       await loadFromAPI();
+      await saveToStorage();
     } catch (e) {
       debugPrint('Error creating room: $e');
       await loadFromAPI();
@@ -467,6 +526,13 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<void> vacateTenant(String tenantId) async {
+    try {
+      await ApiService.vacateTenant(tenantId);
+    } catch (e) {
+      debugPrint('Error vacating tenant: $e');
+      rethrow;
+    }
+
     var tenantIndex = tenants.indexWhere((t) => t.id == tenantId);
     if (tenantIndex != -1) {
       var tenant = tenants[tenantIndex];
@@ -481,7 +547,7 @@ class AppProvider with ChangeNotifier {
         }
       }
       tenants.removeAt(tenantIndex);
-      saveToStorage();
+      await saveToStorage();
       notifyListeners();
     }
   }

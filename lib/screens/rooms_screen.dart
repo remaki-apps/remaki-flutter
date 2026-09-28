@@ -35,7 +35,7 @@ class _RoomsScreenState extends State<RoomsScreen> {
   @override
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
-    final allRooms = appProvider.rooms;
+    final allRooms = appProvider.currentRooms;
 
     final totalCount = allRooms.length;
     final fullCount = allRooms.where((r) => r.isFull).length;

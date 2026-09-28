@@ -30,11 +30,11 @@ class _TenantsScreenState extends State<TenantsScreen> {
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
 
-    final totalCount = appProvider.tenants.length;
-    final paidCount = appProvider.tenants.where((t) => t.totalDue == 0).length;
-    final unpaidCount = appProvider.tenants.where((t) => t.totalDue > 0).length;
+    final totalCount = appProvider.currentTenants.length;
+    final paidCount = appProvider.currentTenants.where((t) => t.totalDue == 0).length;
+    final unpaidCount = appProvider.currentTenants.where((t) => t.totalDue > 0).length;
 
-    var filteredTenants = appProvider.tenants.where((t) {
+    var filteredTenants = appProvider.currentTenants.where((t) {
       if (_filter == 'Paid' && t.totalDue > 0) return false;
       if (_filter == 'Unpaid' && t.totalDue == 0) return false;
       if (_searchQuery.isNotEmpty) {

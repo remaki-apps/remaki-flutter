@@ -25,7 +25,7 @@ class TenantHomeScreen extends StatefulWidget {
 }
 
 class _TenantHomeScreenState extends State<TenantHomeScreen> {
-  static const double _convenienceFee = 9.0;
+  double _platformFee = 9.0;
   final String _paymentType = 'BOTH';
   late int _currentNavIndex;
 
@@ -45,6 +45,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   bool _isPersonalInfoExpanded = false;
   bool _isAddressExpanded = false;
 
+  // Change Password state
+  bool _isChangePasswordExpanded = false;
+  final TextEditingController _tenantNewPasswordController = TextEditingController();
+  final TextEditingController _tenantConfirmPasswordController = TextEditingController();
+  bool _obscureTenantNewPassword = true;
+  bool _obscureTenantConfirmPassword = true;
+  bool _isChangingPassword = false;
+  String? _changePasswordError;
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +64,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   @override
   void dispose() {
     _descriptionController.dispose();
+    _tenantNewPasswordController.dispose();
+    _tenantConfirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -89,6 +100,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   Future<void> _fetchProfile() async {
     final profile = await ApiService.fetchCurrentTenantProfile();
     if (profile != null) {
+      double dynamicPlatformFee = (profile['platformFee'] as num?)?.toDouble() ?? 9.0;
       double pendingRent = (profile['pendingRentAmount'] as num?)?.toDouble() ?? 0;
       double pendingBills = 0;
       final bills = profile['bills'] as List<dynamic>? ?? [];
@@ -99,22 +111,31 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       }
       final rejectionReason = profile['latestRejectionReason'] as String?;
       final double totalDueAmount = (pendingRent + pendingBills) > 0
-          ? (pendingRent + pendingBills + _convenienceFee)
+          ? (pendingRent + pendingBills + dynamicPlatformFee)
           : 0;
 
       bool isPendingApproval = profile['paymentStatus'] == 'PENDING' ||
           profile['hasPendingRequest'] == true ||
           profile['hasSubmittedRequest'] == true;
+      bool isPaid = profile['paymentStatus'] == 'PAID' || totalDueAmount <= 0;
 
       if (mounted) {
         setState(() {
+          _platformFee = dynamicPlatformFee;
           _pendingRent = pendingRent;
           _pendingBills = pendingBills;
           _totalDue = totalDueAmount;
           _profileData = profile;
-          _rejectionReason = (rejectionReason != null && rejectionReason.isNotEmpty) ? rejectionReason : null;
+          _rejectionReason = (rejectionReason != null &&
+                  rejectionReason.isNotEmpty &&
+                  !isPendingApproval &&
+                  !isPaid)
+              ? rejectionReason
+              : null;
           if (isPendingApproval) {
             _hasSubmittedForApproval = true;
+          } else if (isPaid) {
+            _hasSubmittedForApproval = false;
           }
         });
       }
@@ -254,6 +275,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           _selectedImageBytes = null;
           _descriptionController.clear();
           _hasSubmittedForApproval = true;
+          _rejectionReason = null;
         });
         _loadAllData();
       }
@@ -2010,7 +2032,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         const SizedBox(height: 8),
                         _buildPaymentBreakdownRow('Room & Utility Bills', '₹${_pendingBills.toStringAsFixed(0)}', icon: Icons.receipt_long_outlined),
                         const SizedBox(height: 8),
-                        _buildPaymentBreakdownRow('Platform Convenience Fee', '₹${_convenienceFee.toStringAsFixed(0)}', icon: Icons.verified_user_outlined),
+                        _buildPaymentBreakdownRow('Platform Convenience Fee', '₹${_platformFee.toStringAsFixed(0)}', icon: Icons.verified_user_outlined),
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 10),
                           child: Divider(height: 1, color: Color(0xFFE2E8F0)),
@@ -3246,6 +3268,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               _buildProfileRow('PIN Code', pinCode, icon: Icons.pin_drop_outlined),
             ],
           ),
+          const SizedBox(height: 14),
+
+          // Security & Change Password Section
+          _buildChangePasswordSectionCard(),
           const SizedBox(height: 20),
 
           // Log Out Button (Clean modern solid button)
@@ -3422,6 +3448,338 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           ],
         ),
       );
+  }
+
+  Future<void> _handleTenantChangePassword() async {
+    final newPassword = _tenantNewPasswordController.text.trim();
+    final confirmPassword = _tenantConfirmPasswordController.text.trim();
+
+    if (newPassword.isEmpty) {
+      setState(() => _changePasswordError = 'Please enter a new password');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setState(() => _changePasswordError = 'Password must be at least 6 characters');
+      return;
+    }
+    if (newPassword != confirmPassword) {
+      setState(() => _changePasswordError = 'Passwords do not match');
+      return;
+    }
+
+    setState(() {
+      _isChangingPassword = true;
+      _changePasswordError = null;
+    });
+
+    try {
+      final success = await ApiService.changePassword(newPassword);
+      if (!mounted) return;
+      if (success) {
+        _tenantNewPasswordController.clear();
+        _tenantConfirmPasswordController.clear();
+        setState(() {
+          _isChangePasswordExpanded = false;
+        });
+        FancyToast.showSuccess(
+          context,
+          'Password Changed',
+          message: 'Your password has been updated successfully.',
+        );
+      } else {
+        setState(() {
+          _changePasswordError = 'Failed to update password. Please try again.';
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _changePasswordError = e.toString().replaceFirst('Exception: ', '');
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isChangingPassword = false);
+      }
+    }
+  }
+
+  Widget _buildChangePasswordSectionCard() {
+    final isExpanded = _isChangePasswordExpanded;
+    return _buildGlassContainer(
+      borderRadius: 20,
+      customBorderColor: isExpanded ? TenantTheme.primaryBorder.withValues(alpha: 0.85) : TenantTheme.glassBorder,
+      customShadow: [
+        BoxShadow(
+          color: const Color(0x0A0F172A),
+          blurRadius: isExpanded ? 16 : 10,
+          offset: Offset(0, isExpanded ? 6 : 3),
+        ),
+        BoxShadow(
+          color: isExpanded ? TenantTheme.primary.withValues(alpha: 0.04) : const Color(0x040F172A),
+          blurRadius: 4,
+          offset: const Offset(0, 1),
+        ),
+      ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => setState(() => _isChangePasswordExpanded = !_isChangePasswordExpanded),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isExpanded ? TenantTheme.primary : TenantTheme.primarySoft,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: isExpanded
+                            ? [
+                                BoxShadow(
+                                  color: TenantTheme.primary.withValues(alpha: 0.28),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Icon(Icons.lock_reset_rounded, color: isExpanded ? Colors.white : TenantTheme.primary, size: 19),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Change Password',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w800,
+                              color: TenantTheme.textPrimary,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          if (!isExpanded) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              'Update your account password',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w500,
+                                color: TenantTheme.textSecondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: isExpanded ? TenantTheme.primarySoft : const Color(0xFFF1F5F9),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isExpanded ? TenantTheme.primaryBorder.withValues(alpha: 0.6) : const Color(0xFFE2E8F0),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: AnimatedRotation(
+                        turns: isExpanded ? 0.5 : 0.0,
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeInOutCubic,
+                        child: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: isExpanded ? TenantTheme.primary : const Color(0xFF64748B),
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 1,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    color: const Color(0xFFF1F5F9),
+                  ),
+                  Text(
+                    'Set a new password for logging into your Remaki account.',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: TenantTheme.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  // New Password Input
+                  TextFormField(
+                    controller: _tenantNewPasswordController,
+                    obscureText: _obscureTenantNewPassword,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: TenantTheme.textPrimary,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Enter new password',
+                      hintStyle: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        color: TenantTheme.textMuted,
+                      ),
+                      prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20, color: Color(0xFF64748B)),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureTenantNewPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          size: 20,
+                          color: const Color(0xFF64748B),
+                        ),
+                        onPressed: () => setState(() => _obscureTenantNewPassword = !_obscureTenantNewPassword),
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: TenantTheme.primary, width: 1.5),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Confirm Password Input
+                  TextFormField(
+                    controller: _tenantConfirmPasswordController,
+                    obscureText: _obscureTenantConfirmPassword,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: TenantTheme.textPrimary,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Confirm new password',
+                      hintStyle: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        color: TenantTheme.textMuted,
+                      ),
+                      prefixIcon: const Icon(Icons.lock_clock_outlined, size: 20, color: Color(0xFF64748B)),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureTenantConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          size: 20,
+                          color: const Color(0xFF64748B),
+                        ),
+                        onPressed: () => setState(() => _obscureTenantConfirmPassword = !_obscureTenantConfirmPassword),
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: TenantTheme.primary, width: 1.5),
+                      ),
+                    ),
+                  ),
+                  if (_changePasswordError != null) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFFECACA)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline_rounded, color: Color(0xFFDC2626), size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _changePasswordError!,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                color: const Color(0xFFDC2626),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: ElevatedButton(
+                      onPressed: _isChangingPassword ? null : _handleTenantChangePassword,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: TenantTheme.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: _isChangingPassword
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              'Update Password',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            crossFadeState: isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 240),
+            firstCurve: Curves.easeIn,
+            secondCurve: Curves.easeOut,
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildProfileRow(String label, String value, {IconData? icon}) {

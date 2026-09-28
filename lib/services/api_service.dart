@@ -83,11 +83,6 @@ class ApiService {
         }),
       ).timeout(const Duration(seconds: 30));
 
-      Map<String, dynamic>? data;
-      try {
-        data = jsonDecode(response.body);
-      } catch (_) {}
-
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         if (data.containsKey('errors') && data['errors'] != null) {
@@ -167,6 +162,7 @@ class ApiService {
             createdAt
           }
           pendingConvenienceFee
+          platformFee
           occupation
           dateOfBirth
           maritalStatus
@@ -236,6 +232,7 @@ class ApiService {
             createdAt
           }
           pendingConvenienceFee
+          platformFee
         }
       }
     ''';
@@ -285,6 +282,17 @@ class ApiService {
           adminName
           pgName
           pgAddress
+          platformFee
+          properties {
+            id
+            name
+            address
+            city
+            state
+            pincode
+            description
+            totalFloors
+          }
         }
       }
     ''';
@@ -362,6 +370,26 @@ class ApiService {
     });
   }
 
+  static Future<bool> deleteAnnouncement(String id) async {
+    const mutation = '''
+      mutation DeleteAnnouncement(\$id: ID!) {
+        deleteAnnouncement(id: \$id)
+      }
+    ''';
+    final result = await performQuery(mutation, variables: {'id': id});
+    return result['deleteAnnouncement'] == true;
+  }
+
+  static Future<bool> vacateTenant(String tenantId) async {
+    const mutation = '''
+      mutation VacateTenant(\$tenantId: ID!) {
+        vacateTenant(tenantId: \$tenantId)
+      }
+    ''';
+    final result = await performQuery(mutation, variables: {'tenantId': tenantId});
+    return result['vacateTenant'] == true;
+  }
+
   static Future<List<dynamic>> fetchPayments({String? tenantId}) async {
     try {
       String query;
@@ -403,6 +431,7 @@ class ApiService {
       query {
         rooms {
           id
+          propertyId
           roomNumber
           floorNumber
           capacity
@@ -598,5 +627,29 @@ class ApiService {
         'rejectionReason': rejectionReason,
       }
     });
+  }
+
+  static Future<bool> changePassword(String newPassword) async {
+    const String mutation = '''
+      mutation ChangePassword(\$newPassword: String!) {
+        changePassword(newPassword: \$newPassword)
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'newPassword': newPassword});
+    return data['changePassword'] == true;
+  }
+
+  static Future<String> resetPassword(String phoneNumber, {String? newPassword}) async {
+    const String mutation = '''
+      mutation AdminForgotPassword(\$input: AdminForgotPasswordInput!) {
+        adminForgotPassword(input: \$input)
+      }
+    ''';
+    final Map<String, dynamic> input = {'phoneNumber': phoneNumber};
+    if (newPassword != null && newPassword.isNotEmpty) {
+      input['newPassword'] = newPassword;
+    }
+    final data = await performQuery(mutation, variables: {'input': input});
+    return data['adminForgotPassword']?.toString() ?? '';
   }
 }
