@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../providers/app_provider.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
+import '../services/api_service.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/tenant_avatar.dart';
 import '../widgets/custom_date_picker.dart';
@@ -550,7 +551,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                     } catch (e) {
                                       if (mounted) setState(() => _isLoading = false);
                                       if (context.mounted) {
-                                        FancyToast.showError(context, 'Payment Failed', message: e.toString());
+                                        FancyToast.showError(context, 'Payment Failed', message: ApiService.cleanErrorMessage(e));
                                       }
                                     }
                                   },

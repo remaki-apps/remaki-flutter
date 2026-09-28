@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sunshine_pg_app/models/models.dart';
 import 'package:sunshine_pg_app/providers/app_provider.dart';
+import 'package:sunshine_pg_app/services/api_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -277,6 +278,78 @@ void main() {
       // Switch back to prop-1, no unpaid tenants
       provider.selectProperty('prop-1');
       expect(provider.unpaidRentTenants.length, 0);
+    });
+  });
+
+  group('Backend Error Handling & Normalization Tests', () {
+    test('Strips Exception and ApiException prefixes cleanly', () {
+      expect(
+        ApiService.cleanErrorMessage('Exception: Invalid phone or password'),
+        'Invalid phone or password',
+      );
+      expect(
+        ApiService.cleanErrorMessage('ApiException: Room 101 already exists'),
+        'Room 101 already exists',
+      );
+      expect(
+        ApiService.cleanErrorMessage('Error: Bed is already occupied'),
+        'Bed is already occupied',
+      );
+      expect(
+        ApiService.cleanErrorMessage('GraphQL Errors: Invalid credentials'),
+        'Invalid credentials',
+      );
+    });
+
+    test('Normalizes Socket and Client exceptions into user-friendly message', () {
+      expect(
+        ApiService.cleanErrorMessage('SocketException: OS Error: Connection refused, errno = 111'),
+        'Unable to connect to server. Please check your internet connection.',
+      );
+      expect(
+        ApiService.cleanErrorMessage('ClientException with SocketException: Failed host lookup: remaki-backend.onrender.com'),
+        'Unable to connect to server. Please check your internet connection.',
+      );
+      expect(
+        ApiService.cleanErrorMessage('XMLHttpRequest error.'),
+        'Unable to connect to server. Please check your internet connection.',
+      );
+    });
+
+    test('Normalizes TimeoutException into user-friendly message', () {
+      expect(
+        ApiService.cleanErrorMessage('TimeoutException after 0:00:30.000000: Future not completed'),
+        'Request timed out. The server took too long to respond. Please try again.',
+      );
+    });
+
+    test('Normalizes Session and JWT expiry into user-friendly message', () {
+      expect(
+        ApiService.cleanErrorMessage('jwt expired'),
+        'Your session has expired. Please log in again.',
+      );
+      expect(
+        ApiService.cleanErrorMessage('ApiException: Token expired. Please log in.'),
+        'Your session has expired. Please log in again.',
+      );
+    });
+
+    test('Extracts message from raw GraphQL error array format', () {
+      expect(
+        ApiService.cleanErrorMessage('[{message: Bed is already allocated to another tenant, locations: []}]'),
+        'Bed is already allocated to another tenant',
+      );
+    });
+
+    test('Preserves human-readable business logic messages untouched', () {
+      expect(
+        ApiService.cleanErrorMessage('Cannot allocate tenant: Bed is full'),
+        'Cannot allocate tenant: Bed is full',
+      );
+      expect(
+        ApiService.cleanErrorMessage('Phone number is already registered to an existing tenant.'),
+        'Phone number is already registered to an existing tenant.',
+      );
     });
   });
 }

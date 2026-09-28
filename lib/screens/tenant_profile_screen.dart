@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tenant_avatar.dart';
+import '../services/api_service.dart';
 import '../widgets/fancy_toast.dart';
 import 'edit_financials_dialog.dart';
 import 'edit_personal_info_dialog.dart';
@@ -916,7 +917,7 @@ class TenantProfileScreen extends StatelessWidget {
                             FancyToast.showError(
                               context,
                               'Vacate Failed',
-                              message: e.toString().replaceAll('Exception: ', ''),
+                              message: ApiService.cleanErrorMessage(e),
                             );
                           }
                         }

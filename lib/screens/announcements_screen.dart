@@ -40,12 +40,19 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
 
   Future<void> _fetchAnnouncements() async {
     setState(() => _isLoading = true);
-    final data = await ApiService.fetchAnnouncements(true);
-    if (mounted) {
-      setState(() {
-        _announcements = data;
-        _isLoading = false;
-      });
+    try {
+      final data = await ApiService.fetchAnnouncements(true);
+      if (mounted) {
+        setState(() {
+          _announcements = data;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        FancyToast.showError(context, 'Failed to load announcements', message: ApiService.cleanErrorMessage(e));
+      }
     }
   }
 
@@ -92,7 +99,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         _fetchAnnouncements();
       }
     } catch (e) {
-      if (mounted) FancyToast.showError(context, 'Broadcast Failed', message: e.toString());
+      if (mounted) FancyToast.showError(context, 'Broadcast Failed', message: ApiService.cleanErrorMessage(e));
     } finally {
       if (mounted) {
         setState(() => _isSending = false);
@@ -168,7 +175,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         }
       } catch (e) {
         if (mounted) {
-          FancyToast.showError(context, 'Delete Failed', message: e.toString());
+          FancyToast.showError(context, 'Delete Failed', message: ApiService.cleanErrorMessage(e));
         }
       }
     }

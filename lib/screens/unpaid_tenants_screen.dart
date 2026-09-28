@@ -7,6 +7,7 @@ import '../providers/app_provider.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tenant_avatar.dart';
+import '../widgets/fancy_toast.dart';
 import '../widgets/app_shimmer.dart';
 
 class UnpaidTenantsScreen extends StatelessWidget {
@@ -33,15 +34,19 @@ class UnpaidTenantsScreen extends StatelessWidget {
         await launchUrl(url, mode: LaunchMode.externalApplication);
       } else {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not launch WhatsApp')),
+          FancyToast.showError(
+            context,
+            'WhatsApp Unavailable',
+            message: 'Could not open WhatsApp. Please check if WhatsApp is installed.',
           );
         }
       }
-    } catch (e) {
+    } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error launching WhatsApp: $e')),
+        FancyToast.showError(
+          context,
+          'WhatsApp Error',
+          message: 'Unable to open WhatsApp on this device.',
         );
       }
     }

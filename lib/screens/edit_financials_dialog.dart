@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
+import '../services/api_service.dart';
 import '../widgets/fancy_toast.dart';
 
 class EditFinancialsDialog extends StatefulWidget {
@@ -83,7 +84,7 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
       }
     } catch (e) {
       if (mounted) {
-        FancyToast.showError(context, 'Update Failed', message: e.toString());
+        FancyToast.showError(context, 'Update Failed', message: ApiService.cleanErrorMessage(e));
       }
     } finally {
       if (mounted) {

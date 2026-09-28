@@ -64,6 +64,68 @@ class ApiService {
     }
   }
 
+  /// Cleans technical exception strings and GraphQL error prefixes into clean, user-friendly messages.
+  static String cleanErrorMessage(dynamic error) {
+    if (error == null) return 'An unexpected error occurred.';
+    String message = error.toString().trim();
+
+    // Strip common exception prefixes repeatedly
+    bool cleaned = true;
+    while (cleaned) {
+      cleaned = false;
+      for (final prefix in [
+        'ApiException: ',
+        'ApiException:',
+        'Exception: ',
+        'Exception:',
+        'Error: ',
+        'Error:',
+        'GraphQL Errors: ',
+        'GraphQL error: ',
+        'GraphQL Error: ',
+        'ApolloError: ',
+        'HttpException: ',
+        'ClientException: ',
+      ]) {
+        if (message.startsWith(prefix)) {
+          message = message.substring(prefix.length).trim();
+          cleaned = true;
+        }
+      }
+    }
+
+    final lower = message.toLowerCase();
+    if (lower.contains('socketexception') ||
+        lower.contains('clientexception') ||
+        lower.contains('failed host lookup') ||
+        lower.contains('connection refused') ||
+        lower.contains('connection reset') ||
+        lower.contains('network is unreachable') ||
+        lower.contains('xmlhttprequest error') ||
+        lower.contains('handshakeexception')) {
+      return 'Unable to connect to server. Please check your internet connection.';
+    }
+    if (lower.contains('timeoutexception') || lower.contains('request timed out') || lower.contains('connection timeout')) {
+      return 'Request timed out. The server took too long to respond. Please try again.';
+    }
+    if (lower.contains('jwt expired') || lower.contains('token expired') || lower.contains('session expired')) {
+      return 'Your session has expired. Please log in again.';
+    }
+    if (lower.contains('unauthorized') || lower.contains('unauthenticated')) {
+      return 'Authentication failed. Please verify your credentials or log in again.';
+    }
+
+    // If message is in raw GraphQL error array format: [{message: Bed is occupied}]
+    if (message.startsWith('[') && message.endsWith(']')) {
+      final match = RegExp(r'message:\s*([^,}]+)').firstMatch(message);
+      if (match != null && match.group(1) != null) {
+        return match.group(1)!.trim();
+      }
+    }
+
+    return message.isNotEmpty ? message : 'An unexpected error occurred.';
+  }
+
   static Future<Map<String, dynamic>> performQuery(String query, {Map<String, dynamic>? variables}) async {
     try {
       final headers = <String, String>{
@@ -83,44 +145,93 @@ class ApiService {
         }),
       ).timeout(const Duration(seconds: 30));
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body);
-        if (data.containsKey('errors') && data['errors'] != null) {
-          final errorsList = data['errors'];
-          if (errorsList is List && errorsList.isNotEmpty) {
-            debugPrint('GraphQL Errors: $errorsList');
-            final firstErr = errorsList[0];
-            final msg = (firstErr is Map && firstErr['message'] != null)
-                ? firstErr['message'].toString()
-                : 'An unknown backend error occurred.';
-            final lower = msg.toLowerCase();
-            if (lower.contains('unauthorized') || lower.contains('unauthenticated') || lower.contains('jwt expired')) {
-              await clearAuthToken();
-            }
-            throw ApiException(msg);
+      Map<String, dynamic>? responseJson;
+      try {
+        if (response.body.isNotEmpty) {
+          final decoded = jsonDecode(response.body);
+          if (decoded is Map<String, dynamic>) {
+            responseJson = decoded;
           }
         }
-        final rootData = data['data'];
-        if (rootData is Map<String, dynamic>) {
-          return rootData;
+      } catch (_) {
+        // Body is not valid JSON
+      }
+
+      // 1. Inspect response body for GraphQL errors array (can be present on HTTP 200, 400, or 500)
+      if (responseJson != null && responseJson.containsKey('errors') && responseJson['errors'] != null) {
+        final errorsList = responseJson['errors'];
+        if (errorsList is List && errorsList.isNotEmpty) {
+          debugPrint('GraphQL Errors: $errorsList');
+          final firstErr = errorsList[0];
+          String msg = 'An unknown backend error occurred.';
+          if (firstErr is Map && firstErr['message'] != null) {
+            msg = firstErr['message'].toString();
+          } else if (firstErr is String) {
+            msg = firstErr;
+          }
+
+          final lower = msg.toLowerCase();
+          if (lower.contains('unauthorized') || lower.contains('unauthenticated') || lower.contains('jwt expired')) {
+            await clearAuthToken();
+          }
+          throw ApiException(cleanErrorMessage(msg));
+        }
+      }
+
+      // 2. Inspect response body for NestJS / Express HTTP exception payload: {statusCode, message, error}
+      if (response.statusCode != 200 && responseJson != null) {
+        String? extractedMsg;
+        if (responseJson['message'] != null) {
+          if (responseJson['message'] is List) {
+            extractedMsg = (responseJson['message'] as List).map((e) => e.toString()).join('\n');
+          } else {
+            extractedMsg = responseJson['message'].toString();
+          }
+        } else if (responseJson['error'] != null) {
+          extractedMsg = responseJson['error'].toString();
+        }
+
+        if (extractedMsg != null && extractedMsg.trim().isNotEmpty) {
+          final lower = extractedMsg.toLowerCase();
+          if (lower.contains('unauthorized') || lower.contains('unauthenticated') || lower.contains('jwt expired')) {
+            await clearAuthToken();
+          }
+          throw ApiException(cleanErrorMessage(extractedMsg));
+        }
+      }
+
+      // 3. Status code routing
+      if (response.statusCode == 200) {
+        if (responseJson != null) {
+          final rootData = responseJson['data'];
+          if (rootData is Map<String, dynamic>) {
+            return rootData;
+          }
+          return responseJson;
         }
         return <String, dynamic>{};
       } else if (response.statusCode == 401) {
         await clearAuthToken();
-        throw ApiException('Session expired. Please log in again.');
+        throw ApiException('Your session has expired. Please log in again.');
+      } else if (response.statusCode == 403) {
+        throw ApiException('You do not have permission to perform this action.');
+      } else if (response.statusCode == 404) {
+        throw ApiException('The requested resource was not found.');
+      } else if (response.statusCode >= 500) {
+        throw ApiException('Server error (${response.statusCode}). Please try again shortly.');
       } else {
-        throw ApiException('Failed to load data: ${response.statusCode}. Please try again later.');
+        throw ApiException('Request failed with status ${response.statusCode}. Please try again.');
       }
     } on SocketException catch (_) {
-      throw ApiException('No internet connection. Please check your network and try again.');
+      throw ApiException('Unable to connect to server. Please check your internet connection.');
     } on http.ClientException catch (_) {
-      throw ApiException('Unable to connect to server. Please check your network connection.');
+      throw ApiException('Unable to connect to server. Please check your internet connection.');
     } on TimeoutException catch (_) {
       throw ApiException('Request timed out. The server took too long to respond. Please try again.');
     } catch (e) {
       debugPrint('ApiService Error: $e');
       if (e is ApiException) rethrow;
-      throw ApiException('An unexpected error occurred: $e');
+      throw ApiException(cleanErrorMessage(e));
     }
   }
 

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/app_provider.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
+import '../services/api_service.dart';
 import '../widgets/custom_expandable_dropdown.dart';
 import '../widgets/fancy_toast.dart';
 
@@ -19,6 +20,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
   final _roomNumberController = TextEditingController();
   String? _selectedFloor;
   String? _floorError;
+  String? _errorMessage;
   bool _isLoading = false;
   int _capacity = 2;
   final List<TextEditingController> _bedNameControllers = [];
@@ -115,6 +117,39 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
+
+                if (_errorMessage != null && _errorMessage!.isNotEmpty) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF2F2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFFCA5A5)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.error_outline_rounded, color: Color(0xFFEF4444), size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            _errorMessage!,
+                            style: const TextStyle(
+                              color: Color(0xFFB91C1C),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => setState(() => _errorMessage = null),
+                          child: const Icon(Icons.close_rounded, color: Color(0xFF991B1B), size: 18),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
 
                 // Card 1: Floor
                 CustomExpandableDropdown<String>(
@@ -513,11 +548,15 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
         );
       } catch (e) {
         if (!mounted) return;
-        setState(() => _isLoading = false);
+        final cleanMsg = ApiService.cleanErrorMessage(e);
+        setState(() {
+          _isLoading = false;
+          _errorMessage = cleanMsg;
+        });
         FancyToast.showError(
           context,
           'Failed to Add Room',
-          message: e.toString().replaceAll('Exception: ', ''),
+          message: cleanMsg,
         );
       }
     }

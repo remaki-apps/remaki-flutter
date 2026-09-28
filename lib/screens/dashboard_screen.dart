@@ -9,6 +9,7 @@ import '../theme/app_theme.dart';
 import '../models/models.dart';
 import '../widgets/tenant_avatar.dart';
 import '../widgets/app_shimmer.dart';
+import '../widgets/fancy_toast.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -54,6 +55,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appProvider.loadFromAPI(),
       _loadPendingApprovals(),
     ]);
+    if (mounted && appProvider.lastSyncError != null) {
+      FancyToast.showError(
+        context,
+        'Sync Failed',
+        message: appProvider.lastSyncError!,
+      );
+    }
   }
 
   String _getGreeting() {

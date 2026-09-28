@@ -121,7 +121,7 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
         FancyToast.showSuccess(context, 'KYC details updated successfully!');
       }
     } catch (e) {
-      if (mounted) FancyToast.showError(context, 'Error', message: e.toString());
+      if (mounted) FancyToast.showError(context, 'Update Failed', message: ApiService.cleanErrorMessage(e));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

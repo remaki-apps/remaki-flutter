@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/api_service.dart';
+import '../widgets/fancy_toast.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -90,10 +91,12 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final cleanMsg = ApiService.cleanErrorMessage(e);
         setState(() {
           _isLoading = false;
-          _errorMessage = "Login failed: ${e.toString().replaceAll('Exception:', '').trim()}";
+          _errorMessage = cleanMsg;
         });
+        FancyToast.showError(context, 'Login Failed', message: cleanMsg);
       }
     }
   }

@@ -17,6 +17,7 @@ class AppProvider with ChangeNotifier {
   String? selectedPropertyId;
   double platformFee = 9.0;
   bool isLoading = true;
+  String? lastSyncError;
 
   static const String _roomsKey = 'sunshine_pg_rooms';
   static const String _tenantsKey = 'sunshine_pg_tenants';
@@ -52,6 +53,7 @@ class AppProvider with ChangeNotifier {
       isLoading = true;
       notifyListeners();
     }
+    lastSyncError = null;
     try {
       final tenantsData = await ApiService.fetchTenants();
       final roomsData = await ApiService.fetchRooms();
@@ -220,8 +222,10 @@ class AppProvider with ChangeNotifier {
       }
 
       await saveToStorage();
+      lastSyncError = null;
     } catch (e) {
       debugPrint('Error loading from API: $e');
+      lastSyncError = ApiService.cleanErrorMessage(e);
       await loadFromStorage();
     } finally {
       isLoading = false;

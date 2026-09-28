@@ -283,7 +283,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       }
     } catch (e) {
       if (mounted) {
-        FancyToast.showError(context, 'Submission Failed', message: e.toString());
+        FancyToast.showError(context, 'Submission Failed', message: ApiService.cleanErrorMessage(e));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -3495,9 +3495,11 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final cleanMsg = ApiService.cleanErrorMessage(e);
         setState(() {
-          _changePasswordError = e.toString().replaceFirst('Exception: ', '');
+          _changePasswordError = cleanMsg;
         });
+        FancyToast.showError(context, 'Password Change Failed', message: cleanMsg);
       }
     } finally {
       if (mounted) {

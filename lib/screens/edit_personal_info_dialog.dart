@@ -117,7 +117,7 @@ class _EditPersonalInfoDialogState extends State<EditPersonalInfoDialog> {
       }
     } catch (e) {
       if (mounted) {
-        FancyToast.showError(context, 'Update Failed', message: e.toString());
+        FancyToast.showError(context, 'Update Failed', message: ApiService.cleanErrorMessage(e));
       }
     } finally {
       if (mounted) {

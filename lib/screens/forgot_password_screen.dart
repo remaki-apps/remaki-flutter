@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
 import '../services/api_service.dart';
+import '../widgets/fancy_toast.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -106,9 +107,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final cleanMsg = ApiService.cleanErrorMessage(e);
         setState(() {
-          _errorMessage = "Reset failed: ${e.toString().replaceAll('Exception:', '').trim()}";
+          _errorMessage = cleanMsg;
         });
+        FancyToast.showError(context, 'Reset Failed', message: cleanMsg);
       }
     } finally {
       if (mounted) {

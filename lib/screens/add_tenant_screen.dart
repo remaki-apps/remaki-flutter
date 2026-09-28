@@ -196,7 +196,44 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
                       BoxShadow(color: Color(0x06000000), blurRadius: 12, offset: Offset(0, 2)),
                     ],
                   ),
-                  child: _buildCurrentStepContent(appProvider),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_inlineError != null && _inlineError!.isNotEmpty) ...[
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF2F2),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFFCA5A5)),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.error_outline_rounded, color: Color(0xFFEF4444), size: 20),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  _inlineError!,
+                                  style: const TextStyle(
+                                    color: Color(0xFFB91C1C),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => setState(() => _inlineError = null),
+                                child: const Icon(Icons.close_rounded, color: Color(0xFF991B1B), size: 18),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      _buildCurrentStepContent(appProvider),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -682,11 +719,11 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
     } catch (e) {
       if (!mounted) return;
       
-      final errorMsg = e.toString().replaceAll('Exception: ', '');
+      final errorMsg = ApiService.cleanErrorMessage(e);
       
       setState(() {
         _isLoading = false;
-        if (errorMsg.toLowerCase().contains('phone number')) {
+        if (errorMsg.toLowerCase().contains('phone') || errorMsg.toLowerCase().contains('already exists')) {
           _currentStep = 0; // Go back to Personal Details step
         }
         _inlineError = errorMsg;

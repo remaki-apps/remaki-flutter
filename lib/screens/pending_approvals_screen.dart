@@ -36,7 +36,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
       if (!mounted) return;
       setState(() => _requests = reqs);
     } catch (e) {
-      if (mounted) FancyToast.showError(context, 'Error', message: e.toString());
+      if (mounted) FancyToast.showError(context, 'Failed to Load Requests', message: ApiService.cleanErrorMessage(e));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -51,7 +51,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
       FancyToast.showSuccess(context, 'Payment Accepted');
       _loadRequests();
     } catch (e) {
-      if (mounted) FancyToast.showError(context, 'Error', message: e.toString());
+      if (mounted) FancyToast.showError(context, 'Approval Failed', message: ApiService.cleanErrorMessage(e));
     }
   }
 
@@ -255,7 +255,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
         FancyToast.showSuccess(context, 'Payment Declined');
         _loadRequests();
       } catch (e) {
-        if (mounted) FancyToast.showError(context, 'Error', message: e.toString());
+        if (mounted) FancyToast.showError(context, 'Decline Failed', message: ApiService.cleanErrorMessage(e));
       }
     }
   }
