@@ -360,7 +360,7 @@ class Tenant {
         additionalCharges: (json['additionalCharges'] as List<dynamic>?)?.map((e) => AdditionalCharge.fromJson(e as Map<String, dynamic>)).toList() ?? [],
         imageUrl: json['imageUrl'] as String?,
         credentialsSent: json['credentialsSent'] as bool? ?? false,
-        password: json['password'] as String? ?? generateEasyPassword(),
+        password: (json['tempPassword'] ?? json['password']) as String? ?? generateEasyPassword(),
         defaultPaymentMode: json['defaultPaymentMode'] as String?,
         occupation: json['occupation'] as String?,
         dateOfBirth: json['dateOfBirth'] as String?,

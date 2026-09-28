@@ -304,6 +304,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             TextField(
                               controller: _phoneController,
                               keyboardType: TextInputType.phone,
+                              autocorrect: false,
+                              enableSuggestions: false,
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,
@@ -364,6 +366,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             TextField(
                               controller: _passwordController,
                               obscureText: _obscurePassword,
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              textCapitalization: TextCapitalization.none,
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,

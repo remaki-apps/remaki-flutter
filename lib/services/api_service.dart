@@ -136,6 +136,7 @@ class ApiService {
           email
           imageUrl
           emergencyContact
+          tempPassword
           room {
             id
             roomNumber

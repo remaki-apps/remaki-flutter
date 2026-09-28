@@ -58,8 +58,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       _errorMessage = '';
     });
 
+    String cleanPhone = phone.replaceAll(RegExp(r'\s+'), '').replaceAll('-', '');
+    if (cleanPhone.startsWith('+91')) {
+      cleanPhone = cleanPhone.substring(3);
+    } else if (cleanPhone.startsWith('91') && cleanPhone.length == 12) {
+      cleanPhone = cleanPhone.substring(2);
+    } else if (cleanPhone.startsWith('0') && cleanPhone.length == 11) {
+      cleanPhone = cleanPhone.substring(1);
+    }
+
     try {
-      await ApiService.resetPassword(phone, newPassword: newPassword);
+      await ApiService.resetPassword(cleanPhone, newPassword: newPassword);
 
       if (mounted) {
         showDialog(
