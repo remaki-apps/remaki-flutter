@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
@@ -38,109 +39,197 @@ class TenantAvatar extends StatelessWidget {
   void _showImagePreview(BuildContext context, String initial) {
     showDialog(
       context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              constraints: const BoxConstraints(maxWidth: 360),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: const [
-                  BoxShadow(color: Colors.black26, blurRadius: 24, offset: Offset(0, 8))
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Stack(
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      height: 340,
-                      color: const Color(0xFFF1F5F9),
-                      child: InteractiveViewer(
-                        minScale: 0.8,
-                        maxScale: 4.0,
-                        child: _buildLargeImage(context, initial),
-                      ),
-                    ),
-                    Positioned(
-                      top: 12,
-                      right: 12,
-                      child: GestureDetector(
-                        onTap: () => Navigator.of(ctx).pop(),
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: const BoxDecoration(
-                            color: Colors.black54,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.close, color: Colors.white, size: 18),
-                        ),
-                      ),
-                    ),
-                  ],
+      barrierColor: Colors.transparent,
+      builder: (ctx) => Stack(
+        children: [
+          // Immersive Dark Frosted Glass Backdrop (tappable to dismiss)
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () => Navigator.of(ctx).pop(),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.86),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+          Center(
+            child: Dialog(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Top Row: User Name & Glassmorphic Close Button
+                  Container(
+                    constraints: const BoxConstraints(maxWidth: 300),
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                name,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.3,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Profile Photo',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.65),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        GestureDetector(
+                          onTap: () => Navigator.of(ctx).pop(),
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                            ),
+                            child: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Floating Avatar Hero Presentation (modern rounded squircle, no ugly white box)
+                  Container(
+                    constraints: const BoxConstraints(maxWidth: 300, maxHeight: 300),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.20), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.65),
+                          blurRadius: 36,
+                          offset: const Offset(0, 16),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(26),
+                      child: Container(
+                        width: 300,
+                        height: 300,
+                        color: const Color(0xFF0F172A),
+                        child: InteractiveViewer(
+                          minScale: 0.8,
+                          maxScale: 3.5,
+                          child: _buildLargeImage(context, initial),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Subtle Pinch-to-Zoom Hint
+                  Container(
+                    margin: const EdgeInsets.only(top: 14),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.pinch_outlined, color: Colors.white70, size: 14),
+                        SizedBox(width: 6),
+                        Text(
+                          'Pinch or drag to inspect photo',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildLargeImage(BuildContext context, String initial) {
-    if (!_hasImage) return _buildInitialWidget(initial, 40);
+    if (!_hasImage) return _buildInitialLarge(initial);
 
     if (_isBase64) {
       final bytes = _base64Bytes;
-      if (bytes == null) return _buildInitialWidget(initial, 40);
+      if (bytes == null) return _buildInitialLarge(initial);
       return Image.memory(
         bytes,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _buildInitialWidget(initial, 40),
+        filterQuality: FilterQuality.high,
+        errorBuilder: (_, __, ___) => _buildInitialLarge(initial),
       );
     }
 
     return Image.network(
       imageUrl!,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => _buildInitialWidget(initial, 40),
+      filterQuality: FilterQuality.high,
+      errorBuilder: (_, __, ___) => _buildInitialLarge(initial),
     );
   }
 
-  Widget _buildInitialWidget(String initial, double size) {
-    final bg = backgroundColor ?? AppTheme.primaryColor.withValues(alpha: 0.1);
-    final fg = textColor ?? AppTheme.primaryColor;
+  Widget _buildInitialLarge(String initial) {
     return Container(
-      color: bg,
+      color: const Color(0xFF1E293B),
       alignment: Alignment.center,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CircleAvatar(
-            radius: size,
-            backgroundColor: bg,
+            radius: 56,
+            backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.25),
             child: Text(
               initial,
-              style: TextStyle(
-                fontSize: size * 0.9,
+              style: const TextStyle(
+                fontSize: 48,
                 fontWeight: FontWeight.bold,
-                color: fg,
+                color: Colors.white,
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            name,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: AppTheme.textPrimary,
+          const SizedBox(height: 14),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              name,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.white,
+              ),
             ),
           ),
         ],
@@ -181,6 +270,7 @@ class TenantAvatar extends StatelessWidget {
                   width: radius * 2,
                   height: radius * 2,
                   fit: BoxFit.cover,
+                  filterQuality: FilterQuality.high,
                   errorBuilder: (_, __, ___) => Text(
                     initial,
                     style: TextStyle(

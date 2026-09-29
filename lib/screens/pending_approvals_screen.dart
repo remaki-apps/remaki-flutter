@@ -266,12 +266,15 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
       barrierColor: Colors.transparent,
       builder: (ctx) => Stack(
         children: [
-          // Frosted White Blurred Backdrop
+          // Immersive Dark Frosted Glass Backdrop (Tap outside to dismiss)
           Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-              child: Container(
-                color: Colors.white.withValues(alpha: 0.75),
+            child: GestureDetector(
+              onTap: () => Navigator.of(ctx).pop(),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.86),
+                ),
               ),
             ),
           ),
@@ -279,58 +282,117 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
             child: Dialog(
               backgroundColor: Colors.transparent,
               elevation: 0,
-              insetPadding: const EdgeInsets.all(16),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Top Glassmorphic Navigation & Badge Header
                   Container(
-                    constraints: const BoxConstraints(maxWidth: 420, maxHeight: 540),
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.receipt_long_rounded, color: Colors.white, size: 16),
+                              SizedBox(width: 6),
+                              Text(
+                                'Payment Receipt',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => Navigator.of(ctx).pop(),
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                            ),
+                            child: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // High-Contrast Image Viewport (Slate-900 background makes white receipts crisp)
+                  Container(
+                    constraints: const BoxConstraints(maxWidth: 420, maxHeight: 520),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: const Color(0xFF0B1120),
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-                      boxShadow: const [
-                        BoxShadow(color: Color(0x1F000000), blurRadius: 28, offset: Offset(0, 10)),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.16), width: 1.2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.65),
+                          blurRadius: 36,
+                          offset: const Offset(0, 16),
+                        ),
                       ],
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(24),
-                      child: Stack(
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            height: 480,
-                            color: Colors.white,
-                            child: InteractiveViewer(
-                              minScale: 0.8,
-                              maxScale: 4.0,
-                              child: Image.memory(
-                                imageBytes,
-                                fit: BoxFit.contain,
-                                width: double.infinity,
-                                height: double.infinity,
-                              ),
+                      child: Container(
+                        width: double.infinity,
+                        height: 480,
+                        color: const Color(0xFF0B1120),
+                        child: InteractiveViewer(
+                          minScale: 0.8,
+                          maxScale: 4.0,
+                          child: Center(
+                            child: Image.memory(
+                              imageBytes,
+                              fit: BoxFit.contain,
+                              filterQuality: FilterQuality.high,
                             ),
                           ),
-                          Positioned(
-                            top: 14,
-                            right: 14,
-                            child: GestureDetector(
-                              onTap: () => Navigator.of(ctx).pop(),
-                              child: Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF1F5F9),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: const Color(0xFFCBD5E1)),
-                                ),
-                                child: const Icon(Icons.close_rounded, color: Color(0xFF475569), size: 20),
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
+                    ),
+                  ),
+
+                  // Subtle Pinch-to-Zoom Helper Hint
+                  Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.pinch_outlined, color: Colors.white70, size: 14),
+                        SizedBox(width: 6),
+                        Text(
+                          'Pinch or drag to inspect text details',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

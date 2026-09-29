@@ -237,8 +237,38 @@ class UnpaidTenantsScreen extends StatelessWidget {
                                         ),
                                       ),
                                     ],
+                                    if (tenant.totalPendingBills > 0 && tenant.pendingRentAmount == 0) ...[
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFEFF6FF),
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(color: const Color(0xFFDBEAFE)),
+                                        ),
+                                        child: const Text(
+                                          'Bills Only',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF2563EB),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
+                                if (tenant.totalPendingBills > 0 && tenant.pendingRentAmount > 0) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Rent: ₹${tenant.pendingRentAmount.toStringAsFixed(0)} • Bills: ₹${tenant.totalPendingBills.toStringAsFixed(0)}',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Color(0xFF64748B),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ),

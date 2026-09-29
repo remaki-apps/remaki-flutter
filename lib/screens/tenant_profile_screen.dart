@@ -587,7 +587,7 @@ class TenantProfileScreen extends StatelessWidget {
                           _buildModernDetailItem(Icons.payments_outlined, 'Monthly Rent', '₹${tenant.rentAmount.toStringAsFixed(0)}'),
                           if (!tenant.isPaid && tenant.pendingRentAmount > 0 && tenant.pendingRentAmount < tenant.rentAmount)
                             _buildModernDetailItem(Icons.account_balance_wallet_outlined, 'Rent Balance Due', '₹${tenant.pendingRentAmount.toStringAsFixed(0)}', isHighlight: true),
-                          ...tenant.additionalCharges.where((c) => c.billType != 'RENT').map(
+                          ...tenant.additionalCharges.where((c) => c.billType != 'RENT' && (c.status == 'PENDING' || c.status == 'UNPAID')).map(
                             (c) {
                               final dueDateStr = c.billDueDate != null
                                   ? ' (due ${DateFormat('dd/MM').format(c.billDueDate!)})'  
@@ -599,9 +599,9 @@ class TenantProfileScreen extends StatelessWidget {
                               );
                             },
                           ),
-                          if (tenant.additionalCharges.where((c) => c.billType != 'RENT').isNotEmpty)
+                          if (tenant.totalPendingBills > 0 || !tenant.isPaid)
                             _buildModernDetailItem(Icons.account_balance_wallet_outlined, 'Total Due', '₹${tenant.totalDue.toStringAsFixed(0)}', isHighlight: true),
-                          _buildModernDetailItem(Icons.local_atm_outlined, 'Platform Fee per Transaction', '₹9', isHighlight: false),
+                          _buildModernDetailItem(Icons.local_atm_outlined, 'Platform Fee per Rent Payment', '₹${tenant.platformFee.toStringAsFixed(0)}', isHighlight: false),
                         ],
                       ),
                     ),

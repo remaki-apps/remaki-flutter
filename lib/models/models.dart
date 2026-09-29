@@ -227,7 +227,7 @@ class Tenant {
 
     // 2. Additional Charges & Bills (Electricity, Water, Maintenance, EB etc.)
     for (var charge in additionalCharges) {
-      if (charge.billType != 'RENT' && charge.amount > 0) {
+      if (charge.billType != 'RENT' && charge.amount > 0 && (charge.status == 'PENDING' || charge.status == 'UNPAID')) {
         String label = charge.description.trim();
         if (label.isEmpty) {
           label = charge.billType == 'CURRENT' ? 'Electricity / EB Bill' : 'Utility Charge';

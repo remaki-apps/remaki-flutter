@@ -87,9 +87,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final appProvider = Provider.of<AppProvider>(context);
     final monthYear = DateFormat('MMMM yyyy').format(DateTime.now());
 
-    final expectedRent = appProvider.expectedRentOnly;
-    final collectedRent = appProvider.collectedRentOnly;
-    final pendingRent = appProvider.pendingRentOnly;
+    final expectedRent = appProvider.expectedRent;
+    final collectedRent = appProvider.collectedRent;
+    final pendingRent = appProvider.pendingRent;
 
     final sortedPayments = [...appProvider.currentPayments]..sort((a, b) => b.date.compareTo(a.date));
     final recentPayments = sortedPayments.take(5).toList();
@@ -127,7 +127,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   expectedRent: expectedRent,
                   collectedRent: collectedRent,
                   pendingRent: pendingRent,
-                  unpaidCount: appProvider.unpaidRentTenants.length,
+                  unpaidCount: appProvider.unpaidTenants.length,
                 ),
                 const SizedBox(height: 16),
 
@@ -409,7 +409,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildQuickActionsSection(BuildContext context, AppProvider appProvider) {
-    final unpaidRentCount = appProvider.unpaidRentTenants.length;
+    final unpaidCount = appProvider.unpaidTenants.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -431,9 +431,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               runSpacing: 4,
               alignment: WrapAlignment.end,
               children: [
-                if (unpaidRentCount > 0)
+                if (unpaidCount > 0)
                   GestureDetector(
-                    onTap: () => context.push('/unpaid_tenants?filter=rent'),
+                    onTap: () => context.push('/unpaid_tenants'),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                       decoration: BoxDecoration(
@@ -454,7 +454,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '$unpaidRentCount Pending Rent',
+                            '$unpaidCount Pending Dues',
                             style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
@@ -527,12 +527,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(width: 10),
             _buildQuickActionButton(
-              label: 'Unpaid Rent',
+              label: 'Unpaid Dues',
               icon: Icons.pending_actions_rounded,
               bgColor: const Color(0xFFFFF1F2),
               iconColor: const Color(0xFFE11D48),
-              badgeCount: appProvider.unpaidRentTenants.length,
-              onTap: () => context.push('/unpaid_tenants?filter=rent'),
+              badgeCount: appProvider.unpaidTenants.length,
+              onTap: () => context.push('/unpaid_tenants'),
             ),
             const SizedBox(width: 10),
             _buildQuickActionButton(
@@ -883,7 +883,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Rent Overview',
+                    'Rent & Dues Overview',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
@@ -893,31 +893,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ],
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.calendar_today_rounded,
-                      size: 11,
-                      color: Color(0xFF475569),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      monthYear,
-                      style: GoogleFonts.plusJakartaSans(
-                        color: const Color(0xFF475569),
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
+              GestureDetector(
+                onTap: () => context.push('/rent'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.calendar_today_rounded,
+                        size: 11,
+                        color: Color(0xFF475569),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      Text(
+                        monthYear,
+                        style: GoogleFonts.plusJakartaSans(
+                          color: const Color(0xFF475569),
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                      const Icon(Icons.chevron_right_rounded, size: 14, color: Color(0xFF64748B)),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -926,7 +931,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Row(
             children: [
               _buildRentStatColumn(
-                title: 'Expected Rent',
+                title: 'Expected Total',
                 value: '₹${_formatCurrency(expectedRent)}',
                 color: const Color(0xFF0F172A),
                 icon: Icons.receipt_outlined,
