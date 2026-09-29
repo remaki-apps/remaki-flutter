@@ -32,9 +32,26 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
   Future<void> _loadRequests() async {
     setState(() => _isLoading = true);
     try {
+      final appProvider = Provider.of<AppProvider>(context, listen: false);
       final reqs = await ApiService.fetchPendingPaymentRequests();
       if (!mounted) return;
-      setState(() => _requests = reqs);
+
+      // Filter to only show requests belonging to the currently selected property.
+      // appProvider.currentTenants already respects selectedPropertyId.
+      final currentTenantIds = appProvider.currentTenants.map((t) => t.id).toSet();
+      final filtered = reqs.where((r) {
+        final tid = r['tenantProfileId']?.toString() ?? '';
+        // If only one property, currentTenantIds covers all — no filtering needed.
+        // If multiple properties and a specific one selected, filter strictly.
+        if (appProvider.properties.length <= 1 ||
+            appProvider.selectedPropertyId == null ||
+            appProvider.selectedPropertyId == 'ALL') {
+          return true;
+        }
+        return currentTenantIds.contains(tid);
+      }).toList();
+
+      setState(() => _requests = filtered);
     } catch (e) {
       if (mounted) FancyToast.showError(context, 'Failed to Load Requests', message: ApiService.cleanErrorMessage(e));
     } finally {
