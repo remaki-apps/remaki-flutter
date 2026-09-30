@@ -350,6 +350,40 @@ void main() {
         ApiService.cleanErrorMessage('Phone number is already registered to an existing tenant.'),
         'Phone number is already registered to an existing tenant.',
       );
+      expect(
+        ApiService.cleanErrorMessage('Invalid 4-digit Security Recovery PIN. If you do not remember your MPIN, please contact organization support.'),
+        'Invalid 4-digit Security Recovery PIN. If you do not remember your MPIN, please contact organization support.',
+      );
+    });
+  });
+
+  group('Security Recovery PIN Tests', () {
+    test('Stores and updates hasSecurityPin state correctly in ApiService', () async {
+      SharedPreferences.setMockInitialValues({'user_has_security_pin': false});
+      await ApiService.initToken();
+      expect(ApiService.hasSecurityPin, isFalse);
+
+      await ApiService.setHasSecurityPin(true);
+      expect(ApiService.hasSecurityPin, isTrue);
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('user_has_security_pin'), isTrue);
+
+      await ApiService.clearAuthToken();
+      expect(ApiService.hasSecurityPin, isFalse);
+    });
+
+    test('Validates 4-digit PIN pattern strictly', () {
+      final pinRegex = RegExp(r'^\d{4}$');
+      expect(pinRegex.hasMatch('1234'), isTrue);
+      expect(pinRegex.hasMatch('0000'), isTrue);
+      expect(pinRegex.hasMatch('9876'), isTrue);
+
+      expect(pinRegex.hasMatch('123'), isFalse);
+      expect(pinRegex.hasMatch('12345'), isFalse);
+      expect(pinRegex.hasMatch('12a4'), isFalse);
+      expect(pinRegex.hasMatch(''), isFalse);
+      expect(pinRegex.hasMatch(' 1234 '), isFalse);
     });
   });
 }

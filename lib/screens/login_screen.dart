@@ -63,6 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
               id
               email
               role
+              hasSecurityPin
             }
           }
         }
@@ -75,9 +76,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final token = result['customLogin']['token'];
       final role = result['customLogin']['user']['role'];
+      final bool hasSecurityPin = result['customLogin']['user']['hasSecurityPin'] == true;
       
       // Save token in ApiService (persisted via SharedPreferences)
-      await ApiService.setAuthToken(token, role);
+      await ApiService.setAuthToken(token, role, hasSecurityPin: hasSecurityPin);
       
       if (mounted) {
         if (role == 'ADMIN') {
@@ -85,8 +87,12 @@ class _LoginScreenState extends State<LoginScreen> {
           await appProvider.loadFromAPI();
           if (mounted) context.go('/');
         } else {
-          // Tenants navigate directly to tenant portal
-          context.go('/tenant_home');
+          // For Tenants: Check if they have setup their compulsory 4-digit Security Recovery PIN
+          if (!hasSecurityPin) {
+            context.go('/setup_security_pin');
+          } else {
+            context.go('/tenant_home');
+          }
         }
       }
     } catch (e) {

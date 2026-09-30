@@ -57,6 +57,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   bool _isChangingPassword = false;
   String? _changePasswordError;
 
+  // Security PIN state
+  bool _isSecurityPinExpanded = false;
+  final TextEditingController _tenantNewPinController = TextEditingController();
+  final TextEditingController _tenantConfirmNewPinController = TextEditingController();
+  bool _obscureTenantPin = true;
+  bool _obscureTenantConfirmPin = true;
+  bool _isUpdatingPin = false;
+  String? _securityPinError;
+
   @override
   void initState() {
     super.initState();
@@ -69,6 +78,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     _descriptionController.dispose();
     _tenantNewPasswordController.dispose();
     _tenantConfirmPasswordController.dispose();
+    _tenantNewPinController.dispose();
+    _tenantConfirmNewPinController.dispose();
     super.dispose();
   }
 
@@ -3470,6 +3481,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           ),
           const SizedBox(height: 14),
 
+          // Security Recovery PIN Section
+          _buildSecurityPinSectionCard(),
+          const SizedBox(height: 14),
+
           // Security & Change Password Section
           _buildChangePasswordSectionCard(),
           const SizedBox(height: 20),
@@ -3648,6 +3663,379 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           ],
         ),
       );
+  }
+
+  Future<void> _handleTenantUpdateSecurityPin() async {
+    final newPin = _tenantNewPinController.text.trim();
+    final confirmPin = _tenantConfirmNewPinController.text.trim();
+
+    if (newPin.isEmpty) {
+      setState(() => _securityPinError = 'Please enter a 4-digit PIN');
+      return;
+    }
+    if (newPin.length != 4 || !RegExp(r'^\d{4}$').hasMatch(newPin)) {
+      setState(() => _securityPinError = 'PIN must be exactly 4 numeric digits');
+      return;
+    }
+    if (newPin != confirmPin) {
+      setState(() => _securityPinError = 'PINs do not match');
+      return;
+    }
+
+    setState(() {
+      _isUpdatingPin = true;
+      _securityPinError = null;
+    });
+
+    try {
+      final success = await ApiService.setupSecurityPin(newPin);
+      if (!mounted) return;
+      if (success) {
+        _tenantNewPinController.clear();
+        _tenantConfirmNewPinController.clear();
+        setState(() {
+          _isSecurityPinExpanded = false;
+        });
+        FancyToast.showSuccess(
+          context,
+          'Security PIN Updated',
+          message: 'Your 4-digit Security Recovery PIN has been updated successfully.',
+        );
+      } else {
+        setState(() {
+          _securityPinError = 'Failed to update PIN. Please try again.';
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        final cleanMsg = ApiService.cleanErrorMessage(e);
+        setState(() {
+          _securityPinError = cleanMsg;
+        });
+        FancyToast.showError(context, 'PIN Update Failed', message: cleanMsg);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUpdatingPin = false);
+      }
+    }
+  }
+
+  Widget _buildSecurityPinSectionCard() {
+    final isExpanded = _isSecurityPinExpanded;
+    final hasPin = ApiService.hasSecurityPin;
+
+    return _buildGlassContainer(
+      borderRadius: 20,
+      customBorderColor: isExpanded ? const Color(0xFF6366F1).withValues(alpha: 0.85) : TenantTheme.glassBorder,
+      customShadow: [
+        BoxShadow(
+          color: const Color(0x0A0F172A),
+          blurRadius: isExpanded ? 16 : 10,
+          offset: Offset(0, isExpanded ? 6 : 3),
+        ),
+        BoxShadow(
+          color: isExpanded ? const Color(0x146366F1) : const Color(0x040F172A),
+          blurRadius: 4,
+          offset: const Offset(0, 1),
+        ),
+      ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => setState(() => _isSecurityPinExpanded = !_isSecurityPinExpanded),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isExpanded ? const Color(0xFF6366F1) : const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: isExpanded
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFF6366F1).withValues(alpha: 0.28),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Icon(Icons.pin_outlined, color: isExpanded ? Colors.white : const Color(0xFF6366F1), size: 19),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'Security Recovery PIN',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 15.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: TenantTheme.textPrimary,
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: hasPin ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: hasPin ? const Color(0xFFA7F3D0) : const Color(0xFFFDE68A),
+                                  ),
+                                ),
+                                child: Text(
+                                  hasPin ? 'Active' : 'Not Set',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: hasPin ? const Color(0xFF059669) : const Color(0xFFD97706),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (!isExpanded) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              hasPin
+                                  ? '4-digit MPIN for instant password recovery'
+                                  : 'Set up your 4-digit PIN for safe password recovery',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w500,
+                                color: TenantTheme.textSecondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: isExpanded ? const Color(0xFFEEF2FF) : const Color(0xFFF1F5F9),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isExpanded ? const Color(0xFFC7D2FE) : const Color(0xFFE2E8F0),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: AnimatedRotation(
+                        turns: isExpanded ? 0.5 : 0.0,
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeInOutCubic,
+                        child: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: isExpanded ? const Color(0xFF6366F1) : const Color(0xFF64748B),
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 1,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    color: const Color(0xFFF1F5F9),
+                  ),
+                  Text(
+                    'Your 4-digit PIN (ATM / UPI style) allows you to verify your identity and reset your password if you ever forget it.',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: TenantTheme.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  // New PIN Input
+                  TextFormField(
+                    controller: _tenantNewPinController,
+                    obscureText: _obscureTenantPin,
+                    keyboardType: TextInputType.number,
+                    maxLength: 4,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 8,
+                      color: TenantTheme.textPrimary,
+                    ),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      hintText: '• • • •',
+                      hintStyle: GoogleFonts.plusJakartaSans(
+                        fontSize: 16,
+                        letterSpacing: 8,
+                        color: TenantTheme.textMuted,
+                      ),
+                      prefixIcon: const Icon(Icons.pin_outlined, size: 20, color: Color(0xFF64748B)),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureTenantPin ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          size: 20,
+                          color: const Color(0xFF64748B),
+                        ),
+                        onPressed: () => setState(() => _obscureTenantPin = !_obscureTenantPin),
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF6366F1), width: 1.5),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Confirm PIN Input
+                  TextFormField(
+                    controller: _tenantConfirmNewPinController,
+                    obscureText: _obscureTenantConfirmPin,
+                    keyboardType: TextInputType.number,
+                    maxLength: 4,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 8,
+                      color: TenantTheme.textPrimary,
+                    ),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      hintText: '• • • •',
+                      hintStyle: GoogleFonts.plusJakartaSans(
+                        fontSize: 16,
+                        letterSpacing: 8,
+                        color: TenantTheme.textMuted,
+                      ),
+                      prefixIcon: const Icon(Icons.lock_clock_outlined, size: 20, color: Color(0xFF64748B)),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureTenantConfirmPin ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          size: 20,
+                          color: const Color(0xFF64748B),
+                        ),
+                        onPressed: () => setState(() => _obscureTenantConfirmPin = !_obscureTenantConfirmPin),
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF6366F1), width: 1.5),
+                      ),
+                    ),
+                  ),
+                  if (_securityPinError != null) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFFECACA)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline_rounded, color: Color(0xFFDC2626), size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _securityPinError!,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                color: const Color(0xFFDC2626),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: ElevatedButton(
+                      onPressed: _isUpdatingPin ? null : _handleTenantUpdateSecurityPin,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6366F1),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: _isUpdatingPin
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              hasPin ? 'Update Security PIN' : 'Save Security PIN',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            crossFadeState: isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 240),
+            firstCurve: Curves.easeIn,
+            secondCurve: Curves.easeOut,
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _handleTenantChangePassword() async {

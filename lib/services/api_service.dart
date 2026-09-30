@@ -21,9 +21,11 @@ class ApiService {
 
   static String? _token;
   static String? _role;
+  static bool? _hasSecurityPin;
 
   static String? get token => _token;
   static String? get role => _role;
+  static bool get hasSecurityPin => _hasSecurityPin ?? false;
 
   static bool get isLoggedIn => _token != null && _token!.isNotEmpty;
 
@@ -32,33 +34,52 @@ class ApiService {
       final prefs = await SharedPreferences.getInstance();
       _token = prefs.getString('auth_token');
       _role = prefs.getString('user_role');
+      _hasSecurityPin = prefs.getBool('user_has_security_pin');
       authNotifier.value = isLoggedIn;
     } catch (e) {
       debugPrint('ApiService initToken error: $e');
     }
   }
 
-  static Future<void> setAuthToken(String token, String role) async {
+  static Future<void> setAuthToken(String token, String role, {bool? hasSecurityPin}) async {
     _token = token;
     _role = role;
+    if (hasSecurityPin != null) {
+      _hasSecurityPin = hasSecurityPin;
+    }
     authNotifier.value = isLoggedIn;
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('auth_token', token);
       await prefs.setString('user_role', role);
+      if (hasSecurityPin != null) {
+        await prefs.setBool('user_has_security_pin', hasSecurityPin);
+      }
     } catch (e) {
       debugPrint('ApiService setAuthToken error: $e');
+    }
+  }
+
+  static Future<void> setHasSecurityPin(bool value) async {
+    _hasSecurityPin = value;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('user_has_security_pin', value);
+    } catch (e) {
+      debugPrint('ApiService setHasSecurityPin error: $e');
     }
   }
 
   static Future<void> clearAuthToken() async {
     _token = null;
     _role = null;
+    _hasSecurityPin = null;
     authNotifier.value = false;
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('auth_token');
       await prefs.remove('user_role');
+      await prefs.remove('user_has_security_pin');
     } catch (e) {
       debugPrint('ApiService clearAuthToken error: $e');
     }
@@ -755,7 +776,7 @@ class ApiService {
     return data['changePassword'] == true;
   }
 
-  static Future<String> resetPassword(String phoneNumber, {String? newPassword}) async {
+  static Future<String> resetPassword(String phoneNumber, {String? newPassword, String? securityPin}) async {
     const String mutation = '''
       mutation AdminForgotPassword(\$input: AdminForgotPasswordInput!) {
         adminForgotPassword(input: \$input)
@@ -765,7 +786,74 @@ class ApiService {
     if (newPassword != null && newPassword.isNotEmpty) {
       input['newPassword'] = newPassword;
     }
+    if (securityPin != null && securityPin.isNotEmpty) {
+      input['securityPin'] = securityPin;
+    }
     final data = await performQuery(mutation, variables: {'input': input});
     return data['adminForgotPassword']?.toString() ?? '';
+  }
+
+  /// Sets up the compulsory 4-digit Security Recovery PIN (MPIN) for the logged-in user
+  static Future<bool> setupSecurityPin(String pin) async {
+    const String mutation = '''
+      mutation SetupSecurityPin(\$pin: String!) {
+        setupSecurityPin(pin: \$pin)
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'pin': pin});
+    if (data['setupSecurityPin'] == true) {
+      await setHasSecurityPin(true);
+      return true;
+    }
+    return false;
+  }
+
+  /// Resets password using phone number and verified 4-digit Security Recovery PIN (MPIN)
+  static Future<bool> resetPasswordWithPin({
+    required String phoneNumber,
+    required String securityPin,
+    required String newPassword,
+  }) async {
+    const String mutation = '''
+      mutation ResetPasswordWithPin(\$input: ResetPasswordWithPinInput!) {
+        resetPasswordWithPin(input: \$input)
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {
+      'input': {
+        'phoneNumber': phoneNumber,
+        'securityPin': securityPin,
+        'newPassword': newPassword,
+      }
+    });
+    return data['resetPasswordWithPin'] == true;
+  }
+
+  /// Fetches organization support contact details
+  static Future<Map<String, String>> fetchOrganizationSupportInfo() async {
+    const String query = '''
+      query {
+        organizationSupportInfo {
+          email
+          phone
+          message
+        }
+      }
+    ''';
+    try {
+      final data = await performQuery(query);
+      final info = data['organizationSupportInfo'];
+      return {
+        'email': info?['email']?.toString() ?? 'support@remaki.in',
+        'phone': info?['phone']?.toString() ?? '+91 98765 43210',
+        'message': info?['message']?.toString() ?? 'Please contact organization support to recover your Security Recovery PIN (MPIN).',
+      };
+    } catch (_) {
+      return {
+        'email': 'support@remaki.in',
+        'phone': '+91 98765 43210',
+        'message': 'Please contact organization support to recover your Security Recovery PIN (MPIN).',
+      };
+    }
   }
 }

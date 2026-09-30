@@ -23,6 +23,7 @@ import 'screens/unpaid_tenants_screen.dart';
 import 'screens/add_room_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/forgot_password_screen.dart';
+import 'screens/setup_security_pin_screen.dart';
 import 'screens/tenant_home_screen.dart';
 import 'screens/pending_approvals_screen.dart';
 import 'screens/announcements_screen.dart';
@@ -90,7 +91,12 @@ final router = GoRouter(
       return isLoggingIn ? null : '/login';
     }
 
-    if (isLoggingIn) {
+    // Compulsory 4-digit Security Recovery PIN setup for tenants
+    if (ApiService.role == 'TENANT' && !ApiService.hasSecurityPin) {
+      return location == '/setup_security_pin' ? null : '/setup_security_pin';
+    }
+
+    if (isLoggingIn || location == '/setup_security_pin') {
       return ApiService.role == 'TENANT' ? '/tenant_home' : '/';
     }
 
@@ -113,6 +119,15 @@ final router = GoRouter(
         context: context,
         state: state,
         child: const ForgotPasswordScreen(),
+      ),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/setup_security_pin',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: const SetupSecurityPinScreen(),
       ),
     ),
     GoRoute(
