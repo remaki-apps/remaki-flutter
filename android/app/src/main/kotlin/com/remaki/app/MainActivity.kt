@@ -1,4 +1,4 @@
-package com.example.sunshine_pg_app
+package com.remaki.app
 
 import io.flutter.embedding.android.FlutterActivity
 
