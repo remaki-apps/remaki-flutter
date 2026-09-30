@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -109,7 +110,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 1. Sleek PG & Owner Identity Banner
-                _buildPGIdentityCard(appProvider),
+                _buildPGIdentityCard(context, appProvider),
                 const SizedBox(height: 16),
 
                 // 2. Modern Quick Actions Hub (Add Tenant, Notice, Unpaid Rent, Approvals)
@@ -147,213 +148,127 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildPGIdentityCard(AppProvider appProvider) {
+  Widget _buildPGIdentityCard(BuildContext context, AppProvider appProvider) {
     final greeting = _getGreeting();
     final ownerName = appProvider.adminName.isNotEmpty ? appProvider.adminName : 'Owner';
     final pgName = appProvider.pgName.isNotEmpty ? appProvider.pgName : 'Your PG';
     final pgAddress = appProvider.pgAddress;
 
-    return Container(
+    final cardContent = Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x040F172A),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-          BoxShadow(
-            color: Color(0x020F172A),
-            blurRadius: 2,
-            offset: Offset(0, 1),
+            color: Color(0x060F172A),
+            blurRadius: 8,
+            offset: Offset(0, 2),
           ),
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 46,
-            height: 46,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF4F46E5), Color(0xFF3730A3)],
+                colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x254F46E5),
-                  blurRadius: 8,
-                  offset: Offset(0, 3),
+                  color: Color(0x204F46E5),
+                  blurRadius: 6,
+                  offset: Offset(0, 2),
                 ),
               ],
             ),
             child: const Icon(
               Icons.apartment_rounded,
               color: Colors.white,
-              size: 24,
+              size: 22,
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   children: [
                     Text(
                       '$greeting, $ownerName',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF64748B),
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Text('👋', style: TextStyle(fontSize: 11)),
+                    const Text('👋', style: TextStyle(fontSize: 10)),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDF4),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFDCFCE7), width: 1),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 5,
+                            height: 5,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF16A34A),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 3),
+                          const Text(
+                            'Active',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF15803D),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 2),
-                if (appProvider.properties.length > 1) ...[
-                  PopupMenuButton<String>(
-                    tooltip: 'Switch Property',
-                    initialValue: appProvider.selectedPropertyId,
-                    onSelected: (String propId) {
-                      appProvider.selectProperty(propId);
-                    },
-                    position: PopupMenuPosition.under,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            appProvider.selectedPropertyId == 'ALL' ? 'All Properties' : pgName,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.3,
-                              color: const Color(0xFF0F172A),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEEF2FF),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            size: 16,
-                            color: Color(0xFF4F46E5),
-                          ),
-                        ),
-                      ],
-                    ),
-                    itemBuilder: (BuildContext context) {
-                      return [
-                        ...appProvider.properties.map((prop) {
-                          final isSelected = prop.id == appProvider.selectedPropertyId;
-                          return PopupMenuItem<String>(
-                            value: prop.id,
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.business_rounded,
-                                  size: 18,
-                                  color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        prop.name,
-                                        style: TextStyle(
-                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                                          color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFF0F172A),
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      if (prop.city.isNotEmpty || prop.address.isNotEmpty)
-                                        Text(
-                                          prop.city.isNotEmpty ? prop.city : prop.address,
-                                          style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                                if (isSelected)
-                                  const Icon(Icons.check_circle_rounded, size: 18, color: Color(0xFF4F46E5)),
-                              ],
-                            ),
-                          );
-                        }),
-                        const PopupMenuDivider(),
-                        PopupMenuItem<String>(
-                          value: 'ALL',
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.all_inclusive_rounded,
-                                size: 18,
-                                color: appProvider.selectedPropertyId == 'ALL' ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                'All Properties',
-                                style: TextStyle(
-                                  fontWeight: appProvider.selectedPropertyId == 'ALL' ? FontWeight.bold : FontWeight.w600,
-                                  color: appProvider.selectedPropertyId == 'ALL' ? const Color(0xFF4F46E5) : const Color(0xFF0F172A),
-                                  fontSize: 14,
-                                ),
-                              ),
-                              if (appProvider.selectedPropertyId == 'ALL') ...[
-                                const Spacer(),
-                                const Icon(Icons.check_circle_rounded, size: 18, color: Color(0xFF4F46E5)),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ];
-                    },
+                Text(
+                  appProvider.selectedPropertyId == 'ALL' ? 'All Properties' : pgName,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                    color: const Color(0xFF0F172A),
                   ),
-                ] else ...[
-                  Text(
-                    pgName,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.3,
-                      color: const Color(0xFF0F172A),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 if (pgAddress.isNotEmpty) ...[
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 2),
                   Row(
                     children: [
                       const Icon(
                         Icons.location_on_rounded,
-                        size: 12,
+                        size: 11,
                         color: Color(0xFF94A3B8),
                       ),
-                      const SizedBox(width: 3),
+                      const SizedBox(width: 2),
                       Expanded(
                         child: Text(
                           pgAddress,
@@ -372,40 +287,303 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFDCFCE7), width: 1),
+          if (appProvider.properties.length > 1) ...[
+            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEEF2FF),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFC7D2FE), width: 1),
+              ),
+              child: const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 20,
+                color: Color(0xFF4F46E5),
+              ),
             ),
-            child: Row(
+          ],
+        ],
+      ),
+    );
+
+    if (appProvider.properties.length <= 1) {
+      return cardContent;
+    }
+
+    return InkWell(
+      onTap: () => _showPropertySelectorModal(context, appProvider),
+      borderRadius: BorderRadius.circular(16),
+      child: cardContent,
+    );
+  }
+
+  void _showPropertySelectorModal(BuildContext context, AppProvider appProvider) async {
+    appProvider.setNavBarHidden(true);
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.94),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x200F172A),
+                  blurRadius: 24,
+                  offset: Offset(0, -6),
+                ),
+              ],
+            ),
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF16A34A),
-                    shape: BoxShape.circle,
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                const SizedBox(width: 4),
-                const Text(
-                  'Active',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF15803D),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.apartment_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Switch Property',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF0F172A),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFC7D2FE), width: 1),
+                      ),
+                      child: Text(
+                        '${appProvider.properties.length} Properties',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF4F46E5),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        ...appProvider.properties.map((prop) {
+                          final isSelected = prop.id == appProvider.selectedPropertyId;
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: InkWell(
+                              onTap: () {
+                                appProvider.selectProperty(prop.id);
+                                Navigator.pop(context);
+                              },
+                              borderRadius: BorderRadius.circular(14),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFE2E8F0),
+                                    width: 1.5,
+                                  ),
+                                  boxShadow: isSelected
+                                      ? [
+                                          const BoxShadow(
+                                            color: Color(0x334F46E5),
+                                            blurRadius: 12,
+                                            offset: Offset(0, 4),
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 42,
+                                      height: 42,
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? Colors.white.withValues(alpha: 0.2)
+                                            : const Color(0xFFEEF2FF),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(
+                                        Icons.business_rounded,
+                                        color: isSelected ? Colors.white : const Color(0xFF4F46E5),
+                                        size: 20,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            prop.name,
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w700,
+                                              color: isSelected ? Colors.white : const Color(0xFF0F172A),
+                                            ),
+                                          ),
+                                          if (prop.city.isNotEmpty || prop.address.isNotEmpty) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              prop.city.isNotEmpty ? prop.city : prop.address,
+                                              style: GoogleFonts.plusJakartaSans(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w500,
+                                                color: isSelected
+                                                    ? Colors.white.withValues(alpha: 0.8)
+                                                    : const Color(0xFF64748B),
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.white,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.check_rounded,
+                                          size: 14,
+                                          color: Color(0xFF4F46E5),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                        InkWell(
+                          onTap: () {
+                            appProvider.selectProperty('ALL');
+                            Navigator.pop(context);
+                          },
+                          borderRadius: BorderRadius.circular(14),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: appProvider.selectedPropertyId == 'ALL'
+                                  ? const Color(0xFF4F46E5)
+                                  : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: appProvider.selectedPropertyId == 'ALL'
+                                    ? const Color(0xFF4F46E5)
+                                    : const Color(0xFFE2E8F0),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 42,
+                                  height: 42,
+                                  decoration: BoxDecoration(
+                                    color: appProvider.selectedPropertyId == 'ALL'
+                                        ? Colors.white.withValues(alpha: 0.2)
+                                        : const Color(0xFFEEF2FF),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    Icons.all_inclusive_rounded,
+                                    color: appProvider.selectedPropertyId == 'ALL'
+                                        ? Colors.white
+                                        : const Color(0xFF4F46E5),
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'All Properties (Combined Overview)',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: appProvider.selectedPropertyId == 'ALL'
+                                          ? Colors.white
+                                          : const Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ),
+                                if (appProvider.selectedPropertyId == 'ALL')
+                                  Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.check_rounded,
+                                      size: 14,
+                                      color: Color(0xFF4F46E5),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
+    appProvider.setNavBarHidden(false);
   }
 
   Widget _buildQuickActionsSection(BuildContext context, AppProvider appProvider) {

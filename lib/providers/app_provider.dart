@@ -18,6 +18,14 @@ class AppProvider with ChangeNotifier {
   double platformFee = 9.0;
   bool isLoading = true;
   String? lastSyncError;
+  bool isNavBarHidden = false;
+
+  void setNavBarHidden(bool hidden) {
+    if (isNavBarHidden != hidden) {
+      isNavBarHidden = hidden;
+      notifyListeners();
+    }
+  }
 
   static const String _roomsKey = 'sunshine_pg_rooms';
   static const String _tenantsKey = 'sunshine_pg_tenants';

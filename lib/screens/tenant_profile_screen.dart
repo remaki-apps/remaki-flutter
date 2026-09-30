@@ -161,48 +161,67 @@ class TenantProfileScreen extends StatelessWidget {
                     // Hero Profile Card
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: const Color(0xFFF1F5F9)),
                         boxShadow: const [
                           BoxShadow(color: Color(0x06000000), blurRadius: 10, offset: Offset(0, 2)),
                         ],
                       ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          TenantAvatar(
-                            name: tenant.name,
-                            imageUrl: tenant.imageUrl,
-                            radius: 42,
+                          Row(
+                            children: [
+                              TenantAvatar(
+                                name: tenant.name,
+                                imageUrl: tenant.imageUrl,
+                                radius: 24,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      tenant.name,
+                                      style: const TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFEEF2FF),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.meeting_room_outlined, size: 12, color: AppTheme.primaryColor),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Room $roomNumber • $bedName',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppTheme.primaryColor,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 12),
-                          Text(
-                            tenant.name,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF0F172A),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEEF2FF),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              'Room $roomNumber • $bedName',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryColor,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
 
                           // Action Buttons (WhatsApp, Call, Collect Rent)
                           Row(
@@ -675,42 +694,54 @@ class TenantProfileScreen extends StatelessWidget {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 36,
-                                    height: 36,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF0FDF4),
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(color: const Color(0xFFDCFCE7)),
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF0FDF4),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(color: const Color(0xFFDCFCE7)),
+                                      ),
+                                      child: const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 18),
                                     ),
-                                    child: const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 18),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          const Icon(Icons.calendar_today_rounded, size: 11.5, color: Color(0xFF16A34A)),
-                                          const SizedBox(width: 4),
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.calendar_today_rounded, size: 11.5, color: Color(0xFF16A34A)),
+                                              const SizedBox(width: 4),
+                                              Expanded(
+                                                child: Text(
+                                                  'Paid on $dateStr',
+                                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 2),
                                           Text(
-                                            'Paid on $dateStr',
-                                            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                            payment.method,
+                                            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        payment.method,
-                                        style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                    ),
+                                  ],
+                                ),
                               ),
+                              const SizedBox(width: 8),
                               Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
                                     '₹${payment.amount.toStringAsFixed(0)}',

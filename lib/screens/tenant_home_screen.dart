@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import '../theme/tenant_theme.dart';
 import '../models/models.dart';
@@ -98,9 +99,18 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     }
   }
 
+  Future<void> _setLocalPendingStatus(bool isPending, String? tenantId) async {
+    if (tenantId == null || tenantId.isEmpty) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('tenant_pending_payment_$tenantId', isPending);
+    } catch (_) {}
+  }
+
   Future<void> _fetchProfile() async {
     final profile = await ApiService.fetchCurrentTenantProfile();
     if (profile != null) {
+      final tenantId = profile['id'] as String?;
       double dynamicPlatformFee = (profile['platformFee'] as num?)?.toDouble() ?? 9.0;
       double pendingRent = (profile['pendingRentAmount'] as num?)?.toDouble() ?? 0;
       double pendingBills = 0;
@@ -110,15 +120,41 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           pendingBills += (b['amount'] as num).toDouble();
         }
       }
-      final rejectionReason = profile['latestRejectionReason'] as String?;
+      String? rawRejection = profile['latestRejectionReason'] as String? ?? profile['rejectionReason'] as String?;
+
       final double totalDueAmount = (pendingRent + pendingBills) > 0
           ? (pendingRent + pendingBills + dynamicPlatformFee)
           : 0;
 
-      bool isPendingApproval = profile['paymentStatus'] == 'PENDING' ||
-          profile['hasPendingRequest'] == true ||
-          profile['hasSubmittedRequest'] == true;
-      bool isPaid = profile['paymentStatus'] == 'PAID' || totalDueAmount <= 0;
+      // Read local persisted pending status
+      bool storedPending = false;
+      if (tenantId != null && tenantId.isNotEmpty) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          storedPending = prefs.getBool('tenant_pending_payment_$tenantId') ?? false;
+        } catch (_) {}
+      }
+
+      // 1. Check if explicitly PAID on backend
+      bool isPaid = profile['paymentStatus'] == 'PAID';
+
+      // 2. Pending if local submission flag is true OR storedPending is true OR backend status says PENDING/submitted
+      bool isPendingApproval = !isPaid &&
+          (_hasSubmittedForApproval ||
+           storedPending ||
+           profile['paymentStatus'] == 'PENDING' ||
+           profile['hasPendingRequest'] == true ||
+           profile['hasSubmittedRequest'] == true);
+
+      // 3. Check if REJECTED on backend (only if NOT currently pending new submission)
+      bool isBackendRejected = !isPaid && !isPendingApproval &&
+          (profile['paymentStatus'] == 'REJECTED' ||
+           (rawRejection != null && rawRejection.isNotEmpty));
+
+      // 4. Mark paid via totalDueAmount <= 0 only if not pending and not rejected
+      if (!isPaid && !isPendingApproval && !isBackendRejected && totalDueAmount <= 0) {
+        isPaid = true;
+      }
 
       if (mounted) {
         setState(() {
@@ -127,16 +163,22 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           _pendingBills = pendingBills;
           _totalDue = totalDueAmount;
           _profileData = profile;
-          _rejectionReason = (rejectionReason != null &&
-                  rejectionReason.isNotEmpty &&
-                  !isPendingApproval &&
-                  !isPaid)
-              ? rejectionReason
-              : null;
-          if (isPendingApproval) {
-            _hasSubmittedForApproval = true;
-          } else if (isPaid) {
+          
+          if (isPaid) {
             _hasSubmittedForApproval = false;
+            _rejectionReason = null;
+            _setLocalPendingStatus(false, tenantId);
+          } else if (isPendingApproval) {
+            _hasSubmittedForApproval = true;
+            _rejectionReason = null;
+            _setLocalPendingStatus(true, tenantId);
+          } else if (isBackendRejected) {
+            _hasSubmittedForApproval = false;
+            _rejectionReason = rawRejection;
+          } else {
+            _hasSubmittedForApproval = false;
+            _rejectionReason = null;
+            _setLocalPendingStatus(false, tenantId);
           }
         });
       }
@@ -273,17 +315,33 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
       if (mounted) {
         FancyToast.showSuccess(context, 'Payment request submitted for admin approval!');
+        await _setLocalPendingStatus(true, _profileData?['id']);
         setState(() {
           _selectedImageBytes = null;
           _descriptionController.clear();
           _hasSubmittedForApproval = true;
           _rejectionReason = null;
         });
-        _loadAllData();
+        await _loadAllData();
       }
     } catch (e) {
-      if (mounted) {
-        FancyToast.showError(context, 'Submission Failed', message: ApiService.cleanErrorMessage(e));
+      final cleanMsg = ApiService.cleanErrorMessage(e);
+      if (cleanMsg.contains('already have a pending payment request') || cleanMsg.contains('pending payment request')) {
+        await _setLocalPendingStatus(true, _profileData?['id']);
+        if (mounted) {
+          setState(() {
+            _hasSubmittedForApproval = true;
+            _selectedImageBytes = null;
+            _descriptionController.clear();
+            _rejectionReason = null;
+          });
+          FancyToast.showSuccess(context, 'Payment Under Review', message: 'You already have a payment request pending admin approval.');
+          await _loadAllData();
+        }
+      } else {
+        if (mounted) {
+          FancyToast.showError(context, 'Submission Failed', message: cleanMsg);
+        }
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -1817,43 +1875,115 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           ),
           const SizedBox(height: 18),
 
-          // Rejection Banner if any
-          if (_rejectionReason != null) ...[
+          // Rejection Banner if admin rejected previous payment submission
+          if (_rejectionReason != null && !_hasSubmittedForApproval) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFFEF2F2), Color(0xFFFEE2E2)],
+                  colors: [Color(0xFFFFF1F2), Color(0xFFFFE4E6)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFFECACA), width: 1.2),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFFECDD3), width: 1.2),
                 boxShadow: const [
-                  BoxShadow(color: Color(0x08EF4444), blurRadius: 10, offset: Offset(0, 3)),
+                  BoxShadow(color: Color(0x0DE11D48), blurRadius: 12, offset: Offset(0, 4)),
                 ],
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFCA5A5).withValues(alpha: 0.35),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.error_outline_rounded, color: Color(0xFFDC2626), size: 19),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFFE4E6),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.gpp_bad_rounded, color: Color(0xFFE11D48), size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Payment Proof Rejected',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 14.5,
+                                color: const Color(0xFF9F1239),
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            Text(
+                              'Re-upload proof below to resubmit for approval',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5,
+                                color: const Color(0xFFBE123C),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFE4E6),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFFDA4AF)),
+                        ),
+                        child: Text(
+                          'Rejected',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFFE11D48),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFFECDD3)),
+                    ),
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Payment Proof Rejected',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 13, color: const Color(0xFFDC2626), fontWeight: FontWeight.w800),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _rejectionReason!,
-                          style: GoogleFonts.plusJakartaSans(fontSize: 11.5, color: const Color(0xFF7F1D1D), height: 1.3),
+                        const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFFE11D48), size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Admin Comment:',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF9F1239),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _rejectionReason!,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12.5,
+                                  color: const Color(0xFF4C0519),
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -1875,39 +2005,48 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFEF3C7),
-                              borderRadius: BorderRadius.circular(10),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF3C7),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.hourglass_top_rounded, color: Color(0xFFD97706), size: 20),
                             ),
-                            child: const Icon(Icons.hourglass_top_rounded, color: Color(0xFFD97706), size: 20),
-                          ),
-                          const SizedBox(width: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Payment Pending Approval',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
-                                  color: TenantTheme.textPrimary,
-                                ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Payment Pending Approval',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                      color: TenantTheme.textPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    'Proof of payment submitted for review',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11.5,
+                                      color: TenantTheme.textSecondary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
                               ),
-                              Text(
-                                'Proof of payment submitted for review',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11.5,
-                                  color: TenantTheme.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
@@ -1967,39 +2106,48 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFEE2E2),
-                              borderRadius: BorderRadius.circular(10),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEE2E2),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFFEF4444), size: 18),
                             ),
-                            child: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFFEF4444), size: 18),
-                          ),
-                          const SizedBox(width: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Clear Outstanding Dues',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
-                                  color: TenantTheme.textPrimary,
-                                ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Clear Outstanding Dues',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                      color: TenantTheme.textPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    'Pay now to settle rent & utility fees',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11.5,
+                                      color: TenantTheme.textSecondary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
                               ),
-                              Text(
-                                'Pay now to settle rent & utility fees',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11.5,
-                                  color: TenantTheme.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
@@ -3025,31 +3173,24 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Profile Header Card (Frosted Glass Container with specular border & soft float shadow)
+          // Profile Header Card (Sleek Compact Glass Container)
           _buildGlassContainer(
-            borderRadius: 24,
-            padding: const EdgeInsets.all(22),
-            child: Column(
+            borderRadius: 18,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(3.5),
-                  decoration: BoxDecoration(
+                  padding: const EdgeInsets.all(1.5),
+                  decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: const LinearGradient(
+                    gradient: LinearGradient(
                       colors: [TenantTheme.primary, TenantTheme.primaryLight],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: TenantTheme.primary.withValues(alpha: 0.25),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
                   ),
                   child: Container(
-                    padding: const EdgeInsets.all(2),
+                    padding: const EdgeInsets.all(1.5),
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -3057,154 +3198,93 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     child: TenantAvatar(
                       name: name,
                       imageUrl: _profileData?['imageUrl'],
-                      radius: 40,
+                      radius: 22,
                       enablePreview: true,
                       backgroundColor: TenantTheme.primarySoft,
                       textColor: TenantTheme.primary,
                     ),
                   ),
                 ),
-                const SizedBox(height: 14),
-                Text(
-                  name,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 20.5,
-                    fontWeight: FontWeight.w800,
-                    color: TenantTheme.textPrimary,
-                    letterSpacing: -0.4,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.phone_iphone_rounded, size: 14, color: TenantTheme.textSecondary),
-                    const SizedBox(width: 4),
-                    Text(
-                      phone,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        color: TenantTheme.textSecondary,
-                        fontWeight: FontWeight.w500,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        name,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: TenantTheme.textPrimary,
+                          letterSpacing: -0.3,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-
-                // Status Badges Row (Room/Bed info & KYC Verification Status)
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    if (roomNumber != null && roomNumber.isNotEmpty)
+                      const SizedBox(height: 2),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5.5),
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                         decoration: BoxDecoration(
-                          color: TenantTheme.primarySoft,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: TenantTheme.primaryBorder.withValues(alpha: 0.7), width: 0.9),
+                          color: isKycComplete ? TenantTheme.successBg : const Color(0xFFFFFBEB),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: isKycComplete ? TenantTheme.successBorder : const Color(0xFFFDE68A),
+                            width: 0.8,
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.meeting_room_outlined, size: 13, color: TenantTheme.primary),
-                            const SizedBox(width: 4.5),
+                            Icon(
+                              isKycComplete ? Icons.verified_rounded : Icons.pending_actions_rounded,
+                              size: 10,
+                              color: isKycComplete ? TenantTheme.success : const Color(0xFFD97706),
+                            ),
+                            const SizedBox(width: 3),
                             Text(
-                              'Room $roomNumber${bedLabel != null && bedLabel.isNotEmpty ? ' • Bed $bedLabel' : ''}',
+                              isKycComplete ? 'KYC Verified' : 'KYC Pending',
                               style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                                color: TenantTheme.primary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: isKycComplete ? TenantTheme.success : const Color(0xFFD97706),
                               ),
                             ),
                           ],
                         ),
                       ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5.5),
-                      decoration: BoxDecoration(
-                        color: isKycComplete ? TenantTheme.successBg : const Color(0xFFFFFBEB),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isKycComplete ? TenantTheme.successBorder : const Color(0xFFFDE68A),
-                          width: 0.9,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            isKycComplete ? Icons.verified_rounded : Icons.pending_actions_rounded,
-                            size: 13,
-                            color: isKycComplete ? TenantTheme.success : const Color(0xFFD97706),
-                          ),
-                          const SizedBox(width: 4.5),
-                          Text(
-                            isKycComplete ? 'KYC Verified' : 'KYC Pending',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w800,
-                              color: isKycComplete ? TenantTheme.success : const Color(0xFFD97706),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 18),
-
-                // Action Buttons (Edit Profile + Complete/Update KYC)
+                const SizedBox(width: 6),
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _openEditProfileDialog(),
-                        icon: const Icon(Icons.edit_outlined, size: 16, color: TenantTheme.primary),
-                        label: Text(
-                          'Edit Profile',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: TenantTheme.primary,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: TenantTheme.primaryBorder, width: 1.2),
-                          backgroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          elevation: 0,
-                        ),
+                    IconButton(
+                      onPressed: () => _openEditProfileDialog(),
+                      tooltip: 'Edit Profile',
+                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                      padding: EdgeInsets.zero,
+                      style: IconButton.styleFrom(
+                        backgroundColor: TenantTheme.primarySoft,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
+                      icon: const Icon(Icons.edit_outlined, size: 17, color: TenantTheme.primary),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => _openCompleteKycDialog(),
-                        icon: Icon(
-                          isKycComplete ? Icons.assignment_turned_in_outlined : Icons.verified_user_outlined,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                        label: Text(
-                          isKycComplete ? 'Update KYC' : 'Complete KYC',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isKycComplete ? TenantTheme.success : TenantTheme.primary,
-                          foregroundColor: Colors.white,
-                          elevation: 1.5,
-                          shadowColor: (isKycComplete ? TenantTheme.success : TenantTheme.primary).withValues(alpha: 0.35),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
+                    const SizedBox(width: 4),
+                    IconButton(
+                      onPressed: () => _openCompleteKycDialog(),
+                      tooltip: isKycComplete ? 'Update KYC' : 'Complete KYC',
+                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                      padding: EdgeInsets.zero,
+                      style: IconButton.styleFrom(
+                        backgroundColor: isKycComplete ? TenantTheme.successBg : const Color(0xFFFEF3C7),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: Icon(
+                        isKycComplete ? Icons.assignment_turned_in_outlined : Icons.verified_user_outlined,
+                        size: 17,
+                        color: isKycComplete ? TenantTheme.success : const Color(0xFFD97706),
                       ),
                     ),
                   ],
@@ -3240,8 +3320,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             icon: Icons.person_rounded,
             isExpanded: _isPersonalInfoExpanded,
             onToggle: () => setState(() => _isPersonalInfoExpanded = !_isPersonalInfoExpanded),
-            subtitle: email != 'Not Provided' ? email : 'Tap to view details',
+            subtitle: phone != '-' ? phone : (email != 'Not Provided' ? email : 'Tap to view details'),
             items: [
+              _buildProfileRow('Phone Number', phone, icon: Icons.phone_outlined),
               _buildProfileRow('Email', email, icon: Icons.email_outlined),
               _buildProfileRow('Emergency Contact', emergency, icon: Icons.contact_phone_outlined),
               _buildProfileRow('Date of Birth', dob, icon: Icons.cake_outlined),

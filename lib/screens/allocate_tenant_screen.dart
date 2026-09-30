@@ -188,7 +188,7 @@ class _AllocateTenantScreenState extends State<AllocateTenantScreen> {
                   title: const Text('Select Tenant'),
                   isActive: _currentStep >= 0,
                   content: DropdownButtonFormField<String>(
-                    initialValue: _selectedTenantId,
+                    value: _selectedTenantId,
                     decoration: const InputDecoration(labelText: 'Select Tenant *'),
                     items: unallocatedTenants.map((t) => DropdownMenuItem(value: t.id, child: Text('${t.name} (${t.phone})'))).toList(),
                     onChanged: (val) => setState(() => _selectedTenantId = val),
@@ -202,7 +202,7 @@ class _AllocateTenantScreenState extends State<AllocateTenantScreen> {
                       TextField(controller: _rentController, decoration: const InputDecoration(labelText: 'Monthly Rent (₹)', hintText: 'e.g. 8500'), keyboardType: TextInputType.number),
                       TextField(controller: _securityController, decoration: const InputDecoration(labelText: 'Security Deposit (₹)', hintText: 'e.g. 10000'), keyboardType: TextInputType.number),
                       DropdownButtonFormField<String>(
-                        initialValue: _rentDueDate,
+                        value: _rentDueDate,
                         decoration: const InputDecoration(labelText: 'Rent Due Date'),
                         items: ['1st of every month', '5th of every month', '10th of every month'].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
                         onChanged: (val) => setState(() => _rentDueDate = val!),
@@ -214,13 +214,13 @@ class _AllocateTenantScreenState extends State<AllocateTenantScreen> {
                         onTap: () => _selectMoveInDate(context),
                       ),
                       DropdownButtonFormField<String>(
-                        initialValue: _paymentMode,
+                        value: _paymentMode,
                         decoration: const InputDecoration(labelText: 'Rent Payment Mode'),
                         items: ['Cash', 'UPI', 'Bank Transfer'].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
                         onChanged: (val) => setState(() => _paymentMode = val!),
                       ),
                       DropdownButtonFormField<String>(
-                        initialValue: _agreementDuration,
+                        value: _agreementDuration,
                         decoration: const InputDecoration(labelText: 'Agreement Duration'),
                         items: ['6 Months', '11 Months', '12 Months'].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
                         onChanged: (val) => setState(() => _agreementDuration = val!),
