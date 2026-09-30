@@ -65,10 +65,10 @@ class AdditionalCharge {
         id: json['id']?.toString() ?? '',
         description: json['description']?.toString() ?? '',
         amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
-        date: DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now(),
+        date: (DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now()).toLocal(),
         billType: json['billType'] as String? ?? 'OTHER',
         status: json['status'] as String? ?? 'PENDING',
-        billDueDate: json['billDueDate'] != null ? DateTime.tryParse(json['billDueDate'] as String) : null,
+        billDueDate: json['billDueDate'] != null ? DateTime.tryParse(json['billDueDate'] as String)?.toLocal() : null,
       );
 }
 
@@ -352,14 +352,14 @@ class Tenant {
         emergencyContact: json['emergencyContact'] as String?,
         roomId: json['roomId']?.toString() ?? '',
         bedId: json['bedId']?.toString() ?? '',
-        moveInDate: DateTime.tryParse(json['moveInDate']?.toString() ?? '') ?? DateTime.now(),
+        moveInDate: (DateTime.tryParse(json['moveInDate']?.toString() ?? '') ?? DateTime.now()).toLocal(),
         rentAmount: (json['rentAmount'] as num?)?.toDouble() ?? 0.0,
         securityDeposit: (json['securityDeposit'] as num?)?.toDouble() ?? 0.0,
         isPaid: json['isPaid'] as bool? ?? false,
         paymentStatus: json['paymentStatus']?.toString() ?? (json['isPaid'] == true ? 'PAID' : 'UNPAID'),
         platformFee: (json['platformFee'] as num?)?.toDouble() ?? 9.0,
         propertyId: json['propertyId'] as String? ?? (json['room'] != null && json['room']['propertyId'] != null ? json['room']['propertyId'].toString() : ''),
-        rentDueDate: DateTime.tryParse(json['rentDueDate']?.toString() ?? '') ?? DateTime.now(),
+        rentDueDate: (DateTime.tryParse(json['rentDueDate']?.toString() ?? '') ?? DateTime.now()).toLocal(),
         pendingRentAmount: (json['pendingRentAmount'] as num?)?.toDouble() ?? 0,
         additionalCharges: (json['additionalCharges'] as List<dynamic>?)?.map((e) => AdditionalCharge.fromJson(e as Map<String, dynamic>)).toList() ?? [],
         imageUrl: json['imageUrl'] as String?,
@@ -421,7 +421,9 @@ class Payment {
         id: json['id'] as String? ?? '',
         tenantId: json['tenantId'] as String? ?? '',
         amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
-        date: json['date'] != null ? DateTime.tryParse(json['date'] as String) ?? DateTime.now() : DateTime.now(),
+        date: json['date'] != null
+            ? (DateTime.tryParse(json['date'] as String)?.toLocal() ?? DateTime.now())
+            : DateTime.now(),
         method: json['method'] as String? ?? 'UPI',
         tenantName: json['tenantName'] as String?,
         roomNumber: json['roomNumber'] as String?,

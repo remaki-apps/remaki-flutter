@@ -680,9 +680,10 @@ class TenantProfileScreen extends StatelessWidget {
                       )
                     else
                       ...tenantPayments.map((payment) {
-                        final dateStr = (payment.date.hour == 0 && payment.date.minute == 0 && payment.date.second == 0)
-                            ? DateFormat('dd MMM yyyy').format(payment.date)
-                            : DateFormat('dd MMM yyyy, hh:mm a').format(payment.date);
+                        final localDate = payment.date.toLocal();
+                        final dateStr = (localDate.hour == 0 && localDate.minute == 0 && localDate.second == 0)
+                            ? DateFormat('dd MMM yyyy').format(localDate)
+                            : DateFormat('dd MMM yyyy, hh:mm a').format(localDate);
                         return Container(
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

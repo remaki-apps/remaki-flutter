@@ -374,12 +374,13 @@ class AppProvider with ChangeNotifier {
     }
   }
 
-  Future<void> recordPayment(String tenantId, double amount, String method, {String paymentType = 'BOTH'}) async {
+  Future<void> recordPayment(String tenantId, double amount, String method, {String paymentType = 'BOTH', DateTime? paymentDate}) async {
+    final effectiveDate = (paymentDate ?? DateTime.now()).toLocal();
     final payment = Payment(
       id: 'p_${DateTime.now().millisecondsSinceEpoch}',
       tenantId: tenantId,
       amount: amount,
-      date: DateTime.now(),
+      date: effectiveDate,
       method: method,
     );
     payments.add(payment);
@@ -390,7 +391,7 @@ class AppProvider with ChangeNotifier {
         'rentId': 'mock_rent_id',
         'amount': amount,
         'method': method.toUpperCase().replaceAll(' ', '_'),
-        'paymentDate': DateTime.now().toIso8601String(),
+        'paymentDate': effectiveDate.toUtc().toIso8601String(),
         'paymentType': paymentType,
       });
       // Reload from API to get the real paymentStatus and pendingRentAmount

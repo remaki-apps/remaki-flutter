@@ -26,10 +26,11 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   }
 
   String _formatPaymentDate(DateTime date) {
-    if (date.hour == 0 && date.minute == 0 && date.second == 0) {
-      return DateFormat('dd MMM yyyy').format(date);
+    final local = date.toLocal();
+    if (local.hour == 0 && local.minute == 0 && local.second == 0) {
+      return DateFormat('dd MMM yyyy').format(local);
     }
-    return DateFormat('dd MMM yyyy, hh:mm a').format(date);
+    return DateFormat('dd MMM yyyy, hh:mm a').format(local);
   }
 
   String _formatCurrency(num amount) {

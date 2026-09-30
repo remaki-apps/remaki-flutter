@@ -485,7 +485,8 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   String _formatDate(dynamic dateVal) {
     if (dateVal == null) return '';
     try {
-      final dt = DateTime.parse(dateVal.toString());
+      final parsed = dateVal is DateTime ? dateVal : DateTime.parse(dateVal.toString());
+      final dt = parsed.toLocal();
       return DateFormat('dd MMM yyyy, hh:mm a').format(dt);
     } catch (_) {
       return dateVal.toString();

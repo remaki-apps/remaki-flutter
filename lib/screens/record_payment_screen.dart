@@ -532,6 +532,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                         currentAmount,
                                         _paymentMethod,
                                         paymentType: _paymentType,
+                                        paymentDate: _paymentDate,
                                       );
 
                                       final dateStr = DateFormat('dd-MM-yyyy').format(_paymentDate);

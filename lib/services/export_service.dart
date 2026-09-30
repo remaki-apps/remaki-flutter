@@ -138,7 +138,7 @@ class ExportService {
 
       buffer.writeln([
         _escape(p.id),
-        _escape(DateFormat('yyyy-MM-dd HH:mm').format(p.date)),
+        _escape(DateFormat('yyyy-MM-dd HH:mm').format(p.date.toLocal())),
         _escape(tenantName),
         _escape(p.amount.toStringAsFixed(2)),
         _escape(p.method),

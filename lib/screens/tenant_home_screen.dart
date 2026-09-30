@@ -463,7 +463,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     final str = dateStr.toString().trim();
     if (str == 'Not Provided' || str == '-') return str;
     try {
-      final dt = DateTime.parse(str);
+      final dt = DateTime.parse(str).toLocal();
       return DateFormat('dd MMM yyyy').format(dt);
     } catch (_) {
       try {
@@ -2537,7 +2537,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   String _formatPaymentDateTime(dynamic dateVal) {
     if (dateVal == null) return '-';
     try {
-      final dt = dateVal is DateTime ? dateVal : DateTime.parse(dateVal.toString());
+      final parsed = dateVal is DateTime ? dateVal : DateTime.parse(dateVal.toString());
+      final dt = parsed.toLocal();
       if (dt.hour == 0 && dt.minute == 0 && dt.second == 0) {
         return DateFormat('dd MMM yyyy').format(dt);
       }
