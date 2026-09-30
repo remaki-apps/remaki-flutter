@@ -58,7 +58,12 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
 
   Future<void> _pickImage(StateSetter modalSetState) async {
     final picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1200,
+      maxHeight: 1600,
+    );
     
     if (image == null) return;
 
@@ -852,13 +857,21 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                               border: Border.all(color: const Color(0xFFF1F5F9)),
                               borderRadius: BorderRadius.circular(14),
                             ),
-                            child: Image.network(
-                              imageUrl,
-                              height: 170,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                            ),
+                            child: imageUrl.startsWith('data:')
+                                ? Image.memory(
+                                    base64Decode(imageUrl.split(',').last),
+                                    height: 170,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                                  )
+                                : Image.network(
+                                    imageUrl,
+                                    height: 170,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                                  ),
                           ),
                         ),
                       ],

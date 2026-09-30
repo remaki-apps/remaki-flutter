@@ -27,8 +27,8 @@ class TenantHomeScreen extends StatefulWidget {
 }
 
 class _TenantHomeScreenState extends State<TenantHomeScreen> {
-  double _platformFee = 9.0;
-  final String _paymentType = 'BOTH';
+  double _effectivePlatformFee = 0.0;
+  String _paymentType = 'BOTH';
   late int _currentNavIndex;
 
   bool _isLoading = false;
@@ -37,6 +37,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   double _totalDue = 0;
   double _pendingRent = 0;
   double _pendingBills = 0;
+  List<Map<String, dynamic>> _pendingBillsList = [];
   Map<String, dynamic>? _profileData;
   String? _rejectionReason;
   Uint8List? _selectedImageBytes;
@@ -115,16 +116,25 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       double pendingRent = (profile['pendingRentAmount'] as num?)?.toDouble() ?? 0;
       double pendingBills = 0;
       final bills = profile['bills'] as List<dynamic>? ?? [];
+      final pendingBillsList = <Map<String, dynamic>>[];
       for (var b in bills) {
         if (b['status'] == 'PENDING') {
           pendingBills += (b['amount'] as num).toDouble();
+          pendingBillsList.add(Map<String, dynamic>.from(b as Map));
         }
       }
       String? rawRejection = profile['latestRejectionReason'] as String? ?? profile['rejectionReason'] as String?;
 
+      // Platform fee collected ONLY for rent, NEVER for utility bills alone!
+      final double effectivePlatformFee = pendingRent > 0 ? dynamicPlatformFee : 0.0;
+
       final double totalDueAmount = (pendingRent + pendingBills) > 0
-          ? (pendingRent + pendingBills + dynamicPlatformFee)
+          ? (pendingRent + pendingBills + effectivePlatformFee)
           : 0;
+
+      final String calculatedPaymentType = (pendingRent > 0 && pendingBills > 0)
+          ? 'BOTH'
+          : (pendingRent > 0 ? 'RENT' : 'BILLS');
 
       // Read local persisted pending status
       bool storedPending = false;
@@ -158,9 +168,11 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
       if (mounted) {
         setState(() {
-          _platformFee = dynamicPlatformFee;
+          _effectivePlatformFee = effectivePlatformFee;
           _pendingRent = pendingRent;
           _pendingBills = pendingBills;
+          _pendingBillsList = pendingBillsList;
+          _paymentType = calculatedPaymentType;
           _totalDue = totalDueAmount;
           _profileData = profile;
           
@@ -191,7 +203,12 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1200,
+      maxHeight: 1600,
+    );
     if (image == null) return;
 
     final bytes = await image.readAsBytes();
@@ -207,12 +224,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       barrierColor: Colors.transparent,
       builder: (ctx) => Stack(
         children: [
-          // Frosted White Blurred Backdrop
+          // Immersive Dark Frosted Glass Backdrop (Tap outside to dismiss)
           Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-              child: Container(
-                color: Colors.white.withValues(alpha: 0.75),
+            child: GestureDetector(
+              onTap: () => Navigator.of(ctx).pop(),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.86),
+                ),
               ),
             ),
           ),
@@ -220,58 +240,117 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             child: Dialog(
               backgroundColor: Colors.transparent,
               elevation: 0,
-              insetPadding: const EdgeInsets.all(16),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Top Glassmorphic Navigation & Badge Header
                   Container(
-                    constraints: const BoxConstraints(maxWidth: 420, maxHeight: 540),
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.receipt_long_rounded, color: Colors.white, size: 16),
+                              SizedBox(width: 6),
+                              Text(
+                                'Payment Receipt',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => Navigator.of(ctx).pop(),
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                            ),
+                            child: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // High-Contrast Image Viewport (Slate-900 background makes white receipts crisp)
+                  Container(
+                    constraints: const BoxConstraints(maxWidth: 420, maxHeight: 520),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: const Color(0xFF0B1120),
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-                      boxShadow: const [
-                        BoxShadow(color: Color(0x1F000000), blurRadius: 28, offset: Offset(0, 10)),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.16), width: 1.2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.65),
+                          blurRadius: 36,
+                          offset: const Offset(0, 16),
+                        ),
                       ],
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(24),
-                      child: Stack(
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            height: 480,
-                            color: Colors.white,
-                            child: InteractiveViewer(
-                              minScale: 0.8,
-                              maxScale: 4.0,
-                              child: Image.memory(
-                                imageBytes,
-                                fit: BoxFit.contain,
-                                width: double.infinity,
-                                height: double.infinity,
-                              ),
+                      child: Container(
+                        width: double.infinity,
+                        height: 480,
+                        color: const Color(0xFF0B1120),
+                        child: InteractiveViewer(
+                          minScale: 0.8,
+                          maxScale: 4.0,
+                          child: Center(
+                            child: Image.memory(
+                              imageBytes,
+                              fit: BoxFit.contain,
+                              filterQuality: FilterQuality.high,
                             ),
                           ),
-                          Positioned(
-                            top: 14,
-                            right: 14,
-                            child: GestureDetector(
-                              onTap: () => Navigator.of(ctx).pop(),
-                              child: Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF1F5F9),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: const Color(0xFFCBD5E1)),
-                                ),
-                                child: const Icon(Icons.close_rounded, color: Color(0xFF475569), size: 20),
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
+                    ),
+                  ),
+
+                  // Subtle Pinch-to-Zoom Helper Hint
+                  Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.pinch_outlined, color: Colors.white70, size: 14),
+                        SizedBox(width: 6),
+                        Text(
+                          'Pinch or drag to inspect text details',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -2178,11 +2257,30 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     ),
                     child: Column(
                       children: [
-                        _buildPaymentBreakdownRow('Pending Rent', '₹${_pendingRent.toStringAsFixed(0)}', icon: Icons.door_sliding_outlined),
-                        const SizedBox(height: 8),
-                        _buildPaymentBreakdownRow('Room & Utility Bills', '₹${_pendingBills.toStringAsFixed(0)}', icon: Icons.receipt_long_outlined),
-                        const SizedBox(height: 8),
-                        _buildPaymentBreakdownRow('Platform Convenience Fee', '₹${_platformFee.toStringAsFixed(0)}', icon: Icons.verified_user_outlined),
+                        if (_pendingRent > 0) ...[
+                          _buildPaymentBreakdownRow('Pending Rent', '₹${_pendingRent.toStringAsFixed(0)}', icon: Icons.door_sliding_outlined),
+                          const SizedBox(height: 8),
+                        ],
+                        if (_pendingBillsList.isNotEmpty) ...[
+                          ..._pendingBillsList.map((bill) {
+                            final desc = (bill['description'] as String?)?.trim();
+                            final billLabel = (desc != null && desc.isNotEmpty) ? desc : 'Utility Bill';
+                            final billAmount = (bill['amount'] as num?)?.toDouble() ?? 0.0;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: _buildPaymentBreakdownRow(
+                                billLabel,
+                                '₹${billAmount.toStringAsFixed(0)}',
+                                icon: _getBillIcon(billLabel),
+                              ),
+                            );
+                          }),
+                        ],
+                        if (_effectivePlatformFee > 0) ...[
+                          _buildPaymentBreakdownRow('Platform Convenience Fee', '₹${_effectivePlatformFee.toStringAsFixed(0)}', icon: Icons.verified_user_outlined),
+                        ] else if (_pendingBills > 0 && _pendingRent == 0) ...[
+                          _buildPaymentBreakdownRow('Platform Fee (Waived for bills)', '₹0', icon: Icons.check_circle_outline_rounded),
+                        ],
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 10),
                           child: Divider(height: 1, color: Color(0xFFE2E8F0)),
@@ -2858,6 +2956,24 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         ),
       ],
     );
+  }
+
+  IconData _getBillIcon(String label) {
+    final lower = label.toLowerCase();
+    if (lower.contains('electric') || lower.contains('power') || lower.contains('current') || lower.contains('eb')) {
+      return Icons.bolt_rounded;
+    } else if (lower.contains('water')) {
+      return Icons.water_drop_rounded;
+    } else if (lower.contains('wifi') || lower.contains('wi-fi') || lower.contains('internet')) {
+      return Icons.wifi_rounded;
+    } else if (lower.contains('clean')) {
+      return Icons.cleaning_services_rounded;
+    } else if (lower.contains('food') || lower.contains('mess')) {
+      return Icons.restaurant_rounded;
+    } else if (lower.contains('maintain') || lower.contains('maintenance')) {
+      return Icons.build_rounded;
+    }
+    return Icons.receipt_long_outlined;
   }
 
   Widget _buildPaymentBreakdownRow(String label, String value, {IconData? icon}) {

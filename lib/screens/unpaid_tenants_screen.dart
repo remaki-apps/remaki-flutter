@@ -156,146 +156,204 @@ class UnpaidTenantsScreen extends StatelessWidget {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFFE2E8F0)),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x040F172A),
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12),
                     onTap: () => context.push('/tenant_profile/${tenant.id}'),
                     child: Padding(
                       padding: const EdgeInsets.all(12),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          TenantAvatar(
-                            name: tenant.name,
-                            imageUrl: tenant.imageUrl,
-                            radius: 20,
-                            backgroundColor: AppTheme.danger.withValues(alpha: 0.1),
-                            textColor: AppTheme.danger,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  tenant.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                    color: Color(0xFF0F172A),
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Room $roomNumber${bedName.isNotEmpty ? ' - $bedName' : ''}',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF64748B),
-                                  ),
-                                ),
-                                 const SizedBox(height: 3),
-                                Row(
+                          // Top Row: Avatar + Tenant Name & Room + WhatsApp Action
+                          Row(
+                            children: [
+                              TenantAvatar(
+                                name: tenant.name,
+                                imageUrl: tenant.imageUrl,
+                                radius: 20,
+                                backgroundColor: AppTheme.danger.withValues(alpha: 0.1),
+                                textColor: AppTheme.danger,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text.rich(
-                                      TextSpan(
-                                        children: [
-                                          const TextSpan(
-                                            text: 'Pending: ',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: Color(0xFF64748B),
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                          TextSpan(
-                                            text: '₹${totalPending.toStringAsFixed(0)}',
-                                            style: const TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppTheme.danger,
-                                            ),
-                                          ),
-                                        ],
+                                    Text(
+                                      tenant.name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                        color: Color(0xFF0F172A),
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Room $roomNumber${bedName.isNotEmpty ? ' - $bedName' : ''}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              // WhatsApp Button
+                              Tooltip(
+                                message: 'Send WhatsApp Reminder',
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(8),
+                                  onTap: () => _sendWhatsAppReminder(
+                                    context,
+                                    tenant,
+                                    roomNumber,
+                                    floorName: floorName,
+                                    pgName: appProvider.pgName,
+                                  ),
+                                  child: Container(
+                                    width: 34,
+                                    height: 34,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF0FDF4),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: const Color(0xFFBBF7D0)),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Image.asset(
+                                      'assets/icons/whatsapp.png',
+                                      width: 18,
+                                      height: 18,
+                                      errorBuilder: (context, error, stackTrace) => const Icon(
+                                        Icons.chat,
+                                        color: Color(0xFF16A34A),
+                                        size: 18,
                                       ),
                                     ),
-                                    if (tenant.isPartiallyPaid) ...[
-                                      const SizedBox(width: 6),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFFEF3C7),
-                                          borderRadius: BorderRadius.circular(4),
-                                          border: Border.all(color: const Color(0xFFFDE68A)),
-                                        ),
-                                        child: const Text(
-                                          'Partial',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w700,
-                                            color: Color(0xFFD97706),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          const Divider(height: 1, thickness: 0.8, color: Color(0xFFF1F5F9)),
+                          const SizedBox(height: 10),
+                          // Bottom Row: Dues & Badges on left, Mark as Paid Button on right
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Wrap(
+                                      spacing: 6,
+                                      runSpacing: 4,
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      children: [
+                                        Text.rich(
+                                          TextSpan(
+                                            children: [
+                                              const TextSpan(
+                                                text: 'Pending: ',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Color(0xFF64748B),
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                              TextSpan(
+                                                text: '₹${totalPending.toStringAsFixed(0)}',
+                                                style: const TextStyle(
+                                                  fontSize: 13.5,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppTheme.danger,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
+                                        if (tenant.isPartiallyPaid)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFFEF3C7),
+                                              borderRadius: BorderRadius.circular(4),
+                                              border: Border.all(color: const Color(0xFFFDE68A)),
+                                            ),
+                                            child: const Text(
+                                              'Partial',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w700,
+                                                color: Color(0xFFD97706),
+                                              ),
+                                            ),
+                                          ),
+                                        if (tenant.totalPendingBills > 0 && tenant.pendingRentAmount == 0)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFEFF6FF),
+                                              borderRadius: BorderRadius.circular(4),
+                                              border: Border.all(color: const Color(0xFFDBEAFE)),
+                                            ),
+                                            child: const Text(
+                                              'Bills Only',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w700,
+                                                color: Color(0xFF2563EB),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    if (tenant.totalPendingBills > 0 && tenant.pendingRentAmount > 0) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Rent: ₹${tenant.pendingRentAmount.toStringAsFixed(0)} • Bills: ₹${tenant.totalPendingBills.toStringAsFixed(0)}',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: Color(0xFF64748B),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ],
                                   ],
                                 ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          // WhatsApp Button with Background Container
-                          Tooltip(
-                            message: 'Send WhatsApp Reminder',
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(8),
-                              onTap: () => _sendWhatsAppReminder(
-                                context,
-                                tenant,
-                                roomNumber,
-                                floorName: floorName,
-                                pgName: appProvider.pgName,
                               ),
-                              child: Container(
-                                width: 34,
-                                height: 34,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF0FDF4),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: const Color(0xFFBBF7D0)),
+                              const SizedBox(width: 8),
+                              // Mark as Paid Button
+                              ElevatedButton(
+                                onPressed: () => context.push('/record_payment/${tenant.id}'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.primaryColor,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  minimumSize: const Size(0, 34),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 ),
-                                alignment: Alignment.center,
-                                child: Image.asset(
-                                  'assets/icons/whatsapp.png',
-                                  width: 18,
-                                  height: 18,
-                                  errorBuilder: (context, error, stackTrace) => const Icon(
-                                    Icons.chat,
-                                    color: Color(0xFF16A34A),
-                                    size: 18,
+                                child: const Text(
+                                  'Mark as Paid',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          // Mark as Paid Button
-                          ElevatedButton(
-                            onPressed: () => context.push('/record_payment/${tenant.id}'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryColor,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              minimumSize: const Size(0, 34),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                            child: const Text(
-                              'Mark as Paid',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            ],
                           ),
                         ],
                       ),

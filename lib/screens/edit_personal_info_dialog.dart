@@ -55,9 +55,9 @@ class _EditPersonalInfoDialogState extends State<EditPersonalInfoDialog> {
     final picker = ImagePicker();
     final XFile? image = await picker.pickImage(
       source: ImageSource.gallery,
-      imageQuality: 15,   // ≈ 5–10 kb at 120x120
-      maxWidth: 120,
-      maxHeight: 120,
+      imageQuality: 90,
+      maxWidth: 1024,
+      maxHeight: 1024,
     );
     
     if (image == null) return;
