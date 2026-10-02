@@ -473,6 +473,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     if (dateStr == null || dateStr.toString().trim().isEmpty) return 'Not Provided';
     final str = dateStr.toString().trim();
     if (str == 'Not Provided' || str == '-') return str;
+    final numVal = int.tryParse(str);
+    if (numVal != null && str.length >= 10 && RegExp(r'^\d+$').hasMatch(str)) {
+      try {
+        final dt = (numVal > 100000000000)
+            ? DateTime.fromMillisecondsSinceEpoch(numVal).toLocal()
+            : DateTime.fromMillisecondsSinceEpoch(numVal * 1000).toLocal();
+        return DateFormat('dd MMM yyyy').format(dt);
+      } catch (_) {}
+    }
     try {
       final dt = DateTime.parse(str).toLocal();
       return DateFormat('dd MMM yyyy').format(dt);
@@ -1046,7 +1055,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               Row(
                                 children: [
                                   Text(
-                                    'Room $roomNumber',
+                                    roomNumber,
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 20,
                                       fontWeight: FontWeight.w800,
@@ -1076,7 +1085,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Bed $bedLabel',
+                                bedLabel,
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
@@ -2548,8 +2557,25 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   String _formatPaymentDateTime(dynamic dateVal) {
     if (dateVal == null) return '-';
     try {
-      final parsed = dateVal is DateTime ? dateVal : DateTime.parse(dateVal.toString());
-      final dt = parsed.toLocal();
+      DateTime dt;
+      if (dateVal is DateTime) {
+        dt = dateVal.toLocal();
+      } else if (dateVal is num) {
+        final val = dateVal.toInt();
+        dt = (val > 100000000000)
+            ? DateTime.fromMillisecondsSinceEpoch(val).toLocal()
+            : DateTime.fromMillisecondsSinceEpoch(val * 1000).toLocal();
+      } else {
+        final str = dateVal.toString().trim();
+        final numVal = int.tryParse(str);
+        if (numVal != null && str.length >= 10 && RegExp(r'^\d+$').hasMatch(str)) {
+          dt = (numVal > 100000000000)
+              ? DateTime.fromMillisecondsSinceEpoch(numVal).toLocal()
+              : DateTime.fromMillisecondsSinceEpoch(numVal * 1000).toLocal();
+        } else {
+          dt = DateTime.parse(str).toLocal();
+        }
+      }
       if (dt.hour == 0 && dt.minute == 0 && dt.second == 0) {
         return DateFormat('dd MMM yyyy').format(dt);
       }
@@ -2610,16 +2636,31 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               ..._payments.asMap().entries.map((entry) {
                 final idx = entry.key;
                 final p = entry.value;
-                final amount = (p['amount'] as num?)?.toDouble() ?? 0.0;
+                double amount = (p['amount'] as num?)?.toDouble() ?? 0.0;
                 final dateStr = _formatPaymentDateTime(p['date']);
                 final method = p['method']?.toString() ?? 'UPI';
                 final notes = p['notes']?.toString();
                 final isLast = idx == _payments.length - 1 && bills.isEmpty;
 
+                // If payment amount includes bills that are also listed separately below,
+                // adjust rent payment amount to the rent portion so bills are not counted twice.
+                if (bills.isNotEmpty && monthlyRentVal > 0 && amount > monthlyRentVal) {
+                  final totalPaidBills = bills
+                      .where((b) => b['status'] == 'PAID')
+                      .fold(0.0, (sum, b) => sum + ((b['amount'] as num?)?.toDouble() ?? 0.0));
+                  if (totalPaidBills > 0 && (amount >= monthlyRentVal + totalPaidBills - 15)) {
+                    amount = monthlyRentVal;
+                  }
+                }
+
+                final displayTitle = (notes != null && notes.isNotEmpty && !notes.toLowerCase().contains('approved via payment request'))
+                    ? notes
+                    : 'Rent Payment';
+
                 return Column(
                   children: [
                     _buildPaymentRecordTile(
-                      title: notes != null && notes.isNotEmpty ? notes : 'Rent Payment',
+                      title: displayTitle,
                       amount: '₹${NumberFormat('#,##,###').format(amount)}',
                       dateStr: dateStr,
                       method: method,
@@ -2744,24 +2785,31 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.calendar_today_outlined,
-                          size: 11.5,
-                          color: Color(0xFF94A3B8),
-                        ),
-                        const SizedBox(width: 4.5),
-                        Text(
-                          isSuccess ? 'Paid on $dateStr' : 'Due by $dateStr',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w500,
-                            color: TenantTheme.textSecondary,
+                    Expanded(
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_today_outlined,
+                            size: 11.5,
+                            color: Color(0xFF94A3B8),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4.5),
+                          Expanded(
+                            child: Text(
+                              isSuccess ? 'Paid on $dateStr' : 'Due by $dateStr',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w500,
+                                color: TenantTheme.textSecondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 6),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -2895,7 +2943,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   children: [
                     _buildReceiptRow('Tenant Name', tenantName),
                     const SizedBox(height: 9),
-                    _buildReceiptRow('Room / Bed', 'Room $roomNumber • Bed $bedLabel'),
+                    _buildReceiptRow('Room / Bed', '$roomNumber • $bedLabel'),
                     const SizedBox(height: 9),
                     _buildReceiptRow('Billing Period', monthStr),
                     const SizedBox(height: 9),
@@ -2992,22 +3040,29 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 15, color: const Color(0xFF64748B)),
-              const SizedBox(width: 8),
-            ],
-            Text(
-              label,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 12.5,
-                color: TenantTheme.textSecondary,
-                fontWeight: FontWeight.w500,
+        Expanded(
+          child: Row(
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 15, color: const Color(0xFF64748B)),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                child: Text(
+                  label,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12.5,
+                    color: TenantTheme.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+        const SizedBox(width: 8),
         Text(
           value,
           style: GoogleFonts.plusJakartaSans(
@@ -3429,9 +3484,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               icon: Icons.home_work_outlined,
               isExpanded: _isStayDetailsExpanded,
               onToggle: () => setState(() => _isStayDetailsExpanded = !_isStayDetailsExpanded),
-              subtitle: 'Room $roomNumber${bedLabel != null && bedLabel.isNotEmpty ? ' • Bed $bedLabel' : ''}',
+              subtitle: '$roomNumber${bedLabel != null && bedLabel.isNotEmpty ? ' • $bedLabel' : ''}',
               items: [
-                _buildProfileRow('Room & Bed', 'Room $roomNumber${bedLabel != null && bedLabel.isNotEmpty ? ' • Bed $bedLabel' : ''}', icon: Icons.door_sliding_outlined),
+                _buildProfileRow('Room & Bed', '$roomNumber${bedLabel != null && bedLabel.isNotEmpty ? ' • $bedLabel' : ''}', icon: Icons.door_sliding_outlined),
                 if (monthlyRentStr != null)
                   _buildProfileRow('Monthly Rent', monthlyRentStr, icon: Icons.currency_rupee_rounded),
                 if (moveInDateStr.isNotEmpty && moveInDateStr != 'Not Provided')

@@ -206,7 +206,7 @@ class TenantProfileScreen extends StatelessWidget {
                                           const Icon(Icons.meeting_room_outlined, size: 12, color: AppTheme.primaryColor),
                                           const SizedBox(width: 4),
                                           Text(
-                                            'Room $roomNumber • $bedName',
+                                            '$roomNumber • $bedName',
                                             style: const TextStyle(
                                               fontSize: 11,
                                               fontWeight: FontWeight.bold,
@@ -863,7 +863,7 @@ class TenantProfileScreen extends StatelessWidget {
                     const Icon(Icons.meeting_room_outlined, size: 16, color: Color(0xFF475569)),
                     const SizedBox(width: 6),
                     Text(
-                      'Room $roomNumber • $bedName',
+                      '$roomNumber • $bedName',
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
@@ -940,7 +940,7 @@ class TenantProfileScreen extends StatelessWidget {
                             FancyToast.showSuccess(
                               context,
                               'Tenant Vacated!',
-                              message: '${tenant.name} has been vacated from Room $roomNumber - $bedName.',
+                              message: '${tenant.name} has been vacated from $roomNumber - $bedName.',
                             );
                           }
                         } catch (e) {
