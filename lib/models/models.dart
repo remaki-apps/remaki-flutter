@@ -174,7 +174,8 @@ class Tenant {
   String paymentStatus;
   double platformFee;
   String propertyId;
-  bool get isUnpaid => !isPaid && !isPartiallyPaid;
+  bool get isPending => paymentStatus == 'PENDING';
+  bool get isUnpaid => !isPaid && !isPartiallyPaid && !isPending;
   bool get isPartiallyPaid => paymentStatus == 'PARTIAL' || (pendingRentAmount > 0 && pendingRentAmount < rentAmount);
   DateTime rentDueDate;
   // Amount still owed on rent this cycle (0 if fully paid, partial if partially paid)
@@ -356,7 +357,9 @@ class Tenant {
         rentAmount: (json['rentAmount'] as num?)?.toDouble() ?? 0.0,
         securityDeposit: (json['securityDeposit'] as num?)?.toDouble() ?? 0.0,
         isPaid: json['isPaid'] as bool? ?? false,
-        paymentStatus: json['paymentStatus']?.toString() ?? (json['isPaid'] == true ? 'PAID' : 'UNPAID'),
+        paymentStatus: (json['hasPendingRequest'] == true || json['paymentStatus'] == 'PENDING')
+            ? 'PENDING'
+            : (json['paymentStatus']?.toString() ?? (json['isPaid'] == true ? 'PAID' : 'UNPAID')),
         platformFee: (json['platformFee'] as num?)?.toDouble() ?? 9.0,
         propertyId: json['propertyId'] as String? ?? (json['room'] != null && json['room']['propertyId'] != null ? json['room']['propertyId'].toString() : ''),
         rentDueDate: (DateTime.tryParse(json['rentDueDate']?.toString() ?? '') ?? DateTime.now()).toLocal(),
@@ -392,6 +395,7 @@ class Payment {
   String? roomNumber;
   String? notes;
   String? propertyId;
+  String? billingMonth;
 
   Payment({
     required this.id,
@@ -403,6 +407,7 @@ class Payment {
     this.roomNumber,
     this.notes,
     this.propertyId,
+    this.billingMonth,
   });
 
   Map<String, dynamic> toJson() => {
@@ -415,6 +420,7 @@ class Payment {
         'roomNumber': roomNumber,
         'notes': notes,
         'propertyId': propertyId,
+        'billingMonth': billingMonth,
       };
 
   factory Payment.fromJson(Map<String, dynamic> json) => Payment(
@@ -429,6 +435,7 @@ class Payment {
         roomNumber: json['roomNumber'] as String?,
         notes: json['notes'] as String?,
         propertyId: json['propertyId'] as String?,
+        billingMonth: json['billingMonth'] as String?,
       );
 }
 

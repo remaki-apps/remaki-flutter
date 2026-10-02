@@ -284,6 +284,7 @@ class ApiService {
           moveInDate
           status
           paymentStatus
+          hasPendingRequest
           rentDueDate
           pendingRentAmount
           defaultPaymentMode
@@ -329,6 +330,7 @@ class ApiService {
           emergencyContact
           status
           paymentStatus
+          hasPendingRequest
           pendingRentAmount
           monthlyRent
           securityDeposit
@@ -537,7 +539,9 @@ class ApiService {
               amount
               method
               date
+              notes
               propertyId
+              billingMonth
             }
           }
         ''';
@@ -550,7 +554,9 @@ class ApiService {
               amount
               method
               date
+              notes
               propertyId
+              billingMonth
             }
           }
         ''';

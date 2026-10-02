@@ -141,7 +141,7 @@ class AppProvider with ChangeNotifier {
           rentAmount: monthlyRent,
           securityDeposit: (e['securityDeposit'] as num?)?.toDouble() ?? 0.0,
           isPaid: e['paymentStatus'] == 'PAID',
-          paymentStatus: e['paymentStatus']?.toString() ?? 'UNPAID',
+          paymentStatus: (e['hasPendingRequest'] == true || e['paymentStatus'] == 'PENDING') ? 'PENDING' : (e['paymentStatus']?.toString() ?? 'UNPAID'),
           platformFee: (e['platformFee'] as num?)?.toDouble() ?? 9.0,
           propertyId: e['propertyId']?.toString() ?? (roomMap?['propertyId']?.toString() ?? ''),
           rentDueDate: e['rentDueDate'] != null ? DateTime.tryParse(e['rentDueDate'].toString()) ?? DateTime.now() : DateTime.now(),
@@ -213,6 +213,7 @@ class AppProvider with ChangeNotifier {
           tenantName: e['tenantName']?.toString() ?? matchedTenant?.name ?? 'Tenant',
           roomNumber: roomInfo,
           notes: e['notes']?.toString(),
+          billingMonth: e['billingMonth']?.toString(),
         );
       }).toList();
 

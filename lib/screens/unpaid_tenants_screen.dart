@@ -282,6 +282,23 @@ class UnpaidTenantsScreen extends StatelessWidget {
                                             ],
                                           ),
                                         ),
+                                        if (tenant.isPending)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFFEF3C7),
+                                              borderRadius: BorderRadius.circular(4),
+                                              border: Border.all(color: const Color(0xFFFDE68A)),
+                                            ),
+                                            child: const Text(
+                                              'Pending Approval',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w700,
+                                                color: Color(0xFFD97706),
+                                              ),
+                                            ),
+                                          ),
                                         if (tenant.isPartiallyPaid)
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),

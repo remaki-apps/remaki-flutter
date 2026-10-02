@@ -293,10 +293,18 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                             decoration: BoxDecoration(
-                                              color: tenant.totalDue == 0 ? const Color(0xFFF0FDF4) : const Color(0xFFFEF2F2),
+                                              color: tenant.totalDue == 0
+                                                  ? const Color(0xFFF0FDF4)
+                                                  : (tenant.isPending
+                                                      ? const Color(0xFFFEF3C7)
+                                                      : const Color(0xFFFEF2F2)),
                                               borderRadius: BorderRadius.circular(20),
                                               border: Border.all(
-                                                color: tenant.totalDue == 0 ? const Color(0xFFDCFCE7) : const Color(0xFFFCA5A5),
+                                                color: tenant.totalDue == 0
+                                                    ? const Color(0xFFDCFCE7)
+                                                    : (tenant.isPending
+                                                        ? const Color(0xFFFDE68A)
+                                                        : const Color(0xFFFCA5A5)),
                                               ),
                                             ),
                                             child: Row(
@@ -306,15 +314,25 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                                   width: 5,
                                                   height: 5,
                                                   decoration: BoxDecoration(
-                                                    color: tenant.totalDue == 0 ? const Color(0xFF16A34A) : const Color(0xFFEF4444),
+                                                    color: tenant.totalDue == 0
+                                                        ? const Color(0xFF16A34A)
+                                                        : (tenant.isPending
+                                                            ? const Color(0xFFD97706)
+                                                            : const Color(0xFFEF4444)),
                                                     shape: BoxShape.circle,
                                                   ),
                                                 ),
                                                 const SizedBox(width: 4),
                                                 Text(
-                                                  tenant.totalDue == 0 ? 'Paid' : 'Unpaid',
+                                                  tenant.totalDue == 0
+                                                      ? 'Paid'
+                                                      : (tenant.isPending ? 'Pending' : 'Unpaid'),
                                                   style: TextStyle(
-                                                    color: tenant.totalDue == 0 ? const Color(0xFF15803D) : const Color(0xFFB91C1C),
+                                                    color: tenant.totalDue == 0
+                                                        ? const Color(0xFF15803D)
+                                                        : (tenant.isPending
+                                                            ? const Color(0xFFD97706)
+                                                            : const Color(0xFFB91C1C)),
                                                     fontSize: 10,
                                                     fontWeight: FontWeight.bold,
                                                   ),

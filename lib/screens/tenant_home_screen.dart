@@ -44,6 +44,70 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   List<dynamic> _announcements = [];
   List<dynamic> _payments = [];
+  DateTime _selectedPaymentMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+  bool _isPaymentHistoryExpanded = false;
+
+  void _prevPaymentMonth() {
+    setState(() {
+      _selectedPaymentMonth = DateTime(_selectedPaymentMonth.year, _selectedPaymentMonth.month - 1, 1);
+    });
+  }
+
+  void _nextPaymentMonth() {
+    setState(() {
+      _selectedPaymentMonth = DateTime(_selectedPaymentMonth.year, _selectedPaymentMonth.month + 1, 1);
+    });
+  }
+
+  void _resetToCurrentPaymentMonth() {
+    setState(() {
+      _selectedPaymentMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+    });
+  }
+
+  bool _isDateInSelectedMonth(dynamic dateVal, DateTime targetMonth) {
+    if (dateVal == null) return false;
+    try {
+      DateTime dt;
+      if (dateVal is DateTime) {
+        dt = dateVal.toLocal();
+      } else if (dateVal is num) {
+        final val = dateVal.toInt();
+        dt = (val > 100000000000)
+            ? DateTime.fromMillisecondsSinceEpoch(val).toLocal()
+            : DateTime.fromMillisecondsSinceEpoch(val * 1000).toLocal();
+      } else {
+        final str = dateVal.toString().trim();
+        final numVal = int.tryParse(str);
+        if (numVal != null && str.length >= 10 && RegExp(r'^\d+$').hasMatch(str)) {
+          dt = (numVal > 100000000000)
+              ? DateTime.fromMillisecondsSinceEpoch(numVal).toLocal()
+              : DateTime.fromMillisecondsSinceEpoch(numVal * 1000).toLocal();
+        } else {
+          dt = DateTime.parse(str).toLocal();
+        }
+      }
+      return dt.year == targetMonth.year && dt.month == targetMonth.month;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  bool _isPaymentInSelectedMonth(dynamic p, DateTime targetMonth) {
+    final targetMonthStr = DateFormat('yyyy-MM').format(targetMonth);
+    if (p['billingMonth'] != null && p['billingMonth'].toString().isNotEmpty) {
+      if (p['billingMonth'].toString() == targetMonthStr) return true;
+    }
+    return _isDateInSelectedMonth(p['date'], targetMonth);
+  }
+
+  bool _isBillInSelectedMonth(dynamic b, DateTime targetMonth) {
+    final targetMonthStr = DateFormat('yyyy-MM').format(targetMonth);
+    if (b['month'] != null && b['month'].toString().isNotEmpty) {
+      if (b['month'].toString() == targetMonthStr) return true;
+    }
+    return _isDateInSelectedMonth(b['createdAt'] ?? b['dueDate'], targetMonth);
+  }
   bool _isStayDetailsExpanded = false;
   bool _isPersonalInfoExpanded = false;
   bool _isAddressExpanded = false;
@@ -518,6 +582,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       moveInDate: DateTime.tryParse(_profileData?['moveInDate'] ?? _profileData?['joiningDate'] ?? '') ?? DateTime.now(),
       rentAmount: (_profileData?['monthlyRent'] as num?)?.toDouble() ?? 0.0,
       securityDeposit: (_profileData?['securityDeposit'] as num?)?.toDouble() ?? 0.0,
+      isPaid: _profileData?['paymentStatus'] == 'PAID',
+      paymentStatus: (_profileData?['hasPendingRequest'] == true || _profileData?['paymentStatus'] == 'PENDING')
+          ? 'PENDING'
+          : (_profileData?['paymentStatus']?.toString() ?? 'UNPAID'),
       rentDueDate: DateTime.tryParse(_profileData?['rentDueDate'] ?? '') ?? DateTime.now(),
       dateOfBirth: _profileData?['dateOfBirth'],
       maritalStatus: _profileData?['maritalStatus'],
@@ -926,7 +994,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     final bedLabel = _profileData?['bed']?['bedLabel'] != null
         ? '${_profileData!['bed']['bedLabel']}'
         : 'Not Assigned';
-    final isPaid = _totalDue <= 0;
+    final isPending = _hasSubmittedForApproval ||
+        _profileData?['paymentStatus'] == 'PENDING' ||
+        _profileData?['hasPendingRequest'] == true;
+    final isPaid = !isPending && _totalDue <= 0;
 
     final double displayRentAmount = _totalDue > 0
         ? _totalDue
@@ -1183,10 +1254,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                         decoration: BoxDecoration(
-                          color: isPaid ? TenantTheme.successBg : TenantTheme.dangerBg,
+                          color: isPaid
+                              ? TenantTheme.successBg
+                              : (isPending ? TenantTheme.warningBg : TenantTheme.dangerBg),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: isPaid ? TenantTheme.successBorder : TenantTheme.dangerBorder,
+                            color: isPaid
+                                ? TenantTheme.successBorder
+                                : (isPending ? TenantTheme.warningBorder : TenantTheme.dangerBorder),
                             width: 0.8,
                           ),
                         ),
@@ -1198,17 +1273,21 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               height: 5.5,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: isPaid ? TenantTheme.success : TenantTheme.danger,
+                                color: isPaid
+                                    ? TenantTheme.success
+                                    : (isPending ? TenantTheme.warning : TenantTheme.danger),
                               ),
                             ),
                             const SizedBox(width: 4.5),
                             Text(
-                              isPaid ? 'PAID' : 'DUE',
+                              isPaid ? 'PAID' : (isPending ? 'PENDING' : 'DUE'),
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.3,
-                                color: isPaid ? TenantTheme.success : TenantTheme.danger,
+                                color: isPaid
+                                    ? TenantTheme.success
+                                    : (isPending ? TenantTheme.warning : TenantTheme.danger),
                               ),
                             ),
                           ],
@@ -1235,11 +1314,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            isPaid ? 'All dues cleared for this month' : 'Payment due on $rentDueDateStr',
+                            isPaid
+                                ? 'All dues cleared for this month'
+                                : (isPending
+                                    ? 'Payment submitted • Under Admin Review'
+                                    : 'Payment due on $rentDueDateStr'),
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11.5,
-                              color: TenantTheme.textMuted,
-                              fontWeight: FontWeight.w500,
+                              color: isPending ? TenantTheme.warning : TenantTheme.textMuted,
+                              fontWeight: isPending ? FontWeight.w600 : FontWeight.w500,
                             ),
                           ),
                         ],
@@ -1247,10 +1330,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: isPaid ? TenantTheme.surface : TenantTheme.primarySoft,
+                          color: isPaid
+                              ? TenantTheme.surface
+                              : (isPending ? TenantTheme.warningBg : TenantTheme.primarySoft),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: isPaid ? TenantTheme.glassBorder : TenantTheme.primaryBorder,
+                            color: isPaid
+                                ? TenantTheme.glassBorder
+                                : (isPending ? TenantTheme.warningBorder : TenantTheme.primaryBorder),
                             width: 0.8,
                           ),
                         ),
@@ -1258,18 +1345,22 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              isPaid ? 'History' : 'Pay Now',
+                              isPaid ? 'History' : (isPending ? 'Under Review' : 'Pay Now'),
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
-                                color: isPaid ? TenantTheme.textSecondary : TenantTheme.primary,
+                                color: isPaid
+                                    ? TenantTheme.textSecondary
+                                    : (isPending ? TenantTheme.warning : TenantTheme.primary),
                               ),
                             ),
                             const SizedBox(width: 3),
                             Icon(
-                              Icons.arrow_forward_rounded,
+                              isPending ? Icons.hourglass_top_rounded : Icons.arrow_forward_rounded,
                               size: 13,
-                              color: isPaid ? TenantTheme.textSecondary : TenantTheme.primary,
+                              color: isPaid
+                                  ? TenantTheme.textSecondary
+                                  : (isPending ? TenantTheme.warning : TenantTheme.primary),
                             ),
                           ],
                         ),
@@ -1280,6 +1371,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 20),
+
+          // 4.5. Month-wise Payment History Section
+          _buildTenantPaymentHistorySection(isHomepage: true),
           const SizedBox(height: 20),
 
           // 5. Recent Notice Card (Frosted Glass)
@@ -1706,13 +1801,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   // ===========================================================================
   Widget _buildRentAndPaymentsScreen() {
     final currentMonthStr = DateFormat('MMMM yyyy').format(DateTime.now());
-    final isPaid = _totalDue <= 0;
+    final isPending = _hasSubmittedForApproval ||
+        _profileData?['paymentStatus'] == 'PENDING' ||
+        _profileData?['hasPendingRequest'] == true;
+    final isPaid = !isPending && _totalDue <= 0;
     final double monthlyRentVal = ((_profileData?['monthlyRent'] as num?)?.toDouble() ?? 0.0);
     final double displayRent = _totalDue > 0 ? _totalDue : monthlyRentVal;
     final rentDueDateStr = _profileData?['rentDueDate'] != null
         ? _formatDate(_profileData!['rentDueDate'])
         : '-';
-    final bills = (_profileData?['bills'] as List<dynamic>? ?? []);
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
@@ -1838,12 +1935,16 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               decoration: BoxDecoration(
                                 color: isPaid
                                     ? const Color(0xFF10B981).withValues(alpha: 0.25)
-                                    : const Color(0xFFEF4444).withValues(alpha: 0.32),
+                                    : (isPending
+                                        ? const Color(0xFFF59E0B).withValues(alpha: 0.32)
+                                        : const Color(0xFFEF4444).withValues(alpha: 0.32)),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
                                   color: isPaid
                                       ? const Color(0xFF6EE7B7).withValues(alpha: 0.6)
-                                      : const Color(0xFFFCA5A5).withValues(alpha: 0.6),
+                                      : (isPending
+                                          ? const Color(0xFFFDE68A).withValues(alpha: 0.7)
+                                          : const Color(0xFFFCA5A5).withValues(alpha: 0.6)),
                                   width: 1,
                                 ),
                               ),
@@ -1851,13 +1952,23 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    isPaid ? Icons.check_circle_rounded : Icons.pending_rounded,
+                                    isPaid
+                                        ? Icons.check_circle_rounded
+                                        : (isPending
+                                            ? Icons.hourglass_top_rounded
+                                            : Icons.pending_rounded),
                                     size: 13,
-                                    color: isPaid ? const Color(0xFF6EE7B7) : const Color(0xFFFECACA),
+                                    color: isPaid
+                                        ? const Color(0xFF6EE7B7)
+                                        : (isPending
+                                            ? const Color(0xFFFDE68A)
+                                            : const Color(0xFFFECACA)),
                                   ),
                                   const SizedBox(width: 5),
                                   Text(
-                                    isPaid ? 'PAID & SETTLED' : 'PAYMENT DUE',
+                                    isPaid
+                                        ? 'PAID & SETTLED'
+                                        : (isPending ? 'PENDING APPROVAL' : 'PAYMENT DUE'),
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 10.5,
                                       fontWeight: FontWeight.w800,
@@ -1904,13 +2015,25 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 Row(
                                   children: [
                                     Icon(
-                                      isPaid ? Icons.verified_rounded : Icons.schedule_rounded,
+                                      isPaid
+                                          ? Icons.verified_rounded
+                                          : (isPending
+                                              ? Icons.hourglass_top_rounded
+                                              : Icons.schedule_rounded),
                                       size: 13,
-                                      color: isPaid ? const Color(0xFF6EE7B7) : Colors.white.withValues(alpha: 0.82),
+                                      color: isPaid
+                                          ? const Color(0xFF6EE7B7)
+                                          : (isPending
+                                              ? const Color(0xFFFDE68A)
+                                              : Colors.white.withValues(alpha: 0.82)),
                                     ),
                                     const SizedBox(width: 5),
                                     Text(
-                                      isPaid ? 'All dues cleared for this cycle' : 'Due by $rentDueDateStr',
+                                      isPaid
+                                          ? 'All dues cleared for this cycle'
+                                          : (isPending
+                                              ? 'Payment submitted • Under Admin Review'
+                                              : 'Due by $rentDueDateStr'),
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 11.5,
                                         color: Colors.white.withValues(alpha: 0.85),
@@ -2500,54 +2623,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             const SizedBox(height: 20),
           ],
 
-          // 3. Payment History Section
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      color: TenantTheme.primarySoft,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.history_rounded, color: TenantTheme.primary, size: 17),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Payment History',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: TenantTheme.textPrimary,
-                      letterSpacing: -0.4,
-                    ),
-                  ),
-                ],
-              ),
-              if (_payments.isNotEmpty || bills.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '${_payments.length + bills.where((b) => b['status'] == 'PAID').length} Records',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF64748B),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Display Rent cycle record + bills dynamically from API
-          _buildPaymentHistoryList(currentMonthStr, monthlyRentVal, isPaid, bills),
+          // 3. Payment History Section (Month-wise)
+          _buildTenantPaymentHistorySection(isHomepage: false),
           const SizedBox(height: 24),
         ],
       ),
@@ -2585,136 +2662,478 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     }
   }
 
-  Widget _buildPaymentHistoryList(String currentMonthStr, double monthlyRentVal, bool isPaid, List<dynamic> bills) {
-    final hasRecordedPayments = _payments.isNotEmpty;
-    final hasPaidBills = bills.any((b) => b['status'] == 'PAID');
-    final hasPaidCycle = isPaid && monthlyRentVal > 0;
+  Widget _buildTenantPaymentHistorySection({bool isHomepage = false}) {
+    final selectedMonthStr = DateFormat('MMMM yyyy').format(_selectedPaymentMonth);
+    final now = DateTime.now();
+    final isCurrentMonth = _selectedPaymentMonth.year == now.year && _selectedPaymentMonth.month == now.month;
+    final isPastMonth = _selectedPaymentMonth.isBefore(DateTime(now.year, now.month, 1));
+    final double monthlyRentVal = ((_profileData?['monthlyRent'] as num?)?.toDouble() ?? 0.0);
 
-    if (!hasRecordedPayments && !hasPaidBills && !hasPaidCycle) {
-      return _buildGlassContainer(
-        borderRadius: 22,
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
-        child: Center(
-          child: Column(
-            children: [
-              Image.asset(
-                'assets/images/no_payment_history.png',
-                height: 160,
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'No Payment Records Found',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w700,
-                  color: TenantTheme.textPrimary,
+    // 1. Filter payments belonging to the selected month
+    final monthPayments = _payments.where((p) => _isPaymentInSelectedMonth(p, _selectedPaymentMonth)).toList();
+
+    // 2. Filter bills belonging to the selected month
+    final allBills = (_profileData?['bills'] as List<dynamic>? ?? []);
+    final monthBills = allBills.where((b) => _isBillInSelectedMonth(b, _selectedPaymentMonth)).toList();
+    final paidMonthBills = monthBills.where((b) => b['status'] == 'PAID').toList();
+
+    // 3. Compute total paid for this selected month
+    double totalPaidThisMonth = 0;
+    for (var p in monthPayments) {
+      double amt = (p['amount'] as num?)?.toDouble() ?? 0.0;
+      if (allBills.isNotEmpty && monthlyRentVal > 0 && amt > monthlyRentVal) {
+        final totalPaidBills = allBills
+            .where((b) => b['status'] == 'PAID')
+            .fold(0.0, (sum, b) => sum + ((b['amount'] as num?)?.toDouble() ?? 0.0));
+        if (totalPaidBills > 0 && (amt >= monthlyRentVal + totalPaidBills - 15)) {
+          amt = monthlyRentVal;
+        }
+      }
+      totalPaidThisMonth += amt;
+    }
+    for (var b in paidMonthBills) {
+      if (monthPayments.isEmpty) {
+        totalPaidThisMonth += (b['amount'] as num?)?.toDouble() ?? 0.0;
+      }
+    }
+
+    final isPendingApproval = isCurrentMonth && (_hasSubmittedForApproval ||
+        _profileData?['paymentStatus'] == 'PENDING' ||
+        _profileData?['hasPendingRequest'] == true);
+    final isCurrentPaid = isCurrentMonth && !isPendingApproval && _totalDue <= 0;
+
+    if (monthPayments.isEmpty && isCurrentPaid && monthlyRentVal > 0 && totalPaidThisMonth == 0) {
+      totalPaidThisMonth = monthlyRentVal;
+    }
+
+    // Determine status badge
+    String statusBadge;
+    Color statusBg;
+    Color statusBorder;
+    Color statusColor;
+    if (totalPaidThisMonth > 0 || monthPayments.isNotEmpty) {
+      statusBadge = 'PAID';
+      statusBg = TenantTheme.successBg;
+      statusBorder = TenantTheme.successBorder;
+      statusColor = TenantTheme.success;
+    } else if (isCurrentMonth) {
+      if (isPendingApproval) {
+        statusBadge = 'PENDING';
+        statusBg = TenantTheme.warningBg;
+        statusBorder = TenantTheme.warningBorder;
+        statusColor = TenantTheme.warning;
+      } else if (_totalDue > 0) {
+        statusBadge = 'DUE';
+        statusBg = TenantTheme.dangerBg;
+        statusBorder = TenantTheme.dangerBorder;
+        statusColor = TenantTheme.danger;
+      } else {
+        statusBadge = 'NO DUES';
+        statusBg = const Color(0xFFF1F5F9);
+        statusBorder = const Color(0xFFCBD5E1);
+        statusColor = const Color(0xFF64748B);
+      }
+    } else if (isPastMonth) {
+      statusBadge = 'NO PAYMENTS';
+      statusBg = const Color(0xFFF1F5F9);
+      statusBorder = const Color(0xFFCBD5E1);
+      statusColor = const Color(0xFF64748B);
+    } else {
+      statusBadge = 'UPCOMING';
+      statusBg = const Color(0xFFEFF6FF);
+      statusBorder = const Color(0xFFBFDBFE);
+      statusColor = const Color(0xFF2563EB);
+    }
+
+    final List<Widget> transactionWidgets = [];
+
+    if (monthPayments.isNotEmpty) {
+      for (int i = 0; i < monthPayments.length; i++) {
+        final p = monthPayments[i];
+        double amount = (p['amount'] as num?)?.toDouble() ?? 0.0;
+        final dateStr = _formatPaymentDateTime(p['date']);
+        final method = p['method']?.toString() ?? 'UPI';
+        final notes = p['notes']?.toString();
+
+        if (allBills.isNotEmpty && monthlyRentVal > 0 && amount > monthlyRentVal) {
+          final totalPaidBills = allBills
+              .where((b) => b['status'] == 'PAID')
+              .fold(0.0, (sum, b) => sum + ((b['amount'] as num?)?.toDouble() ?? 0.0));
+          if (totalPaidBills > 0 && (amount >= monthlyRentVal + totalPaidBills - 15)) {
+            amount = monthlyRentVal;
+          }
+        }
+
+        final displayTitle = (notes != null && notes.isNotEmpty && !notes.toLowerCase().contains('approved via payment request'))
+            ? notes
+            : 'Rent Payment';
+
+        transactionWidgets.add(_buildPaymentRecordTile(
+          title: displayTitle,
+          amount: '₹${NumberFormat('#,##,###').format(amount)}',
+          dateStr: dateStr,
+          method: method,
+          status: 'Paid',
+          isSuccess: true,
+        ));
+        if (i < monthPayments.length - 1 || monthBills.isNotEmpty) {
+          transactionWidgets.add(const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16));
+        }
+      }
+    } else if (monthPayments.isEmpty && isCurrentPaid && monthlyRentVal > 0) {
+      transactionWidgets.add(_buildPaymentRecordTile(
+        title: '$selectedMonthStr Rent',
+        amount: '₹${NumberFormat('#,##,###').format(monthlyRentVal)}',
+        dateStr: _formatPaymentDateTime(DateTime.now()),
+        method: 'UPI',
+        status: 'Paid',
+        isSuccess: true,
+      ));
+      if (monthBills.isNotEmpty) {
+        transactionWidgets.add(const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16));
+      }
+    }
+
+    for (int i = 0; i < monthBills.length; i++) {
+      final b = monthBills[i];
+      final isBillPaid = b['status'] == 'PAID';
+      final amount = (b['amount'] as num?)?.toDouble() ?? 0;
+      final title = b['description'] != null && b['description'].toString().isNotEmpty
+          ? b['description'].toString()
+          : (b['type'] != null ? '${b['type']} Bill' : 'Utility Bill');
+      final billDate = isBillPaid
+          ? _formatPaymentDateTime(b['createdAt'] ?? b['dueDate'])
+          : _formatDate(b['dueDate'] ?? b['createdAt']);
+
+      transactionWidgets.add(_buildPaymentRecordTile(
+        title: title,
+        amount: '₹${NumberFormat('#,##,###').format(amount)}',
+        dateStr: billDate,
+        method: isBillPaid ? 'PAID' : 'PENDING',
+        status: isBillPaid ? 'Paid' : 'Pending',
+        isSuccess: isBillPaid,
+      ));
+      if (i < monthBills.length - 1) {
+        transactionWidgets.add(const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16));
+      }
+    }
+
+    final totalCount = monthPayments.length + monthBills.length + (monthPayments.isEmpty && isCurrentPaid ? 1 : 0);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section Header
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: TenantTheme.primarySoft,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.history_rounded, color: TenantTheme.primary, size: 17),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Payment History',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: TenantTheme.textPrimary,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+              ],
+            ),
+            if (isHomepage)
+              GestureDetector(
+                onTap: () => setState(() => _currentNavIndex = 1),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'View All',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: TenantTheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    const Icon(Icons.arrow_forward_rounded, size: 13, color: TenantTheme.primary),
+                  ],
+                ),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '$totalCount Records',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF64748B),
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Your payment history and rent clearances will be recorded here.',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
-                  color: TenantTheme.textSecondary,
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Month Navigation Bar
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: TenantTheme.glassBorder, width: 1),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x060F172A),
+                blurRadius: 8,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chevron_left_rounded, size: 22, color: Color(0xFF1E293B)),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                splashRadius: 18,
+                onPressed: _prevPaymentMonth,
+                tooltip: 'Previous Month',
+              ),
+              GestureDetector(
+                onTap: isCurrentMonth ? null : _resetToCurrentPaymentMonth,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.calendar_month_rounded, size: 15, color: TenantTheme.primary),
+                    const SizedBox(width: 6),
+                    Text(
+                      selectedMonthStr,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6.5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isCurrentMonth ? const Color(0xFFEEF2FF) : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: isCurrentMonth ? const Color(0xFFC7D2FE) : const Color(0xFFE2E8F0),
+                          width: 0.6,
+                        ),
+                      ),
+                      child: Text(
+                        isCurrentMonth ? 'Current' : 'Reset',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: isCurrentMonth ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right_rounded, size: 22, color: Color(0xFF1E293B)),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                splashRadius: 18,
+                onPressed: _nextPaymentMonth,
+                tooltip: 'Next Month',
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // Monthly Summary Metric Card (Frosted Glass Container)
+        _buildGlassContainer(
+          borderRadius: 16,
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: totalPaidThisMonth > 0 ? const Color(0xFFECFDF5) : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: totalPaidThisMonth > 0 ? const Color(0xFFA7F3D0) : const Color(0xFFE2E8F0),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.account_balance_wallet_rounded,
+                      size: 18,
+                      color: totalPaidThisMonth > 0 ? const Color(0xFF10B981) : const Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'TOTAL PAID FOR ${selectedMonthStr.toUpperCase()}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: TenantTheme.textMuted,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '₹${NumberFormat('#,##,###').format(totalPaidThisMonth)}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: TenantTheme.textPrimary,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                decoration: BoxDecoration(
+                  color: statusBg,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: statusBorder, width: 0.8),
+                ),
+                child: Text(
+                  statusBadge,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.3,
+                    color: statusColor,
+                  ),
                 ),
               ),
             ],
           ),
         ),
-      );
-    }
+        const SizedBox(height: 10),
 
-    return _buildGlassContainer(
-      borderRadius: 22,
-      child: Column(
-        children: [
-            // 1. If backend payments exist, display each payment record with exact paid date
-            if (hasRecordedPayments) ...[
-              ..._payments.asMap().entries.map((entry) {
-                final idx = entry.key;
-                final p = entry.value;
-                double amount = (p['amount'] as num?)?.toDouble() ?? 0.0;
-                final dateStr = _formatPaymentDateTime(p['date']);
-                final method = p['method']?.toString() ?? 'UPI';
-                final notes = p['notes']?.toString();
-                final isLast = idx == _payments.length - 1 && bills.isEmpty;
-
-                // If payment amount includes bills that are also listed separately below,
-                // adjust rent payment amount to the rent portion so bills are not counted twice.
-                if (bills.isNotEmpty && monthlyRentVal > 0 && amount > monthlyRentVal) {
-                  final totalPaidBills = bills
-                      .where((b) => b['status'] == 'PAID')
-                      .fold(0.0, (sum, b) => sum + ((b['amount'] as num?)?.toDouble() ?? 0.0));
-                  if (totalPaidBills > 0 && (amount >= monthlyRentVal + totalPaidBills - 15)) {
-                    amount = monthlyRentVal;
-                  }
-                }
-
-                final displayTitle = (notes != null && notes.isNotEmpty && !notes.toLowerCase().contains('approved via payment request'))
-                    ? notes
-                    : 'Rent Payment';
-
-                return Column(
-                  children: [
-                    _buildPaymentRecordTile(
-                      title: displayTitle,
-                      amount: '₹${NumberFormat('#,##,###').format(amount)}',
-                      dateStr: dateStr,
-                      method: method,
-                      status: 'Paid',
-                      isSuccess: true,
-                    ),
-                    if (!isLast) const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
-                  ],
-                );
-              }),
-            ] else if (hasPaidCycle) ...[
-              // Fallback if backend payments list is empty but profile is marked PAID
-              _buildPaymentRecordTile(
-                title: '$currentMonthStr Rent',
-                amount: '₹${NumberFormat('#,##,###').format(monthlyRentVal)}',
-                dateStr: _formatPaymentDateTime(DateTime.now()),
-                method: 'UPI',
-                status: 'Paid',
-                isSuccess: true,
-              ),
-              if (bills.isNotEmpty) const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
-            ],
-
-            // 2. Bills history
-            ...bills.asMap().entries.map((entry) {
-              final idx = entry.key;
-              final b = entry.value;
-              final isBillPaid = b['status'] == 'PAID';
-              final amount = (b['amount'] as num?)?.toDouble() ?? 0;
-              final title = b['description'] != null && b['description'].toString().isNotEmpty
-                  ? b['description'].toString()
-                  : (b['type'] != null ? '${b['type']} Bill' : 'Utility Bill');
-              final billDate = isBillPaid
-                  ? _formatPaymentDateTime(b['createdAt'] ?? b['dueDate'])
-                  : _formatDate(b['dueDate'] ?? b['createdAt']);
-
-              return Column(
-                children: [
-                  _buildPaymentRecordTile(
-                    title: title,
-                    amount: '₹${NumberFormat('#,##,###').format(amount)}',
-                    dateStr: billDate,
-                    method: isBillPaid ? 'PAID' : 'PENDING',
-                    status: isBillPaid ? 'Paid' : 'Pending',
-                    isSuccess: isBillPaid,
+        // Transactions Container
+        if (transactionWidgets.isEmpty)
+          _buildGlassContainer(
+            borderRadius: 18,
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.receipt_long_rounded,
+                  size: 36,
+                  color: TenantTheme.textMuted.withValues(alpha: 0.45),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'No Records for $selectedMonthStr',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: TenantTheme.textPrimary,
                   ),
-                  if (idx < bills.length - 1)
-                    const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'No transactions or dues were recorded for this month.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    color: TenantTheme.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          _buildGlassContainer(
+            borderRadius: 18,
+            child: Column(
+              children: [
+                // Summary View: show preview of top 2 items
+                if (!_isPaymentHistoryExpanded) ...[
+                  ...transactionWidgets.take(3), // Up to 2 items + 1 divider
+                ] else ...[
+                  // Detailed View: show all items
+                  ...transactionWidgets,
                 ],
-              );
-            }),
-          ],
-        ),
-      );
+
+                // Show More / Show Summary Expandable Button
+                if (transactionWidgets.length > 2)
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        _isPaymentHistoryExpanded = !_isPaymentHistoryExpanded;
+                      });
+                    },
+                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(18)),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.vertical(bottom: Radius.circular(18)),
+                        border: Border(top: BorderSide(color: Color(0xFFF1F5F9), width: 1)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _isPaymentHistoryExpanded
+                                ? 'Show Summary'
+                                : 'Show More ($totalCount Transactions)',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: TenantTheme.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            _isPaymentHistoryExpanded
+                                ? Icons.keyboard_arrow_up_rounded
+                                : Icons.keyboard_arrow_down_rounded,
+                            size: 17,
+                            color: TenantTheme.primary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
   }
 
   Widget _buildPaymentRecordTile({

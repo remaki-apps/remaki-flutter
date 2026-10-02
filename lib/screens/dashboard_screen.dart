@@ -22,6 +22,26 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _pendingApprovalsCount = 0;
   bool _isLoadingApprovals = false;
+  DateTime _selectedPaymentMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+  bool _isPaymentHistoryExpanded = false;
+
+  void _prevPaymentMonth() {
+    setState(() {
+      _selectedPaymentMonth = DateTime(_selectedPaymentMonth.year, _selectedPaymentMonth.month - 1, 1);
+    });
+  }
+
+  void _nextPaymentMonth() {
+    setState(() {
+      _selectedPaymentMonth = DateTime(_selectedPaymentMonth.year, _selectedPaymentMonth.month + 1, 1);
+    });
+  }
+
+  void _resetToCurrentPaymentMonth() {
+    setState(() {
+      _selectedPaymentMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+    });
+  }
 
   @override
   void initState() {
@@ -105,9 +125,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final collectedRent = appProvider.collectedRent;
     final pendingRent = appProvider.pendingRent;
 
-    final sortedPayments = [...appProvider.currentPayments]..sort((a, b) => b.date.compareTo(a.date));
-    final recentPayments = sortedPayments.take(5).toList();
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
@@ -145,12 +162,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // 5. Payment History (Recent Transactions with Tenant Profile Photos)
+                // 5. Payment History (Month-wise Transactions & Summary)
                 _buildPaymentHistorySection(
                   context: context,
                   appProvider: appProvider,
-                  payments: recentPayments,
-                  totalCount: appProvider.currentPayments.length,
+                  payments: appProvider.currentPayments,
                 ),
                 const SizedBox(height: 24),
               ],
@@ -1239,8 +1255,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required BuildContext context,
     required AppProvider appProvider,
     required List<Payment> payments,
-    required int totalCount,
   }) {
+    final targetMonthKey = DateFormat('yyyy-MM').format(_selectedPaymentMonth);
+    final monthPayments = payments.where((p) {
+      if (p.billingMonth != null && p.billingMonth!.isNotEmpty) {
+        return p.billingMonth == targetMonthKey;
+      }
+      return p.date.year == _selectedPaymentMonth.year && p.date.month == _selectedPaymentMonth.month;
+    }).toList();
+    monthPayments.sort((a, b) => b.date.compareTo(a.date));
+
+    final double monthTotalCollected = monthPayments.fold(0.0, (sum, p) => sum + p.amount);
+    final now = DateTime.now();
+    final isCurrentMonth = _selectedPaymentMonth.year == now.year && _selectedPaymentMonth.month == now.month;
+    final selectedMonthStr = DateFormat('MMMM yyyy').format(_selectedPaymentMonth);
+
+    final displayList = _isPaymentHistoryExpanded
+        ? monthPayments
+        : monthPayments.take(3).toList();
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -1264,6 +1297,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 1. Header with Title and "View All" Link
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1297,7 +1331,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                     ),
-                    if (totalCount > 0) ...[
+                    if (payments.isNotEmpty) ...[
                       const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
@@ -1307,7 +1341,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
                         ),
                         child: Text(
-                          '$totalCount',
+                          '${payments.length}',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
@@ -1344,11 +1378,172 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 14),
+
+          // 2. Month Navigation Bar with Previous and Next Arrows
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left_rounded, size: 22, color: Color(0xFF1E293B)),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                  splashRadius: 18,
+                  onPressed: _prevPaymentMonth,
+                  tooltip: 'Previous Month',
+                ),
+                GestureDetector(
+                  onTap: isCurrentMonth ? null : _resetToCurrentPaymentMonth,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.calendar_month_rounded, size: 15, color: AppTheme.primaryColor),
+                      const SizedBox(width: 6),
+                      Text(
+                        selectedMonthStr,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                      if (isCurrentMonth) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEEF2FF),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFC7D2FE), width: 0.6),
+                          ),
+                          child: Text(
+                            'Current',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF4F46E5),
+                            ),
+                          ),
+                        ),
+                      ] else ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Reset',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF64748B),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right_rounded, size: 22, color: Color(0xFF1E293B)),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                  splashRadius: 18,
+                  onPressed: _nextPaymentMonth,
+                  tooltip: 'Next Month',
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 12),
-          if (payments.isEmpty)
+
+          // 3. Month Summary Statistics Card
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFF8FAFC), Color(0xFFF1F5F9)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$selectedMonthStr Collections',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '₹${NumberFormat('#,##,###').format(monthTotalCollected)}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.4,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: monthPayments.isNotEmpty ? const Color(0xFFDCFCE7) : const Color(0xFFFFFFFF),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: monthPayments.isNotEmpty ? const Color(0xFF86EFAC) : const Color(0xFFE2E8F0),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        monthPayments.isNotEmpty ? Icons.check_circle_rounded : Icons.info_outline_rounded,
+                        size: 13,
+                        color: monthPayments.isNotEmpty ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+                      ),
+                      const SizedBox(width: 4.5),
+                      Text(
+                        '${monthPayments.length} ${monthPayments.length == 1 ? "Payment" : "Payments"}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: monthPayments.isNotEmpty ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // 4. Transactions List or Month Empty State
+          if (monthPayments.isEmpty)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
               decoration: BoxDecoration(
                 color: const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(12),
@@ -1358,12 +1553,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   Image.asset(
                     'assets/images/no_payment_history.png',
-                    height: 120,
+                    height: 100,
                     fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'No payment history yet',
+                    'No transactions in $selectedMonthStr',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -1371,65 +1566,74 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   const SizedBox(height: 3),
-                  const Text(
-                    'Payments recorded for tenants will appear here.',
-                    style: TextStyle(
+                  Text(
+                    'Use the arrows above to inspect previous or upcoming months.',
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 11,
-                      color: Color(0xFF94A3B8),
+                      color: const Color(0xFF94A3B8),
                     ),
                     textAlign: TextAlign.center,
                   ),
                 ],
               ),
             )
-          else
+          else ...[
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: payments.length,
+              itemCount: displayList.length,
               separatorBuilder: (_, __) => const Padding(
                 padding: EdgeInsets.symmetric(vertical: 8.0),
                 child: Divider(height: 1, color: Color(0xFFF1F5F9)),
               ),
               itemBuilder: (context, index) {
-                final payment = payments[index];
+                final payment = displayList[index];
                 return _buildPaymentRow(payment, appProvider);
               },
             ),
-          if (totalCount > 5) ...[
-            const SizedBox(height: 12),
-            GestureDetector(
-              onTap: () => context.push('/payment_history'),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 9),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                alignment: Alignment.center,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'View all $totalCount transactions',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
+
+            // 5. "Show More" / "Show Less" Expandable Button
+            if (monthPayments.length > 3) ...[
+              const SizedBox(height: 12),
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isPaymentHistoryExpanded = !_isPaymentHistoryExpanded;
+                  });
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEEF2FF),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFC7D2FE), width: 0.8),
+                  ),
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _isPaymentHistoryExpanded
+                            ? 'Show Summary'
+                            : 'Show More (${monthPayments.length - 3} more in $selectedMonthStr)',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        _isPaymentHistoryExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                        size: 18,
                         color: AppTheme.primaryColor,
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.arrow_forward_rounded,
-                      size: 13,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ],
         ],
       ),

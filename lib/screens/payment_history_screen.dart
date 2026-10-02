@@ -19,6 +19,38 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   String _searchQuery = '';
   String _selectedFilter = 'ALL'; // ALL, UPI, CASH, BANK
 
+  DateTime? _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+
+  void _prevMonth() {
+    setState(() {
+      final cur = _selectedMonth ?? DateTime(DateTime.now().year, DateTime.now().month, 1);
+      _selectedMonth = DateTime(cur.year, cur.month - 1, 1);
+    });
+  }
+
+  void _nextMonth() {
+    setState(() {
+      final cur = _selectedMonth ?? DateTime(DateTime.now().year, DateTime.now().month, 1);
+      _selectedMonth = DateTime(cur.year, cur.month + 1, 1);
+    });
+  }
+
+  void _resetToCurrentMonth() {
+    setState(() {
+      _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+    });
+  }
+
+  void _toggleAllTime() {
+    setState(() {
+      if (_selectedMonth == null) {
+        _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+      } else {
+        _selectedMonth = null;
+      }
+    });
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -40,7 +72,19 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
-    final sortedPayments = [...appProvider.currentPayments]..sort((a, b) => b.date.compareTo(a.date));
+    final allSortedPayments = [...appProvider.currentPayments]..sort((a, b) => b.date.compareTo(a.date));
+
+    // Filter by selected month if not All Time
+    final sortedPayments = _selectedMonth == null
+        ? allSortedPayments
+        : allSortedPayments.where((p) {
+            final targetMonthStr = DateFormat('yyyy-MM').format(_selectedMonth!);
+            if (p.billingMonth != null && p.billingMonth!.isNotEmpty) {
+              if (p.billingMonth == targetMonthStr) return true;
+            }
+            final local = p.date.toLocal();
+            return local.year == _selectedMonth!.year && local.month == _selectedMonth!.month;
+          }).toList();
 
     // Calculate total amount collected from all payments
     final double totalCollected = sortedPayments.fold(0.0, (sum, p) => sum + p.amount);
@@ -139,6 +183,135 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 0. Month Navigation Bar with Previous, Next, and All Time Toggle
+              Container(
+                margin: const EdgeInsets.only(bottom: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x060F172A),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left_rounded, size: 22, color: Color(0xFF1E293B)),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                      splashRadius: 18,
+                      onPressed: _prevMonth,
+                      tooltip: 'Previous Month',
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        if (_selectedMonth != null &&
+                            (_selectedMonth!.year != DateTime.now().year || _selectedMonth!.month != DateTime.now().month)) {
+                          _resetToCurrentMonth();
+                        }
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.calendar_month_rounded,
+                            size: 16,
+                            color: _selectedMonth != null ? AppTheme.primaryColor : const Color(0xFF64748B),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            _selectedMonth == null
+                                ? 'All Time'
+                                : DateFormat('MMMM yyyy').format(_selectedMonth!),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF0F172A),
+                            ),
+                          ),
+                          if (_selectedMonth != null) ...[
+                            const SizedBox(width: 6),
+                            if (_selectedMonth!.year == DateTime.now().year &&
+                                _selectedMonth!.month == DateTime.now().month)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEEF2FF),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: const Color(0xFFC7D2FE), width: 0.6),
+                                ),
+                                child: Text(
+                                  'Current',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF4F46E5),
+                                  ),
+                                ),
+                              )
+                            else
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  'Reset',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.chevron_right_rounded, size: 22, color: Color(0xFF1E293B)),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                          splashRadius: 18,
+                          onPressed: _nextMonth,
+                          tooltip: 'Next Month',
+                        ),
+                        const SizedBox(width: 4),
+                        GestureDetector(
+                          onTap: _toggleAllTime,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: _selectedMonth == null ? AppTheme.primaryColor : const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              _selectedMonth == null ? 'Month View' : 'All Time',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: _selectedMonth == null ? Colors.white : const Color(0xFF475569),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
               // 1. Total Collections Metric Card (Fintech Hero Card)
               Container(
                 width: double.infinity,
@@ -190,7 +363,9 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'TOTAL RECORDED PAYMENTS',
+                                _selectedMonth == null
+                                    ? 'TOTAL RECORDED PAYMENTS'
+                                    : 'COLLECTIONS FOR ${DateFormat('MMMM yyyy').format(_selectedMonth!).toUpperCase()}',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 10.5,
                                   color: Colors.white70,

@@ -10,16 +10,43 @@ import '../services/api_service.dart';
 import '../widgets/fancy_toast.dart';
 import 'edit_financials_dialog.dart';
 import 'edit_personal_info_dialog.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../widgets/app_shimmer.dart';
 
-class TenantProfileScreen extends StatelessWidget {
+class TenantProfileScreen extends StatefulWidget {
   final String tenantId;
   const TenantProfileScreen({super.key, required this.tenantId});
 
   @override
+  State<TenantProfileScreen> createState() => _TenantProfileScreenState();
+}
+
+class _TenantProfileScreenState extends State<TenantProfileScreen> {
+  DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+  bool _isHistoryExpanded = false;
+
+  void _prevMonth() {
+    setState(() {
+      _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month - 1, 1);
+    });
+  }
+
+  void _nextMonth() {
+    setState(() {
+      _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1);
+    });
+  }
+
+  void _resetToCurrentMonth() {
+    setState(() {
+      _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
-    final tenantIndex = appProvider.tenants.indexWhere((t) => t.id == tenantId);
+    final tenantIndex = appProvider.tenants.indexWhere((t) => t.id == widget.tenantId);
 
     if (tenantIndex == -1) {
       return Scaffold(
@@ -68,7 +95,7 @@ class TenantProfileScreen extends StatelessWidget {
             : 'N/A')
         : 'N/A';
 
-    final tenantPayments = appProvider.payments.where((p) => p.tenantId == tenantId).toList()
+    final tenantPayments = appProvider.payments.where((p) => p.tenantId == widget.tenantId).toList()
       ..sort((a, b) => b.date.compareTo(a.date));
 
     return Scaffold(
@@ -415,6 +442,54 @@ class TenantProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
 
+                    if (tenant.isPending) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFFDE68A)),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFFDE68A),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.hourglass_top_rounded, color: Color(0xFFD97706), size: 16),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Text(
+                                    'Payment Request Pending Approval',
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF92400E),
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'This tenant submitted payment proof. Verify in Pending Approvals.',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Color(0xFFB45309),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
                     // Financial Summary Cards
                     Row(
                       children: [
@@ -422,9 +497,15 @@ class TenantProfileScreen extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: tenant.totalDue == 0 ? const Color(0xFFF0FDF4) : const Color(0xFFFFF7ED),
+                              color: tenant.totalDue == 0
+                                  ? const Color(0xFFF0FDF4)
+                                  : (tenant.isPending ? const Color(0xFFFEF3C7) : const Color(0xFFFFF7ED)),
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: tenant.totalDue == 0 ? const Color(0xFFDCFCE7) : const Color(0xFFFFEDD5)),
+                              border: Border.all(
+                                color: tenant.totalDue == 0
+                                    ? const Color(0xFFDCFCE7)
+                                    : (tenant.isPending ? const Color(0xFFFDE68A) : const Color(0xFFFFEDD5)),
+                              ),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -436,15 +517,25 @@ class TenantProfileScreen extends StatelessWidget {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: tenant.totalDue == 0 ? const Color(0xFFDCFCE7) : const Color(0xFFFFEDD5),
+                                        color: tenant.totalDue == 0
+                                            ? const Color(0xFFDCFCE7)
+                                            : (tenant.isPending ? const Color(0xFFFDE68A) : const Color(0xFFFFEDD5)),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
-                                        tenant.totalDue == 0 ? 'PAID' : (tenant.pendingRentAmount < tenant.rentAmount && tenant.pendingRentAmount > 0 ? 'PARTIAL' : 'DUE'),
+                                        tenant.totalDue == 0
+                                            ? 'PAID'
+                                            : (tenant.isPending
+                                                ? 'PENDING'
+                                                : (tenant.pendingRentAmount < tenant.rentAmount && tenant.pendingRentAmount > 0
+                                                    ? 'PARTIAL'
+                                                    : 'DUE')),
                                         style: TextStyle(
                                           fontSize: 9,
                                           fontWeight: FontWeight.bold,
-                                          color: tenant.totalDue == 0 ? const Color(0xFF16A34A) : const Color(0xFFEA580C),
+                                          color: tenant.totalDue == 0
+                                              ? const Color(0xFF16A34A)
+                                              : (tenant.isPending ? const Color(0xFFD97706) : const Color(0xFFEA580C)),
                                         ),
                                       ),
                                     ),
@@ -456,7 +547,9 @@ class TenantProfileScreen extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: tenant.totalDue == 0 ? const Color(0xFF15803D) : const Color(0xFFC2410C),
+                                    color: tenant.totalDue == 0
+                                        ? const Color(0xFF15803D)
+                                        : (tenant.isPending ? const Color(0xFFD97706) : const Color(0xFFC2410C)),
                                   ),
                                 ),
                               ],
@@ -620,7 +713,7 @@ class TenantProfileScreen extends StatelessWidget {
                           ),
                           if (tenant.totalPendingBills > 0 || !tenant.isPaid)
                             _buildModernDetailItem(Icons.account_balance_wallet_outlined, 'Total Due', '₹${tenant.totalDue.toStringAsFixed(0)}', isHighlight: true),
-                          _buildModernDetailItem(Icons.local_atm_outlined, 'Platform Fee per Rent Payment', '₹${tenant.platformFee.toStringAsFixed(0)}', isHighlight: false),
+                          _buildModernDetailItem(Icons.local_atm_outlined, 'Platform Fee per Rent Payment', '₹${tenant.platformFee.toStringAsFixed(0)}'),
                         ],
                       ),
                     ),
@@ -637,7 +730,7 @@ class TenantProfileScreen extends StatelessWidget {
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
                           ),
                           Text(
-                            '${tenantPayments.length} Payments',
+                            '${tenantPayments.length} Total Payments',
                             style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
                           ),
                         ],
@@ -645,132 +738,333 @@ class TenantProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
 
-                    if (tenantPayments.isEmpty)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFF1F5F9)),
-                        ),
-                        child: Column(
-                          children: [
-                            Image.asset(
-                              'assets/images/no_payment_history.png',
-                              height: 120,
-                              fit: BoxFit.contain,
-                            ),
-                            const SizedBox(height: 10),
-                            const Text(
-                              'No Recorded Payments Yet',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF334155),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              'Payment history for this tenant will appear here.',
-                              style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      ...tenantPayments.map((payment) {
-                        final localDate = payment.date.toLocal();
-                        final dateStr = (localDate.hour == 0 && localDate.minute == 0 && localDate.second == 0)
-                            ? DateFormat('dd MMM yyyy').format(localDate)
-                            : DateFormat('dd MMM yyyy, hh:mm a').format(localDate);
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: const Color(0xFFF1F5F9)),
+                    // Month Navigation Bar with Previous and Next Arrows
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+                        boxShadow: const [
+                          BoxShadow(color: Color(0x04000000), blurRadius: 4, offset: Offset(0, 1)),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.chevron_left_rounded, size: 22, color: Color(0xFF1E293B)),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                            splashRadius: 18,
+                            onPressed: _prevMonth,
+                            tooltip: 'Previous Month',
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 36,
-                                      height: 36,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF0FDF4),
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(color: const Color(0xFFDCFCE7)),
-                                      ),
-                                      child: const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 18),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              const Icon(Icons.calendar_today_rounded, size: 11.5, color: Color(0xFF16A34A)),
-                                              const SizedBox(width: 4),
-                                              Expanded(
-                                                child: Text(
-                                                  'Paid on $dateStr',
-                                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            payment.method,
-                                            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    '₹${payment.amount.toStringAsFixed(0)}',
-                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                          GestureDetector(
+                            onTap: (DateTime.now().year == _selectedMonth.year && DateTime.now().month == _selectedMonth.month)
+                                ? null
+                                : _resetToCurrentMonth,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.calendar_month_rounded, size: 15, color: AppTheme.primaryColor),
+                                const SizedBox(width: 6),
+                                Text(
+                                  DateFormat('MMMM yyyy').format(_selectedMonth),
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF0F172A),
                                   ),
-                                  const SizedBox(width: 8),
+                                ),
+                                if (DateTime.now().year == _selectedMonth.year && DateTime.now().month == _selectedMonth.month) ...[
+                                  const SizedBox(width: 6),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFDCFCE7),
+                                      color: const Color(0xFFEEF2FF),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: const Color(0xFFC7D2FE), width: 0.6),
+                                    ),
+                                    child: Text(
+                                      'Current',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF4F46E5),
+                                      ),
+                                    ),
+                                  ),
+                                ] else ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF1F5F9),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
-                                    child: const Text('PAID', style: TextStyle(color: Color(0xFF16A34A), fontSize: 9, fontWeight: FontWeight.bold)),
+                                    child: Text(
+                                      'Reset',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF64748B),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.chevron_right_rounded, size: 22, color: Color(0xFF1E293B)),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                            splashRadius: 18,
+                            onPressed: _nextMonth,
+                            tooltip: 'Next Month',
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Month Summary Metrics
+                    Builder(
+                      builder: (context) {
+                        final targetMonthKey = DateFormat('yyyy-MM').format(_selectedMonth);
+                        final monthPayments = tenantPayments.where((p) {
+                          if (p.billingMonth != null && p.billingMonth!.isNotEmpty) {
+                            return p.billingMonth == targetMonthKey;
+                          }
+                          return p.date.year == _selectedMonth.year && p.date.month == _selectedMonth.month;
+                        }).toList();
+                        final double monthTotalPaid = monthPayments.fold(0.0, (sum, p) => sum + p.amount);
+                        final selectedMonthStr = DateFormat('MMMM yyyy').format(_selectedMonth);
+                        final displayList = _isHistoryExpanded ? monthPayments : monthPayments.take(2).toList();
+
+                        return Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFFF1F5F9)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '$selectedMonthStr Paid',
+                                        style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '₹${monthTotalPaid.toStringAsFixed(0)}',
+                                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                      ),
+                                    ],
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: monthPayments.isNotEmpty ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      '${monthPayments.length} ${monthPayments.length == 1 ? "Payment" : "Payments"}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: monthPayments.isNotEmpty ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
+                            ),
+                            const SizedBox(height: 10),
+
+                            if (monthPayments.isEmpty)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: const Color(0xFFF1F5F9)),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Image.asset(
+                                      'assets/images/no_payment_history.png',
+                                      height: 90,
+                                      fit: BoxFit.contain,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'No Payments for $selectedMonthStr',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF334155),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    const Text(
+                                      'Transactions recorded for this month will appear here.',
+                                      style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            else ...[
+                              ...displayList.map((payment) {
+                                final localDate = payment.date.toLocal();
+                                final dateStr = (localDate.hour == 0 && localDate.minute == 0 && localDate.second == 0)
+                                    ? DateFormat('dd MMM yyyy').format(localDate)
+                                    : DateFormat('dd MMM yyyy, hh:mm a').format(localDate);
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(color: const Color(0xFFF1F5F9)),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 36,
+                                              height: 36,
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFF0FDF4),
+                                                borderRadius: BorderRadius.circular(10),
+                                                border: Border.all(color: const Color(0xFFDCFCE7)),
+                                              ),
+                                              child: const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 18),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      const Icon(Icons.calendar_today_rounded, size: 11.5, color: Color(0xFF16A34A)),
+                                                      const SizedBox(width: 4),
+                                                      Expanded(
+                                                        child: Text(
+                                                          'Paid on $dateStr',
+                                                          style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow.ellipsis,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    (payment.notes != null && payment.notes!.isNotEmpty)
+                                                        ? '${payment.method} • ${payment.notes}'
+                                                        : payment.method,
+                                                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            '₹${payment.amount.toStringAsFixed(0)}',
+                                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFDCFCE7),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: const Text('PAID', style: TextStyle(color: Color(0xFF16A34A), fontSize: 9, fontWeight: FontWeight.bold)),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+
+                              if (monthPayments.length > 2) ...[
+                                const SizedBox(height: 4),
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _isHistoryExpanded = !_isHistoryExpanded;
+                                    });
+                                  },
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(vertical: 9),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEEF2FF),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: const Color(0xFFC7D2FE), width: 0.8),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          _isHistoryExpanded
+                                              ? 'Show Summary'
+                                              : 'Show More (${monthPayments.length - 2} more in $selectedMonthStr)',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppTheme.primaryColor,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Icon(
+                                          _isHistoryExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                                          size: 16,
+                                          color: AppTheme.primaryColor,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
-                          ),
+                          ],
                         );
-                      }),
+                      },
+                    ),
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
             ),
           ),
         ],
-        ),
       ),
+    ),
     ),
     );
   }
