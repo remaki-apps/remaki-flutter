@@ -527,6 +527,28 @@ class ApiService {
     return result['vacateTenant'] == true;
   }
 
+  static Future<bool> transferTenant({
+    required String tenantId,
+    required String fromBedId,
+    required String toBedId,
+    String? reason,
+  }) async {
+    const mutation = '''
+      mutation TransferTenant(\$input: TransferTenantInput!) {
+        transferTenant(input: \$input)
+      }
+    ''';
+    final result = await performQuery(mutation, variables: {
+      'input': {
+        'tenantId': tenantId,
+        'fromBedId': fromBedId,
+        'toBedId': toBedId,
+        'reason': reason,
+      }
+    });
+    return result['transferTenant'] == true;
+  }
+
   static Future<List<dynamic>> fetchPayments({String? tenantId}) async {
     try {
       String query;

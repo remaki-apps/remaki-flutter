@@ -379,13 +379,14 @@ class RoomDetailsScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: tenant.totalDue == 0 ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
+                    color: tenant.statusBgColor,
                     borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: tenant.statusBorderColor, width: 0.5),
                   ),
                   child: Text(
-                    tenant.totalDue == 0 ? 'PAID' : 'UNPAID',
+                    tenant.statusBadgeLabel,
                     style: TextStyle(
-                      color: tenant.totalDue == 0 ? const Color(0xFF16A34A) : const Color(0xFFEF4444),
+                      color: tenant.statusColor,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),

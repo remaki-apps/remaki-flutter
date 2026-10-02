@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
+import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tenant_avatar.dart';
@@ -161,16 +162,37 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: () => _showVacateDialog(context, appProvider, tenant, roomNumber, bedName),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFEE2E2),
-                        borderRadius: BorderRadius.circular(12),
+                  Tooltip(
+                    message: 'Change Room',
+                    child: GestureDetector(
+                      onTap: () => _showChangeRoomDialog(context, appProvider, tenant, roomNumber, bedName),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFDBEAFE)),
+                        ),
+                        child: const Icon(Icons.swap_horiz_rounded, color: AppTheme.primaryColor, size: 22),
                       ),
-                      child: const Icon(Icons.person_remove_outlined, color: Color(0xFFEF4444), size: 20),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Tooltip(
+                    message: 'Vacate Tenant',
+                    child: GestureDetector(
+                      onTap: () => _showVacateDialog(context, appProvider, tenant, roomNumber, bedName),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEE2E2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFECACA)),
+                        ),
+                        child: const Icon(Icons.person_remove_outlined, color: Color(0xFFEF4444), size: 20),
+                      ),
                     ),
                   ),
                 ],
@@ -499,22 +521,10 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: tenant.totalDue == 0
-                                  ? const Color(0xFFF0FDF4)
-                                  : (tenant.isPending
-                                      ? const Color(0xFFFEF3C7)
-                                      : (tenant.isUpcoming
-                                          ? const Color(0xFFEFF6FF)
-                                          : const Color(0xFFFFF7ED))),
+                              color: tenant.statusBgColor,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: tenant.totalDue == 0
-                                    ? const Color(0xFFDCFCE7)
-                                    : (tenant.isPending
-                                        ? const Color(0xFFFDE68A)
-                                        : (tenant.isUpcoming
-                                            ? const Color(0xFFBFDBFE)
-                                            : const Color(0xFFFFEDD5))),
+                                color: tenant.statusBorderColor,
                               ),
                             ),
                             child: Column(
@@ -527,35 +537,16 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: tenant.totalDue == 0
-                                            ? const Color(0xFFDCFCE7)
-                                            : (tenant.isPending
-                                                ? const Color(0xFFFDE68A)
-                                                : (tenant.isUpcoming
-                                                    ? const Color(0xFFDBEAFE)
-                                                    : const Color(0xFFFFEDD5))),
+                                        color: tenant.statusBgColor,
                                         borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: tenant.statusBorderColor, width: 0.5),
                                       ),
                                       child: Text(
-                                        tenant.totalDue == 0
-                                            ? 'PAID'
-                                            : (tenant.isPending
-                                                ? 'PENDING'
-                                                : (tenant.isUpcoming
-                                                    ? 'UPCOMING'
-                                                    : (tenant.pendingRentAmount < tenant.rentAmount && tenant.pendingRentAmount > 0
-                                                        ? 'PARTIAL'
-                                                        : 'DUE'))),
+                                        tenant.statusBadgeLabel,
                                         style: TextStyle(
                                           fontSize: 9,
                                           fontWeight: FontWeight.bold,
-                                          color: tenant.totalDue == 0
-                                              ? const Color(0xFF16A34A)
-                                              : (tenant.isPending
-                                                  ? const Color(0xFFD97706)
-                                                  : (tenant.isUpcoming
-                                                      ? const Color(0xFF2563EB)
-                                                      : const Color(0xFFEA580C))),
+                                          color: tenant.statusColor,
                                         ),
                                       ),
                                     ),
@@ -567,13 +558,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: tenant.totalDue == 0
-                                        ? const Color(0xFF15803D)
-                                        : (tenant.isPending
-                                            ? const Color(0xFFD97706)
-                                            : (tenant.isUpcoming
-                                                ? const Color(0xFF2563EB)
-                                                : const Color(0xFFC2410C))),
+                                    color: tenant.statusColor,
                                   ),
                                 ),
                               ],
@@ -721,6 +706,11 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                           const SizedBox(height: 12),
                           _buildModernDetailItem(Icons.calendar_today_outlined, 'Move-in Date', DateFormat('dd/MM/yyyy').format(tenant.moveInDate)),
                           _buildModernDetailItem(Icons.payments_outlined, 'Monthly Rent', '₹${tenant.rentAmount.toStringAsFixed(0)}'),
+                          _buildModernDetailItem(
+                            Icons.event_outlined,
+                            'Rent Due Date',
+                            '${_formatOrdinalDay(tenant.rentDueDate.day)} of every month (${DateFormat('dd MMM yyyy').format(tenant.rentDueDate)})',
+                          ),
                           if (!tenant.isPaid && tenant.pendingRentAmount > 0 && tenant.pendingRentAmount < tenant.rentAmount)
                             _buildModernDetailItem(Icons.account_balance_wallet_outlined, 'Rent Balance Due', '₹${tenant.pendingRentAmount.toStringAsFixed(0)}', isHighlight: true),
                           ...tenant.additionalCharges.where((c) => c.billType != 'RENT' && (c.status == 'PENDING' || c.status == 'UNPAID')).map(
@@ -1142,6 +1132,24 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
     );
   }
 
+  String _formatOrdinalDay(int day) {
+    String suffix = 'th';
+    if (day < 11 || day > 13) {
+      switch (day % 10) {
+        case 1:
+          suffix = 'st';
+          break;
+        case 2:
+          suffix = 'nd';
+          break;
+        case 3:
+          suffix = 'rd';
+          break;
+      }
+    }
+    return '$day$suffix';
+  }
+
   Widget _buildModernDetailItem(IconData icon, String label, String value, {bool isHighlight = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -1149,6 +1157,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, size: 16, color: isHighlight ? AppTheme.primaryColor : const Color(0xFF64748B)),
               const SizedBox(width: 8),
@@ -1162,12 +1171,16 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
               ),
             ],
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: isHighlight ? AppTheme.primaryColor : const Color(0xFF0F172A),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: isHighlight ? AppTheme.primaryColor : const Color(0xFF0F172A),
+              ),
             ),
           ),
         ],
@@ -1332,6 +1345,298 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showChangeRoomDialog(
+    BuildContext context,
+    AppProvider appProvider,
+    dynamic tenant,
+    String currentRoomNumber,
+    String currentBedName,
+  ) {
+    String? selectedRoomId;
+    String? selectedBedId;
+    bool isSubmitting = false;
+
+    // Filter rooms that have at least one available bed
+    final availableRooms = appProvider.rooms.where((r) => r.beds.any((b) => b.isAvailable)).toList();
+
+    showDialog(
+      context: context,
+      barrierDismissible: !isSubmitting,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          final room = selectedRoomId != null
+              ? appProvider.rooms.where((r) => r.id == selectedRoomId).firstOrNull
+              : null;
+          final availableBeds = room != null
+              ? room.beds.where((b) => b.isAvailable).toList()
+              : <Bed>[];
+
+          return Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            backgroundColor: Colors.white,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(22),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(Icons.swap_horiz_rounded, color: AppTheme.primaryColor, size: 24),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Change Room',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Transfer tenant to a new room & bed',
+                                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Current Stay Info
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline, size: 16, color: Color(0xFF64748B)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Current: Room $currentRoomNumber • $currentBedName',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF334155),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    if (availableRooms.isEmpty) ...[
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF2F2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFECACA)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444), size: 20),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'No rooms with available beds found. Please create or free a bed first.',
+                                style: TextStyle(fontSize: 12, color: Color(0xFF991B1B)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ] else ...[
+                      // Select Target Room
+                      const Text(
+                        'Select Target Room',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                      ),
+                      const SizedBox(height: 6),
+                      DropdownButtonFormField<String>(
+                        value: selectedRoomId,
+                        isExpanded: true,
+                        decoration: InputDecoration(
+                          hintText: 'Choose Room',
+                          hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
+                          filled: true,
+                          fillColor: const Color(0xFFF8FAFC),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                        ),
+                        items: availableRooms.map((r) {
+                          final avail = r.beds.where((b) => b.isAvailable).length;
+                          return DropdownMenuItem<String>(
+                            value: r.id,
+                            child: Text(
+                              'Room ${r.number} (${r.floor}) — $avail free',
+                              style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          setDialogState(() {
+                            selectedRoomId = val;
+                            selectedBedId = null;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Select Target Bed
+                      const Text(
+                        'Select Target Bed',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                      ),
+                      const SizedBox(height: 6),
+                      DropdownButtonFormField<String>(
+                        value: selectedBedId,
+                        isExpanded: true,
+                        decoration: InputDecoration(
+                          hintText: selectedRoomId == null ? 'Select room first' : 'Choose Bed',
+                          hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
+                          filled: true,
+                          fillColor: const Color(0xFFF8FAFC),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                        ),
+                        items: availableBeds.map((b) {
+                          return DropdownMenuItem<String>(
+                            value: b.id,
+                            child: Text(
+                              b.name,
+                              style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: selectedRoomId == null
+                            ? null
+                            : (val) {
+                                setDialogState(() {
+                                  selectedBedId = val;
+                                });
+                              },
+                      ),
+                      const SizedBox(height: 22),
+                    ],
+
+                    // Action Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              backgroundColor: const Color(0xFFF1F5F9),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: isSubmitting ? null : () => Navigator.of(ctx).pop(),
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(color: Color(0xFF475569), fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              backgroundColor: AppTheme.primaryColor,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: (isSubmitting || selectedBedId == null)
+                                ? null
+                                : () async {
+                                    setDialogState(() => isSubmitting = true);
+                                    try {
+                                      await ApiService.transferTenant(
+                                        tenantId: tenant.id,
+                                        fromBedId: tenant.bedId,
+                                        toBedId: selectedBedId!,
+                                        reason: 'Admin transfer via Tenant Profile',
+                                      );
+                                      await appProvider.loadFromAPI();
+                                      if (ctx.mounted) Navigator.of(ctx).pop();
+                                      if (context.mounted) {
+                                        final targetRoom = appProvider.rooms.where((r) => r.id == selectedRoomId).firstOrNull;
+                                        final targetBed = targetRoom?.beds.where((b) => b.id == selectedBedId).firstOrNull;
+                                        FancyToast.showSuccess(
+                                          context,
+                                          'Room Changed!',
+                                          message: '${tenant.name} transferred to Room ${targetRoom?.number ?? ""} - ${targetBed?.name ?? ""}.',
+                                        );
+                                      }
+                                    } catch (e) {
+                                      setDialogState(() => isSubmitting = false);
+                                      if (context.mounted) {
+                                        FancyToast.showError(
+                                          context,
+                                          'Transfer Failed',
+                                          message: ApiService.cleanErrorMessage(e),
+                                        );
+                                      }
+                                    }
+                                  },
+                            child: isSubmitting
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  )
+                                : const Text(
+                                    'Confirm Transfer',
+                                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

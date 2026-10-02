@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
@@ -61,13 +62,19 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
 
   Future<void> _handleAccept(String requestId) async {
     final appProvider = Provider.of<AppProvider>(context, listen: false);
+    // Optimistically remove request from UI immediately
+    setState(() {
+      _requests.removeWhere((r) => r['id']?.toString() == requestId);
+    });
     try {
       await ApiService.resolvePaymentRequest(requestId, 'APPROVE');
       await appProvider.loadFromAPI();
       if (!mounted) return;
       FancyToast.showSuccess(context, 'Payment Accepted');
-      _loadRequests();
+      await _loadRequests();
     } catch (e) {
+      // Reload on failure to restore accurate state
+      await _loadRequests();
       if (mounted) FancyToast.showError(context, 'Approval Failed', message: ApiService.cleanErrorMessage(e));
     }
   }
@@ -254,11 +261,18 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
     if (reason != null && reason.isNotEmpty) {
       if (!mounted) return;
       final appProvider = Provider.of<AppProvider>(context, listen: false);
+      final req = _requests.firstWhere((r) => r['id']?.toString() == requestId, orElse: () => null);
+
+      // Optimistically remove request from UI immediately
+      setState(() {
+        _requests.removeWhere((r) => r['id']?.toString() == requestId);
+      });
+
       try {
         await ApiService.resolvePaymentRequest(requestId, 'REJECT', rejectionReason: reason);
+        await appProvider.loadFromAPI();
 
         // Launch WhatsApp to notify tenant
-        final req = _requests.firstWhere((r) => r['id'] == requestId, orElse: () => null);
         if (req != null) {
           final tenant = appProvider.tenants.firstWhere((t) => t.id == req['tenantProfileId'], orElse: () => appProvider.tenants.first);
           final msg = Uri.encodeComponent('Your request for marking rent payment as paid is rejected. Reason: $reason. Kindly upload a valid screenshot.');
@@ -270,8 +284,10 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
 
         if (!mounted) return;
         FancyToast.showSuccess(context, 'Payment Declined');
-        _loadRequests();
+        await _loadRequests();
       } catch (e) {
+        // Reload on failure to restore accurate state
+        await _loadRequests();
         if (mounted) FancyToast.showError(context, 'Decline Failed', message: ApiService.cleanErrorMessage(e));
       }
     }
@@ -513,6 +529,17 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                         final String paymentType = req['paymentType']?.toString() ?? 'RENT';
                         final String? description = req['description']?.toString();
                         final String? proofImageBase64 = req['proofImageBase64']?.toString();
+                        final String method = req['method']?.toString() ?? '';
+                        final String? createdAtRaw = req['createdAt']?.toString();
+
+                        DateTime? requestDateTime;
+                        String formattedDateTime = '';
+                        if (createdAtRaw != null && createdAtRaw.isNotEmpty) {
+                          requestDateTime = DateTime.tryParse(createdAtRaw)?.toLocal();
+                          if (requestDateTime != null) {
+                            formattedDateTime = DateFormat('dd MMM yyyy, hh:mm a').format(requestDateTime);
+                          }
+                        }
 
                         Uint8List? proofBytes;
                         if (proofImageBase64 != null && proofImageBase64.isNotEmpty) {
@@ -578,6 +605,24 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                                                   ),
                                                 ),
                                               ),
+                                              if (method.isNotEmpty) ...[
+                                                const SizedBox(width: 6),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(0xFFF1F5F9),
+                                                    borderRadius: BorderRadius.circular(6),
+                                                  ),
+                                                  child: Text(
+                                                    method.toUpperCase(),
+                                                    style: const TextStyle(
+                                                      color: Color(0xFF475569),
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ],
                                           ),
                                         ],
@@ -593,6 +638,45 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                                     ),
                                   ],
                                 ),
+
+                                // Sent Date & Time Badge
+                                if (formattedDateTime.isNotEmpty) ...[
+                                  const SizedBox(height: 10),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF8FAFC),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.schedule_rounded,
+                                          size: 14,
+                                          color: Color(0xFF64748B),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Sent: ',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w500,
+                                            color: const Color(0xFF64748B),
+                                          ),
+                                        ),
+                                        Text(
+                                          formattedDateTime,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: const Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
 
                                 if (description != null && description.trim().isNotEmpty) ...[
                                   const SizedBox(height: 12),

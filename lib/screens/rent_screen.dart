@@ -225,35 +225,65 @@ class _RentScreenState extends State<RentScreen> {
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          PieChart(
-                            PieChartData(
-                              sectionsSpace: 3,
-                              centerSpaceRadius: 55,
-                              startDegreeOffset: -90,
-                              sections: expectedAmount > 0
-                                  ? [
-                                      PieChartSectionData(
-                                        color: const Color(0xFF16A34A),
-                                        value: collectedAmount > 0 ? collectedAmount : 0.001,
-                                        title: '',
-                                        radius: 22,
-                                      ),
-                                      PieChartSectionData(
-                                        color: AppTheme.danger,
-                                        value: pendingAmount > 0 ? pendingAmount : 0.001,
-                                        title: '',
-                                        radius: 22,
-                                      ),
-                                    ]
-                                  : [
-                                      PieChartSectionData(
-                                        color: const Color(0xFFE2E8F0),
-                                        value: 1,
-                                        title: '',
-                                        radius: 18,
-                                      ),
-                                    ],
-                            ),
+                          Builder(
+                            builder: (context) {
+                              final hasCollected = collectedAmount > 0;
+                              final hasPending = pendingAmount > 0;
+                              final List<PieChartSectionData> chartSections;
+
+                              if (hasCollected && hasPending) {
+                                chartSections = [
+                                  PieChartSectionData(
+                                    color: const Color(0xFF16A34A),
+                                    value: collectedAmount,
+                                    title: '',
+                                    radius: 22,
+                                  ),
+                                  PieChartSectionData(
+                                    color: AppTheme.danger,
+                                    value: pendingAmount,
+                                    title: '',
+                                    radius: 22,
+                                  ),
+                                ];
+                              } else if (hasCollected) {
+                                chartSections = [
+                                  PieChartSectionData(
+                                    color: const Color(0xFF16A34A),
+                                    value: collectedAmount,
+                                    title: '',
+                                    radius: 22,
+                                  ),
+                                ];
+                              } else if (hasPending) {
+                                chartSections = [
+                                  PieChartSectionData(
+                                    color: AppTheme.danger,
+                                    value: pendingAmount,
+                                    title: '',
+                                    radius: 22,
+                                  ),
+                                ];
+                              } else {
+                                chartSections = [
+                                  PieChartSectionData(
+                                    color: const Color(0xFFE2E8F0),
+                                    value: 1,
+                                    title: '',
+                                    radius: 18,
+                                  ),
+                                ];
+                              }
+
+                              return PieChart(
+                                PieChartData(
+                                  sectionsSpace: (hasCollected && hasPending) ? 3 : 0,
+                                  centerSpaceRadius: 55,
+                                  startDegreeOffset: -90,
+                                  sections: chartSections,
+                                ),
+                              );
+                            },
                           ),
                           Column(
                             mainAxisSize: MainAxisSize.min,

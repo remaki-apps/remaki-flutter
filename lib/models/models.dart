@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 String generateEasyPassword() {
@@ -175,10 +176,90 @@ class Tenant {
   double platformFee;
   String propertyId;
   bool get isPending => paymentStatus == 'PENDING';
-  bool get isUpcoming => !isPaid && !isPending && (paymentStatus == 'UPCOMING' || (paymentStatus != 'UNPAID' && DateTime.now().isBefore(DateTime(rentDueDate.year, rentDueDate.month, rentDueDate.day, 23, 59, 59))));
-  bool get isOverdue => !isPaid && !isPending && !isUpcoming;
-  bool get isUnpaid => !isPaid && !isPartiallyPaid && !isPending;
   bool get isPartiallyPaid => paymentStatus == 'PARTIAL' || (pendingRentAmount > 0 && pendingRentAmount < rentAmount);
+
+  bool get isUpcoming {
+    if (isPaid || isPending || isPartiallyPaid) return false;
+    if (paymentStatus == 'UPCOMING') return true;
+    if (paymentStatus == 'OVERDUE' || paymentStatus == 'UNPAID') return false;
+    final dueStart = DateTime(rentDueDate.year, rentDueDate.month, rentDueDate.day);
+    return DateTime.now().isBefore(dueStart);
+  }
+
+  bool get isOverdue {
+    if (isPaid || isPending || isPartiallyPaid) return false;
+    if (paymentStatus == 'OVERDUE') return true;
+    final nextMonthFirst = DateTime(rentDueDate.year, rentDueDate.month + 1, 1);
+    return DateTime.now().isAfter(nextMonthFirst) || DateTime.now().isAtSameMomentAs(nextMonthFirst);
+  }
+
+  bool get isUnpaid {
+    if (isPaid || isPending || isPartiallyPaid) return false;
+    return !isUpcoming && !isOverdue;
+  }
+
+  String get statusBadgeLabel {
+    if (isPaid || totalDue == 0) return 'PAID';
+    if (isPending) return 'PENDING';
+    if (isPartiallyPaid) return 'PARTIAL';
+    if (isUpcoming) return 'UPCOMING';
+    if (isOverdue) return 'OVERDUE';
+    return 'UNPAID';
+  }
+
+  Color get statusColor {
+    switch (statusBadgeLabel) {
+      case 'PAID':
+        return const Color(0xFF16A34A);
+      case 'PENDING':
+        return const Color(0xFFD97706);
+      case 'PARTIAL':
+        return const Color(0xFFEAB308);
+      case 'UPCOMING':
+        return const Color(0xFF2563EB);
+      case 'OVERDUE':
+        return const Color(0xFFEF4444);
+      case 'UNPAID':
+      default:
+        return const Color(0xFFEA580C);
+    }
+  }
+
+  Color get statusBgColor {
+    switch (statusBadgeLabel) {
+      case 'PAID':
+        return const Color(0xFFDCFCE7);
+      case 'PENDING':
+        return const Color(0xFFFEF3C7);
+      case 'PARTIAL':
+        return const Color(0xFFFEF9C3);
+      case 'UPCOMING':
+        return const Color(0xFFEFF6FF);
+      case 'OVERDUE':
+        return const Color(0xFFFEE2E2);
+      case 'UNPAID':
+      default:
+        return const Color(0xFFFFEDD5);
+    }
+  }
+
+  Color get statusBorderColor {
+    switch (statusBadgeLabel) {
+      case 'PAID':
+        return const Color(0xFFBBF7D0);
+      case 'PENDING':
+        return const Color(0xFFFDE68A);
+      case 'PARTIAL':
+        return const Color(0xFFFDE047);
+      case 'UPCOMING':
+        return const Color(0xFFBFDBFE);
+      case 'OVERDUE':
+        return const Color(0xFFFCA5A5);
+      case 'UNPAID':
+      default:
+        return const Color(0xFFFED7AA);
+    }
+  }
   DateTime rentDueDate;
   // Amount still owed on rent this cycle (0 if fully paid, partial if partially paid)
   double pendingRentAmount;
