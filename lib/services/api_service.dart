@@ -531,6 +531,7 @@ class ApiService {
     required String tenantId,
     required String fromBedId,
     required String toBedId,
+    String? effectiveDate,
     String? reason,
   }) async {
     const mutation = '''
@@ -546,6 +547,7 @@ class ApiService {
         'tenantId': tenantId,
         'fromBedId': fromBedId,
         'toBedId': toBedId,
+        'effectiveDate': effectiveDate ?? DateTime.now().toIso8601String(),
         'reason': reason,
       }
     });
