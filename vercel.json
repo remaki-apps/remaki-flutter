@@ -4,9 +4,20 @@
   "installCommand": "echo 'skipping npm install'",
   "framework": null,
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/manifest.json", "destination": "/manifest.json" },
+    { "source": "/favicon.png", "destination": "/favicon.png" },
+    { "source": "/version.json", "destination": "/version.json" },
+    { "source": "/((?!assets/|icons/).*)", "destination": "/index.html" }
   ],
   "headers": [
+    {
+      "source": "/manifest.json",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Content-Type", "value": "application/manifest+json" },
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate, max-age=0" }
+      ]
+    },
     {
       "source": "/index.html",
       "headers": [
@@ -18,6 +29,7 @@
     {
       "source": "/version.json",
       "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
         { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate, max-age=0" },
         { "key": "Pragma", "value": "no-cache" },
         { "key": "Expires", "value": "0" }

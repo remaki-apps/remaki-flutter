@@ -535,7 +535,10 @@ class ApiService {
   }) async {
     const mutation = '''
       mutation TransferTenant(\$input: TransferTenantInput!) {
-        transferTenant(input: \$input)
+        transferTenant(input: \$input) {
+          id
+          name
+        }
       }
     ''';
     final result = await performQuery(mutation, variables: {
@@ -546,7 +549,7 @@ class ApiService {
         'reason': reason,
       }
     });
-    return result['transferTenant'] == true;
+    return result['transferTenant'] != null;
   }
 
   static Future<List<dynamic>> fetchPayments({String? tenantId}) async {
