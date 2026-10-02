@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,6 +7,8 @@ import '../providers/app_provider.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/export_data_modal.dart';
+import '../widgets/fancy_toast.dart';
+import '../utils/web_update_util.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -409,6 +412,22 @@ class MoreScreen extends StatelessWidget {
                     onTap: () => context.push('/about'),
                   ),
                   const SizedBox(height: 8),
+
+                  // 2.5. Check for Updates / Refresh Web App (Web only)
+                  if (kIsWeb) ...[
+                    _buildActionCard(
+                      icon: Icons.sync_rounded,
+                      title: 'Check for Updates / Refresh App',
+                      subtitle: 'Clear browser cache & load latest UI changes',
+                      onTap: () {
+                        FancyToast.showSuccess(context, 'Checking and refreshing Remaki...');
+                        Future.delayed(const Duration(milliseconds: 300), () {
+                          WebUpdateUtil.refreshAndClearCache();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                  ],
 
                   // 3. Logout Separate Container
                   _buildActionCard(

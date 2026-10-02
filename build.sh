@@ -25,3 +25,16 @@ flutter pub get
 
 echo "=== Building Flutter Web Release ==="
 flutter build web --release
+
+echo "=== Generating version.json for auto-update detection ==="
+BUILD_TIME=$(date +%s%3N)
+GIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "v1")
+cat <<EOF > build/web/version.json
+{
+  "version": "$GIT_HASH",
+  "buildTime": $BUILD_TIME,
+  "builtAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF
+echo "Generated version.json: buildTime=$BUILD_TIME, gitHash=$GIT_HASH"
+

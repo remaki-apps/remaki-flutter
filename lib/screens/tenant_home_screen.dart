@@ -18,6 +18,8 @@ import 'complete_profile_dialog.dart';
 import '../widgets/app_shimmer.dart';
 import '../utils/image_compress_util.dart';
 import '../widgets/payment_splitup_card.dart';
+import 'package:flutter/foundation.dart';
+import '../utils/web_update_util.dart';
 
 class TenantHomeScreen extends StatefulWidget {
   final int initialTab;
@@ -4053,6 +4055,45 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           // Security & Change Password Section
           _buildChangePasswordSectionCard(),
           const SizedBox(height: 20),
+
+          // Web App Update / Cache Clear Button (Web only)
+          if (kIsWeb) ...[
+            _buildGlassContainer(
+              width: double.infinity,
+              height: 52,
+              borderRadius: 16,
+              customGlassFill: const Color(0xFFEEF2FF),
+              customBorderColor: const Color(0xFFC7D2FE),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    FancyToast.showSuccess(context, 'Refreshing Remaki & loading latest updates...');
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      WebUpdateUtil.refreshAndClearCache();
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.sync_rounded, color: Color(0xFF4F46E5), size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Refresh App / Clear Web Cache',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF4F46E5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
 
           // Log Out Button (Clean modern solid button)
           _buildGlassContainer(

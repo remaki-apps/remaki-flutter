@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
@@ -320,16 +321,15 @@ class AppProvider with ChangeNotifier {
   int get availableBeds => currentRooms.fold(0, (sum, room) => sum + room.availableBeds);
   double get occupancyRate => totalBeds == 0 ? 0 : occupiedBeds / totalBeds;
 
-  // Expected is total rent of all tenants + any pending bills
-  // --- Combined Metrics (if needed elsewhere) ---
-  double get expectedRent => currentTenants.fold(0.0, (sum, t) => sum + t.rentAmount + t.totalExpectedBills);
-  double get collectedRent => currentTenants.fold(0.0, (sum, t) => sum + (t.rentAmount - t.pendingRentAmount) + t.totalPaidBills);
-  double get pendingRent => expectedRent - collectedRent;
+  // --- Combined Metrics (Rent + Bills) ---
+  double get expectedRent => expectedRentOnly + expectedBillsOnly;
+  double get collectedRent => collectedRentOnly + collectedBillsOnly;
+  double get pendingRent => pendingRentOnly + pendingBillsOnly;
 
   // --- Rent Only Metrics ---
-  double get expectedRentOnly => currentTenants.fold(0.0, (sum, t) => sum + t.rentAmount);
-  double get collectedRentOnly => currentTenants.fold(0.0, (sum, t) => sum + (t.rentAmount - t.pendingRentAmount));
-  double get pendingRentOnly => expectedRentOnly - collectedRentOnly;
+  double get expectedRentOnly => currentTenants.fold(0.0, (sum, t) => sum + math.max(t.rentAmount, t.pendingRentAmount));
+  double get collectedRentOnly => math.max(0.0, expectedRentOnly - pendingRentOnly);
+  double get pendingRentOnly => currentTenants.fold(0.0, (sum, t) => sum + t.pendingRentAmount);
 
   // --- Bills Only Metrics ---
   double get expectedBillsOnly => currentTenants.fold(0.0, (sum, t) => sum + t.totalExpectedBills);

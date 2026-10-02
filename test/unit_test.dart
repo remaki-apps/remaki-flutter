@@ -101,6 +101,47 @@ void main() {
       expect(provider.pendingRentOnly, 2000);
     });
 
+    test('Handles past arrears correctly without negative collected rent', () async {
+      SharedPreferences.setMockInitialValues({});
+      final provider = AppProvider();
+
+      // Tenant 1 has 5000 rent + 36 arrears from previous month = 5036 pending
+      // Tenant 2 has 27090 rent and 27090 pending
+      provider.tenants = [
+        Tenant(
+          id: 't1',
+          name: 'Arrears Tenant',
+          phone: '1111111111',
+          email: 't1@test.com',
+          roomId: 'r1',
+          bedId: 'b1',
+          moveInDate: DateTime.now(),
+          rentAmount: 5000,
+          securityDeposit: 0,
+          rentDueDate: DateTime.now(),
+          pendingRentAmount: 5036, // 36 past arrears included
+        ),
+        Tenant(
+          id: 't2',
+          name: 'Normal Tenant',
+          phone: '2222222222',
+          email: 't2@test.com',
+          roomId: 'r2',
+          bedId: 'b2',
+          moveInDate: DateTime.now(),
+          rentAmount: 27090,
+          securityDeposit: 0,
+          rentDueDate: DateTime.now(),
+          pendingRentAmount: 27090,
+        ),
+      ];
+
+      expect(provider.expectedRentOnly, 32126);
+      expect(provider.collectedRentOnly, 0.0); // Must NOT be -36.0!
+      expect(provider.pendingRentOnly, 32126);
+      expect(provider.expectedRent, provider.collectedRent + provider.pendingRent);
+    });
+
     test('Filters rooms and tenants when property is selected', () async {
       SharedPreferences.setMockInitialValues({});
       final provider = AppProvider();

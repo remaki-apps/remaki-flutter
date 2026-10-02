@@ -1,19 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
@@ -41,44 +28,167 @@
   <title>Remaki</title>
   <link rel="manifest" href="manifest.json">
 
-  <script>
-    // ──────────────────────────────────────────────────────────────────────────
-    // Service Worker Registration
-    // Simple registration — no auto-reload on SW update to prevent refresh loops.
-    // ──────────────────────────────────────────────────────────────────────────
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register(
-        'flutter_service_worker.js',
-        { scope: '/' }
-      ).then(function (registration) {
-        console.log('[SW] Registered successfully');
-      }).catch(function (err) {
-        console.error('[SW] Registration failed:', err);
-      });
-    }
-  </script>
-</head>
-<body>
-  <!-- Loading indicator shown while Flutter initializes -->
+  <!-- ─── Modern Refresh / Update UI Styling ─── -->
   <style>
     body {
       margin: 0;
       padding: 0;
       overflow: hidden;
+      background-color: #0F172A;
     }
+
     #loading {
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       width: 100vw;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
       color: white;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       z-index: -1;
     }
-  </style>
 
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* ─── Floating App Update Banner ─── */
+    #remaki-update-banner {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-150%);
+      z-index: 2147483647; /* Highest z-index to stay cleanly on top of Flutter Canvas/DOM */
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 16px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(99, 102, 241, 0.25);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #F8FAFC;
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+      max-width: 92vw;
+      width: auto;
+    }
+
+    #remaki-update-banner.remaki-show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .remaki-update-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+      flex-shrink: 0;
+      animation: remaki-pulse 2s infinite ease-in-out;
+    }
+
+    @keyframes remaki-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    .remaki-update-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      text-align: left;
+    }
+
+    .remaki-update-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #FFFFFF;
+      letter-spacing: -0.2px;
+      line-height: 1.2;
+    }
+
+    .remaki-update-desc {
+      font-size: 11px;
+      font-weight: 400;
+      color: #94A3B8;
+      line-height: 1.2;
+    }
+
+    .remaki-update-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      color: #FFFFFF;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+      transition: transform 0.15s ease, filter 0.15s ease;
+      white-space: nowrap;
+      outline: none;
+    }
+
+    .remaki-update-btn:hover {
+      filter: brightness(1.1);
+      transform: scale(1.02);
+    }
+
+    .remaki-update-btn:active {
+      transform: scale(0.97);
+    }
+
+    .remaki-update-dismiss {
+      background: transparent;
+      border: none;
+      color: #64748B;
+      font-size: 15px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      outline: none;
+      transition: color 0.15s;
+    }
+
+    .remaki-update-dismiss:hover {
+      color: #CBD5E1;
+    }
+  </style>
+</head>
+<body>
+  <!-- ─── Floating Smart Update Banner ─── -->
+  <div id="remaki-update-banner" role="alert">
+    <div class="remaki-update-icon">✨</div>
+    <div class="remaki-update-text">
+      <div class="remaki-update-title">New Update Available!</div>
+      <div class="remaki-update-desc">Tap refresh to load latest UI improvements.</div>
+    </div>
+    <button id="remaki-update-btn" class="remaki-update-btn" onclick="window.remakiAppUpdate.clearCacheAndReload()">
+      Refresh App
+    </button>
+    <button class="remaki-update-dismiss" onclick="window.remakiAppUpdate.dismiss()" aria-label="Dismiss">✕</button>
+  </div>
+
+  <!-- Loading indicator shown while Flutter initializes -->
   <div id="loading">
     <div style="text-align: center;">
       <div style="font-size: 24px; margin-bottom: 20px;">🏠 Remaki</div>
@@ -87,17 +197,160 @@
     </div>
   </div>
 
-  <style>
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  </style>
-
-  <!-- Flutter app entry point -->
-  <script src="flutter_bootstrap.js" async></script>
-  
   <script>
+    // ──────────────────────────────────────────────────────────────────────────
+    // Remaki Smart Update & Cache Clearing Engine
+    // ──────────────────────────────────────────────────────────────────────────
+    window.remakiAppUpdate = {
+      isUpdating: false,
+      bannerShown: false,
+
+      showBanner: function() {
+        if (this.bannerShown) return;
+        this.bannerShown = true;
+        const banner = document.getElementById('remaki-update-banner');
+        if (banner) {
+          banner.classList.add('remaki-show');
+        }
+      },
+
+      dismiss: function() {
+        const banner = document.getElementById('remaki-update-banner');
+        if (banner) {
+          banner.classList.remove('remaki-show');
+        }
+      },
+
+      clearCacheAndReload: async function() {
+        if (this.isUpdating) return;
+        this.isUpdating = true;
+
+        const btn = document.getElementById('remaki-update-btn');
+        if (btn) {
+          btn.innerHTML = '⟳ Refreshing...';
+          btn.style.opacity = '0.85';
+          btn.style.pointerEvents = 'none';
+        }
+
+        console.log('[Remaki Update] Clearing app cache & service workers...');
+
+        try {
+          // 1. Tell service worker to skip waiting
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for (const reg of regs) {
+              if (reg.waiting) {
+                reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+              }
+              await reg.unregister();
+            }
+          }
+
+          // 2. Clear all browser CacheStorage caches for Remaki
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            for (const key of keys) {
+              await caches.delete(key);
+            }
+          }
+        } catch (err) {
+          console.warn('[Remaki Update] Cache clearing note:', err);
+        }
+
+        // 3. Perform hard reload with timestamp cache-buster
+        setTimeout(function() {
+          const currentUrl = new URL(window.location.href);
+          currentUrl.searchParams.set('_v', Date.now().toString());
+          window.location.replace(currentUrl.toString());
+        }, 300);
+      }
+    };
+
+    // Global helper callable from anywhere
+    window.clearRemakiCache = function() {
+      window.remakiAppUpdate.clearCacheAndReload();
+    };
+
+    // ── Version Polling & Service Worker Monitoring ───────────────────────────
+    let currentAppVersion = null;
+
+    async function checkServerVersion() {
+      try {
+        const res = await fetch('/version.json?_t=' + Date.now(), {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache, no-store', 'Pragma': 'no-cache' }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const serverVersion = (data.buildTime || data.version || '').toString();
+          if (!currentAppVersion) {
+            currentAppVersion = serverVersion;
+            try {
+              sessionStorage.setItem('remaki_app_build', serverVersion);
+            } catch (_) {}
+          } else if (serverVersion && serverVersion !== currentAppVersion) {
+            console.log('[Remaki] New build version detected:', serverVersion, 'current:', currentAppVersion);
+            window.remakiAppUpdate.showBanner();
+          }
+        }
+      } catch (e) {
+        // Network unavailable or offline
+      }
+    }
+
+    // Initialize version from session or current load
+    try {
+      currentAppVersion = sessionStorage.getItem('remaki_app_build');
+    } catch (_) {}
+
+    // Initial check after app loads (3 seconds)
+    setTimeout(checkServerVersion, 3000);
+
+    // Periodic check every 45 seconds while app is active
+    setInterval(checkServerVersion, 45 * 1000);
+
+    // Also check when user switches back to this browser tab
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') {
+        checkServerVersion();
+      }
+    });
+
+    // ── Service Worker Registration & Update Listener ─────────────────────────
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register(
+        'flutter_service_worker.js',
+        { scope: '/' }
+      ).then(function (registration) {
+        console.log('[SW] Registered successfully');
+
+        // Check for updates on every page load
+        registration.update();
+
+        // Listen for new service worker being installed
+        registration.addEventListener('updatefound', function () {
+          const installingWorker = registration.installing;
+          if (installingWorker) {
+            installingWorker.addEventListener('statechange', function () {
+              if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('[Remaki] New service worker ready - showing update prompt');
+                window.remakiAppUpdate.showBanner();
+              }
+            });
+          }
+        });
+      }).catch(function (err) {
+        console.error('[SW] Registration failed:', err);
+      });
+
+      // If a waiting worker is already present
+      navigator.serviceWorker.ready.then(function(reg) {
+        if (reg.waiting) {
+          window.remakiAppUpdate.showBanner();
+        }
+      });
+    }
+
     // Hide loading indicator when Flutter is ready
     window.addEventListener('load', function() {
       const loading = document.getElementById('loading');
@@ -106,5 +359,8 @@
       }
     });
   </script>
+
+  <!-- Flutter app entry point -->
+  <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
