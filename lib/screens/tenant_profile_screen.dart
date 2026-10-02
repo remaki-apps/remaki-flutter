@@ -12,6 +12,7 @@ import 'edit_financials_dialog.dart';
 import 'edit_personal_info_dialog.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/app_shimmer.dart';
+import '../widgets/payment_splitup_card.dart';
 
 class TenantProfileScreen extends StatefulWidget {
   final String tenantId;
@@ -24,6 +25,7 @@ class TenantProfileScreen extends StatefulWidget {
 class _TenantProfileScreenState extends State<TenantProfileScreen> {
   DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
   bool _isHistoryExpanded = false;
+  final Set<String> _expandedPaymentIds = {};
 
   void _prevMonth() {
     setState(() {
@@ -499,12 +501,20 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                             decoration: BoxDecoration(
                               color: tenant.totalDue == 0
                                   ? const Color(0xFFF0FDF4)
-                                  : (tenant.isPending ? const Color(0xFFFEF3C7) : const Color(0xFFFFF7ED)),
+                                  : (tenant.isPending
+                                      ? const Color(0xFFFEF3C7)
+                                      : (tenant.isUpcoming
+                                          ? const Color(0xFFEFF6FF)
+                                          : const Color(0xFFFFF7ED))),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: tenant.totalDue == 0
                                     ? const Color(0xFFDCFCE7)
-                                    : (tenant.isPending ? const Color(0xFFFDE68A) : const Color(0xFFFFEDD5)),
+                                    : (tenant.isPending
+                                        ? const Color(0xFFFDE68A)
+                                        : (tenant.isUpcoming
+                                            ? const Color(0xFFBFDBFE)
+                                            : const Color(0xFFFFEDD5))),
                               ),
                             ),
                             child: Column(
@@ -519,7 +529,11 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                       decoration: BoxDecoration(
                                         color: tenant.totalDue == 0
                                             ? const Color(0xFFDCFCE7)
-                                            : (tenant.isPending ? const Color(0xFFFDE68A) : const Color(0xFFFFEDD5)),
+                                            : (tenant.isPending
+                                                ? const Color(0xFFFDE68A)
+                                                : (tenant.isUpcoming
+                                                    ? const Color(0xFFDBEAFE)
+                                                    : const Color(0xFFFFEDD5))),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
@@ -527,15 +541,21 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                             ? 'PAID'
                                             : (tenant.isPending
                                                 ? 'PENDING'
-                                                : (tenant.pendingRentAmount < tenant.rentAmount && tenant.pendingRentAmount > 0
-                                                    ? 'PARTIAL'
-                                                    : 'DUE')),
+                                                : (tenant.isUpcoming
+                                                    ? 'UPCOMING'
+                                                    : (tenant.pendingRentAmount < tenant.rentAmount && tenant.pendingRentAmount > 0
+                                                        ? 'PARTIAL'
+                                                        : 'DUE'))),
                                         style: TextStyle(
                                           fontSize: 9,
                                           fontWeight: FontWeight.bold,
                                           color: tenant.totalDue == 0
                                               ? const Color(0xFF16A34A)
-                                              : (tenant.isPending ? const Color(0xFFD97706) : const Color(0xFFEA580C)),
+                                              : (tenant.isPending
+                                                  ? const Color(0xFFD97706)
+                                                  : (tenant.isUpcoming
+                                                      ? const Color(0xFF2563EB)
+                                                      : const Color(0xFFEA580C))),
                                         ),
                                       ),
                                     ),
@@ -549,7 +569,11 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                     fontWeight: FontWeight.bold,
                                     color: tenant.totalDue == 0
                                         ? const Color(0xFF15803D)
-                                        : (tenant.isPending ? const Color(0xFFD97706) : const Color(0xFFC2410C)),
+                                        : (tenant.isPending
+                                            ? const Color(0xFFD97706)
+                                            : (tenant.isUpcoming
+                                                ? const Color(0xFF2563EB)
+                                                : const Color(0xFFC2410C))),
                                   ),
                                 ),
                               ],
@@ -928,84 +952,133 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                 final dateStr = (localDate.hour == 0 && localDate.minute == 0 && localDate.second == 0)
                                     ? DateFormat('dd MMM yyyy').format(localDate)
                                     : DateFormat('dd MMM yyyy, hh:mm a').format(localDate);
+                                final isExpanded = _expandedPaymentIds.contains(payment.id);
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 8),
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(color: const Color(0xFFF1F5F9)),
+                                    border: Border.all(color: isExpanded ? const Color(0xFFC7D2FE) : const Color(0xFFF1F5F9)),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0x04000000),
+                                        blurRadius: isExpanded ? 8 : 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Row(
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(14),
+                                      onTap: () {
+                                        setState(() {
+                                          if (_expandedPaymentIds.contains(payment.id)) {
+                                            _expandedPaymentIds.remove(payment.id);
+                                          } else {
+                                            _expandedPaymentIds.add(payment.id);
+                                          }
+                                        });
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                        child: Column(
                                           children: [
-                                            Container(
-                                              width: 36,
-                                              height: 36,
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFF0FDF4),
-                                                borderRadius: BorderRadius.circular(10),
-                                                border: Border.all(color: const Color(0xFFDCFCE7)),
-                                              ),
-                                              child: const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 18),
-                                            ),
-                                            const SizedBox(width: 10),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Row(
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Expanded(
+                                                  child: Row(
                                                     children: [
-                                                      const Icon(Icons.calendar_today_rounded, size: 11.5, color: Color(0xFF16A34A)),
-                                                      const SizedBox(width: 4),
+                                                      Container(
+                                                        width: 36,
+                                                        height: 36,
+                                                        decoration: BoxDecoration(
+                                                          color: const Color(0xFFF0FDF4),
+                                                          borderRadius: BorderRadius.circular(10),
+                                                          border: Border.all(color: const Color(0xFFDCFCE7)),
+                                                        ),
+                                                        child: const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 18),
+                                                      ),
+                                                      const SizedBox(width: 10),
                                                       Expanded(
-                                                        child: Text(
-                                                          'Paid on $dateStr',
-                                                          style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow.ellipsis,
+                                                        child: Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Row(
+                                                              children: [
+                                                                const Icon(Icons.calendar_today_rounded, size: 11.5, color: Color(0xFF16A34A)),
+                                                                const SizedBox(width: 4),
+                                                                Expanded(
+                                                                  child: Text(
+                                                                    'Paid on $dateStr',
+                                                                    style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                                                    maxLines: 1,
+                                                                    overflow: TextOverflow.ellipsis,
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            const SizedBox(height: 2),
+                                                            Text(
+                                                              (payment.notes != null && payment.notes!.isNotEmpty)
+                                                                  ? '${payment.method} • ${payment.notes}'
+                                                                  : payment.method,
+                                                              style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                                              maxLines: 1,
+                                                              overflow: TextOverflow.ellipsis,
+                                                            ),
+                                                          ],
                                                         ),
                                                       ),
                                                     ],
                                                   ),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    (payment.notes != null && payment.notes!.isNotEmpty)
-                                                        ? '${payment.method} • ${payment.notes}'
-                                                        : payment.method,
-                                                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                ],
-                                              ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Text(
+                                                      '₹${payment.amount.toStringAsFixed(0)}',
+                                                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    Container(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                      decoration: BoxDecoration(
+                                                        color: const Color(0xFFDCFCE7),
+                                                        borderRadius: BorderRadius.circular(6),
+                                                      ),
+                                                      child: const Text('PAID', style: TextStyle(color: Color(0xFF16A34A), fontSize: 9, fontWeight: FontWeight.bold)),
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                    AnimatedRotation(
+                                                      turns: isExpanded ? 0.25 : 0.0,
+                                                      duration: const Duration(milliseconds: 200),
+                                                      child: const Icon(
+                                                        Icons.chevron_right_rounded,
+                                                        color: Color(0xFF64748B),
+                                                        size: 20,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
                                             ),
+                                            if (isExpanded)
+                                              PaymentSplitupCard(
+                                                paymentAmount: payment.amount,
+                                                rentAmount: tenant.rentAmount,
+                                                platformFee: tenant.platformFee,
+                                                bills: tenant.additionalCharges,
+                                                method: payment.method,
+                                                notes: payment.notes,
+                                                paymentDate: payment.date,
+                                              ),
                                           ],
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            '₹${payment.amount.toStringAsFixed(0)}',
-                                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFDCFCE7),
-                                              borderRadius: BorderRadius.circular(6),
-                                            ),
-                                            child: const Text('PAID', style: TextStyle(color: Color(0xFF16A34A), fontSize: 9, fontWeight: FontWeight.bold)),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
+                                    ),
                                   ),
                                 );
                               }),

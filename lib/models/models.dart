@@ -175,6 +175,8 @@ class Tenant {
   double platformFee;
   String propertyId;
   bool get isPending => paymentStatus == 'PENDING';
+  bool get isUpcoming => !isPaid && !isPending && (paymentStatus == 'UPCOMING' || (paymentStatus != 'UNPAID' && DateTime.now().isBefore(DateTime(rentDueDate.year, rentDueDate.month, rentDueDate.day, 23, 59, 59))));
+  bool get isOverdue => !isPaid && !isPending && !isUpcoming;
   bool get isUnpaid => !isPaid && !isPartiallyPaid && !isPending;
   bool get isPartiallyPaid => paymentStatus == 'PARTIAL' || (pendingRentAmount > 0 && pendingRentAmount < rentAmount);
   DateTime rentDueDate;

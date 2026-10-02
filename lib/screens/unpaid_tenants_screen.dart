@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../providers/app_provider.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
@@ -179,8 +180,12 @@ class UnpaidTenantsScreen extends StatelessWidget {
                                 name: tenant.name,
                                 imageUrl: tenant.imageUrl,
                                 radius: 20,
-                                backgroundColor: AppTheme.danger.withValues(alpha: 0.1),
-                                textColor: AppTheme.danger,
+                                backgroundColor: tenant.isUpcoming
+                                    ? const Color(0xFFEFF6FF)
+                                    : AppTheme.danger.withValues(alpha: 0.1),
+                                textColor: tenant.isUpcoming
+                                    ? const Color(0xFF2563EB)
+                                    : AppTheme.danger,
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -273,15 +278,49 @@ class UnpaidTenantsScreen extends StatelessWidget {
                                               ),
                                               TextSpan(
                                                 text: '₹${totalPending.toStringAsFixed(0)}',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 13.5,
                                                   fontWeight: FontWeight.bold,
-                                                  color: AppTheme.danger,
+                                                  color: tenant.isUpcoming ? const Color(0xFF2563EB) : AppTheme.danger,
                                                 ),
                                               ),
                                             ],
                                           ),
                                         ),
+                                        if (tenant.isUpcoming)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFEFF6FF),
+                                              borderRadius: BorderRadius.circular(4),
+                                              border: Border.all(color: const Color(0xFFBFDBFE)),
+                                            ),
+                                            child: Text(
+                                              'Due ${DateFormat('dd MMM').format(tenant.rentDueDate)}',
+                                              style: const TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w700,
+                                                color: Color(0xFF2563EB),
+                                              ),
+                                            ),
+                                          ),
+                                        if (tenant.isOverdue && !tenant.isPending)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFFEF2F2),
+                                              borderRadius: BorderRadius.circular(4),
+                                              border: Border.all(color: const Color(0xFFFCA5A5)),
+                                            ),
+                                            child: const Text(
+                                              'Overdue',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w700,
+                                                color: Color(0xFFB91C1C),
+                                              ),
+                                            ),
+                                          ),
                                         if (tenant.isPending)
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),

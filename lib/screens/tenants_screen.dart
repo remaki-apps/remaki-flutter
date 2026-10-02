@@ -297,14 +297,18 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                                   ? const Color(0xFFF0FDF4)
                                                   : (tenant.isPending
                                                       ? const Color(0xFFFEF3C7)
-                                                      : const Color(0xFFFEF2F2)),
+                                                      : (tenant.isUpcoming
+                                                          ? const Color(0xFFEFF6FF)
+                                                          : const Color(0xFFFEF2F2))),
                                               borderRadius: BorderRadius.circular(20),
                                               border: Border.all(
                                                 color: tenant.totalDue == 0
                                                     ? const Color(0xFFDCFCE7)
                                                     : (tenant.isPending
                                                         ? const Color(0xFFFDE68A)
-                                                        : const Color(0xFFFCA5A5)),
+                                                        : (tenant.isUpcoming
+                                                            ? const Color(0xFFBFDBFE)
+                                                            : const Color(0xFFFCA5A5))),
                                               ),
                                             ),
                                             child: Row(
@@ -318,7 +322,9 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                                         ? const Color(0xFF16A34A)
                                                         : (tenant.isPending
                                                             ? const Color(0xFFD97706)
-                                                            : const Color(0xFFEF4444)),
+                                                            : (tenant.isUpcoming
+                                                                ? const Color(0xFF2563EB)
+                                                                : const Color(0xFFEF4444))),
                                                     shape: BoxShape.circle,
                                                   ),
                                                 ),
@@ -326,13 +332,17 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                                 Text(
                                                   tenant.totalDue == 0
                                                       ? 'Paid'
-                                                      : (tenant.isPending ? 'Pending' : 'Unpaid'),
+                                                      : (tenant.isPending
+                                                          ? 'Pending'
+                                                          : (tenant.isUpcoming ? 'Upcoming' : 'Overdue')),
                                                   style: TextStyle(
                                                     color: tenant.totalDue == 0
                                                         ? const Color(0xFF15803D)
                                                         : (tenant.isPending
                                                             ? const Color(0xFFD97706)
-                                                            : const Color(0xFFB91C1C)),
+                                                            : (tenant.isUpcoming
+                                                                ? const Color(0xFF1D4ED8)
+                                                                : const Color(0xFFB91C1C))),
                                                     fontSize: 10,
                                                     fontWeight: FontWeight.bold,
                                                   ),

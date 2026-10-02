@@ -6,16 +6,16 @@ import 'package:image/image.dart' as img;
 /// Works in tandem with backend Sharp processing to ensure all images stored in the DB
 /// stay strictly < 10 KB without compromising clarity or text readability.
 class ImageCompressUtil {
-  // For avatars, target is ~4-6 KB on client side (well under 10 KB).
-  static const int defaultProfileTargetBytes = 8 * 1024;
+  // For avatars, target is strictly <= 15 KB (15 * 1024 bytes) without sacrificing visual quality.
+  static const int defaultProfileTargetBytes = 15 * 1024;
   
   // For bills/receipts, client maintains crisp text at ~35-50 KB for instant mobile upload,
-  // which the backend Sharp WebP engine then optimizes to strictly < 10 KB without losing legibility.
+  // which the backend Sharp WebP engine then optimizes to strictly < 12 KB without losing legibility.
   static const int defaultDocumentTargetBytes = 45 * 1024;
 
   /// Compresses a profile picture/avatar.
-  /// Center-crops to a true square, resizes to 240x240 px with cubic interpolation,
-  /// and outputs a crisp, high-density avatar under 10 KB.
+  /// Center-crops to a true square, resizes with cubic interpolation,
+  /// and outputs a crisp, high-density avatar strictly <= 15 KB.
   static Future<Uint8List> compressProfileImage(
     Uint8List rawBytes, {
     int targetBytes = defaultProfileTargetBytes,
@@ -62,20 +62,33 @@ class ImageCompressUtil {
       height: cropSize,
     );
 
-    // Resize to 240x240 px using cubic interpolation (razor-sharp for retina mobile screens)
-    final resized = img.copyResize(
+    // Start with 320x320 px (sharp retina clarity for avatar displays)
+    int currentDimension = 320;
+    img.Image resized = img.copyResize(
       square,
-      width: 240,
-      height: 240,
+      width: currentDimension,
+      height: currentDimension,
       interpolation: img.Interpolation.cubic,
     );
 
-    // Encode at high quality (quality 80)
-    int quality = 80;
+    // Start with high visual quality (quality 88)
+    int quality = 88;
     Uint8List compressed = Uint8List.fromList(img.encodeJpg(resized, quality: quality));
 
-    while (compressed.lengthInBytes > targetBytes && quality > 50) {
-      quality -= 10;
+    while (compressed.lengthInBytes > targetBytes && quality > 45) {
+      quality -= 4;
+      compressed = Uint8List.fromList(img.encodeJpg(resized, quality: quality));
+    }
+
+    // If still over 15 KB, reduce dimension slightly and encode
+    while (compressed.lengthInBytes > targetBytes && currentDimension > 180) {
+      currentDimension -= 30;
+      resized = img.copyResize(
+        square,
+        width: currentDimension,
+        height: currentDimension,
+        interpolation: img.Interpolation.cubic,
+      );
       compressed = Uint8List.fromList(img.encodeJpg(resized, quality: quality));
     }
 

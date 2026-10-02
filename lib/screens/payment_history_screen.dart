@@ -6,6 +6,7 @@ import '../providers/app_provider.dart';
 import '../widgets/tenant_avatar.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_shimmer.dart';
+import '../widgets/payment_splitup_card.dart';
 
 class PaymentHistoryScreen extends StatefulWidget {
   const PaymentHistoryScreen({super.key});
@@ -18,6 +19,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedFilter = 'ALL'; // ALL, UPI, CASH, BANK
+  final Set<String> _expandedPaymentIds = {};
 
   DateTime? _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
 
@@ -587,8 +589,9 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                         .where((t) => t.id == payment.tenantId)
                         .firstOrNull;
 
+                    final isExpanded = _expandedPaymentIds.contains(payment.id);
+
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
@@ -606,163 +609,204 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                           ),
                         ],
                       ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          // Tenant Profile Avatar with clean outline border & tap-to-preview
-                          Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
-                            ),
-                            child: TenantAvatar(
-                              name: payment.tenantName ?? tenant?.name ?? 'Tenant',
-                              imageUrl: tenant?.imageUrl,
-                              radius: 20,
-                              enablePreview: true,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
+                      child: InkWell(
+                        onTap: () {
+                          setState(() {
+                            if (isExpanded) {
+                              _expandedPaymentIds.remove(payment.id);
+                            } else {
+                              _expandedPaymentIds.add(payment.id);
+                            }
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          child: Column(
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  // Tenant Profile Avatar with clean outline border & tap-to-preview
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                                    ),
+                                    child: TenantAvatar(
+                                      name: payment.tenantName ?? tenant?.name ?? 'Tenant',
+                                      imageUrl: tenant?.imageUrl,
+                                      radius: 20,
+                                      enablePreview: true,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
 
-                          // Tenant Name, Room & Date
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        payment.tenantName ?? tenant?.name ?? 'Tenant',
+                                  // Tenant Name, Room & Date
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Flexible(
+                                              child: Text(
+                                                payment.tenantName ?? tenant?.name ?? 'Tenant',
+                                                style: GoogleFonts.plusJakartaSans(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: const Color(0xFF0F172A),
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            if (payment.roomNumber != null && payment.roomNumber!.isNotEmpty) ...[
+                                              const SizedBox(width: 6),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFFF1F5F9),
+                                                  borderRadius: BorderRadius.circular(4),
+                                                  border: Border.all(color: const Color(0xFFE2E8F0), width: 0.5),
+                                                ),
+                                                child: Text(
+                                                  payment.roomNumber!,
+                                                  style: GoogleFonts.plusJakartaSans(
+                                                    fontSize: 9.5,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: const Color(0xFF475569),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                        const SizedBox(height: 3),
+                                        Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.access_time_rounded,
+                                              size: 11.5,
+                                              color: Color(0xFF94A3B8),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              paidDateStr,
+                                              style: GoogleFonts.plusJakartaSans(
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.w500,
+                                                color: const Color(0xFF64748B),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        if (payment.notes != null && payment.notes!.isNotEmpty) ...[
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            payment.notes!,
+                                            style: const TextStyle(fontSize: 10.5, color: Color(0xFF94A3B8)),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+
+                                  // Amount & Badges
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        '₹${_formatCurrency(payment.amount)}',
                                         style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w700,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: -0.3,
                                           color: const Color(0xFF0F172A),
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                    ),
-                                    if (payment.roomNumber != null && payment.roomNumber!.isNotEmpty) ...[
-                                      const SizedBox(width: 6),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFF1F5F9),
-                                          borderRadius: BorderRadius.circular(4),
-                                          border: Border.all(color: const Color(0xFFE2E8F0), width: 0.5),
-                                        ),
-                                        child: Text(
-                                          payment.roomNumber!,
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 9.5,
-                                            fontWeight: FontWeight.w700,
-                                            color: const Color(0xFF475569),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6.5, vertical: 2.5),
+                                            decoration: BoxDecoration(
+                                              color: isUPI
+                                                  ? const Color(0xFFEEF2FF)
+                                                  : (isCash ? const Color(0xFFFFFBEB) : const Color(0xFFF1F5F9)),
+                                              borderRadius: BorderRadius.circular(6),
+                                              border: Border.all(
+                                                color: isUPI
+                                                    ? const Color(0xFFE0E7FF)
+                                                    : (isCash ? const Color(0xFFFEF3C7) : const Color(0xFFE2E8F0)),
+                                                width: 0.8,
+                                              ),
+                                            ),
+                                            child: Text(
+                                              payment.method.toUpperCase(),
+                                              style: TextStyle(
+                                                fontSize: 9.5,
+                                                fontWeight: FontWeight.w700,
+                                                letterSpacing: 0.3,
+                                                color: isUPI
+                                                    ? const Color(0xFF4F46E5)
+                                                    : (isCash ? const Color(0xFFD97706) : const Color(0xFF475569)),
+                                              ),
+                                            ),
                                           ),
-                                        ),
+                                          const SizedBox(width: 4),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFDCFCE7),
+                                              borderRadius: BorderRadius.circular(6),
+                                              border: Border.all(color: const Color(0xFFBBF7D0), width: 0.6),
+                                            ),
+                                            child: const Text(
+                                              'PAID',
+                                              style: TextStyle(
+                                                fontSize: 9.5,
+                                                fontWeight: FontWeight.w700,
+                                                letterSpacing: 0.3,
+                                                color: Color(0xFF16A34A),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
-                                  ],
-                                ),
-                                const SizedBox(height: 3),
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.access_time_rounded,
-                                      size: 11.5,
-                                      color: Color(0xFF94A3B8),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      paidDateStr,
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w500,
-                                        color: const Color(0xFF64748B),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                if (payment.notes != null && payment.notes!.isNotEmpty) ...[
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    payment.notes!,
-                                    style: const TextStyle(fontSize: 10.5, color: Color(0xFF94A3B8)),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ],
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 10),
+                                  const SizedBox(width: 6),
 
-                          // Amount & Badges
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                '₹${_formatCurrency(payment.amount)}',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -0.3,
-                                  color: const Color(0xFF0F172A),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6.5, vertical: 2.5),
-                                    decoration: BoxDecoration(
-                                      color: isUPI
-                                          ? const Color(0xFFEEF2FF)
-                                          : (isCash ? const Color(0xFFFFFBEB) : const Color(0xFFF1F5F9)),
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(
-                                        color: isUPI
-                                            ? const Color(0xFFE0E7FF)
-                                            : (isCash ? const Color(0xFFFEF3C7) : const Color(0xFFE2E8F0)),
-                                        width: 0.8,
-                                      ),
-                                    ),
-                                    child: Text(
-                                      payment.method.toUpperCase(),
-                                      style: TextStyle(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.3,
-                                        color: isUPI
-                                            ? const Color(0xFF4F46E5)
-                                            : (isCash ? const Color(0xFFD97706) : const Color(0xFF475569)),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFDCFCE7),
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: const Color(0xFFBBF7D0), width: 0.6),
-                                    ),
-                                    child: const Text(
-                                      'PAID',
-                                      style: TextStyle(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.3,
-                                        color: Color(0xFF16A34A),
-                                      ),
+                                  // Chevron icon
+                                  AnimatedRotation(
+                                    turns: isExpanded ? 0.25 : 0.0,
+                                    duration: const Duration(milliseconds: 200),
+                                    child: const Icon(
+                                      Icons.chevron_right_rounded,
+                                      size: 20,
+                                      color: Color(0xFF64748B),
                                     ),
                                   ),
                                 ],
                               ),
+                              if (isExpanded)
+                                PaymentSplitupCard(
+                                  paymentAmount: payment.amount,
+                                  rentAmount: tenant?.rentAmount ?? payment.amount,
+                                  platformFee: tenant?.platformFee ?? 9.0,
+                                  bills: tenant?.additionalCharges,
+                                  method: payment.method,
+                                  notes: payment.notes,
+                                  paymentDate: payment.date,
+                                ),
                             ],
                           ),
-                        ],
+                        ),
                       ),
                     );
                   },
