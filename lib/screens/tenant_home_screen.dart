@@ -1394,10 +1394,6 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           ),
           const SizedBox(height: 20),
 
-          // 4.5. Month-wise Payment History Section
-          _buildTenantPaymentHistorySection(isHomepage: true),
-          const SizedBox(height: 20),
-
           // 5. Recent Notice Card (Frosted Glass)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

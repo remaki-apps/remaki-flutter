@@ -20,10 +20,21 @@ class ImageCompressUtil {
     Uint8List rawBytes, {
     int targetBytes = defaultProfileTargetBytes,
   }) async {
-    return compute(_isolateCompressProfile, {
-      'bytes': rawBytes,
-      'targetBytes': targetBytes,
-    });
+    try {
+      if (kIsWeb) {
+        return _isolateCompressProfile({
+          'bytes': rawBytes,
+          'targetBytes': targetBytes,
+        });
+      }
+      return await compute(_isolateCompressProfile, {
+        'bytes': rawBytes,
+        'targetBytes': targetBytes,
+      });
+    } catch (e) {
+      debugPrint('[ImageCompressUtil] compressProfileImage fallback: $e');
+      return rawBytes;
+    }
   }
 
   /// Compresses a bill, receipt, or payment proof.
@@ -33,10 +44,21 @@ class ImageCompressUtil {
     Uint8List rawBytes, {
     int targetBytes = defaultDocumentTargetBytes,
   }) async {
-    return compute(_isolateCompressDocument, {
-      'bytes': rawBytes,
-      'targetBytes': targetBytes,
-    });
+    try {
+      if (kIsWeb) {
+        return _isolateCompressDocument({
+          'bytes': rawBytes,
+          'targetBytes': targetBytes,
+        });
+      }
+      return await compute(_isolateCompressDocument, {
+        'bytes': rawBytes,
+        'targetBytes': targetBytes,
+      });
+    } catch (e) {
+      debugPrint('[ImageCompressUtil] compressDocumentOrBill fallback: $e');
+      return rawBytes;
+    }
   }
 
   // --- Background Isolate Worker for Profile Pictures ---

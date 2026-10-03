@@ -9,6 +9,7 @@ import '../theme/app_theme.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/app_shimmer.dart';
 import '../utils/image_compress_util.dart';
+import '../widgets/image_adjust_dialog.dart';
 
 class AnnouncementsScreen extends StatefulWidget {
   const AnnouncementsScreen({super.key});
@@ -57,20 +58,38 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   }
 
   Future<void> _pickImage(StateSetter modalSetState) async {
-    final picker = ImagePicker();
-    final XFile? image = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-      maxWidth: 1200,
-      maxHeight: 1600,
-    );
-    
-    if (image == null) return;
+    try {
+      final picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 92,
+        maxWidth: 1600,
+        maxHeight: 1600,
+      );
+      
+      if (image == null) return;
 
-    final bytes = await image.readAsBytes();
-    final compressed = await ImageCompressUtil.compressDocumentOrBill(bytes);
-    setState(() => _selectedImageBytes = compressed);
-    modalSetState(() => _selectedImageBytes = compressed);
+      final bytes = await image.readAsBytes();
+      if (!mounted) return;
+
+      final adjusted = await ImageAdjustDialog.show(
+        context,
+        imageBytes: bytes,
+        title: 'Adjust Announcement Photo',
+        isCircle: false,
+        aspectRatio: 16 / 10,
+      );
+      if (adjusted == null) return;
+
+      final compressed = await ImageCompressUtil.compressDocumentOrBill(adjusted);
+      setState(() => _selectedImageBytes = compressed);
+      modalSetState(() => _selectedImageBytes = compressed);
+    } catch (e) {
+      debugPrint('[Announcements] Pick image error: $e');
+      if (mounted) {
+        FancyToast.showError(context, 'Image Error', message: 'Could not process selected image.');
+      }
+    }
   }
 
   Future<void> _sendAnnouncement(StateSetter modalSetState) async {

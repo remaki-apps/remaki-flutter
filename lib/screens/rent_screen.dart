@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
+import '../models/models.dart';
 import '../widgets/app_shimmer.dart';
 
 class RentScreen extends StatefulWidget {
@@ -17,27 +19,115 @@ class RentScreen extends StatefulWidget {
 
 class _RentScreenState extends State<RentScreen> {
   bool _showBills = false;
+  DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+
+  void _prevMonth() {
+    setState(() {
+      _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month - 1, 1);
+    });
+  }
+
+  void _nextMonth() {
+    setState(() {
+      _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1);
+    });
+  }
+
+  void _resetToCurrentMonth() {
+    final now = DateTime.now();
+    setState(() {
+      _selectedMonth = DateTime(now.year, now.month, 1);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
-    final monthYear = DateFormat('MMMM yyyy').format(DateTime.now());
+    final now = DateTime.now();
+    final bool isCurrentMonth = _selectedMonth.year == now.year && _selectedMonth.month == now.month;
+    final selectedMonthStr = DateFormat('MMMM yyyy').format(_selectedMonth);
+    final targetMonthKey = DateFormat('yyyy-MM').format(_selectedMonth);
 
-    final expectedAmount = _showBills ? appProvider.expectedBillsOnly : appProvider.expectedRentOnly;
-    final collectedAmount = _showBills ? appProvider.collectedBillsOnly : appProvider.collectedRentOnly;
-    final pendingAmount = _showBills ? appProvider.pendingBillsOnly : appProvider.pendingRentOnly;
+    // Filter payments for the selected month
+    final monthPayments = appProvider.currentPayments.where((p) {
+      if (p.billingMonth != null && p.billingMonth!.isNotEmpty) {
+        return p.billingMonth == targetMonthKey;
+      }
+      return p.date.year == _selectedMonth.year && p.date.month == _selectedMonth.month;
+    }).toList();
+
+    final monthRentPayments = monthPayments.where((p) {
+      final isBill = p.notes != null && p.notes!.toLowerCase().contains('bill');
+      return !isBill;
+    }).toList();
+
+    final monthBillPayments = monthPayments.where((p) {
+      final isBill = p.notes != null && p.notes!.toLowerCase().contains('bill');
+      return isBill;
+    }).toList();
+
+    // Filter charges for the selected month
+    final allMonthCharges = <Map<String, dynamic>>[];
+    for (final tenant in appProvider.currentTenants) {
+      for (final charge in tenant.additionalCharges) {
+        if (charge.billType == 'RENT') continue;
+        final chargeDate = charge.billDueDate ?? charge.date;
+        if (chargeDate.year == _selectedMonth.year && chargeDate.month == _selectedMonth.month) {
+          allMonthCharges.add({
+            'charge': charge,
+            'tenant': tenant,
+          });
+        }
+      }
+    }
+
+    // Compute Metrics for Selected Month
+    final double expectedAmount;
+    final double collectedAmount;
+    final double pendingAmount;
+    final int paidCount;
+    final int unpaidCount;
+
+    if (!_showBills) {
+      if (isCurrentMonth) {
+        expectedAmount = appProvider.expectedRentOnly;
+        collectedAmount = appProvider.collectedRentOnly;
+        pendingAmount = appProvider.pendingRentOnly;
+        paidCount = appProvider.currentTenants.where((t) => t.pendingRentAmount == 0 && t.rentAmount > 0).length;
+        unpaidCount = appProvider.currentTenants.where((t) => t.pendingRentAmount > 0).length;
+      } else {
+        final rentExpectedRaw = appProvider.currentTenants.fold(0.0, (sum, t) {
+          if (t.moveInDate.isAfter(DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1))) return sum;
+          return sum + t.rentAmount;
+        });
+        collectedAmount = monthRentPayments.fold(0.0, (sum, p) => sum + p.amount);
+        expectedAmount = math.max(rentExpectedRaw, collectedAmount);
+        pendingAmount = math.max(0.0, expectedAmount - collectedAmount);
+        paidCount = monthRentPayments.map((p) => p.tenantId).toSet().length;
+        unpaidCount = math.max(0, appProvider.currentTenants.length - paidCount);
+      }
+    } else {
+      if (isCurrentMonth) {
+        expectedAmount = appProvider.expectedBillsOnly;
+        collectedAmount = appProvider.collectedBillsOnly;
+        pendingAmount = appProvider.pendingBillsOnly;
+        paidCount = appProvider.currentTenants.where((t) => t.totalPendingBills == 0 && t.additionalCharges.any((c) => c.billType != 'RENT')).length;
+        unpaidCount = appProvider.currentTenants.where((t) => t.totalPendingBills > 0).length;
+      } else {
+        final billsExpectedFromCharges = allMonthCharges.fold(0.0, (sum, item) => sum + (item['charge'] as AdditionalCharge).amount);
+        final billsCollectedFromPayments = monthBillPayments.fold(0.0, (sum, p) => sum + p.amount);
+        final billsCollectedFromCharges = allMonthCharges.where((item) => (item['charge'] as AdditionalCharge).status == 'PAID').fold(0.0, (sum, item) => sum + (item['charge'] as AdditionalCharge).amount);
+        collectedAmount = math.max(billsCollectedFromPayments, billsCollectedFromCharges);
+        expectedAmount = math.max(billsExpectedFromCharges, collectedAmount);
+        pendingAmount = math.max(0.0, expectedAmount - collectedAmount);
+        paidCount = allMonthCharges.where((item) => (item['charge'] as AdditionalCharge).status == 'PAID').map((item) => (item['tenant'] as Tenant).id).toSet().length;
+        unpaidCount = allMonthCharges.where((item) => (item['charge'] as AdditionalCharge).status == 'PENDING').map((item) => (item['tenant'] as Tenant).id).toSet().length;
+      }
+    }
 
     final double collectionRate = expectedAmount > 0
         ? ((collectedAmount / expectedAmount) * 100).clamp(0.0, 100.0)
         : 0.0;
-
-    final int paidCount = _showBills
-        ? appProvider.currentTenants.where((t) => t.totalPendingBills == 0 && t.additionalCharges.any((c) => c.billType != 'RENT')).length
-        : appProvider.currentTenants.where((t) => t.pendingRentAmount == 0 && t.rentAmount > 0).length;
-
-    final int unpaidCount = _showBills
-        ? appProvider.currentTenants.where((t) => t.totalPendingBills > 0).length
-        : appProvider.currentTenants.where((t) => t.pendingRentAmount > 0).length;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
@@ -57,7 +147,7 @@ class _RentScreenState extends State<RentScreen> {
             ),
             const SizedBox(height: 2),
             Text(
-              monthYear,
+              selectedMonthStr,
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
@@ -111,6 +201,10 @@ class _RentScreenState extends State<RentScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 12),
+
+              // 1.5. Month-Wise Payment History Navigation Bar
+              _buildMonthNavigationBar(selectedMonthStr, isCurrentMonth),
               const SizedBox(height: 16),
 
               AnimatedSwitcher(
@@ -456,6 +550,16 @@ class _RentScreenState extends State<RentScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: 16),
+
+            // 5. Month Payment Records / Payment History Section
+            _buildMonthPaymentHistorySection(
+              selectedMonthStr: selectedMonthStr,
+              payments: _showBills ? monthBillPayments : monthRentPayments,
+              charges: allMonthCharges,
+              isBillsTab: _showBills,
+              appProvider: appProvider,
+            ),
           ],
         ),
       ),
@@ -466,6 +570,276 @@ class _RentScreenState extends State<RentScreen> {
 ),
 );
 }
+
+  Widget _buildMonthNavigationBar(String selectedMonthStr, bool isCurrentMonth) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x060F172A),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.chevron_left_rounded, size: 22, color: Color(0xFF1E293B)),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            splashRadius: 18,
+            onPressed: _prevMonth,
+            tooltip: 'Previous Month',
+          ),
+          GestureDetector(
+            onTap: isCurrentMonth ? null : _resetToCurrentMonth,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.calendar_month_rounded, size: 16, color: AppTheme.primaryColor),
+                const SizedBox(width: 6),
+                Text(
+                  selectedMonthStr,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                  decoration: BoxDecoration(
+                    color: isCurrentMonth ? const Color(0xFFEEF2FF) : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: isCurrentMonth ? const Color(0xFFC7D2FE) : const Color(0xFFE2E8F0),
+                      width: 0.6,
+                    ),
+                  ),
+                  child: Text(
+                    isCurrentMonth ? 'Current' : 'Reset',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: isCurrentMonth ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.chevron_right_rounded, size: 22, color: Color(0xFF1E293B)),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            splashRadius: 18,
+            onPressed: _nextMonth,
+            tooltip: 'Next Month',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonthPaymentHistorySection({
+    required String selectedMonthStr,
+    required List<Payment> payments,
+    required List<Map<String, dynamic>> charges,
+    required bool isBillsTab,
+    required AppProvider appProvider,
+  }) {
+    final tenantMap = {for (final t in appProvider.currentTenants) t.id: t};
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x04000000),
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section Title
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.history_rounded, color: AppTheme.primaryColor, size: 18),
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Payment History',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF0F172A),
+                          ),
+                        ),
+                        Text(
+                          selectedMonthStr,
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${payments.length} Records',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF475569),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+
+          if (payments.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(
+                      isBillsTab ? Icons.receipt_long_outlined : Icons.account_balance_wallet_outlined,
+                      size: 38,
+                      color: const Color(0xFFCBD5E1),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'No ${isBillsTab ? "bill" : "rent"} payments recorded for $selectedMonthStr',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF64748B),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Collected payments in this month will appear here',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: payments.length,
+              separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              itemBuilder: (context, index) {
+                final p = payments[index];
+                final tenant = tenantMap[p.tenantId];
+                final tenantDisplayName = p.tenantName ?? tenant?.name ?? 'Tenant';
+                final roomIdx = tenant != null ? appProvider.rooms.indexWhere((r) => r.id == tenant.roomId) : -1;
+                final tenantRoomNum = roomIdx != -1 ? appProvider.rooms[roomIdx].number : '';
+                final roomInfo = (p.roomNumber != null && p.roomNumber!.isNotEmpty)
+                    ? 'Room ${p.roomNumber}'
+                    : (tenantRoomNum.isNotEmpty ? 'Room $tenantRoomNum' : 'PG Tenant');
+                final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(p.date);
+
+                return ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  leading: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0FDF4),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 20),
+                  ),
+                  title: Text(
+                    tenantDisplayName,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF0F172A),
+                    ),
+                  ),
+                  subtitle: Text(
+                    '$roomInfo • $dateStr',
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  ),
+                  trailing: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '+₹${p.amount.toStringAsFixed(0)}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF16A34A),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          p.method.toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF475569),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  onTap: tenant != null
+                      ? () => context.push('/tenant_profile', extra: tenant)
+                      : null,
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildSegmentButton({
     required String title,

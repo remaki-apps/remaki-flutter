@@ -132,20 +132,30 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
     final mediaQuery = MediaQuery.of(context);
     final availableHeight = mediaQuery.size.height;
     final keyboardPadding = mediaQuery.viewInsets.bottom;
+    final isKeyboardOpen = keyboardPadding > 0;
 
-    return AnimatedPadding(
-      padding: EdgeInsets.only(bottom: keyboardPadding),
-      duration: const Duration(milliseconds: 150),
-      child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: Colors.white,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        child: Container(
-          constraints: BoxConstraints(
-            maxWidth: 450,
-            maxHeight: (availableHeight * 0.85).clamp(300.0, 700.0),
-          ),
-          child: Column(
+    // Calculate maximum dialog height strictly fitting inside the visible space above keyboard
+    final maxDialogHeight = isKeyboardOpen
+        ? (availableHeight - keyboardPadding - 32.0).clamp(240.0, 560.0)
+        : (availableHeight * 0.85).clamp(300.0, 720.0);
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: Colors.white,
+      clipBehavior: Clip.antiAlias,
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: isKeyboardOpen ? 12 : 24,
+      ),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        constraints: BoxConstraints(
+          maxWidth: 460,
+          maxHeight: maxDialogHeight,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(20),
@@ -252,9 +262,8 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
           ],
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildTextField(
     String label,
@@ -298,7 +307,7 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
         Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: (value != null && options.contains(value)) ? value : null,
+          initialValue: (value != null && options.contains(value)) ? value : null,
           items: options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
           onChanged: onChanged,
           decoration: InputDecoration(

@@ -8,6 +8,7 @@ import '../services/api_service.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/tenant_avatar.dart';
 import '../utils/image_compress_util.dart';
+import '../widgets/image_adjust_dialog.dart';
 
 class EditPersonalInfoDialog extends StatefulWidget {
   final dynamic tenant;
@@ -52,21 +53,39 @@ class _EditPersonalInfoDialogState extends State<EditPersonalInfoDialog> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final XFile? image = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 90,
-      maxWidth: 1024,
-      maxHeight: 1024,
-    );
-    
-    if (image == null) return;
+    try {
+      final picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 92,
+        maxWidth: 1200,
+        maxHeight: 1200,
+      );
+      
+      if (image == null) return;
 
-    final bytes = await image.readAsBytes();
-    final compressed = await ImageCompressUtil.compressProfileImage(bytes);
-    setState(() {
-      _selectedImageBytes = compressed;
-    });
+      final bytes = await image.readAsBytes();
+      if (!mounted) return;
+
+      final adjusted = await ImageAdjustDialog.show(
+        context,
+        imageBytes: bytes,
+        title: 'Adjust Profile Picture',
+        isCircle: true,
+        aspectRatio: 1.0,
+      );
+      if (adjusted == null) return;
+
+      final compressed = await ImageCompressUtil.compressProfileImage(adjusted);
+      setState(() {
+        _selectedImageBytes = compressed;
+      });
+    } catch (e) {
+      debugPrint('[EditPersonalInfoDialog] Pick image error: $e');
+      if (mounted) {
+        FancyToast.showError(context, 'Image Error', message: 'Could not process selected image.');
+      }
+    }
   }
 
   Future<void> _saveChanges() async {
