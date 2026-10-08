@@ -33,7 +33,7 @@ class MoreScreen extends StatelessWidget {
             const SizedBox(width: 12),
             Text(
               'Confirm Logout',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.lato(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF0F172A),
@@ -43,7 +43,7 @@ class MoreScreen extends StatelessWidget {
         ),
         content: Text(
           'Are you sure you want to log out? You will need to sign in again to access the admin portal.',
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.lato(
             fontSize: 13.5,
             color: const Color(0xFF64748B),
           ),
@@ -54,7 +54,7 @@ class MoreScreen extends StatelessWidget {
             onPressed: () => Navigator.of(ctx).pop(),
             child: Text(
               'Cancel',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 color: const Color(0xFF64748B),
                 fontWeight: FontWeight.w600,
               ),
@@ -77,7 +77,7 @@ class MoreScreen extends StatelessWidget {
             },
             child: Text(
               'Logout',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+              style: GoogleFonts.lato(fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -95,7 +95,7 @@ class MoreScreen extends StatelessWidget {
         centerTitle: false,
         title: Text(
           'More Options',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.lato(
             fontWeight: FontWeight.w700,
             fontSize: 20,
             color: const Color(0xFF0F172A),
@@ -177,7 +177,7 @@ class MoreScreen extends StatelessWidget {
                                               provider.selectedPropertyId == 'ALL' ? 'All Properties' : provider.pgName,
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
-                                              style: GoogleFonts.outfit(
+                                              style: GoogleFonts.lato(
                                                 fontSize: 16.5,
                                                 fontWeight: FontWeight.w700,
                                                 color: Colors.white,
@@ -276,7 +276,7 @@ class MoreScreen extends StatelessWidget {
                                       provider.pgName,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.lato(
                                         fontSize: 16.5,
                                         fontWeight: FontWeight.w700,
                                         color: Colors.white,
@@ -290,7 +290,7 @@ class MoreScreen extends StatelessWidget {
                                         : '${provider.adminName} • Property Manager',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.lato(
                                       fontSize: 11.5,
                                       color: const Color(0xFFE0E7FF),
                                     ),
@@ -322,7 +322,7 @@ class MoreScreen extends StatelessWidget {
                                   const SizedBox(width: 4),
                                   Text(
                                     'Active',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.lato(
                                       fontSize: 9.5,
                                       fontWeight: FontWeight.w700,
                                       color: Colors.white,
@@ -448,7 +448,7 @@ class MoreScreen extends StatelessWidget {
                       const SizedBox(width: 5),
                       Text(
                         'Encrypted Session • Remaki v1.0.0 (Build 1)',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
                           color: const Color(0xFF94A3B8),
@@ -471,7 +471,7 @@ class MoreScreen extends StatelessWidget {
       children: [
         Text(
           value,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.lato(
             fontSize: 12.5,
             fontWeight: FontWeight.w700,
             color: Colors.white,
@@ -480,7 +480,7 @@ class MoreScreen extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           label,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.lato(
             fontSize: 10.5,
             color: const Color(0xFFE0E7FF),
           ),
@@ -544,7 +544,7 @@ class MoreScreen extends StatelessWidget {
         ),
         title: Text(
           title,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.lato(
             fontSize: 14.5,
             fontWeight: FontWeight.w600,
             color: isDestructive ? const Color(0xFFEF4444) : const Color(0xFF0F172A),
@@ -552,7 +552,7 @@ class MoreScreen extends StatelessWidget {
         ),
         subtitle: Text(
           subtitle,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.lato(
             fontSize: 11.5,
             color: isDestructive ? const Color(0xFFFCA5A5) : const Color(0xFF64748B),
           ),
@@ -569,7 +569,7 @@ class MoreScreen extends StatelessWidget {
                 ),
                 child: Text(
                   badge,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: effectiveIconColor,

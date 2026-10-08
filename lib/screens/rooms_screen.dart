@@ -234,7 +234,7 @@ class _RoomsScreenState extends State<RoomsScreen> {
                               _searchQuery.isNotEmpty
                                   ? 'No rooms matching "$_searchQuery"'
                                   : 'No Rooms Available',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.lato(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF0F172A),
@@ -247,7 +247,7 @@ class _RoomsScreenState extends State<RoomsScreen> {
                                   ? 'Try searching with a different room number or floor.'
                                   : 'Add rooms to manage beds, tenants, and occupancy.',
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
                                 color: const Color(0xFF64748B),

@@ -120,7 +120,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                           const SizedBox(width: 10),
                           Text(
                             'Decline Payment',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.lato(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF0F172A),
@@ -450,7 +450,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
           children: [
             Text(
               'Pending Approvals',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.lato(
                 fontWeight: FontWeight.w700,
                 fontSize: 20,
                 color: const Color(0xFF0F172A),
@@ -459,7 +459,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
             if (_requests.isNotEmpty)
               Text(
                 '${_requests.length} payment request(s) awaiting review',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontSize: 11,
                   color: const Color(0xFF64748B),
                 ),
@@ -497,7 +497,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                           const SizedBox(height: 18),
                           Text(
                             'No Pending Approvals',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.lato(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF0F172A),
@@ -508,7 +508,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                           Text(
                             'All tenant rent and payment requests have been reviewed.',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                               color: const Color(0xFF64748B),
@@ -581,7 +581,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                                         children: [
                                           Text(
                                             tenantName,
-                                            style: GoogleFonts.outfit(
+                                            style: GoogleFonts.lato(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w700,
                                               color: const Color(0xFF0F172A),
@@ -630,7 +630,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                                     ),
                                     Text(
                                       '₹${amount.toStringAsFixed(0)}',
-                                      style: GoogleFonts.outfit(
+                                      style: GoogleFonts.lato(
                                         fontSize: 20,
                                         fontWeight: FontWeight.w800,
                                         color: AppTheme.primaryColor,
@@ -659,7 +659,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                                         const SizedBox(width: 6),
                                         Text(
                                           'Sent: ',
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.lato(
                                             fontSize: 11.5,
                                             fontWeight: FontWeight.w500,
                                             color: const Color(0xFF64748B),
@@ -667,7 +667,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                                         ),
                                         Text(
                                           formattedDateTime,
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.lato(
                                             fontSize: 11.5,
                                             fontWeight: FontWeight.w700,
                                             color: const Color(0xFF0F172A),

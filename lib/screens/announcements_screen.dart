@@ -153,14 +153,14 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             Expanded(
               child: Text(
                 'Delete Notice?',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 18, color: const Color(0xFF0F172A)),
+                style: GoogleFonts.lato(fontWeight: FontWeight.w700, fontSize: 18, color: const Color(0xFF0F172A)),
               ),
             ),
           ],
         ),
         content: Text(
           'Are you sure you want to delete "$heading"? This notice will be immediately removed from all residents\' notice boards.',
-          style: GoogleFonts.plusJakartaSans(fontSize: 13.5, color: const Color(0xFF475569), height: 1.45),
+          style: GoogleFonts.lato(fontSize: 13.5, color: const Color(0xFF475569), height: 1.45),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
@@ -168,7 +168,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
               'Cancel',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: const Color(0xFF64748B)),
+              style: GoogleFonts.lato(fontWeight: FontWeight.w600, color: const Color(0xFF64748B)),
             ),
           ),
           ElevatedButton(
@@ -181,7 +181,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
               'Delete',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: Colors.white),
+              style: GoogleFonts.lato(fontWeight: FontWeight.w700, color: Colors.white),
             ),
           ),
         ],
@@ -273,7 +273,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                               children: [
                                 Text(
                                   'New Announcement',
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.lato(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w700,
                                     color: const Color(0xFF0F172A),
@@ -281,7 +281,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                                 ),
                                 Text(
                                   'Instant notification to all residents',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.lato(
                                     fontSize: 12,
                                     color: const Color(0xFF64748B),
                                     fontWeight: FontWeight.w500,
@@ -300,7 +300,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     const SizedBox(height: 20),
                     Text(
                       'TITLE',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.lato(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF64748B),
@@ -310,14 +310,14 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     const SizedBox(height: 6),
                     TextField(
                       controller: _headingCtrl,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.lato(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF0F172A),
                       ),
                       decoration: InputDecoration(
                         hintText: 'e.g., Water Tank Cleaning & Maintenance',
-                        hintStyle: GoogleFonts.plusJakartaSans(
+                        hintStyle: GoogleFonts.lato(
                           fontSize: 13.5,
                           color: const Color(0xFF94A3B8),
                         ),
@@ -341,7 +341,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     const SizedBox(height: 16),
                     Text(
                       'DESCRIPTION',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.lato(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF64748B),
@@ -352,13 +352,13 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     TextField(
                       controller: _descCtrl,
                       maxLines: 4,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.lato(
                         fontSize: 14,
                         color: const Color(0xFF0F172A),
                       ),
                       decoration: InputDecoration(
                         hintText: 'Write all details, timing, or instructions for tenants...',
-                        hintStyle: GoogleFonts.plusJakartaSans(
+                        hintStyle: GoogleFonts.lato(
                           fontSize: 13.5,
                           color: const Color(0xFF94A3B8),
                         ),
@@ -429,7 +429,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                           ),
                           label: Text(
                             _selectedImageBytes != null ? 'Change Image' : 'Attach Photo',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               fontWeight: FontWeight.w600,
                               fontSize: 13,
                               color: const Color(0xFF334155),
@@ -478,7 +478,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                                         const SizedBox(width: 8),
                                         Text(
                                           'Post Now',
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.lato(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w700,
                                             color: Colors.white,
@@ -525,7 +525,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
           children: [
             Text(
               'Announcements',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.lato(
                 fontWeight: FontWeight.w800,
                 fontSize: 21,
                 color: const Color(0xFF0F172A),
@@ -541,7 +541,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               ),
               child: Text(
                 'LIVE BOARD',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                   color: const Color(0xFF059669),
@@ -563,7 +563,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         icon: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
         label: Text(
           'New Announcement',
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.lato(
             fontWeight: FontWeight.w700,
             fontSize: 13.5,
             color: Colors.white,
@@ -621,7 +621,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                       children: [
                         Text(
                           'Broadcast to Tenants',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.lato(
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
@@ -630,7 +630,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                         const SizedBox(height: 2),
                         Text(
                           '${_announcements.length} active announcements broadcasted',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.lato(
                             fontSize: 12,
                             color: Colors.white.withValues(alpha: 0.85),
                             fontWeight: FontWeight.w500,
@@ -650,7 +650,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               children: [
                 Text(
                   'Broadcast History',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.lato(
                     fontSize: 16.5,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF0F172A),
@@ -658,7 +658,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                 ),
                 Text(
                   '${_announcements.length} notices',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF64748B),
@@ -701,7 +701,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     const SizedBox(height: 16),
                     Text(
                       'No Announcements Published',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.lato(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF0F172A),
@@ -712,7 +712,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     Text(
                       'Broadcast notices, repair alerts, and PG updates directly to your tenants.',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.lato(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: const Color(0xFF64748B),
@@ -725,7 +725,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                       icon: const Icon(Icons.campaign_rounded, size: 18, color: Colors.white),
                       label: Text(
                         'Create First Notice',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontWeight: FontWeight.w700,
                           fontSize: 13.5,
                           color: Colors.white,
@@ -789,7 +789,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                               children: [
                                 Text(
                                   heading,
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.lato(
                                     fontSize: 16.5,
                                     fontWeight: FontWeight.w700,
                                     color: const Color(0xFF0F172A),
@@ -808,7 +808,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                                       const SizedBox(width: 4),
                                       Text(
                                         dateStr,
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.lato(
                                           fontSize: 11.5,
                                           fontWeight: FontWeight.w500,
                                           color: const Color(0xFF64748B),
@@ -836,7 +836,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                                     const SizedBox(width: 4),
                                     Text(
                                       'Official',
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.lato(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w700,
                                         color: const Color(0xFF4F46E5),
@@ -861,7 +861,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                       const SizedBox(height: 14),
                       Text(
                         description,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 14,
                           height: 1.55,
                           fontWeight: FontWeight.w400,
@@ -907,7 +907,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                             const SizedBox(width: 5),
                             Text(
                               'Delivered to all active PG tenants',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 11.5,
                                 color: const Color(0xFF059669),
                                 fontWeight: FontWeight.w600,

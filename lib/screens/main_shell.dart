@@ -114,7 +114,7 @@ class MainShell extends StatelessWidget {
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontSize: 10.5,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                   color: isSelected ? AppTheme.primaryColor : const Color(0xFF64748B),

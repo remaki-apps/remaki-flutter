@@ -215,7 +215,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                               _searchQuery.isNotEmpty
                                   ? 'No tenants matching "$_searchQuery"'
                                   : 'No Tenants Found',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.lato(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF0F172A),
@@ -228,7 +228,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                   ? 'Try searching for another name, phone number, or room.'
                                   : 'Add tenants to track rent payments and bed allocations.',
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
                                 color: const Color(0xFF64748B),

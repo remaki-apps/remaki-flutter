@@ -181,7 +181,7 @@ class PaymentSplitupCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     'Payment Split-up',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
                       color: titleColor,
@@ -199,7 +199,7 @@ class PaymentSplitupCard extends StatelessWidget {
                 ),
                 child: Text(
                   'SETTLED',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 9.5,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.4,
@@ -261,7 +261,7 @@ class PaymentSplitupCard extends StatelessWidget {
             children: [
               Text(
                 'Total Amount Paid',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: titleColor,
@@ -269,7 +269,7 @@ class PaymentSplitupCard extends StatelessWidget {
               ),
               Text(
                 '₹${paymentAmount.toStringAsFixed(0)}',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
                   color: const Color(0xFF4F46E5),
@@ -298,7 +298,7 @@ class PaymentSplitupCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Mode: $method • $timeStr${(notes != null && notes!.isNotEmpty) ? ' • $notes' : ''}',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 10,
                       color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                       fontWeight: FontWeight.w500,
@@ -330,7 +330,7 @@ class PaymentSplitupCard extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.lato(
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: labelColor,
@@ -341,7 +341,7 @@ class PaymentSplitupCard extends StatelessWidget {
         ),
         Text(
           '₹${amount.toStringAsFixed(0)}',
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.lato(
             fontSize: 12.5,
             fontWeight: FontWeight.w700,
             color: valueColor,

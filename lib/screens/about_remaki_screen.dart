@@ -15,7 +15,7 @@ class AboutRemakiScreen extends StatelessWidget {
         leading: const BackButton(color: Color(0xFF0F172A)),
         title: Text(
           'About Remaki',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.lato(
             fontWeight: FontWeight.w700,
             fontSize: 20,
             color: const Color(0xFF0F172A),
@@ -48,33 +48,34 @@ class AboutRemakiScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                // Logo
-                Image.asset(
-                  'assets/logo/logo_word.png',
-                  height: 38,
-                  fit: BoxFit.contain,
-                  errorBuilder: (ctx, err, stack) => Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF5B32E4),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(Icons.apartment_rounded, color: Colors.white, size: 24),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'REMAKI',
-                        style: GoogleFonts.outfit(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF0F172A),
-                          letterSpacing: 0.5,
-                        ),
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFE0E7FF), Color(0xFF6366F1)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF6366F1).withValues(alpha: 0.25),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
                       ),
                     ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: Image.asset(
+                      'assets/logo/R_logo.jpeg',
+                      fit: BoxFit.cover,
+                      errorBuilder: (ctx, err, stack) => Container(
+                        color: const Color(0xFF5B32E4),
+                        child: const Icon(Icons.apartment_rounded, color: Colors.white, size: 32),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -86,7 +87,7 @@ class AboutRemakiScreen extends StatelessWidget {
                   ),
                   child: Text(
                     'Version 1.0.0 (Build 1)',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w700,
                       color: const Color(0xFF4F46E5),
@@ -97,7 +98,7 @@ class AboutRemakiScreen extends StatelessWidget {
                 Text(
                   'Smart Hostel & PG Operating System',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.lato(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF0F172A),
@@ -107,7 +108,7 @@ class AboutRemakiScreen extends StatelessWidget {
                 Text(
                   'Remaki is an end-to-end management platform designed for modern paying guest accommodations, student hostels, and co-living properties. It automates rent collections, tenant onboarding, inventory allocation, and resident communications.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 13,
                     height: 1.5,
                     color: const Color(0xFF64748B),
@@ -123,7 +124,7 @@ class AboutRemakiScreen extends StatelessWidget {
             padding: const EdgeInsets.only(left: 4, bottom: 10),
             child: Text(
               'PLATFORM CAPABILITIES',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w800,
                 color: const Color(0xFF64748B),
@@ -183,7 +184,7 @@ class AboutRemakiScreen extends StatelessWidget {
               children: [
                 Text(
                   '© 2026 Remaki Technologies. All rights reserved.',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF94A3B8),
@@ -192,7 +193,7 @@ class AboutRemakiScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'Empowering modern co-living communities.',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 11,
                     color: const Color(0xFFCBD5E1),
                   ),
@@ -245,7 +246,7 @@ class AboutRemakiScreen extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.lato(
                     fontSize: 14.5,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF0F172A),
@@ -254,7 +255,7 @@ class AboutRemakiScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 12.5,
                     height: 1.45,
                     color: const Color(0xFF64748B),

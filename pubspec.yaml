@@ -58,15 +58,15 @@ dev_dependencies:
 flutter_launcher_icons:
   android: "ic_launcher"
   ios: true
-  image_path: "assets/logo/logo_word.png"
+  image_path: "assets/logo/Remaki_ICON_1.png"
   min_sdk_android: 21
 
 flutter_native_splash:
-  color: "#1E1B4B"
-  image: "assets/logo/logo_word.png"
+  color: "#F8FAFC"
+  image: "assets/logo/R_logo.jpeg"
   android_12:
-    color: "#1E1B4B"
-    image: "assets/logo/logo_word.png"
+    color: "#F8FAFC"
+    image: "assets/logo/R_logo.jpeg"
   web: false
 
 # For information on the generic Dart part of this file, see the

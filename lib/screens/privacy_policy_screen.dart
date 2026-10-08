@@ -15,7 +15,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
         leading: const BackButton(color: Color(0xFF0F172A)),
         title: Text(
           'Privacy Policy',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.lato(
             fontWeight: FontWeight.w700,
             fontSize: 20,
             color: const Color(0xFF0F172A),
@@ -86,7 +86,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       ),
                       child: Text(
                         'Global Privacy Standard',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
@@ -98,7 +98,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 const SizedBox(height: 18),
                 Text(
                   'Your Data & Privacy Protected',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.lato(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
@@ -108,7 +108,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   'At Remaki, we believe property and tenant information must remain confidential, securely encrypted, and never commercialized.',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 13,
                     height: 1.5,
                     color: const Color(0xFFD1FAE5),
@@ -160,7 +160,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             padding: const EdgeInsets.only(left: 4, bottom: 12),
             child: Text(
               'INFORMATION PRACTICES',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w800,
                 color: const Color(0xFF64748B),
@@ -271,7 +271,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     children: [
                       Text(
                         'Privacy Inquiries or Data Removal',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.lato(
                           fontSize: 14.5,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF0F172A),
@@ -280,7 +280,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         'Email privacy team: remakiapps@gmail.com',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 12,
                           color: const Color(0xFF64748B),
                         ),
@@ -297,7 +297,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           Center(
             child: Text(
               '© 2026 Remaki Technologies. All rights reserved.',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF94A3B8),
@@ -345,7 +345,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.lato(
               fontSize: 11.5,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF0F172A),
@@ -355,7 +355,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.lato(
               fontSize: 9.5,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF64748B),
@@ -405,7 +405,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.lato(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF0F172A),
@@ -420,7 +420,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 ),
                 child: Text(
                   number,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFF64748B),
@@ -448,7 +448,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   Expanded(
                     child: Text(
                       b,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.lato(
                         fontSize: 12.5,
                         height: 1.45,
                         color: const Color(0xFF475569),

@@ -90,7 +90,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
             Text(
               'Forgot Security PIN?',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.lato(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
                 color: const Color(0xFF0F172A),
@@ -101,7 +101,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF64748B),
@@ -137,7 +137,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           children: [
                             Text(
                               'Organization Support Email',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xFF94A3B8),
@@ -146,7 +146,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             const SizedBox(height: 2),
                             Text(
                               email,
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF0F172A),
@@ -184,7 +184,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             children: [
                               Text(
                                 'Support Helpline',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.lato(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                   color: const Color(0xFF94A3B8),
@@ -193,7 +193,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               const SizedBox(height: 2),
                               Text(
                                 phone,
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.lato(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   color: const Color(0xFF0F172A),
@@ -224,7 +224,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 icon: const Icon(Icons.send_rounded, size: 18),
                 label: Text(
                   'Email Organization Support',
-                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14),
+                  style: GoogleFonts.lato(fontWeight: FontWeight.w700, fontSize: 14),
                 ),
                 onPressed: () async {
                   Navigator.pop(ctx);
@@ -259,7 +259,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               onPressed: () => Navigator.pop(ctx),
               child: Text(
                 'Close',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF64748B),
                 ),
@@ -333,12 +333,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               children: [
                 const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 28),
                 const SizedBox(width: 8),
-                Text('Password Reset', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18)),
+                Text('Password Reset', style: GoogleFonts.lato(fontWeight: FontWeight.bold, fontSize: 18)),
               ],
             ),
             content: Text(
               'Your password has been reset successfully! You can now log in using your new password.',
-              style: GoogleFonts.plusJakartaSans(fontSize: 14, color: const Color(0xFF475569)),
+              style: GoogleFonts.lato(fontSize: 14, color: const Color(0xFF475569)),
             ),
             actions: [
               ElevatedButton(
@@ -379,7 +379,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       appBar: AppBar(
         title: Text(
           'Forgot Password',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 18),
+          style: GoogleFonts.lato(fontWeight: FontWeight.w700, fontSize: 18),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -429,7 +429,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     Center(
                       child: Text(
                         'Reset Password',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.lato(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: AppTheme.textPrimary,
@@ -441,7 +441,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       child: Text(
                         'Enter your registered phone number, 4-digit Security Recovery PIN, and create a new password.',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.plusJakartaSans(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
+                        style: GoogleFonts.lato(fontSize: 13, color: AppTheme.textSecondary, height: 1.4),
                       ),
                     ),
                     const SizedBox(height: 22),
@@ -467,7 +467,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                 Expanded(
                                   child: Text(
                                     _errorMessage,
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.lato(
                                       color: const Color(0xFFB91C1C),
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.w600,
@@ -494,7 +494,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                       const SizedBox(width: 6),
                                       Text(
                                         'Contact Organization Support for PIN Reset',
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.lato(
                                           fontSize: 11.5,
                                           fontWeight: FontWeight.w700,
                                           color: const Color(0xFFDC2626),
@@ -514,14 +514,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     // Phone Number
                     Text(
                       'Phone Number',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
+                      style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
                     ),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _phoneController,
                       decoration: InputDecoration(
                         hintText: 'Enter registered phone number',
-                        hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13),
+                        hintStyle: GoogleFonts.lato(color: const Color(0xFF94A3B8), fontSize: 13),
                         prefixIcon: const Icon(Icons.phone_outlined, size: 20, color: Color(0xFF64748B)),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -540,7 +540,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             const SizedBox(width: 6),
                             Text(
                               '4-Digit Security Recovery PIN (MPIN)',
-                              style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
+                              style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
                             ),
                           ],
                         ),
@@ -548,7 +548,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           onTap: () => setState(() => _obscurePin = !_obscurePin),
                           child: Text(
                             _obscurePin ? 'Show' : 'Hide',
-                            style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF64748B)),
+                            style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF64748B)),
                           ),
                         ),
                       ],
@@ -563,7 +563,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       decoration: InputDecoration(
                         counterText: '',
                         hintText: 'Enter 4-digit MPIN',
-                        hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13),
+                        hintStyle: GoogleFonts.lato(color: const Color(0xFF94A3B8), fontSize: 13),
                         prefixIcon: const Icon(Icons.pin_outlined, size: 20, color: Color(0xFF64748B)),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -584,7 +584,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             Flexible(
                               child: Text(
                                 "Don't remember your Security PIN? Contact Organization Support",
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.lato(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   color: AppTheme.primaryColor,
@@ -601,7 +601,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     // New Password
                     Text(
                       'Enter New Password',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
+                      style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
                     ),
                     const SizedBox(height: 6),
                     TextField(
@@ -609,7 +609,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       obscureText: _obscureNewPassword,
                       decoration: InputDecoration(
                         hintText: 'Minimum 4 characters',
-                        hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13),
+                        hintStyle: GoogleFonts.lato(color: const Color(0xFF94A3B8), fontSize: 13),
                         prefixIcon: const Icon(Icons.lock_outline, size: 20, color: Color(0xFF64748B)),
                         suffixIcon: IconButton(
                           icon: Icon(_obscureNewPassword ? Icons.visibility_off : Icons.visibility, size: 20, color: const Color(0xFF64748B)),
@@ -624,7 +624,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     // Confirm New Password
                     Text(
                       'Confirm New Password',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
+                      style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
                     ),
                     const SizedBox(height: 6),
                     TextField(
@@ -632,7 +632,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       obscureText: _obscureConfirmPassword,
                       decoration: InputDecoration(
                         hintText: 'Re-enter new password',
-                        hintStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF94A3B8), fontSize: 13),
+                        hintStyle: GoogleFonts.lato(color: const Color(0xFF94A3B8), fontSize: 13),
                         prefixIcon: const Icon(Icons.lock_outline, size: 20, color: Color(0xFF64748B)),
                         suffixIcon: IconButton(
                           icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility, size: 20, color: const Color(0xFF64748B)),
@@ -658,7 +658,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         ),
                         child: _isLoading
                             ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                            : Text('Reset Password', style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.bold)),
+                            : Text('Reset Password', style: GoogleFonts.lato(fontSize: 15, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],

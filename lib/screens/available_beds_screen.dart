@@ -93,7 +93,7 @@ class AvailableBedsScreen extends StatelessWidget {
                           const SizedBox(height: 16),
                           Text(
                             'No Available Beds',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.lato(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF0F172A),
@@ -104,7 +104,7 @@ class AvailableBedsScreen extends StatelessWidget {
                           Text(
                             'All beds are currently occupied or allocated.',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               fontSize: 13,
                               color: const Color(0xFF64748B),
                             ),

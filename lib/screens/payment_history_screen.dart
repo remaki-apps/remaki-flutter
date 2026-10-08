@@ -150,7 +150,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
           children: [
             Text(
               'Payment History',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.3,
@@ -160,7 +160,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
             const SizedBox(height: 2),
             Text(
               '${sortedPayments.length} Recorded Transactions',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF64748B),
@@ -232,7 +232,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                             _selectedMonth == null
                                 ? 'All Time'
                                 : DateFormat('MMMM yyyy').format(_selectedMonth!),
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               fontSize: 13.5,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF0F172A),
@@ -251,7 +251,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                 ),
                                 child: Text(
                                   'Current',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.lato(
                                     fontSize: 9.5,
                                     fontWeight: FontWeight.w700,
                                     color: const Color(0xFF4F46E5),
@@ -267,7 +267,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                 ),
                                 child: Text(
                                   'Reset',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.lato(
                                     fontSize: 9.5,
                                     fontWeight: FontWeight.w600,
                                     color: const Color(0xFF64748B),
@@ -300,7 +300,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                             ),
                             child: Text(
                               _selectedMonth == null ? 'Month View' : 'All Time',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
                                 color: _selectedMonth == null ? Colors.white : const Color(0xFF475569),
@@ -368,7 +368,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                 _selectedMonth == null
                                     ? 'TOTAL RECORDED PAYMENTS'
                                     : 'COLLECTIONS FOR ${DateFormat('MMMM yyyy').format(_selectedMonth!).toUpperCase()}',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.lato(
                                   fontSize: 10.5,
                                   color: Colors.white70,
                                   fontWeight: FontWeight.w700,
@@ -378,7 +378,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                               const SizedBox(height: 3),
                               Text(
                                 '₹${_formatCurrency(totalCollected)}',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.lato(
                                   fontSize: 24,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: -0.5,
@@ -400,7 +400,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                           ),
                           child: Text(
                             '${sortedPayments.length} Transactions',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
@@ -432,14 +432,14 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                 child: TextField(
                   controller: _searchController,
                   onChanged: (val) => setState(() => _searchQuery = val.trim()),
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF0F172A),
                   ),
                   decoration: InputDecoration(
                     hintText: 'Search by tenant, room, mode, or notes...',
-                    hintStyle: GoogleFonts.plusJakartaSans(
+                    hintStyle: GoogleFonts.lato(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF94A3B8),
@@ -488,7 +488,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                 children: [
                   Text(
                     'TRANSACTIONS',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                       color: const Color(0xFF94A3B8),
@@ -497,7 +497,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                   ),
                   Text(
                     '${filteredPayments.length} results',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFF64748B),
@@ -527,7 +527,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                       const SizedBox(height: 14),
                       Text(
                         'No payment history yet',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF334155),
@@ -557,7 +557,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                       const SizedBox(height: 10),
                       Text(
                         'No matching payments found',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF334155),
@@ -652,7 +652,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                             Flexible(
                                               child: Text(
                                                 payment.tenantName ?? tenant?.name ?? 'Tenant',
-                                                style: GoogleFonts.plusJakartaSans(
+                                                style: GoogleFonts.lato(
                                                   fontSize: 14,
                                                   fontWeight: FontWeight.w700,
                                                   color: const Color(0xFF0F172A),
@@ -672,7 +672,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                                 ),
                                                 child: Text(
                                                   payment.roomNumber!,
-                                                  style: GoogleFonts.plusJakartaSans(
+                                                  style: GoogleFonts.lato(
                                                     fontSize: 9.5,
                                                     fontWeight: FontWeight.w700,
                                                     color: const Color(0xFF475569),
@@ -693,7 +693,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                             const SizedBox(width: 4),
                                             Text(
                                               paidDateStr,
-                                              style: GoogleFonts.plusJakartaSans(
+                                              style: GoogleFonts.lato(
                                                 fontSize: 11.5,
                                                 fontWeight: FontWeight.w500,
                                                 color: const Color(0xFF64748B),
@@ -721,7 +721,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                     children: [
                                       Text(
                                         '₹${_formatCurrency(payment.amount)}',
-                                        style: GoogleFonts.plusJakartaSans(
+                                        style: GoogleFonts.lato(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w800,
                                           letterSpacing: -0.3,
@@ -847,7 +847,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
           children: [
             Text(
               label,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                 color: isSelected ? Colors.white : const Color(0xFF475569),
@@ -864,7 +864,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
               ),
               child: Text(
                 '$count',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   color: isSelected ? Colors.white : const Color(0xFF64748B),

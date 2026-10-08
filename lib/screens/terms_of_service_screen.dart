@@ -15,7 +15,7 @@ class TermsOfServiceScreen extends StatelessWidget {
         leading: const BackButton(color: Color(0xFF0F172A)),
         title: Text(
           'Terms of Service',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.lato(
             fontWeight: FontWeight.w700,
             fontSize: 20,
             color: const Color(0xFF0F172A),
@@ -86,7 +86,7 @@ class TermsOfServiceScreen extends StatelessWidget {
                       ),
                       child: Text(
                         'Effective Jan 2026',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
@@ -98,7 +98,7 @@ class TermsOfServiceScreen extends StatelessWidget {
                 const SizedBox(height: 18),
                 Text(
                   'Remaki Terms of Service',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.lato(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
@@ -108,7 +108,7 @@ class TermsOfServiceScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   'These terms outline the rules and guidelines for using the Remaki PG & Hostel Management Platform by property owners, managers, staff, and residents.',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 13,
                     height: 1.5,
                     color: const Color(0xFFCBD5E1),
@@ -157,7 +157,7 @@ class TermsOfServiceScreen extends StatelessWidget {
             padding: const EdgeInsets.only(left: 4, bottom: 12),
             child: Text(
               'PLATFORM POLICIES & GUIDELINES',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w800,
                 color: const Color(0xFF64748B),
@@ -262,7 +262,7 @@ class TermsOfServiceScreen extends StatelessWidget {
                     children: [
                       Text(
                         'Questions about Terms?',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.lato(
                           fontSize: 14.5,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF0F172A),
@@ -271,7 +271,7 @@ class TermsOfServiceScreen extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         'Contact legal & operations: remakiapps@gmail.com',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 12,
                           color: const Color(0xFF64748B),
                         ),
@@ -288,7 +288,7 @@ class TermsOfServiceScreen extends StatelessWidget {
           Center(
             child: Text(
               '© 2026 Remaki Technologies. All rights reserved.',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF94A3B8),
@@ -335,7 +335,7 @@ class TermsOfServiceScreen extends StatelessWidget {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.lato(
               fontSize: 10.5,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF334155),
@@ -385,7 +385,7 @@ class TermsOfServiceScreen extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.lato(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF0F172A),
@@ -400,7 +400,7 @@ class TermsOfServiceScreen extends StatelessWidget {
                 ),
                 child: Text(
                   number,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFF64748B),
@@ -412,7 +412,7 @@ class TermsOfServiceScreen extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             content,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.lato(
               fontSize: 13,
               height: 1.5,
               color: const Color(0xFF475569),

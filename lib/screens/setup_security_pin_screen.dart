@@ -87,11 +87,11 @@ class _SetupSecurityPinScreenState extends State<SetupSecurityPinScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: Text(
           'Sign Out?',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18),
+          style: GoogleFonts.lato(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         content: Text(
           'You need to set up a 4-digit Security Recovery PIN to access your tenant account. Do you want to sign out?',
-          style: GoogleFonts.plusJakartaSans(fontSize: 14, color: const Color(0xFF64748B)),
+          style: GoogleFonts.lato(fontSize: 14, color: const Color(0xFF64748B)),
         ),
         actions: [
           TextButton(
@@ -160,7 +160,7 @@ class _SetupSecurityPinScreenState extends State<SetupSecurityPinScreen> {
           child: Center(
             child: Text(
               digitChar,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.lato(
                 fontSize: _obscurePin ? 20 : 24,
                 fontWeight: FontWeight.w800,
                 color: const Color(0xFF1E1B4B),
@@ -237,7 +237,7 @@ class _SetupSecurityPinScreenState extends State<SetupSecurityPinScreen> {
                           const SizedBox(width: 6),
                           Text(
                             'COMPULSORY FIRST TIME SETUP',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
                               color: const Color(0xFFB45309),
@@ -251,7 +251,7 @@ class _SetupSecurityPinScreenState extends State<SetupSecurityPinScreen> {
 
                     Text(
                       'Create Security PIN',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.lato(
                         fontSize: 26,
                         fontWeight: FontWeight.w800,
                         color: const Color(0xFF0F172A),
@@ -262,7 +262,7 @@ class _SetupSecurityPinScreenState extends State<SetupSecurityPinScreen> {
                     Text(
                       'Set a 4-digit Security Recovery PIN (like an ATM / UPI MPIN). You will need this PIN to reset your password if you ever forget it.',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.lato(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: const Color(0xFF64748B),
@@ -306,7 +306,7 @@ class _SetupSecurityPinScreenState extends State<SetupSecurityPinScreen> {
                                   Expanded(
                                     child: Text(
                                       _errorMessage!,
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.lato(
                                         color: const Color(0xFFB91C1C),
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
@@ -324,7 +324,7 @@ class _SetupSecurityPinScreenState extends State<SetupSecurityPinScreen> {
                             children: [
                               Text(
                                 'Enter 4-Digit MPIN',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.lato(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                   color: const Color(0xFF334155),
@@ -342,7 +342,7 @@ class _SetupSecurityPinScreenState extends State<SetupSecurityPinScreen> {
                                     const SizedBox(width: 4),
                                     Text(
                                       _obscurePin ? 'Show' : 'Hide',
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.lato(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                         color: const Color(0xFF64748B),
@@ -387,7 +387,7 @@ class _SetupSecurityPinScreenState extends State<SetupSecurityPinScreen> {
                           // Confirm PIN Header
                           Text(
                             'Confirm 4-Digit MPIN',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF334155),
@@ -437,7 +437,7 @@ class _SetupSecurityPinScreenState extends State<SetupSecurityPinScreen> {
                                 Expanded(
                                   child: Text(
                                     'Keep this MPIN safe and memorable. It verifies your identity if you ever forget your password.',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.lato(
                                       fontSize: 11.5,
                                       fontWeight: FontWeight.w500,
                                       color: const Color(0xFF64748B),
@@ -476,7 +476,7 @@ class _SetupSecurityPinScreenState extends State<SetupSecurityPinScreen> {
                                         const SizedBox(width: 8),
                                         Text(
                                           'Save & Secure Account',
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.lato(
                                             fontSize: 15,
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -497,7 +497,7 @@ class _SetupSecurityPinScreenState extends State<SetupSecurityPinScreen> {
                       icon: const Icon(Icons.logout_rounded, size: 16, color: Color(0xFF94A3B8)),
                       label: Text(
                         'Sign Out / Switch Account',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF94A3B8),

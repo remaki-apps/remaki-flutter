@@ -131,7 +131,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
         ),
         title: Text(
           'Record Payment',
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.lato(
             fontWeight: FontWeight.w700,
             fontSize: 18,
             color: const Color(0xFF0F172A),
@@ -263,7 +263,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                 children: [
                                   Text(
                                     '₹',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.lato(
                                       fontSize: 32,
                                       fontWeight: FontWeight.bold,
                                       color: AppTheme.primaryColor,
@@ -274,7 +274,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                     child: TextField(
                                       controller: _amountController,
                                       keyboardType: TextInputType.number,
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.lato(
                                         fontSize: 32,
                                         fontWeight: FontWeight.w800,
                                         color: const Color(0xFF0F172A),
@@ -572,7 +572,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                     isValid
                                         ? 'Confirm Payment • ₹${currentAmount.toStringAsFixed(0)}'
                                         : 'Enter Amount',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.lato(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w700,
                                       color: Colors.white,

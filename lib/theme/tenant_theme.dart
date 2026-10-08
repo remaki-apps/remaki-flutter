@@ -115,14 +115,14 @@ class TenantTheme {
     ),
   ];
 
-  // Typography Tokens with GoogleFonts Plus Jakarta Sans
+  // Typography Tokens with GoogleFonts Lato
   static TextStyle heading({
     double fontSize = 24,
     FontWeight fontWeight = FontWeight.w800,
     Color color = textPrimary,
     double letterSpacing = -0.5,
   }) {
-    return GoogleFonts.plusJakartaSans(
+    return GoogleFonts.lato(
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
@@ -136,7 +136,7 @@ class TenantTheme {
     Color color = textPrimary,
     double letterSpacing = -0.3,
   }) {
-    return GoogleFonts.plusJakartaSans(
+    return GoogleFonts.lato(
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
@@ -150,7 +150,7 @@ class TenantTheme {
     Color color = textSecondary,
     double? height,
   }) {
-    return GoogleFonts.plusJakartaSans(
+    return GoogleFonts.lato(
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
@@ -163,7 +163,7 @@ class TenantTheme {
     FontWeight fontWeight = FontWeight.w500,
     Color color = textMuted,
   }) {
-    return GoogleFonts.plusJakartaSans(
+    return GoogleFonts.lato(
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,

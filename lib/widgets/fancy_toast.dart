@@ -171,7 +171,7 @@ class _FancyToastWidgetState extends State<_FancyToastWidget> with SingleTickerP
                       children: [
                         Text(
                           widget.title,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.lato(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF0F172A),
@@ -182,7 +182,7 @@ class _FancyToastWidgetState extends State<_FancyToastWidget> with SingleTickerP
                           const SizedBox(height: 2),
                           Text(
                             widget.message!,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: const Color(0xFF64748B),

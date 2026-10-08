@@ -130,7 +130,7 @@ class _ExportDataModalState extends State<ExportDataModal> {
                     children: [
                       Text(
                         'Backup & Export Data',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.lato(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF0F172A),
@@ -139,7 +139,7 @@ class _ExportDataModalState extends State<ExportDataModal> {
                       const SizedBox(height: 2),
                       Text(
                         'Export property records to Excel (.csv)',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 12.5,
                           color: const Color(0xFF64748B),
                         ),
@@ -172,7 +172,7 @@ class _ExportDataModalState extends State<ExportDataModal> {
                   children: [
                     Text(
                       'EXPORT SUMMARY',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.lato(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF64748B),
@@ -230,7 +230,7 @@ class _ExportDataModalState extends State<ExportDataModal> {
                     Expanded(
                       child: Text(
                         'Generates an Excel-ready spreadsheet with UTF-8 BOM encoding for native compatibility with Microsoft Excel & Google Sheets.',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 12,
                           color: const Color(0xFF475569),
                           height: 1.4,
@@ -272,7 +272,7 @@ class _ExportDataModalState extends State<ExportDataModal> {
                             const SizedBox(width: 8),
                             Text(
                               'Export as Excel File',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 14.5,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -295,7 +295,7 @@ class _ExportDataModalState extends State<ExportDataModal> {
         const SizedBox(height: 4),
         Text(
           value,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.lato(
             fontSize: 17,
             fontWeight: FontWeight.w700,
             color: const Color(0xFF0F172A),
@@ -303,7 +303,7 @@ class _ExportDataModalState extends State<ExportDataModal> {
         ),
         Text(
           label,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.lato(
             fontSize: 11,
             color: const Color(0xFF64748B),
           ),
@@ -344,7 +344,7 @@ class _ExportDataModalState extends State<ExportDataModal> {
                       children: [
                         Text(
                           'Export Successful',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.lato(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF0F172A),
@@ -352,7 +352,7 @@ class _ExportDataModalState extends State<ExportDataModal> {
                         ),
                         Text(
                           '${result.recordCount} records formatted for Excel',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.lato(
                             fontSize: 12,
                             color: const Color(0xFF64748B),
                           ),
@@ -367,7 +367,7 @@ class _ExportDataModalState extends State<ExportDataModal> {
               const SizedBox(height: 12),
               Text(
                 'File Saved At:',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF64748B),
@@ -376,7 +376,7 @@ class _ExportDataModalState extends State<ExportDataModal> {
               const SizedBox(height: 4),
               SelectableText(
                 result.filePath,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontSize: 12,
                   color: const Color(0xFF0F172A),
                   fontWeight: FontWeight.w600,
@@ -403,7 +403,7 @@ class _ExportDataModalState extends State<ExportDataModal> {
                 icon: const Icon(Icons.copy_rounded, size: 18, color: Color(0xFF0F172A)),
                 label: Text(
                   'Copy Data',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF0F172A),
@@ -426,7 +426,7 @@ class _ExportDataModalState extends State<ExportDataModal> {
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(
                   'Done',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
                   ),

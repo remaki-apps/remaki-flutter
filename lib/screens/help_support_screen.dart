@@ -101,7 +101,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
         leading: const BackButton(color: Color(0xFF0F172A)),
         title: Text(
           'Help & Support',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.lato(
             fontWeight: FontWeight.w700,
             fontSize: 20,
             color: const Color(0xFF0F172A),
@@ -146,7 +146,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                       child: Center(
                         child: Text(
                           supportName[0],
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.lato(
                             color: Colors.white,
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
@@ -163,7 +163,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                             children: [
                               Text(
                                 supportName,
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.lato(
                                   color: const Color(0xFF0F172A),
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
@@ -190,7 +190,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                                     const SizedBox(width: 4),
                                     Text(
                                       'Active',
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.lato(
                                         color: const Color(0xFF475569),
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
@@ -204,7 +204,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                           const SizedBox(height: 2),
                           Text(
                             'Remaki Support & Operations',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               color: const Color(0xFF64748B),
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
@@ -235,7 +235,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                       Expanded(
                         child: Text(
                           'Mon – Sat, 9:00 AM – 9:00 PM IST  •  Fast resolution',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.lato(
                             color: const Color(0xFF475569),
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -255,7 +255,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
             padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Text(
               'GET IN TOUCH',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF64748B),
@@ -320,7 +320,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
             padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Text(
               'FREQUENTLY ASKED QUESTIONS',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF64748B),
@@ -362,7 +362,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                         collapsedIconColor: const Color(0xFF94A3B8),
                         title: Text(
                           faq['question'],
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.lato(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF0F172A),
@@ -376,7 +376,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                         children: [
                           Text(
                             faq['answer'],
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               fontSize: 12.5,
                               height: 1.5,
                               color: const Color(0xFF64748B),
@@ -401,7 +401,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
               children: [
                 Text(
                   'Remaki Support Desk',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF64748B),
@@ -410,7 +410,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                 const SizedBox(height: 2),
                 Text(
                   '© 2026 Remaki Technologies',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 11,
                     color: const Color(0xFF94A3B8),
                   ),
@@ -464,7 +464,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.lato(
                       fontSize: 14.5,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFF0F172A),
@@ -473,7 +473,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 12,
                       color: const Color(0xFF64748B),
                     ),
@@ -489,7 +489,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
               ),
               child: Text(
                 actionText,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,

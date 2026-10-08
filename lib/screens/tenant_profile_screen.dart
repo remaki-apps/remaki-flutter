@@ -785,7 +785,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                 const SizedBox(width: 6),
                                 Text(
                                   DateFormat('MMMM yyyy').format(_selectedMonth),
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.lato(
                                     fontSize: 13.5,
                                     fontWeight: FontWeight.w700,
                                     color: const Color(0xFF0F172A),
@@ -802,7 +802,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                     ),
                                     child: Text(
                                       'Current',
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.lato(
                                         fontSize: 9.5,
                                         fontWeight: FontWeight.w700,
                                         color: const Color(0xFF4F46E5),
@@ -819,7 +819,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                     ),
                                     child: Text(
                                       'Reset',
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.lato(
                                         fontSize: 9.5,
                                         fontWeight: FontWeight.w600,
                                         color: const Color(0xFF64748B),
@@ -1097,7 +1097,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                           _isHistoryExpanded
                                               ? 'Show Summary'
                                               : 'Show More (${monthPayments.length - 2} more in $selectedMonthStr)',
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.lato(
                                             fontSize: 11.5,
                                             fontWeight: FontWeight.w700,
                                             color: AppTheme.primaryColor,

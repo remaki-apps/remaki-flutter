@@ -312,7 +312,7 @@ class _ImageAdjustDialogState extends State<ImageAdjustDialog> {
           Expanded(
             child: Text(
               widget.title,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -359,7 +359,7 @@ class _ImageAdjustDialogState extends State<ImageAdjustDialog> {
               const SizedBox(width: 6),
               Text(
                 'Drag to reposition • Pinch or scroll to zoom',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   color: const Color(0xFF94A3B8),
                   fontSize: 11.5,
                   fontWeight: FontWeight.w500,
@@ -382,7 +382,7 @@ class _ImageAdjustDialogState extends State<ImageAdjustDialog> {
                   ),
                   child: Text(
                     'Cancel',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       color: Colors.white70,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
@@ -451,7 +451,7 @@ class _ImageAdjustDialogState extends State<ImageAdjustDialog> {
                               const SizedBox(width: 6),
                               Text(
                                 'Set Photo',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.lato(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 14,

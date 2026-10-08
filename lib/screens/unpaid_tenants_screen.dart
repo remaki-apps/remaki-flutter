@@ -107,7 +107,7 @@ class UnpaidTenantsScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     Text(
                       'No Unpaid Tenants!',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.lato(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF0F172A),
@@ -118,7 +118,7 @@ class UnpaidTenantsScreen extends StatelessWidget {
                     Text(
                       'All dues are clear for this month.',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.lato(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: const Color(0xFF64748B),

@@ -139,7 +139,7 @@ class _RentScreenState extends State<RentScreen> {
           children: [
             Text(
               _showBills ? 'Bills Overview' : 'Rent Overview',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF0F172A),
@@ -271,7 +271,7 @@ class _RentScreenState extends State<RentScreen> {
                       children: [
                         Text(
                           'COLLECTION PERFORMANCE',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.lato(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF64748B),
@@ -389,7 +389,7 @@ class _RentScreenState extends State<RentScreen> {
                               const SizedBox(height: 2),
                               Text(
                                 '₹${expectedAmount.toStringAsFixed(0)}',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.lato(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
                                 color: const Color(0xFF0F172A),
@@ -606,7 +606,7 @@ class _RentScreenState extends State<RentScreen> {
                 const SizedBox(width: 6),
                 Text(
                   selectedMonthStr,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF0F172A),
@@ -625,7 +625,7 @@ class _RentScreenState extends State<RentScreen> {
                   ),
                   child: Text(
                     isCurrentMonth ? 'Current' : 'Reset',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: isCurrentMonth ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
@@ -695,7 +695,7 @@ class _RentScreenState extends State<RentScreen> {
                       children: [
                         Text(
                           'Payment History',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.lato(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
                             color: const Color(0xFF0F172A),
@@ -717,7 +717,7 @@ class _RentScreenState extends State<RentScreen> {
                   ),
                   child: Text(
                     '${payments.length} Records',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: const Color(0xFF475569),
@@ -743,7 +743,7 @@ class _RentScreenState extends State<RentScreen> {
                     const SizedBox(height: 10),
                     Text(
                       'No ${isBillsTab ? "bill" : "rent"} payments recorded for $selectedMonthStr',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.lato(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF64748B),
@@ -790,7 +790,7 @@ class _RentScreenState extends State<RentScreen> {
                   ),
                   title: Text(
                     tenantDisplayName,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w700,
                       color: const Color(0xFF0F172A),
@@ -806,7 +806,7 @@ class _RentScreenState extends State<RentScreen> {
                     children: [
                       Text(
                         '+₹${p.amount.toStringAsFixed(0)}',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 14.5,
                           fontWeight: FontWeight.w800,
                           color: const Color(0xFF16A34A),
@@ -916,7 +916,7 @@ class _RentScreenState extends State<RentScreen> {
               fit: BoxFit.scaleDown,
               child: Text(
                 '₹${amount.toStringAsFixed(0)}',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
                   color: color,

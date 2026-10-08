@@ -32,6 +32,7 @@ import 'screens/terms_of_service_screen.dart';
 import 'screens/privacy_policy_screen.dart';
 import 'screens/help_support_screen.dart';
 import 'screens/payment_history_screen.dart';
+import 'screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -81,10 +82,12 @@ CustomTransitionPage<T> _buildPageWithTransition<T>({
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   refreshListenable: ApiService.authNotifier,
-  initialLocation: ApiService.isLoggedIn ? (ApiService.role == 'TENANT' ? '/tenant_home' : '/') : '/login',
+  initialLocation: '/splash',
   redirect: (context, state) {
-    final isLoggedIn = ApiService.isLoggedIn;
     final location = state.matchedLocation;
+    if (location == '/splash') return null;
+
+    final isLoggedIn = ApiService.isLoggedIn;
     final isLoggingIn = location == '/login' || location == '/forgot_password';
 
     if (!isLoggedIn) {
@@ -103,6 +106,11 @@ final router = GoRouter(
     return null;
   },
   routes: [
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/splash',
+      builder: (context, state) => const SplashScreen(),
+    ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/login',

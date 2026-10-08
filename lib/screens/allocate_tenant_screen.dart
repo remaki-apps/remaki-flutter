@@ -77,7 +77,7 @@ class _AllocateTenantScreenState extends State<AllocateTenantScreen> {
                     const SizedBox(height: 16),
                     Text(
                       'No Unallocated Tenants Found',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.lato(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF0F172A),
@@ -88,7 +88,7 @@ class _AllocateTenantScreenState extends State<AllocateTenantScreen> {
                     Text(
                       'Create a new tenant to allocate to this bed.',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.lato(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: const Color(0xFF64748B),

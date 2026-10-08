@@ -95,7 +95,7 @@ class HelpSupportModal {
                           children: [
                             Text(
                               supportName,
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.lato(
                                 color: Colors.white,
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
@@ -123,7 +123,7 @@ class HelpSupportModal {
                         const SizedBox(height: 2),
                         Text(
                           'Remaki Help & Support Lead',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.lato(
                             color: Colors.white.withValues(alpha: 0.85),
                             fontSize: 12.5,
                             fontWeight: FontWeight.w500,
@@ -139,7 +139,7 @@ class HelpSupportModal {
 
             Text(
               'REACH OUT VIA',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
                 color: const Color(0xFF64748B),
@@ -251,11 +251,11 @@ class HelpSupportModal {
         ),
         title: Text(
           title,
-          style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+          style: GoogleFonts.lato(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
         ),
         subtitle: Text(
           subtitle,
-          style: GoogleFonts.plusJakartaSans(fontSize: 12, color: const Color(0xFF64748B), fontWeight: FontWeight.w500),
+          style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF64748B), fontWeight: FontWeight.w500),
         ),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -265,7 +265,7 @@ class HelpSupportModal {
           ),
           child: Text(
             actionLabel,
-            style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700, color: iconColor),
+            style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700, color: iconColor),
           ),
         ),
         onTap: onTap,

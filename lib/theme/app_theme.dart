@@ -23,6 +23,7 @@ class AppTheme {
 
   static ThemeData get lightTheme {
     return ThemeData(
+      fontFamily: GoogleFonts.lato().fontFamily,
       primaryColor: primaryColor,
       colorScheme: const ColorScheme.light(
         primary: primaryColor,
@@ -31,7 +32,7 @@ class AppTheme {
         onSurface: Color(0xFF0F172A),
       ),
       scaffoldBackgroundColor: backgroundColor,
-      textTheme: GoogleFonts.interTextTheme().apply(
+      textTheme: GoogleFonts.latoTextTheme().apply(
         bodyColor: textPrimary,
         displayColor: textPrimary,
       ),
@@ -44,17 +45,17 @@ class AppTheme {
         ),
         headerBackgroundColor: primaryColor,
         headerForegroundColor: Colors.white,
-        headerHeadlineStyle: const TextStyle(
+        headerHeadlineStyle: GoogleFonts.lato(
           fontSize: 22,
           fontWeight: FontWeight.bold,
           color: Colors.white,
         ),
-        headerHelpStyle: const TextStyle(
+        headerHelpStyle: GoogleFonts.lato(
           fontSize: 12,
           fontWeight: FontWeight.w600,
           color: Colors.white70,
         ),
-        dayStyle: const TextStyle(
+        dayStyle: GoogleFonts.lato(
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
@@ -73,7 +74,7 @@ class AppTheme {
         todayBackgroundColor: WidgetStateProperty.all(const Color(0xFFEEF2FF)),
         todayForegroundColor: WidgetStateProperty.all(primaryColor),
         todayBorder: const BorderSide(color: primaryColor, width: 1.5),
-        yearStyle: const TextStyle(
+        yearStyle: GoogleFonts.lato(
           fontSize: 14,
           fontWeight: FontWeight.w600,
         ),
@@ -91,18 +92,18 @@ class AppTheme {
         }),
         cancelButtonStyle: TextButton.styleFrom(
           foregroundColor: const Color(0xFF64748B),
-          textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          textStyle: GoogleFonts.lato(fontWeight: FontWeight.bold, fontSize: 14),
         ),
         confirmButtonStyle: TextButton.styleFrom(
           foregroundColor: primaryColor,
-          textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          textStyle: GoogleFonts.lato(fontWeight: FontWeight.bold, fontSize: 14),
         ),
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: backgroundColor,
         elevation: 0,
-        iconTheme: IconThemeData(color: primaryDark),
-        titleTextStyle: TextStyle(
+        iconTheme: const IconThemeData(color: primaryDark),
+        titleTextStyle: GoogleFonts.lato(
           color: primaryDark,
           fontSize: 22,
           fontWeight: FontWeight.bold,

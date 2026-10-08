@@ -812,7 +812,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               const SizedBox(height: 2),
               Text(
                 label,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontSize: 10.5,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                   color: isSelected ? TenantTheme.primary : TenantTheme.textSecondary,
@@ -865,7 +865,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               const SizedBox(height: 7),
               Text(
                 label,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
                   color: TenantTheme.textPrimary,
@@ -896,7 +896,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             ),
             title: Text(
               'Notices & Announcements',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
                 color: TenantTheme.textPrimary,
@@ -932,7 +932,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             ),
             title: Text(
               'My Stay',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
                 color: TenantTheme.textPrimary,
@@ -965,7 +965,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         const SizedBox(width: 5),
                         Text(
                           isActive ? 'Active Stay' : 'Inactive',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.lato(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: isActive ? TenantTheme.success : TenantTheme.danger,
@@ -1027,7 +1027,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 children: [
                   Text(
                     '${_getGreeting()},',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w500,
                       color: TenantTheme.textSecondary,
@@ -1038,7 +1038,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     children: [
                       Text(
                         '$firstName ',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 23,
                           fontWeight: FontWeight.w800,
                           color: TenantTheme.textPrimary,
@@ -1051,7 +1051,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   const SizedBox(height: 2),
                   Text(
                     'Welcome to your resident dashboard',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 12,
                       color: TenantTheme.textMuted,
                       fontWeight: FontWeight.w500,
@@ -1132,7 +1132,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 children: [
                                   Text(
                                     roomNumber,
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.lato(
                                       fontSize: 20,
                                       fontWeight: FontWeight.w800,
                                       color: Colors.white,
@@ -1149,7 +1149,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                     ),
                                     child: Text(
                                       'ACTIVE',
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.lato(
                                         fontSize: 9,
                                         fontWeight: FontWeight.w800,
                                         letterSpacing: 0.4,
@@ -1162,7 +1162,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               const SizedBox(height: 4),
                               Text(
                                 bedLabel,
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.lato(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                   color: Colors.white.withValues(alpha: 0.88),
@@ -1182,7 +1182,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               children: [
                                 Text(
                                   'My Stay',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.lato(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white,
@@ -1250,7 +1250,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     children: [
                       Text(
                         'Rent Status',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: TenantTheme.textSecondary,
@@ -1296,7 +1296,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                   : (isPending
                                       ? 'PENDING'
                                       : (isUpcoming ? 'UPCOMING' : 'OVERDUE')),
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.3,
@@ -1322,7 +1322,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         children: [
                           Text(
                             '₹${NumberFormat('#,##,###').format(displayRentAmount)}',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               fontSize: 26,
                               fontWeight: FontWeight.w800,
                               color: TenantTheme.textPrimary,
@@ -1338,7 +1338,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                     : (isUpcoming
                                         ? 'Payment due by $rentDueDateStr'
                                         : 'Payment overdue since $rentDueDateStr')),
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               fontSize: 11.5,
                               color: isPending
                                   ? TenantTheme.warning
@@ -1367,7 +1367,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           children: [
                             Text(
                               isPaid ? 'History' : (isPending ? 'Under Review' : 'Pay Now'),
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
                                 color: isPaid
@@ -1400,7 +1400,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             children: [
               Text(
                 'Recent Notice',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                   color: TenantTheme.textPrimary,
@@ -1411,7 +1411,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 onTap: _openNoticesScreen,
                 child: Text(
                   'View All',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
                     color: TenantTheme.primary,
@@ -1444,7 +1444,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 const SizedBox(width: 4),
                                 Text(
                                   'Official Notice',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.lato(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
                                     color: TenantTheme.primary,
@@ -1460,7 +1460,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 const SizedBox(width: 4),
                                 Text(
                                   _formatDate(_announcements.first['createdAt']),
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.lato(
                                     fontSize: 11,
                                     color: TenantTheme.textMuted,
                                     fontWeight: FontWeight.w500,
@@ -1494,7 +1494,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               children: [
                                 Text(
                                   _announcements.first['heading'] ?? 'Notice',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.lato(
                                     fontSize: 15.5,
                                     fontWeight: FontWeight.w700,
                                     color: TenantTheme.textPrimary,
@@ -1503,7 +1503,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 const SizedBox(height: 4),
                                 Text(
                                   _announcements.first['description'] ?? '',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.lato(
                                     fontSize: 13,
                                     color: TenantTheme.textSecondary,
                                     height: 1.45,
@@ -1532,7 +1532,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           const SizedBox(height: 12),
                           Text(
                             'No Notices Yet',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                               color: TenantTheme.textPrimary,
@@ -1543,7 +1543,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           Text(
                             'Official PG notices will appear here once posted by management.',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: TenantTheme.textSecondary,
@@ -1598,7 +1598,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               children: [
                 Text(
                   'My Stay',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
                     color: TenantTheme.textPrimary,
@@ -1626,7 +1626,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       const SizedBox(width: 5),
                       Text(
                         stayStatus,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w800,
                           color: isActive ? TenantTheme.success : TenantTheme.danger,
@@ -1661,7 +1661,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       const SizedBox(width: 10),
                       Text(
                         'Room & Bed Assignment',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                           color: TenantTheme.textPrimary,
@@ -1704,7 +1704,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       const SizedBox(width: 10),
                       Text(
                         'Financial Terms',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                           color: TenantTheme.textPrimary,
@@ -1747,7 +1747,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       const SizedBox(width: 10),
                       Text(
                         'Resident Information',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                           color: TenantTheme.textPrimary,
@@ -1785,7 +1785,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               const SizedBox(width: 10),
               Text(
                 label,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontSize: 13.5,
                   color: TenantTheme.textSecondary,
                   fontWeight: FontWeight.w500,
@@ -1797,7 +1797,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             child: Text(
               value,
               textAlign: TextAlign.right,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
                 color: TenantTheme.textPrimary,
@@ -1841,7 +1841,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             children: [
               Text(
                 'Rent & Payments',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
                   color: TenantTheme.textPrimary,
@@ -1851,7 +1851,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               const SizedBox(height: 2),
               Text(
                 'Manage monthly rent, utility bills & transactions',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontSize: 12,
                   color: TenantTheme.textSecondary,
                 ),
@@ -1939,7 +1939,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                   const SizedBox(width: 6),
                                   Text(
                                     currentMonthStr,
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.lato(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
                                       color: Colors.white,
@@ -1997,7 +1997,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                         : (isPending
                                             ? 'PENDING APPROVAL'
                                             : (isUpcoming ? 'UPCOMING DUE' : 'PAYMENT OVERDUE')),
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.lato(
                                       fontSize: 10.5,
                                       fontWeight: FontWeight.w800,
                                       letterSpacing: 0.4,
@@ -2021,7 +2021,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               children: [
                                 Text(
                                   isPaid ? 'Cleared Rent' : 'Payable Amount',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.lato(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.white.withValues(alpha: 0.78),
@@ -2031,7 +2031,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 const SizedBox(height: 2),
                                 Text(
                                   '₹${NumberFormat('#,##,###').format(displayRent)}',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.lato(
                                     fontSize: 28,
                                     fontWeight: FontWeight.w800,
                                     color: Colors.white,
@@ -2068,7 +2068,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                               : (isUpcoming
                                                   ? 'Rent payable by $rentDueDateStr • No late fee'
                                                   : 'Overdue since $rentDueDateStr')),
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.lato(
                                         fontSize: 11.5,
                                         color: Colors.white.withValues(alpha: 0.85),
                                         fontWeight: FontWeight.w500,
@@ -2109,7 +2109,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                         const SizedBox(width: 6),
                                         Text(
                                           'Receipt',
-                                          style: GoogleFonts.plusJakartaSans(
+                                          style: GoogleFonts.lato(
                                             color: Colors.white,
                                             fontSize: 12.5,
                                             fontWeight: FontWeight.w800,
@@ -2167,7 +2167,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           children: [
                             Text(
                               'Payment Proof Rejected',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 14.5,
                                 color: const Color(0xFF9F1239),
                                 fontWeight: FontWeight.w800,
@@ -2175,7 +2175,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             ),
                             Text(
                               'Re-upload proof below to resubmit for approval',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 11.5,
                                 color: const Color(0xFFBE123C),
                               ),
@@ -2193,7 +2193,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         ),
                         child: Text(
                           'Rejected',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.lato(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w800,
                             color: const Color(0xFFE11D48),
@@ -2222,7 +2222,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             children: [
                               Text(
                                 'Admin Comment:',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.lato(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   color: const Color(0xFF9F1239),
@@ -2231,7 +2231,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               const SizedBox(height: 2),
                               Text(
                                 _rejectionReason!,
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.lato(
                                   fontSize: 12.5,
                                   color: const Color(0xFF4C0519),
                                   fontWeight: FontWeight.w600,
@@ -2279,7 +2279,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 children: [
                                   Text(
                                     'Payment Pending Approval',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.lato(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w800,
                                       color: TenantTheme.textPrimary,
@@ -2289,7 +2289,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                   ),
                                   Text(
                                     'Proof of payment submitted for review',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.lato(
                                       fontSize: 11.5,
                                       color: TenantTheme.textSecondary,
                                     ),
@@ -2312,7 +2312,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         ),
                         child: Text(
                           'Under Review',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.lato(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w800,
                             color: const Color(0xFFD97706),
@@ -2337,7 +2337,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         Expanded(
                           child: Text(
                             'Your payment transaction proof has been submitted to your property manager. Account balance will update automatically upon verification.',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               fontSize: 12,
                               color: const Color(0xFF92400E),
                               height: 1.4,
@@ -2380,7 +2380,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 children: [
                                   Text(
                                     'Clear Outstanding Dues',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.lato(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w800,
                                       color: TenantTheme.textPrimary,
@@ -2390,7 +2390,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                   ),
                                   Text(
                                     'Pay now to settle rent & utility fees',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.lato(
                                       fontSize: 11.5,
                                       color: TenantTheme.textSecondary,
                                     ),
@@ -2413,7 +2413,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         ),
                         child: Text(
                           'Action Required',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.lato(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w800,
                             color: const Color(0xFFDC2626),
@@ -2467,7 +2467,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           children: [
                             Text(
                               'Total Payable',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w700,
                                 color: TenantTheme.textPrimary,
@@ -2475,7 +2475,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             ),
                             Text(
                               '₹${_totalDue.toStringAsFixed(0)}',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 19,
                                 fontWeight: FontWeight.w800,
                                 color: TenantTheme.primary,
@@ -2523,7 +2523,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               children: [
                                 Text(
                                   _selectedImageBytes != null ? 'Screenshot Attached' : 'Attach UPI Screenshot',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.lato(
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w700,
                                     color: _selectedImageBytes != null ? const Color(0xFF15803D) : TenantTheme.textPrimary,
@@ -2531,7 +2531,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 ),
                                 Text(
                                   _selectedImageBytes != null ? 'Tap to replace image' : 'Proof of transaction for admin approval',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.lato(
                                     fontSize: 11,
                                     color: TenantTheme.textSecondary,
                                   ),
@@ -2547,7 +2547,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             ),
                             child: Text(
                               _selectedImageBytes != null ? 'Change' : 'Upload',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.white,
@@ -2584,11 +2584,11 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   // Transaction Reference TextField
                   TextField(
                     controller: _descriptionController,
-                    style: GoogleFonts.plusJakartaSans(fontSize: 13, color: TenantTheme.textPrimary),
+                    style: GoogleFonts.lato(fontSize: 13, color: TenantTheme.textPrimary),
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Icons.tag_rounded, size: 18, color: Color(0xFF94A3B8)),
                       hintText: 'UTR / Transaction Reference (optional)',
-                      hintStyle: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: const Color(0xFF94A3B8)),
+                      hintStyle: GoogleFonts.lato(fontSize: 12.5, color: const Color(0xFF94A3B8)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       isDense: true,
                       filled: true,
@@ -2642,7 +2642,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               fit: BoxFit.scaleDown,
                               child: Text(
                                 'Submit Payment for Approval',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.lato(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800,
                                   color: Colors.white,
@@ -2881,7 +2881,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 const SizedBox(width: 10),
                 Text(
                   'Payment History',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                     color: TenantTheme.textPrimary,
@@ -2898,7 +2898,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   children: [
                     Text(
                       'View All',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.lato(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
                         color: TenantTheme.primary,
@@ -2918,7 +2918,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 ),
                 child: Text(
                   '$totalCount Records',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF64748B),
@@ -2964,7 +2964,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     const SizedBox(width: 6),
                     Text(
                       selectedMonthStr,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.lato(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF0F172A),
@@ -2983,7 +2983,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       ),
                       child: Text(
                         isCurrentMonth ? 'Current' : 'Reset',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 9.5,
                           fontWeight: FontWeight.w700,
                           color: isCurrentMonth ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
@@ -3038,7 +3038,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     children: [
                       Text(
                         'TOTAL PAID FOR ${selectedMonthStr.toUpperCase()}',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           color: TenantTheme.textMuted,
@@ -3048,7 +3048,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       const SizedBox(height: 2),
                       Text(
                         '₹${NumberFormat('#,##,###').format(totalPaidThisMonth)}',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
                           color: TenantTheme.textPrimary,
@@ -3068,7 +3068,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 ),
                 child: Text(
                   statusBadge,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.3,
@@ -3097,7 +3097,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'No Records for $selectedMonthStr',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
                     color: TenantTheme.textPrimary,
@@ -3107,7 +3107,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 Text(
                   'No transactions or dues were recorded for this month.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 11.5,
                     color: TenantTheme.textMuted,
                   ),
@@ -3152,7 +3152,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             _isPaymentHistoryExpanded
                                 ? 'Show Summary'
                                 : 'Show More ($totalCount Transactions)',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               color: TenantTheme.primary,
@@ -3245,7 +3245,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           Expanded(
                             child: Text(
                               title,
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
                                 color: TenantTheme.textPrimary,
@@ -3256,7 +3256,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           ),
                           Text(
                             amount,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               fontSize: 14.5,
                               fontWeight: FontWeight.w800,
                               color: TenantTheme.textPrimary,
@@ -3280,7 +3280,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 Expanded(
                                   child: Text(
                                     isSuccess ? 'Paid on $dateStr' : 'Due by $dateStr',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.lato(
                                       fontSize: 11.5,
                                       fontWeight: FontWeight.w500,
                                       color: TenantTheme.textSecondary,
@@ -3365,7 +3365,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         const SizedBox(height: 3),
                         Text(
                           notes,
-                          style: GoogleFonts.plusJakartaSans(fontSize: 10.5, color: TenantTheme.textMuted),
+                          style: GoogleFonts.lato(fontSize: 10.5, color: TenantTheme.textMuted),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -3426,7 +3426,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               const SizedBox(height: 14),
               Text(
                 'Payment Receipt',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontSize: 19,
                   fontWeight: FontWeight.w800,
                   color: TenantTheme.textPrimary,
@@ -3436,7 +3436,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               const SizedBox(height: 3),
               Text(
                 'Official Rent & Utility Statement',
-                style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: TenantTheme.textSecondary),
+                style: GoogleFonts.lato(fontSize: 12.5, color: TenantTheme.textSecondary),
               ),
               const SizedBox(height: 18),
               Container(
@@ -3465,7 +3465,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       children: [
                         Text(
                           'Amount Paid',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.lato(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: TenantTheme.textPrimary,
@@ -3473,7 +3473,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         ),
                         Text(
                           '₹${NumberFormat('#,##,###').format(amount)}',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.lato(
                             fontSize: 19,
                             fontWeight: FontWeight.w800,
                             color: TenantTheme.primary,
@@ -3498,7 +3498,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   ),
                   child: Text(
                     'Close Receipt',
-                    style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w800),
+                    style: GoogleFonts.lato(fontSize: 14, fontWeight: FontWeight.w800),
                   ),
                 ),
               ),
@@ -3513,10 +3513,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 12.5, color: TenantTheme.textSecondary)),
+        Text(label, style: GoogleFonts.lato(fontSize: 12.5, color: TenantTheme.textSecondary)),
         Text(
           value,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.lato(
             fontSize: 12.5,
             fontWeight: FontWeight.w700,
             color: isGreen ? const Color(0xFF10B981) : TenantTheme.textPrimary,
@@ -3558,7 +3558,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               Expanded(
                 child: Text(
                   label,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 12.5,
                     color: TenantTheme.textSecondary,
                     fontWeight: FontWeight.w500,
@@ -3573,7 +3573,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         const SizedBox(width: 8),
         Text(
           value,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.lato(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: TenantTheme.textPrimary,
@@ -3603,7 +3603,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       if (showHeader) ...[
                         Text(
                           'Notices & Announcements',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.lato(
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
                             color: TenantTheme.textPrimary,
@@ -3627,7 +3627,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 const SizedBox(height: 16),
                                 Text(
                                   'No Notices Found',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.lato(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w700,
                                     color: TenantTheme.textPrimary,
@@ -3638,7 +3638,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 Text(
                                   'Official PG notices will appear here once posted by management.',
                                   textAlign: TextAlign.center,
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.lato(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
                                     color: TenantTheme.textSecondary,
@@ -3670,7 +3670,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           if (showHeader) ...[
             Text(
               'Notices & Announcements',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
                 color: TenantTheme.textPrimary,
@@ -3719,7 +3719,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             children: [
                               Text(
                                 heading,
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.lato(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                   color: TenantTheme.textPrimary,
@@ -3738,7 +3738,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                     const SizedBox(width: 4),
                                     Text(
                                       date,
-                                      style: GoogleFonts.plusJakartaSans(
+                                      style: GoogleFonts.lato(
                                         fontSize: 11.5,
                                         color: TenantTheme.textMuted,
                                         fontWeight: FontWeight.w500,
@@ -3764,7 +3764,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               const SizedBox(width: 4),
                               Text(
                                 'Official',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.lato(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   color: TenantTheme.primary,
@@ -3778,7 +3778,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     const SizedBox(height: 12),
                     Text(
                       desc,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.lato(
                         fontSize: 13.5,
                         height: 1.5,
                         color: TenantTheme.textSecondary,
@@ -3855,7 +3855,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           // Title
           Text(
             'My Profile',
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.lato(
               fontSize: 22,
               fontWeight: FontWeight.w800,
               color: TenantTheme.textPrimary,
@@ -3904,7 +3904,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     children: [
                       Text(
                         name,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
                           color: TenantTheme.textPrimary,
@@ -3935,7 +3935,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             const SizedBox(width: 3),
                             Text(
                               isKycComplete ? 'KYC Verified' : 'KYC Pending',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
                                 color: isKycComplete ? TenantTheme.success : const Color(0xFFD97706),
@@ -4077,7 +4077,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       const SizedBox(width: 8),
                       Text(
                         'Refresh App / Clear Web Cache',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF4F46E5),
@@ -4117,7 +4117,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     const SizedBox(width: 8),
                     Text(
                       'Log Out',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.lato(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w800,
                         color: TenantTheme.danger,
@@ -4192,7 +4192,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           children: [
                             Text(
                               title,
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 15.5,
                                 fontWeight: FontWeight.w800,
                                 color: TenantTheme.textPrimary,
@@ -4203,7 +4203,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               const SizedBox(height: 2),
                               Text(
                                 subtitle,
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.lato(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w500,
                                   color: TenantTheme.textSecondary,
@@ -4379,7 +4379,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             children: [
                               Text(
                                 'Security Recovery PIN',
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.lato(
                                   fontSize: 15.5,
                                   fontWeight: FontWeight.w800,
                                   color: TenantTheme.textPrimary,
@@ -4398,7 +4398,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 ),
                                 child: Text(
                                   hasPin ? 'Active' : 'Not Set',
-                                  style: GoogleFonts.plusJakartaSans(
+                                  style: GoogleFonts.lato(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
                                     color: hasPin ? const Color(0xFF059669) : const Color(0xFFD97706),
@@ -4413,7 +4413,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               hasPin
                                   ? '4-digit MPIN for instant password recovery'
                                   : 'Set up your 4-digit PIN for safe password recovery',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w500,
                                 color: TenantTheme.textSecondary,
@@ -4466,7 +4466,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   ),
                   Text(
                     'Your 4-digit PIN (ATM / UPI style) allows you to verify your identity and reset your password if you ever forget it.',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,
                       color: TenantTheme.textSecondary,
@@ -4480,7 +4480,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     keyboardType: TextInputType.number,
                     maxLength: 4,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 8,
@@ -4489,7 +4489,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     decoration: InputDecoration(
                       counterText: '',
                       hintText: '• • • •',
-                      hintStyle: GoogleFonts.plusJakartaSans(
+                      hintStyle: GoogleFonts.lato(
                         fontSize: 16,
                         letterSpacing: 8,
                         color: TenantTheme.textMuted,
@@ -4528,7 +4528,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     keyboardType: TextInputType.number,
                     maxLength: 4,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 8,
@@ -4537,7 +4537,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     decoration: InputDecoration(
                       counterText: '',
                       hintText: '• • • •',
-                      hintStyle: GoogleFonts.plusJakartaSans(
+                      hintStyle: GoogleFonts.lato(
                         fontSize: 16,
                         letterSpacing: 8,
                         color: TenantTheme.textMuted,
@@ -4584,7 +4584,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           Expanded(
                             child: Text(
                               _securityPinError!,
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 12,
                                 color: const Color(0xFFDC2626),
                                 fontWeight: FontWeight.w600,
@@ -4620,7 +4620,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             )
                           : Text(
                               hasPin ? 'Update Security PIN' : 'Save Security PIN',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -4748,7 +4748,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         children: [
                           Text(
                             'Change Password',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               fontSize: 15.5,
                               fontWeight: FontWeight.w800,
                               color: TenantTheme.textPrimary,
@@ -4759,7 +4759,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             const SizedBox(height: 2),
                             Text(
                               'Update your account password',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w500,
                                 color: TenantTheme.textSecondary,
@@ -4812,7 +4812,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   ),
                   Text(
                     'Set a new password for logging into your Remaki account.',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,
                       color: TenantTheme.textSecondary,
@@ -4823,14 +4823,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   TextFormField(
                     controller: _tenantNewPasswordController,
                     obscureText: _obscureTenantNewPassword,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: TenantTheme.textPrimary,
                     ),
                     decoration: InputDecoration(
                       hintText: 'Enter new password',
-                      hintStyle: GoogleFonts.plusJakartaSans(
+                      hintStyle: GoogleFonts.lato(
                         fontSize: 13,
                         color: TenantTheme.textMuted,
                       ),
@@ -4865,14 +4865,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   TextFormField(
                     controller: _tenantConfirmPasswordController,
                     obscureText: _obscureTenantConfirmPassword,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: TenantTheme.textPrimary,
                     ),
                     decoration: InputDecoration(
                       hintText: 'Confirm new password',
-                      hintStyle: GoogleFonts.plusJakartaSans(
+                      hintStyle: GoogleFonts.lato(
                         fontSize: 13,
                         color: TenantTheme.textMuted,
                       ),
@@ -4918,7 +4918,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           Expanded(
                             child: Text(
                               _changePasswordError!,
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 12,
                                 color: const Color(0xFFDC2626),
                                 fontWeight: FontWeight.w600,
@@ -4954,7 +4954,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             )
                           : Text(
                               'Update Password',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -4995,7 +4995,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           ],
           Text(
             label,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.lato(
               fontSize: 13,
               fontWeight: FontWeight.w500,
               color: TenantTheme.textSecondary,
@@ -5006,7 +5006,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             child: Text(
               isNotProvided ? 'Not Provided' : value,
               textAlign: TextAlign.right,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 fontSize: 13,
                 fontWeight: isNotProvided ? FontWeight.w500 : FontWeight.w700,
                 color: isNotProvided ? const Color(0xFF94A3B8) : TenantTheme.textPrimary,
@@ -5053,15 +5053,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           borderRadius: BorderRadius.circular(20),
           side: const BorderSide(color: TenantTheme.glassBorder),
         ),
-        title: Text('Log Out', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: TenantTheme.textPrimary)),
+        title: Text('Log Out', style: GoogleFonts.lato(fontWeight: FontWeight.w800, color: TenantTheme.textPrimary)),
         content: Text(
           'Are you sure you want to log out of your tenant account?',
-          style: GoogleFonts.plusJakartaSans(fontSize: 13.5, color: TenantTheme.textSecondary),
+          style: GoogleFonts.lato(fontSize: 13.5, color: TenantTheme.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: GoogleFonts.plusJakartaSans(color: TenantTheme.textSecondary, fontWeight: FontWeight.w600)),
+            child: Text('Cancel', style: GoogleFonts.lato(color: TenantTheme.textSecondary, fontWeight: FontWeight.w600)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -5074,7 +5074,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: Text('Log Out', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+            child: Text('Log Out', style: GoogleFonts.lato(fontWeight: FontWeight.w700)),
           ),
         ],
       ),

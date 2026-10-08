@@ -240,7 +240,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         '$greeting, $ownerName',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF64748B),
@@ -285,7 +285,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const SizedBox(height: 2),
                 Text(
                   appProvider.selectedPropertyId == 'ALL' ? 'All Properties' : pgName,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.3,
@@ -410,7 +410,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const SizedBox(width: 10),
                         Text(
                           'Switch Property',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.lato(
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
                             color: const Color(0xFF0F172A),
@@ -427,7 +427,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       child: Text(
                         '${appProvider.properties.length} Properties',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF4F46E5),
@@ -495,7 +495,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         children: [
                                           Text(
                                             prop.name,
-                                            style: GoogleFonts.plusJakartaSans(
+                                            style: GoogleFonts.lato(
                                               fontSize: 14,
                                               fontWeight: FontWeight.w700,
                                               color: isSelected ? Colors.white : const Color(0xFF0F172A),
@@ -505,7 +505,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             const SizedBox(height: 2),
                                             Text(
                                               prop.city.isNotEmpty ? prop.city : prop.address,
-                                              style: GoogleFonts.plusJakartaSans(
+                                              style: GoogleFonts.lato(
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w500,
                                                 color: isSelected
@@ -582,7 +582,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 Expanded(
                                   child: Text(
                                     'All Properties (Combined Overview)',
-                                    style: GoogleFonts.plusJakartaSans(
+                                    style: GoogleFonts.lato(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                       color: appProvider.selectedPropertyId == 'ALL'
@@ -632,7 +632,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Text(
               'QUICK ACTIONS',
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.lato(
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
                 color: const Color(0xFF94A3B8),
@@ -846,7 +846,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   label,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF334155),
@@ -910,7 +910,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         'Bed Occupancy',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.2,
@@ -931,7 +931,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 child: Text(
                   '$occupancyPct% Occupied',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     color: const Color(0xFF4F46E5),
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -1030,7 +1030,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   value,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.lato(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.5,
@@ -1041,7 +1041,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 2),
               Text(
                 title,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontSize: 10.5,
                   color: const Color(0xFF64748B),
                   fontWeight: FontWeight.w600,
@@ -1112,7 +1112,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         'Rent Overview',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.2,
@@ -1144,7 +1144,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(width: 4),
                       Text(
                         monthYear,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           color: const Color(0xFF475569),
                           fontSize: 10.5,
                           fontWeight: FontWeight.w700,
@@ -1222,7 +1222,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Expanded(
                   child: Text(
                     title,
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 10.5,
                       color: const Color(0xFF64748B),
                       fontWeight: FontWeight.w600,
@@ -1239,7 +1239,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               alignment: Alignment.centerLeft,
               child: Text(
                 value,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.lato(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.3,
@@ -1325,7 +1325,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         'Payment History',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.2,
@@ -1344,7 +1344,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         child: Text(
                           '${payments.length}',
-                          style: GoogleFonts.plusJakartaSans(
+                          style: GoogleFonts.lato(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
                             color: const Color(0xFF475569),
@@ -1363,7 +1363,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     Text(
                       'View All',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.lato(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w800,
                         color: AppTheme.primaryColor,
@@ -1410,7 +1410,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(width: 6),
                       Text(
                         selectedMonthStr,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 13.5,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF0F172A),
@@ -1427,7 +1427,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           child: Text(
                             'Current',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               fontSize: 9.5,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF4F46E5),
@@ -1444,7 +1444,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           child: Text(
                             'Reset',
-                            style: GoogleFonts.plusJakartaSans(
+                            style: GoogleFonts.lato(
                               fontSize: 9.5,
                               fontWeight: FontWeight.w600,
                               color: const Color(0xFF64748B),
@@ -1488,7 +1488,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     Text(
                       '$selectedMonthStr Collections',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.lato(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF64748B),
@@ -1497,7 +1497,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 2),
                     Text(
                       '₹${NumberFormat('#,##,###').format(monthTotalCollected)}',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.lato(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.4,
@@ -1527,7 +1527,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(width: 4.5),
                       Text(
                         '${monthPayments.length} ${monthPayments.length == 1 ? "Payment" : "Payments"}',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: monthPayments.isNotEmpty ? const Color(0xFF16A34A) : const Color(0xFF64748B),
@@ -1561,7 +1561,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 10),
                   Text(
                     'No transactions in $selectedMonthStr',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: const Color(0xFF334155),
@@ -1570,7 +1570,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 3),
                   Text(
                     'Use the arrows above to inspect previous or upcoming months.',
-                    style: GoogleFonts.plusJakartaSans(
+                    style: GoogleFonts.lato(
                       fontSize: 11,
                       color: const Color(0xFF94A3B8),
                     ),
@@ -1619,7 +1619,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         _isPaymentHistoryExpanded
                             ? 'Show Summary'
                             : 'Show More (${monthPayments.length - 3} more in $selectedMonthStr)',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.lato(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.primaryColor,
@@ -1702,7 +1702,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Flexible(
                             child: Text(
                               payment.tenantName ?? tenant?.name ?? 'Tenant',
-                              style: GoogleFonts.plusJakartaSans(
+                              style: GoogleFonts.lato(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF0F172A),
@@ -1722,7 +1722,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                               child: Text(
                                 payment.roomNumber!,
-                                style: GoogleFonts.plusJakartaSans(
+                                style: GoogleFonts.lato(
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.w700,
                                   color: const Color(0xFF475569),
@@ -1769,7 +1769,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     Text(
                       '₹${_formatCurrency(payment.amount)}',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.lato(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.3,
