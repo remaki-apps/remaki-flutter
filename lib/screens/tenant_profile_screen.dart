@@ -28,21 +28,40 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
   bool _isHistoryExpanded = false;
   final Set<String> _expandedPaymentIds = {};
 
-  void _prevMonth() {
-    setState(() {
-      _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month - 1, 1);
-    });
+  DateTime get _currentMonth => DateTime(DateTime.now().year, DateTime.now().month, 1);
+
+  DateTime _getEarliestPaymentMonth(List<Payment> payments, DateTime fallback) {
+    if (payments.isEmpty) return DateTime(fallback.year, fallback.month, 1);
+    DateTime earliest = payments.first.date;
+    for (final p in payments) {
+      if (p.date.isBefore(earliest)) {
+        earliest = p.date;
+      }
+    }
+    return DateTime(earliest.year, earliest.month, 1);
+  }
+
+  void _prevMonth(DateTime earliestMonth) {
+    final prev = DateTime(_selectedMonth.year, _selectedMonth.month - 1, 1);
+    if (!prev.isBefore(earliestMonth)) {
+      setState(() {
+        _selectedMonth = prev;
+      });
+    }
   }
 
   void _nextMonth() {
-    setState(() {
-      _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1);
-    });
+    final next = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1);
+    if (!next.isAfter(_currentMonth)) {
+      setState(() {
+        _selectedMonth = next;
+      });
+    }
   }
 
   void _resetToCurrentMonth() {
     setState(() {
-      _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+      _selectedMonth = _currentMonth;
     });
   }
 
@@ -112,9 +131,12 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
               : Column(
                   children: [
             // Top Header Bar
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-              child: Row(
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 960),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  child: Row(
                 children: [
                   GestureDetector(
                     onTap: () => context.pop(),
@@ -198,17 +220,23 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                 ],
               ),
             ),
+          ),
+        ),
 
             // Scrollable Content
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () => appProvider.loadFromAPI(),
                 color: AppTheme.primaryColor,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Column(
-                  children: [
+                child: Scrollbar(
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 960),
+                        child: Column(
+                          children: [
                     // Hero Profile Card
                     Container(
                       width: double.infinity,
@@ -753,93 +781,108 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                     const SizedBox(height: 12),
 
                     // Month Navigation Bar with Previous and Next Arrows
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
-                        boxShadow: const [
-                          BoxShadow(color: Color(0x04000000), blurRadius: 4, offset: Offset(0, 1)),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.chevron_left_rounded, size: 22, color: Color(0xFF1E293B)),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-                            splashRadius: 18,
-                            onPressed: _prevMonth,
-                            tooltip: 'Previous Month',
+                    Builder(
+                      builder: (context) {
+                        final earliestMonth = _getEarliestPaymentMonth(tenantPayments, tenant.moveInDate);
+                        final bool isCurrentMonth = _selectedMonth.year == _currentMonth.year && _selectedMonth.month == _currentMonth.month;
+                        final bool canGoPrev = _selectedMonth.isAfter(earliestMonth);
+                        final bool canGoNext = _selectedMonth.isBefore(_currentMonth);
+
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+                            boxShadow: const [
+                              BoxShadow(color: Color(0x04000000), blurRadius: 4, offset: Offset(0, 1)),
+                            ],
                           ),
-                          GestureDetector(
-                            onTap: (DateTime.now().year == _selectedMonth.year && DateTime.now().month == _selectedMonth.month)
-                                ? null
-                                : _resetToCurrentMonth,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.calendar_month_rounded, size: 15, color: AppTheme.primaryColor),
-                                const SizedBox(width: 6),
-                                Text(
-                                  DateFormat('MMMM yyyy').format(_selectedMonth),
-                                  style: GoogleFonts.lato(
-                                    fontSize: 13.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF0F172A),
-                                  ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  Icons.chevron_left_rounded,
+                                  size: 22,
+                                  color: canGoPrev ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1),
                                 ),
-                                if (DateTime.now().year == _selectedMonth.year && DateTime.now().month == _selectedMonth.month) ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFEEF2FF),
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: const Color(0xFFC7D2FE), width: 0.6),
-                                    ),
-                                    child: Text(
-                                      'Current',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                                splashRadius: 18,
+                                onPressed: canGoPrev ? () => _prevMonth(earliestMonth) : null,
+                                tooltip: canGoPrev ? 'Previous Month' : 'First Recorded Month',
+                              ),
+                              GestureDetector(
+                                onTap: isCurrentMonth ? null : _resetToCurrentMonth,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.calendar_month_rounded, size: 15, color: AppTheme.primaryColor),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      DateFormat('MMMM yyyy').format(_selectedMonth),
                                       style: GoogleFonts.lato(
-                                        fontSize: 9.5,
+                                        fontSize: 13.5,
                                         fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF4F46E5),
+                                        color: const Color(0xFF0F172A),
                                       ),
                                     ),
-                                  ),
-                                ] else ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF1F5F9),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      'Reset',
-                                      style: GoogleFonts.lato(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF64748B),
+                                    if (isCurrentMonth) ...[
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFEEF2FF),
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(color: const Color(0xFFC7D2FE), width: 0.6),
+                                        ),
+                                        child: Text(
+                                          'Current',
+                                          style: GoogleFonts.lato(
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: const Color(0xFF4F46E5),
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
+                                    ] else ...[
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF1F5F9),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          'Reset',
+                                          style: GoogleFonts.lato(
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF64748B),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.chevron_right_rounded,
+                                  size: 22,
+                                  color: canGoNext ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1),
+                                ),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                                splashRadius: 18,
+                                onPressed: canGoNext ? _nextMonth : null,
+                                tooltip: canGoNext ? 'Next Month' : 'Current Month',
+                              ),
+                            ],
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.chevron_right_rounded, size: 22, color: Color(0xFF1E293B)),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-                            splashRadius: 18,
-                            onPressed: _nextMonth,
-                            tooltip: 'Next Month',
-                          ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 10),
 
@@ -1125,6 +1168,9 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    ),
         ],
       ),
     ),

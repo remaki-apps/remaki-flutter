@@ -28,7 +28,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
       ),
       body: ListView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+        padding: EdgeInsets.fromLTRB(18, 20, 18, 20 + MediaQuery.paddingOf(context).bottom),
         children: [
           // 1. Hero Header
           Container(

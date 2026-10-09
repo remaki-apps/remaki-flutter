@@ -21,30 +21,50 @@ class _RentScreenState extends State<RentScreen> {
   bool _showBills = false;
   DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
 
-  void _prevMonth() {
-    setState(() {
-      _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month - 1, 1);
-    });
+  DateTime get _currentMonth => DateTime(DateTime.now().year, DateTime.now().month, 1);
+
+  DateTime _getEarliestPaymentMonth(List<Payment> payments) {
+    if (payments.isEmpty) return _currentMonth;
+    DateTime earliest = payments.first.date;
+    for (final p in payments) {
+      if (p.date.isBefore(earliest)) {
+        earliest = p.date;
+      }
+    }
+    return DateTime(earliest.year, earliest.month, 1);
+  }
+
+  void _prevMonth(DateTime earliestMonth) {
+    final prev = DateTime(_selectedMonth.year, _selectedMonth.month - 1, 1);
+    if (!prev.isBefore(earliestMonth)) {
+      setState(() {
+        _selectedMonth = prev;
+      });
+    }
   }
 
   void _nextMonth() {
-    setState(() {
-      _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1);
-    });
+    final next = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1);
+    if (!next.isAfter(_currentMonth)) {
+      setState(() {
+        _selectedMonth = next;
+      });
+    }
   }
 
   void _resetToCurrentMonth() {
-    final now = DateTime.now();
     setState(() {
-      _selectedMonth = DateTime(now.year, now.month, 1);
+      _selectedMonth = _currentMonth;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
-    final now = DateTime.now();
-    final bool isCurrentMonth = _selectedMonth.year == now.year && _selectedMonth.month == now.month;
+    final earliestMonth = _getEarliestPaymentMonth(appProvider.currentPayments);
+    final bool canGoPrev = _selectedMonth.isAfter(earliestMonth);
+    final bool canGoNext = _selectedMonth.isBefore(_currentMonth);
+    final bool isCurrentMonth = _selectedMonth.year == _currentMonth.year && _selectedMonth.month == _currentMonth.month;
     final selectedMonthStr = DateFormat('MMMM yyyy').format(_selectedMonth);
     final targetMonthKey = DateFormat('yyyy-MM').format(_selectedMonth);
 
@@ -167,12 +187,16 @@ class _RentScreenState extends State<RentScreen> {
         color: AppTheme.primaryColor,
         child: appProvider.isLoading
             ? const RentOverviewSkeleton()
-            : SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-          padding: EdgeInsets.fromLTRB(16, 14, 16, 95 + MediaQuery.of(context).padding.bottom),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+            : Scrollbar(
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(16, 14, 16, 120 + MediaQuery.paddingOf(context).bottom),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 960),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
               // 1. Classic Segmented Switcher (Rent vs Bills)
               Container(
                 padding: const EdgeInsets.all(4),
@@ -204,7 +228,14 @@ class _RentScreenState extends State<RentScreen> {
               const SizedBox(height: 12),
 
               // 1.5. Month-Wise Payment History Navigation Bar
-              _buildMonthNavigationBar(selectedMonthStr, isCurrentMonth),
+              _buildMonthNavigationBar(
+                selectedMonthStr: selectedMonthStr,
+                isCurrentMonth: isCurrentMonth,
+                canGoPrev: canGoPrev,
+                canGoNext: canGoNext,
+                onPrev: () => _prevMonth(earliestMonth),
+                onNext: _nextMonth,
+              ),
               const SizedBox(height: 16),
 
               AnimatedSwitcher(
@@ -564,14 +595,24 @@ class _RentScreenState extends State<RentScreen> {
         ),
       ),
     ),
-  ],
-),
-),
-),
-);
-}
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-  Widget _buildMonthNavigationBar(String selectedMonthStr, bool isCurrentMonth) {
+  Widget _buildMonthNavigationBar({
+    required String selectedMonthStr,
+    required bool isCurrentMonth,
+    required bool canGoPrev,
+    required bool canGoNext,
+    required VoidCallback? onPrev,
+    required VoidCallback? onNext,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       decoration: BoxDecoration(
@@ -590,12 +631,16 @@ class _RentScreenState extends State<RentScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.chevron_left_rounded, size: 22, color: Color(0xFF1E293B)),
+            icon: Icon(
+              Icons.chevron_left_rounded,
+              size: 22,
+              color: canGoPrev ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1),
+            ),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
             splashRadius: 18,
-            onPressed: _prevMonth,
-            tooltip: 'Previous Month',
+            onPressed: canGoPrev ? onPrev : null,
+            tooltip: canGoPrev ? 'Previous Month' : 'First Recorded Month',
           ),
           GestureDetector(
             onTap: isCurrentMonth ? null : _resetToCurrentMonth,
@@ -636,12 +681,16 @@ class _RentScreenState extends State<RentScreen> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.chevron_right_rounded, size: 22, color: Color(0xFF1E293B)),
+            icon: Icon(
+              Icons.chevron_right_rounded,
+              size: 22,
+              color: canGoNext ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1),
+            ),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
             splashRadius: 18,
-            onPressed: _nextMonth,
-            tooltip: 'Next Month',
+            onPressed: canGoNext ? onNext : null,
+            tooltip: canGoNext ? 'Next Month' : 'Current Month',
           ),
         ],
       ),
@@ -830,8 +879,13 @@ class _RentScreenState extends State<RentScreen> {
                       ),
                     ],
                   ),
-                  onTap: tenant != null
-                      ? () => context.push('/tenant_profile', extra: tenant)
+                  onTap: (tenant != null || p.tenantId.isNotEmpty)
+                      ? () {
+                          final targetId = p.tenantId.isNotEmpty ? p.tenantId : (tenant?.id ?? '');
+                          if (targetId.isNotEmpty) {
+                            context.push('/tenant_profile/$targetId', extra: tenant);
+                          }
+                        }
                       : null,
                 );
               },

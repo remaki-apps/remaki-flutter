@@ -110,11 +110,15 @@ class MoreScreen extends StatelessWidget {
         builder: (context, provider, _) {
           final totalBeds = provider.totalBeds;
 
-          return SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-            padding: EdgeInsets.fromLTRB(16, 12, 16, 95 + MediaQuery.of(context).padding.bottom),
-            child: Column(
-                children: [
+          return Scrollbar(
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(16, 12, 16, 125 + MediaQuery.paddingOf(context).bottom),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: Column(
+                    children: [
                   // 1. Property Overview Header Card (App Signature Purple Gradient)
                   Container(
                     width: double.infinity,
@@ -459,10 +463,13 @@ class MoreScreen extends StatelessWidget {
                   const SizedBox(height: 6),
                 ],
               ),
-            );
-          },
+            ),
+          ),
         ),
       );
+    },
+  ),
+);
   }
 
   Widget _buildMiniStat(String value, String label) {

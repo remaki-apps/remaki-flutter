@@ -676,8 +676,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               ),
             ),
           ),
-          Align(
-            alignment: Alignment.bottomCenter,
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
             child: _buildBottomNavigationBar(),
           ),
         ],
@@ -716,41 +718,47 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   // ===========================================================================
   Widget _buildBottomNavigationBar() {
     return SafeArea(
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFE2E8F0).withValues(alpha: 0.8), width: 1.2),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x140F172A),
-              blurRadius: 24,
-              spreadRadius: 0,
-              offset: Offset(0, 8),
+      maintainBottomViewPadding: true,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFFE2E8F0).withValues(alpha: 0.8), width: 1.2),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x140F172A),
+                  blurRadius: 24,
+                  spreadRadius: 0,
+                  offset: Offset(0, 8),
+                ),
+                BoxShadow(
+                  color: Color(0x0A4F46E5),
+                  blurRadius: 10,
+                  spreadRadius: 0,
+                  offset: Offset(0, 2),
+                ),
+              ],
             ),
-            BoxShadow(
-              color: Color(0x0A4F46E5),
-              blurRadius: 10,
-              spreadRadius: 0,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-            child: Container(
-              height: 66,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              color: Colors.white.withValues(alpha: 0.82),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Home'),
-                  _buildNavItem(1, Icons.account_balance_wallet_rounded, Icons.account_balance_wallet_outlined, 'Payments'),
-                  _buildNavItem(2, Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
-                ],
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Container(
+                  height: 66,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  color: Colors.white.withValues(alpha: 0.82),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Home'),
+                      _buildNavItem(1, Icons.account_balance_wallet_rounded, Icons.account_balance_wallet_outlined, 'Payments'),
+                      _buildNavItem(2, Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -1011,11 +1019,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         ? _formatDate(_profileData!['rentDueDate'])
         : '-';
 
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-      padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 95.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Scrollbar(
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        padding: EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 120.0 + MediaQuery.paddingOf(context).bottom),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 860),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 1. Top Greeting Header
           Row(
@@ -1558,7 +1570,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           const SizedBox(height: 24),
         ],
       ),
-    );
+    ),
+  ),
+),
+);
   }
 
 
@@ -1585,11 +1600,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     final stayStatus = (_profileData?['status'] as String? ?? 'ACTIVE').toUpperCase();
     final isActive = stayStatus == 'ACTIVE';
 
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-      padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 95.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Scrollbar(
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        padding: EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 120.0 + MediaQuery.paddingOf(context).bottom),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 860),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!hideHeaderTitle) ...[
             // Header Row
@@ -1770,7 +1789,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           const SizedBox(height: 28),
         ],
       ),
-    );
+    ),
+  ),
+),
+);
   }
 
   Widget _buildStayDetailTile(IconData icon, String label, String value) {
@@ -1829,11 +1851,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         ? _formatDate(_profileData!['rentDueDate'])
         : '-';
 
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-      padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 95.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Scrollbar(
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        padding: EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 120.0 + MediaQuery.paddingOf(context).bottom),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 860),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Screen Title & Subtitle
           Column(
@@ -2662,7 +2688,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           const SizedBox(height: 24),
         ],
       ),
-    );
+    ),
+  ),
+),
+);
   }
 
   String _formatPaymentDateTime(dynamic dateVal) {
@@ -3405,8 +3434,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
         ),
         insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -3506,6 +3537,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 
@@ -3590,15 +3622,19 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     if (_announcements.isEmpty) {
       return LayoutBuilder(
         builder: (context, constraints) {
-          return SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: IntrinsicHeight(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          return Scrollbar(
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 860),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (showHeader) ...[
                         Text(
@@ -3655,16 +3691,23 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 ),
               ),
             ),
-          );
-        },
-      );
+          ),
+        ),
+      ),
+    );
+  },
+);
     }
 
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-      padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 95.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Scrollbar(
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        padding: EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 120.0 + MediaQuery.paddingOf(context).bottom),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 860),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Title
           if (showHeader) ...[
@@ -3812,7 +3855,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           const SizedBox(height: 24),
         ],
       ),
-    );
+    ),
+  ),
+),
+);
   }
 
   // ===========================================================================
@@ -3846,11 +3892,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     final rawKycStatus = (_profileData?['kycStatus'] as String?)?.toUpperCase();
     final isKycComplete = rawKycStatus == 'VERIFIED' || _calculateProfileCompletion() >= 1.0;
 
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-      padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 95.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Scrollbar(
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        padding: EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 120.0 + MediaQuery.paddingOf(context).bottom),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 860),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Title
           Text(
@@ -4131,7 +4181,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           const SizedBox(height: 24),
         ],
       ),
-    );
+    ),
+  ),
+),
+);
   }
 
   Widget _buildProfileSectionCard({
@@ -5054,9 +5107,12 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           side: const BorderSide(color: TenantTheme.glassBorder),
         ),
         title: Text('Log Out', style: GoogleFonts.lato(fontWeight: FontWeight.w800, color: TenantTheme.textPrimary)),
-        content: Text(
-          'Are you sure you want to log out of your tenant account?',
-          style: GoogleFonts.lato(fontSize: 13.5, color: TenantTheme.textSecondary),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Text(
+            'Are you sure you want to log out of your tenant account?',
+            style: GoogleFonts.lato(fontSize: 13.5, color: TenantTheme.textSecondary),
+          ),
         ),
         actions: [
           TextButton(

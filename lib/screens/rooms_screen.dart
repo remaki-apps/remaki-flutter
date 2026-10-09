@@ -82,11 +82,14 @@ class _RoomsScreenState extends State<RoomsScreen> {
           color: AppTheme.primaryColor,
           child: appProvider.isLoading
               ? const RoomsGridSkeleton()
-              : Column(
-                  children: [
-            // Top Header Bar
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              : Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 960),
+                    child: Column(
+                      children: [
+                        // Top Header Bar
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               child: _isSearching
                   ? Row(
                       children: [
@@ -258,9 +261,10 @@ class _RoomsScreenState extends State<RoomsScreen> {
                         ),
                       ),
                     )
-                  : ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      padding: EdgeInsets.fromLTRB(16, 0, 16, 95 + MediaQuery.of(context).padding.bottom),
+                  : Scrollbar(
+                      child: ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(16, 0, 16, 120 + MediaQuery.paddingOf(context).bottom),
                       itemCount: floors.length,
                       itemBuilder: (context, floorIndex) {
                         final floor = floors[floorIndex];
@@ -413,8 +417,11 @@ class _RoomsScreenState extends State<RoomsScreen> {
                         );
                       },
                     ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     ),

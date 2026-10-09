@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/app_provider.dart';
+import '../models/models.dart';
 import '../widgets/tenant_avatar.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_shimmer.dart';
@@ -23,30 +25,49 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
 
   DateTime? _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
 
-  void _prevMonth() {
+  DateTime get _currentMonth => DateTime(DateTime.now().year, DateTime.now().month, 1);
+
+  DateTime _getEarliestPaymentMonth(List<Payment> payments) {
+    if (payments.isEmpty) return _currentMonth;
+    DateTime earliest = payments.first.date;
+    for (final p in payments) {
+      if (p.date.isBefore(earliest)) {
+        earliest = p.date;
+      }
+    }
+    return DateTime(earliest.year, earliest.month, 1);
+  }
+
+  void _prevMonth(DateTime earliestMonth) {
     setState(() {
-      final cur = _selectedMonth ?? DateTime(DateTime.now().year, DateTime.now().month, 1);
-      _selectedMonth = DateTime(cur.year, cur.month - 1, 1);
+      final cur = _selectedMonth ?? _currentMonth;
+      final prev = DateTime(cur.year, cur.month - 1, 1);
+      if (!prev.isBefore(earliestMonth)) {
+        _selectedMonth = prev;
+      }
     });
   }
 
   void _nextMonth() {
     setState(() {
-      final cur = _selectedMonth ?? DateTime(DateTime.now().year, DateTime.now().month, 1);
-      _selectedMonth = DateTime(cur.year, cur.month + 1, 1);
+      final cur = _selectedMonth ?? _currentMonth;
+      final next = DateTime(cur.year, cur.month + 1, 1);
+      if (!next.isAfter(_currentMonth)) {
+        _selectedMonth = next;
+      }
     });
   }
 
   void _resetToCurrentMonth() {
     setState(() {
-      _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+      _selectedMonth = _currentMonth;
     });
   }
 
   void _toggleAllTime() {
     setState(() {
       if (_selectedMonth == null) {
-        _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+        _selectedMonth = _currentMonth;
       } else {
         _selectedMonth = null;
       }
@@ -75,6 +96,12 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
     final allSortedPayments = [...appProvider.currentPayments]..sort((a, b) => b.date.compareTo(a.date));
+    final earliestMonth = _getEarliestPaymentMonth(allSortedPayments);
+    final bool isCurrentMonth = _selectedMonth != null &&
+        _selectedMonth!.year == _currentMonth.year &&
+        _selectedMonth!.month == _currentMonth.month;
+    final bool canGoPrev = _selectedMonth != null && _selectedMonth!.isAfter(earliestMonth);
+    final bool canGoNext = _selectedMonth != null && _selectedMonth!.isBefore(_currentMonth);
 
     // Filter by selected month if not All Time
     final sortedPayments = _selectedMonth == null
@@ -188,7 +215,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
               // 0. Month Navigation Bar with Previous, Next, and All Time Toggle
               Container(
                 margin: const EdgeInsets.only(bottom: 14),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(14),
@@ -202,113 +229,105 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                   ],
                 ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.chevron_left_rounded, size: 22, color: Color(0xFF1E293B)),
+                      icon: Icon(
+                        Icons.chevron_left_rounded,
+                        size: 22,
+                        color: canGoPrev ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1),
+                      ),
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                      constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
                       splashRadius: 18,
-                      onPressed: _prevMonth,
-                      tooltip: 'Previous Month',
+                      onPressed: canGoPrev ? () => _prevMonth(earliestMonth) : null,
+                      tooltip: canGoPrev ? 'Previous Month' : 'First Recorded Month',
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        if (_selectedMonth != null &&
-                            (_selectedMonth!.year != DateTime.now().year || _selectedMonth!.month != DateTime.now().month)) {
-                          _resetToCurrentMonth();
-                        }
-                      },
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.calendar_month_rounded,
-                            size: 16,
-                            color: _selectedMonth != null ? AppTheme.primaryColor : const Color(0xFF64748B),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            _selectedMonth == null
-                                ? 'All Time'
-                                : DateFormat('MMMM yyyy').format(_selectedMonth!),
-                            style: GoogleFonts.lato(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0F172A),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          if (_selectedMonth != null && !isCurrentMonth) {
+                            _resetToCurrentMonth();
+                          }
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.calendar_month_rounded,
+                              size: 15,
+                              color: _selectedMonth != null ? AppTheme.primaryColor : const Color(0xFF64748B),
                             ),
-                          ),
-                          if (_selectedMonth != null) ...[
-                            const SizedBox(width: 6),
-                            if (_selectedMonth!.year == DateTime.now().year &&
-                                _selectedMonth!.month == DateTime.now().month)
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEEF2FF),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: const Color(0xFFC7D2FE), width: 0.6),
+                            const SizedBox(width: 5),
+                            Flexible(
+                              child: Text(
+                                _selectedMonth == null
+                                    ? 'All Time'
+                                    : DateFormat('MMMM yyyy').format(_selectedMonth!),
+                                style: GoogleFonts.lato(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF0F172A),
                                 ),
-                                child: Text(
-                                  'Current',
-                                  style: GoogleFonts.lato(
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF4F46E5),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (_selectedMonth != null) ...[
+                              const SizedBox(width: 5),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5.5, vertical: 1.5),
+                                decoration: BoxDecoration(
+                                  color: isCurrentMonth ? const Color(0xFFEEF2FF) : const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(5),
+                                  border: Border.all(
+                                    color: isCurrentMonth ? const Color(0xFFC7D2FE) : const Color(0xFFE2E8F0),
+                                    width: 0.6,
                                   ),
                                 ),
-                              )
-                            else
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF1F5F9),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
                                 child: Text(
-                                  'Reset',
+                                  isCurrentMonth ? 'Current' : 'Reset',
                                   style: GoogleFonts.lato(
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF64748B),
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                    color: isCurrentMonth ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
                                   ),
                                 ),
                               ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.chevron_right_rounded, size: 22, color: Color(0xFF1E293B)),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                          splashRadius: 18,
-                          onPressed: _nextMonth,
-                          tooltip: 'Next Month',
+                    IconButton(
+                      icon: Icon(
+                        Icons.chevron_right_rounded,
+                        size: 22,
+                        color: canGoNext ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1),
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                      splashRadius: 18,
+                      onPressed: canGoNext ? _nextMonth : null,
+                      tooltip: canGoNext ? 'Next Month' : 'Current Month',
+                    ),
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: _toggleAllTime,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: _selectedMonth == null ? AppTheme.primaryColor : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        const SizedBox(width: 4),
-                        GestureDetector(
-                          onTap: _toggleAllTime,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: _selectedMonth == null ? AppTheme.primaryColor : const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              _selectedMonth == null ? 'Month View' : 'All Time',
-                              style: GoogleFonts.lato(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: _selectedMonth == null ? Colors.white : const Color(0xFF475569),
-                              ),
-                            ),
+                        child: Text(
+                          _selectedMonth == null ? 'Month View' : 'All Time',
+                          style: GoogleFonts.lato(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: _selectedMonth == null ? Colors.white : const Color(0xFF475569),
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -650,15 +669,24 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                         Row(
                                           children: [
                                             Flexible(
-                                              child: Text(
-                                                payment.tenantName ?? tenant?.name ?? 'Tenant',
-                                                style: GoogleFonts.lato(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: const Color(0xFF0F172A),
+                                              child: InkWell(
+                                                onTap: () {
+                                                  final targetId = tenant?.id ?? payment.tenantId;
+                                                  if (targetId.isNotEmpty) {
+                                                    context.push('/tenant_profile/$targetId', extra: tenant);
+                                                  }
+                                                },
+                                                borderRadius: BorderRadius.circular(4),
+                                                child: Text(
+                                                  payment.tenantName ?? tenant?.name ?? 'Tenant',
+                                                  style: GoogleFonts.lato(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: const Color(0xFF0F172A),
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
                                             if (payment.roomNumber != null && payment.roomNumber!.isNotEmpty) ...[

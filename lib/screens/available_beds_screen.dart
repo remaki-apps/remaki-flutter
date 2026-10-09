@@ -59,7 +59,8 @@ class AvailableBedsScreen extends StatelessWidget {
         leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
         title: const Text('Available Beds'),
       ),
-      body: RefreshIndicator(
+      body: SafeArea(
+        child: RefreshIndicator(
         onRefresh: () => appProvider.loadFromAPI(),
         color: AppTheme.primaryColor,
         child: appProvider.isLoading
@@ -219,6 +220,7 @@ class AvailableBedsScreen extends StatelessWidget {
         ],
       ),
     ),
+      ),
     );
   }
 }

@@ -135,45 +135,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
           color: AppTheme.primaryColor,
           child: appProvider.isLoading
               ? const DashboardSkeleton()
-              : SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-            padding: EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 95.0 + MediaQuery.of(context).padding.bottom),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. Sleek PG & Owner Identity Banner
-                _buildPGIdentityCard(context, appProvider),
-                const SizedBox(height: 16),
+              : Scrollbar(
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 120.0 + MediaQuery.paddingOf(context).bottom),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 960),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // 1. Sleek PG & Owner Identity Banner
+                            _buildPGIdentityCard(context, appProvider),
+                            const SizedBox(height: 16),
 
-                // 2. Modern Quick Actions Hub (Add Tenant, Notice, Unpaid Rent, Approvals)
-                _buildQuickActionsSection(context, appProvider),
-                const SizedBox(height: 16),
+                            // 2. Modern Quick Actions Hub (Add Tenant, Notice, Unpaid Rent, Approvals)
+                            _buildQuickActionsSection(context, appProvider),
+                            const SizedBox(height: 16),
 
-                // 3. Bed Occupancy & Capacity Bento Card
-                _buildOccupancyCard(context, appProvider),
-                const SizedBox(height: 16),
+                            // 3. Bed Occupancy & Capacity Bento Card
+                            _buildOccupancyCard(context, appProvider),
+                            const SizedBox(height: 16),
 
-                // 4. Rent Collection Overview Card
-                _buildRentOverviewCard(
-                  context: context,
-                  monthYear: monthYear,
-                  expectedRent: expectedRent,
-                  collectedRent: collectedRent,
-                  pendingRent: pendingRent,
-                  unpaidCount: appProvider.unpaidTenants.length,
+                            // 4. Rent Collection Overview Card
+                            _buildRentOverviewCard(
+                              context: context,
+                              monthYear: monthYear,
+                              expectedRent: expectedRent,
+                              collectedRent: collectedRent,
+                              pendingRent: pendingRent,
+                              unpaidCount: appProvider.unpaidTenants.length,
+                            ),
+                            const SizedBox(height: 16),
+
+                            // 5. Payment History (Month-wise Transactions & Summary)
+                            _buildPaymentHistorySection(
+                              context: context,
+                              appProvider: appProvider,
+                              payments: appProvider.currentPayments,
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 16),
-
-                // 5. Payment History (Month-wise Transactions & Summary)
-                _buildPaymentHistorySection(
-                  context: context,
-                  appProvider: appProvider,
-                  payments: appProvider.currentPayments,
-                ),
-                const SizedBox(height: 24),
-              ],
-            ),
-          ),
         ),
       ),
     );
@@ -359,6 +366,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (context) {
         return BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),

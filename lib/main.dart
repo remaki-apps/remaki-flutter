@@ -1,7 +1,10 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
+import 'models/models.dart';
 import 'providers/app_provider.dart';
 import 'services/api_service.dart';
 import 'theme/app_theme.dart';
@@ -36,6 +39,16 @@ import 'screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.dark,
+      systemNavigationBarContrastEnforced: false,
+    ),
+  );
   await ApiService.initToken();
   runApp(
     MultiProvider(
@@ -194,6 +207,19 @@ final router = GoRouter(
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
+      path: '/tenant_profile',
+      pageBuilder: (context, state) {
+        final tenant = state.extra as Tenant?;
+        final id = tenant?.id ?? state.uri.queryParameters['id'] ?? '';
+        return _buildPageWithTransition(
+          context: context,
+          state: state,
+          child: TenantProfileScreen(tenantId: id),
+        );
+      },
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
       path: '/record_payment/:id',
       pageBuilder: (context, state) => _buildPageWithTransition(
         context: context,
@@ -332,6 +358,18 @@ final router = GoRouter(
   ],
 );
 
+class AppScrollBehavior extends MaterialScrollBehavior {
+  const AppScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+  };
+}
+
 class RemakiApp extends StatelessWidget {
   const RemakiApp({super.key});
 
@@ -340,6 +378,7 @@ class RemakiApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'Remaki',
       theme: AppTheme.lightTheme,
+      scrollBehavior: const AppScrollBehavior(),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

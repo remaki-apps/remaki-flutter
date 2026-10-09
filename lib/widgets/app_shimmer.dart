@@ -291,41 +291,46 @@ class RentOverviewSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppShimmer(
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        physics: const NeverScrollableScrollPhysics(),
-        children: [
-          // Rent/Bill Toggle Segment
-          const ShimmerBox(height: 48, borderRadius: 14),
-          const SizedBox(height: 16),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 860),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              // Rent/Bill Toggle Segment
+              const ShimmerBox(height: 48, borderRadius: 14),
+              const SizedBox(height: 16),
 
-          // Primary Collection Card
-          const ShimmerBox(height: 160, borderRadius: 22),
-          const SizedBox(height: 16),
+              // Primary Collection Card
+              const ShimmerBox(height: 160, borderRadius: 22),
+              const SizedBox(height: 16),
 
-          // Stat Breakdown Grid (2x2)
-          Row(
-            children: const [
-              Expanded(child: ShimmerBox(height: 80, borderRadius: 16)),
-              SizedBox(width: 12),
-              Expanded(child: ShimmerBox(height: 80, borderRadius: 16)),
+              // Stat Breakdown Grid (2x2)
+              Row(
+                children: const [
+                  Expanded(child: ShimmerBox(height: 80, borderRadius: 16)),
+                  SizedBox(width: 12),
+                  Expanded(child: ShimmerBox(height: 80, borderRadius: 16)),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Tenant List Header
+              const ShimmerBox(width: 150, height: 20, borderRadius: 6),
+              const SizedBox(height: 12),
+
+              // List Items
+              ...List.generate(
+                4,
+                (index) => const Padding(
+                  padding: EdgeInsets.only(bottom: 12.0),
+                  child: ShimmerBox(height: 85, borderRadius: 16),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 20),
-
-          // Tenant List Header
-          const ShimmerBox(width: 150, height: 20, borderRadius: 6),
-          const SizedBox(height: 12),
-
-          // List Items
-          ...List.generate(
-            4,
-            (index) => const Padding(
-              padding: EdgeInsets.only(bottom: 12.0),
-              child: ShimmerBox(height: 85, borderRadius: 16),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -472,54 +477,59 @@ class TenantHomeSkeleton extends StatelessWidget {
     return AppShimmer(
       baseColor: const Color(0xFFE2E8F0),
       highlightColor: const Color(0xFFF8FAFC),
-      child: SingleChildScrollView(
-        physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Tenant Welcome Header Card
-            const ShimmerBox(height: 90, borderRadius: 22),
-            const SizedBox(height: 16),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 860),
+          child: SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Tenant Welcome Header Card
+                const ShimmerBox(height: 90, borderRadius: 22),
+                const SizedBox(height: 16),
 
-            // Due Amount / Rent Status Hero Banner
-            const ShimmerBox(height: 180, borderRadius: 24),
-            const SizedBox(height: 20),
+                // Due Amount / Rent Status Hero Banner
+                const ShimmerBox(height: 180, borderRadius: 24),
+                const SizedBox(height: 20),
 
-            // Quick Actions Section Header
-            const ShimmerBox(width: 130, height: 18, borderRadius: 6),
-            const SizedBox(height: 12),
+                // Quick Actions Section Header
+                const ShimmerBox(width: 130, height: 18, borderRadius: 6),
+                const SizedBox(height: 12),
 
-            // Quick Actions 4 Grid
-            Row(
-              children: const [
-                Expanded(child: ShimmerBox(height: 85, borderRadius: 18)),
-                SizedBox(width: 12),
-                Expanded(child: ShimmerBox(height: 85, borderRadius: 18)),
+                // Quick Actions 4 Grid
+                Row(
+                  children: const [
+                    Expanded(child: ShimmerBox(height: 85, borderRadius: 18)),
+                    SizedBox(width: 12),
+                    Expanded(child: ShimmerBox(height: 85, borderRadius: 18)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: const [
+                    Expanded(child: ShimmerBox(height: 85, borderRadius: 18)),
+                    SizedBox(width: 12),
+                    Expanded(child: ShimmerBox(height: 85, borderRadius: 18)),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Recent Payment History Header
+                const ShimmerBox(width: 160, height: 18, borderRadius: 6),
+                const SizedBox(height: 12),
+
+                ...List.generate(
+                  3,
+                  (index) => const Padding(
+                    padding: EdgeInsets.only(bottom: 12.0),
+                    child: ShimmerBox(height: 75, borderRadius: 16),
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: const [
-                Expanded(child: ShimmerBox(height: 85, borderRadius: 18)),
-                SizedBox(width: 12),
-                Expanded(child: ShimmerBox(height: 85, borderRadius: 18)),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Recent Payment History Header
-            const ShimmerBox(width: 160, height: 18, borderRadius: 6),
-            const SizedBox(height: 12),
-
-            ...List.generate(
-              3,
-              (index) => const Padding(
-                padding: EdgeInsets.only(bottom: 12.0),
-                child: ShimmerBox(height: 75, borderRadius: 16),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -533,31 +543,36 @@ class ProfileSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppShimmer(
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        physics: const NeverScrollableScrollPhysics(),
-        children: [
-          // Profile Header Card with Avatar
-          Center(
-            child: Column(
-              children: const [
-                ShimmerCircle(radius: 45),
-                SizedBox(height: 12),
-                ShimmerBox(width: 150, height: 22, borderRadius: 6),
-                SizedBox(height: 6),
-                ShimmerBox(width: 100, height: 14, borderRadius: 4),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 860),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              // Profile Header Card with Avatar
+              Center(
+                child: Column(
+                  children: const [
+                    ShimmerCircle(radius: 45),
+                    SizedBox(height: 12),
+                    ShimmerBox(width: 150, height: 22, borderRadius: 6),
+                    SizedBox(height: 6),
+                    ShimmerBox(width: 100, height: 14, borderRadius: 4),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
 
-          // Detail Cards
-          const ShimmerBox(height: 140, borderRadius: 18),
-          const SizedBox(height: 14),
-          const ShimmerBox(height: 120, borderRadius: 18),
-          const SizedBox(height: 14),
-          const ShimmerBox(height: 100, borderRadius: 18),
-        ],
+              // Detail Cards
+              const ShimmerBox(height: 140, borderRadius: 18),
+              const SizedBox(height: 14),
+              const ShimmerBox(height: 120, borderRadius: 18),
+              const SizedBox(height: 14),
+              const ShimmerBox(height: 100, borderRadius: 18),
+            ],
+          ),
+        ),
       ),
     );
   }

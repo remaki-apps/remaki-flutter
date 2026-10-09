@@ -56,11 +56,14 @@ class _TenantsScreenState extends State<TenantsScreen> {
           color: AppTheme.primaryColor,
           child: appProvider.isLoading
               ? const TenantsListSkeleton()
-              : Column(
-                  children: [
-            // Top Header & Search Bar
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              : Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 960),
+                    child: Column(
+                      children: [
+                        // Top Header & Search Bar
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -239,9 +242,10 @@ class _TenantsScreenState extends State<TenantsScreen> {
                         ),
                       ),
                     )
-                  : ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      padding: EdgeInsets.fromLTRB(16, 4, 16, 95 + MediaQuery.of(context).padding.bottom),
+                  : Scrollbar(
+                      child: ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(16, 4, 16, 120 + MediaQuery.paddingOf(context).bottom),
                       itemCount: filteredTenants.length,
                       itemBuilder: (context, index) {
                         var tenant = filteredTenants[index];
@@ -376,13 +380,16 @@ class _TenantsScreenState extends State<TenantsScreen> {
                         );
                       },
                     ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     ),
-    );
-  }
+  );
+}
 
   Widget _buildKpiBox({
     required String label,

@@ -62,7 +62,8 @@ class _AllocateTenantScreenState extends State<AllocateTenantScreen> {
         leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
         title: const Text('Allocate Tenant'),
       ),
-      body: unallocatedTenants.isEmpty
+      body: SafeArea(
+        child: unallocatedTenants.isEmpty
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
@@ -230,6 +231,7 @@ class _AllocateTenantScreenState extends State<AllocateTenantScreen> {
                 ),
               ],
             ),
+      ),
     );
   }
 }
