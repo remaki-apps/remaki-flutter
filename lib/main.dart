@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import 'models/models.dart';
 import 'providers/app_provider.dart';
+import 'providers/notification_provider.dart';
 import 'services/api_service.dart';
 import 'theme/app_theme.dart';
 import 'screens/main_shell.dart';
@@ -54,6 +55,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AppProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: const RemakiApp(),
     ),
@@ -154,11 +156,15 @@ final router = GoRouter(
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/tenant_home',
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const TenantHomeScreen(),
-      ),
+      pageBuilder: (context, state) {
+        final tabStr = state.uri.queryParameters['tab'];
+        final tab = int.tryParse(tabStr ?? '') ?? 0;
+        return _buildPageWithTransition(
+          context: context,
+          state: state,
+          child: TenantHomeScreen(initialTab: tab),
+        );
+      },
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

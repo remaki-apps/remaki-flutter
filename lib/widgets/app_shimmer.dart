@@ -344,29 +344,31 @@ class PaymentHistorySkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppShimmer(
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 20),
         physics: const NeverScrollableScrollPhysics(),
         children: [
-          // Total Collection Header Banner
-          const ShimmerBox(height: 110, borderRadius: 20),
-          const SizedBox(height: 16),
+          // Search bar
+          const ShimmerBox(height: 38, borderRadius: 10),
+          const SizedBox(height: 8),
 
-          // Filter & Search bar
+          // Filter chips
           Row(
             children: const [
-              Expanded(child: ShimmerBox(height: 46, borderRadius: 12)),
-              SizedBox(width: 10),
-              ShimmerBox(width: 46, height: 46, borderRadius: 12),
+              ShimmerBox(width: 52, height: 26, borderRadius: 16),
+              SizedBox(width: 6),
+              ShimmerBox(width: 52, height: 26, borderRadius: 16),
+              SizedBox(width: 6),
+              ShimmerBox(width: 52, height: 26, borderRadius: 16),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
 
           // List of payments
           ...List.generate(
-            5,
+            6,
             (index) => const Padding(
-              padding: EdgeInsets.only(bottom: 12.0),
-              child: ShimmerBox(height: 80, borderRadius: 16),
+              padding: EdgeInsets.only(bottom: 7.0),
+              child: ShimmerBox(height: 58, borderRadius: 14),
             ),
           ),
         ],

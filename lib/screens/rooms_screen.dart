@@ -297,44 +297,51 @@ class _RoomsScreenState extends State<RoomsScreen> {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Row(
-                                        children: [
-                                          Container(
-                                            width: 36,
-                                            height: 36,
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFEEF2FF),
-                                              borderRadius: BorderRadius.circular(10),
+                                      Expanded(
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 36,
+                                              height: 36,
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFEEF2FF),
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                              child: const Icon(Icons.domain_outlined, color: AppTheme.primaryColor, size: 20),
                                             ),
-                                            child: const Icon(Icons.domain_outlined, color: AppTheme.primaryColor, size: 20),
-                                          ),
-                                          const SizedBox(width: 10),
-                                          Text(
-                                            floor,
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF0F172A),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFEEF2FF),
-                                              borderRadius: BorderRadius.circular(12),
-                                            ),
-                                            child: Text(
-                                              '${roomsInFloor.length} ${roomsInFloor.length == 1 ? "Room" : "Rooms"}',
-                                              style: const TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppTheme.primaryColor,
+                                            const SizedBox(width: 10),
+                                            Flexible(
+                                              child: Text(
+                                                floor,
+                                                style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF0F172A),
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
-                                          ),
-                                        ],
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFEEF2FF),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Text(
+                                                '${roomsInFloor.length} ${roomsInFloor.length == 1 ? "Room" : "Rooms"}',
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppTheme.primaryColor,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
+                                      const SizedBox(width: 8),
                                       Icon(
                                         isCollapsed
                                             ? Icons.keyboard_arrow_down_rounded
@@ -365,39 +372,49 @@ class _RoomsScreenState extends State<RoomsScreen> {
                                           child: Row(
                                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
-                                              Row(
-                                                children: [
-                                                  Container(
-                                                    width: 38,
-                                                    height: 38,
-                                                    decoration: BoxDecoration(
-                                                      color: const Color(0xFFF3F0FF),
-                                                      borderRadius: BorderRadius.circular(10),
+                                              Expanded(
+                                                child: Row(
+                                                  children: [
+                                                    Container(
+                                                      width: 38,
+                                                      height: 38,
+                                                      decoration: BoxDecoration(
+                                                        color: const Color(0xFFF3F0FF),
+                                                        borderRadius: BorderRadius.circular(10),
+                                                      ),
+                                                      child: const Icon(Icons.door_sliding_outlined, color: AppTheme.primaryColor, size: 18),
                                                     ),
-                                                    child: const Icon(Icons.door_sliding_outlined, color: AppTheme.primaryColor, size: 18),
-                                                  ),
-                                                  const SizedBox(width: 10),
-                                                  Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Text(
-                                                        'Room ${room.number}',
-                                                        style: const TextStyle(
-                                                          fontSize: 15,
-                                                          fontWeight: FontWeight.bold,
-                                                          color: Color(0xFF0F172A),
-                                                        ),
+                                                    const SizedBox(width: 10),
+                                                    Expanded(
+                                                      child: Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Text(
+                                                            'Room ${room.number}',
+                                                            style: const TextStyle(
+                                                              fontSize: 15,
+                                                              fontWeight: FontWeight.bold,
+                                                              color: Color(0xFF0F172A),
+                                                            ),
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                          const SizedBox(height: 2),
+                                                          Text(
+                                                            '${room.capacity} Beds Total',
+                                                            style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ],
                                                       ),
-                                                      const SizedBox(height: 2),
-                                                      Text(
-                                                        '${room.capacity} Beds Total',
-                                                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ],
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
+                                              const SizedBox(width: 8),
                                               Row(
+                                                mainAxisSize: MainAxisSize.min,
                                                 children: [
                                                   _buildStatusBadge(room),
                                                   const SizedBox(width: 8),

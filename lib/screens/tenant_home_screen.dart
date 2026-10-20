@@ -19,6 +19,10 @@ import '../widgets/app_shimmer.dart';
 import '../utils/image_compress_util.dart';
 import '../widgets/payment_splitup_card.dart';
 import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart';
+import '../providers/notification_provider.dart';
+import '../widgets/in_app_notification_center.dart';
+import '../providers/app_provider.dart';
 import '../utils/web_update_util.dart';
 
 class TenantHomeScreen extends StatefulWidget {
@@ -139,6 +143,16 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     super.initState();
     _currentNavIndex = widget.initialTab;
     _loadAllData();
+  }
+
+  @override
+  void didUpdateWidget(TenantHomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialTab != oldWidget.initialTab && widget.initialTab != _currentNavIndex) {
+      setState(() {
+        _currentNavIndex = widget.initialTab;
+      });
+    }
   }
 
   @override
@@ -272,6 +286,16 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             _setLocalPendingStatus(false, tenantId);
           }
         });
+
+        // Trigger tenant in-app notification check (payment status)
+        final notifProvider = Provider.of<NotificationProvider>(context, listen: false);
+        notifProvider.checkTenantNotifications(
+          profileData: profile,
+          totalDue: totalDueAmount,
+          isPending: isPendingApproval,
+          rejectionReason: rawRejection,
+          context: context,
+        );
       }
     } else {
       if (mounted) {
@@ -680,7 +704,21 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             left: 0,
             right: 0,
             bottom: 0,
-            child: _buildBottomNavigationBar(),
+            child: Consumer<AppProvider>(
+              builder: (context, appProvider, child) {
+                final bool isNavBarHidden = appProvider.isNavBarHidden;
+                return AnimatedSlide(
+                  offset: isNavBarHidden ? const Offset(0, 2) : Offset.zero,
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                  child: AnimatedOpacity(
+                    opacity: isNavBarHidden ? 0.0 : 1.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: _buildBottomNavigationBar(),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -1034,66 +1072,152 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${_getGreeting()},',
-                    style: GoogleFonts.lato(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w500,
-                      color: TenantTheme.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      Text(
-                        '$firstName ',
-                        style: GoogleFonts.lato(
-                          fontSize: 23,
-                          fontWeight: FontWeight.w800,
-                          color: TenantTheme.textPrimary,
-                          letterSpacing: -0.6,
-                        ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${_getGreeting()},',
+                      style: GoogleFonts.lato(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w500,
+                        color: TenantTheme.textSecondary,
                       ),
-                      const Text('👋', style: TextStyle(fontSize: 20)),
-                    ],
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            '$firstName ',
+                            style: GoogleFonts.lato(
+                              fontSize: 23,
+                              fontWeight: FontWeight.w800,
+                              color: TenantTheme.textPrimary,
+                              letterSpacing: -0.6,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const Text('👋', style: TextStyle(fontSize: 20)),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Welcome to your resident dashboard',
+                      style: GoogleFonts.lato(
+                        fontSize: 12,
+                        color: TenantTheme.textMuted,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // In-App Notification Bell Button with live unread badge
+                  Consumer<NotificationProvider>(
+                    builder: (context, notifProvider, _) {
+                      final unread = notifProvider.unreadCount;
+                      return GestureDetector(
+                        onTap: () => InAppNotificationCenter.show(
+                          context,
+                          onNavigate: (route) {
+                            if (route.contains('tab=1')) {
+                              setState(() => _currentNavIndex = 1);
+                            } else if (route.isNotEmpty) {
+                              context.push(route);
+                            }
+                          },
+                        ),
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: unread > 0 ? const Color(0xFFEEF2FF) : Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: unread > 0 ? const Color(0xFFC7D2FE) : const Color(0xFFE2E8F0),
+                              width: 1.2,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x080F172A),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Center(
+                                child: Icon(
+                                  unread > 0 ? Icons.notifications_active_rounded : Icons.notifications_none_rounded,
+                                  color: unread > 0 ? TenantTheme.primary : const Color(0xFF64748B),
+                                  size: 21,
+                                ),
+                              ),
+                              if (unread > 0)
+                                Positioned(
+                                  top: -2,
+                                  right: -2,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEF4444),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: Colors.white, width: 1.5),
+                                    ),
+                                    child: Text(
+                                      unread > 9 ? '9+' : '$unread',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Welcome to your resident dashboard',
-                    style: GoogleFonts.lato(
-                      fontSize: 12,
-                      color: TenantTheme.textMuted,
-                      fontWeight: FontWeight.w500,
+                  const SizedBox(width: 10),
+                  GestureDetector(
+                    onTap: () => setState(() => _currentNavIndex = 2),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x100F172A),
+                            blurRadius: 10,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                        border: Border.all(color: TenantTheme.glassBorder, width: 2),
+                      ),
+                      child: TenantAvatar(
+                        name: tenantName,
+                        imageUrl: _profileData?['imageUrl'],
+                        radius: 23,
+                        enablePreview: true,
+                        backgroundColor: TenantTheme.primarySoft,
+                        textColor: TenantTheme.primary,
+                      ),
                     ),
                   ),
                 ],
-              ),
-              GestureDetector(
-                onTap: () => setState(() => _currentNavIndex = 2),
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x100F172A),
-                        blurRadius: 10,
-                        offset: Offset(0, 3),
-                      ),
-                    ],
-                    border: Border.all(color: TenantTheme.glassBorder, width: 2),
-                  ),
-                  child: TenantAvatar(
-                    name: tenantName,
-                    imageUrl: _profileData?['imageUrl'],
-                    radius: 23,
-                    enablePreview: true,
-                    backgroundColor: TenantTheme.primarySoft,
-                    textColor: TenantTheme.primary,
-                  ),
-                ),
               ),
             ],
           ),

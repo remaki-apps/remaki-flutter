@@ -61,7 +61,17 @@ class UnpaidTenantsScreen extends StatelessWidget {
         ? appProvider.unpaidBillsTenants
         : filter == 'rent'
             ? appProvider.unpaidRentTenants
-            : appProvider.unpaidTenants;
+            : filter == 'overdue'
+                ? appProvider.currentTenants.where((t) => t.isOverdue || (t.pendingRentAmount > 0 && DateTime.now().difference(t.rentDueDate).inDays >= 3)).toList()
+                : appProvider.unpaidTenants;
+
+    final String screenTitle = filter == 'overdue'
+        ? 'Overdue Tenants (3+ Days)'
+        : filter == 'bills'
+            ? 'Unpaid Bills'
+            : filter == 'rent'
+                ? 'Unpaid Rent'
+                : 'Unpaid Tenants';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
@@ -73,9 +83,9 @@ class UnpaidTenantsScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          'Unpaid Tenants',
-          style: TextStyle(
+        title: Text(
+          screenTitle,
+          style: const TextStyle(
             color: Color(0xFF0F172A),
             fontWeight: FontWeight.bold,
             fontSize: 18,
