@@ -189,8 +189,8 @@ class Tenant {
   bool get isOverdue {
     if (isPaid || isPending || isPartiallyPaid) return false;
     if (paymentStatus == 'OVERDUE') return true;
-    final nextMonthFirst = DateTime(rentDueDate.year, rentDueDate.month + 1, 1);
-    return DateTime.now().isAfter(nextMonthFirst) || DateTime.now().isAtSameMomentAs(nextMonthFirst);
+    final graceDate = DateTime(rentDueDate.year, rentDueDate.month, rentDueDate.day).add(const Duration(days: 3));
+    return DateTime.now().isAfter(graceDate);
   }
 
   bool get isUnpaid {
@@ -333,7 +333,7 @@ class Tenant {
 
     return Uri.encodeComponent(
       '🧾 *RENT & BILL STATEMENT* 🧾\n'
-      '🏢 *${pgName.isNotEmpty ? pgName : 'Your PG'}*\n'
+      '🏢 *${pgName.isNotEmpty ? pgName : 'PG'}*\n'
       '────────────────────────────\n'
       '👤 *Tenant Name:* $name\n'
       '📱 *Mobile Number:* $phone\n'
@@ -348,7 +348,7 @@ class Tenant {
       '📲 Track payments & receipts anytime on the *Remaki* app.\n'
       'Kindly clear your pending bill balance on or before the due date.\n\n'
       'Best regards,\n'
-      '*${pgName.isNotEmpty ? pgName : 'Your PG'} Management*'
+      '*${pgName.isNotEmpty ? '$pgName Management' : 'Property Management'}*'
     );
   }
 

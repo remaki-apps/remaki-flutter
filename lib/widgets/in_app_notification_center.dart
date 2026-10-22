@@ -18,8 +18,9 @@ class InAppNotificationCenter {
       appProvider.setNavBarHidden(true);
     } catch (_) {}
 
+    String? targetRoute;
     try {
-      await showModalBottomSheet(
+      targetRoute = await showModalBottomSheet<String>(
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
@@ -29,6 +30,14 @@ class InAppNotificationCenter {
       );
     } finally {
       appProvider?.setNavBarHidden(false);
+    }
+
+    if (targetRoute != null && targetRoute.isNotEmpty && context.mounted) {
+      if (onNavigate != null) {
+        onNavigate(targetRoute);
+      } else {
+        context.push(targetRoute);
+      }
     }
   }
 }
@@ -51,15 +60,7 @@ class _NotificationCenterModal extends StatelessWidget {
     final notifProvider = Provider.of<NotificationProvider>(context, listen: false);
     notifProvider.markAsRead(item.id);
 
-    Navigator.of(context).pop();
-
-    if (onNavigate != null) {
-      onNavigate!(item.targetRoute);
-    } else {
-      if (item.targetRoute.isNotEmpty) {
-        context.push(item.targetRoute);
-      }
-    }
+    Navigator.of(context).pop(item.targetRoute);
   }
 
   @override

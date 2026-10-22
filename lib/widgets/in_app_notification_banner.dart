@@ -31,7 +31,7 @@ class InAppNotificationBanner {
           if (onTap != null) {
             onTap();
           } else {
-            if (notification.targetRoute.isNotEmpty) {
+            if (notification.targetRoute.isNotEmpty && context.mounted) {
               context.push(notification.targetRoute);
             }
           }

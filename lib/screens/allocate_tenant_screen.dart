@@ -53,6 +53,14 @@ class _AllocateTenantScreenState extends State<AllocateTenantScreen> {
   }
 
   @override
+  void dispose() {
+    _rentController.dispose();
+    _securityController.dispose();
+    _moveInController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
     final unallocatedTenants = appProvider.tenants.where((t) => t.roomId.isEmpty).toList();

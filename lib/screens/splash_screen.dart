@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -30,10 +32,14 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
   String _loadingStatus = 'Preparing your experience...';
   Timer? _statusTimer;
+  Timer? _navigationTimer;
 
   @override
   void initState() {
     super.initState();
+    ApiService.warmupServer();
+
+    final isTestEnvironment = !kIsWeb && Platform.environment.containsKey('FLUTTER_TEST');
 
     // Main entrance timeline (2.0s)
     _mainController = AnimationController(
@@ -41,23 +47,32 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       duration: const Duration(milliseconds: 2000),
     );
 
-    // Sonar pulse ripples (infinite)
+    // Sonar pulse ripples (infinite in app, non-repeating in tests)
     _rippleController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2800),
-    )..repeat();
+    );
+    if (!isTestEnvironment) {
+      _rippleController.repeat();
+    }
 
-    // Shimmer sheen sweep across logo (infinite)
+    // Shimmer sheen sweep across logo (infinite in app, non-repeating in tests)
     _shimmerController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2200),
-    )..repeat();
+    );
+    if (!isTestEnvironment) {
+      _shimmerController.repeat();
+    }
 
-    // Floating particles (infinite)
+    // Floating particles (infinite in app, non-repeating in tests)
     _particleController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 4000),
-    )..repeat();
+    );
+    if (!isTestEnvironment) {
+      _particleController.repeat();
+    }
 
     // Logo Animations
     _logoScale = Tween<double>(begin: 0.2, end: 1.0).animate(
@@ -123,7 +138,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     });
 
     // Navigate to next screen after 2.6 seconds
-    Timer(const Duration(milliseconds: 2600), () {
+    _navigationTimer = Timer(const Duration(milliseconds: 2600), () {
       _navigateToNextScreen();
     });
   }
@@ -147,6 +162,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   @override
   void dispose() {
     _statusTimer?.cancel();
+    _navigationTimer?.cancel();
     _mainController.dispose();
     _rippleController.dispose();
     _shimmerController.dispose();

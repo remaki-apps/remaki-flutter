@@ -51,6 +51,7 @@ void main() async {
     ),
   );
   await ApiService.initToken();
+  ApiService.warmupServer();
   runApp(
     MultiProvider(
       providers: [
@@ -116,6 +117,26 @@ final router = GoRouter(
 
     if (isLoggingIn || location == '/setup_security_pin') {
       return ApiService.role == 'TENANT' ? '/tenant_home' : '/';
+    }
+
+    // Role-Based Access Control
+    if (ApiService.role == 'TENANT') {
+      const allowedTenantRoutes = {
+        '/tenant_home',
+        '/tenant_my_profile',
+        '/setup_security_pin',
+        '/about',
+        '/terms',
+        '/privacy',
+        '/help_support',
+      };
+      if (!allowedTenantRoutes.contains(location)) {
+        return '/tenant_home';
+      }
+    } else if (ApiService.role == 'ADMIN') {
+      if (location == '/tenant_home' || location == '/tenant_my_profile') {
+        return '/';
+      }
     }
 
     return null;

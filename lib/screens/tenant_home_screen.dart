@@ -211,7 +211,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       final bills = profile['bills'] as List<dynamic>? ?? [];
       final pendingBillsList = <Map<String, dynamic>>[];
       for (var b in bills) {
-        if (b['status'] == 'PENDING') {
+        if (b['status'] == 'PENDING' || b['status'] == 'UNPAID') {
           pendingBills += (b['amount'] as num).toDouble();
           pendingBillsList.add(Map<String, dynamic>.from(b as Map));
         }
@@ -1453,37 +1453,42 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '₹${NumberFormat('#,##,###').format(displayRentAmount)}',
-                            style: GoogleFonts.lato(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w800,
-                              color: TenantTheme.textPrimary,
-                              letterSpacing: -0.6,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '₹${NumberFormat('#,##,###').format(displayRentAmount)}',
+                              style: GoogleFonts.lato(
+                                fontSize: 26,
+                                fontWeight: FontWeight.w800,
+                                color: TenantTheme.textPrimary,
+                                letterSpacing: -0.6,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            isPaid
-                                ? 'All dues cleared for this month'
-                                : (isPending
-                                    ? 'Payment submitted • Under Admin Review'
-                                    : (isUpcoming
-                                        ? 'Payment due by $rentDueDateStr'
-                                        : 'Payment overdue since $rentDueDateStr')),
-                            style: GoogleFonts.lato(
-                              fontSize: 11.5,
-                              color: isPending
-                                  ? TenantTheme.warning
-                                  : (isUpcoming ? TenantTheme.textMuted : TenantTheme.danger),
-                              fontWeight: (isPending || !isUpcoming) ? FontWeight.w600 : FontWeight.w500,
+                            const SizedBox(height: 4),
+                            Text(
+                              isPaid
+                                  ? 'All dues cleared for this month'
+                                  : (isPending
+                                      ? 'Payment submitted • Under Admin Review'
+                                      : (isUpcoming
+                                          ? 'Payment due by $rentDueDateStr'
+                                          : 'Payment overdue since $rentDueDateStr')),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.lato(
+                                fontSize: 11.5,
+                                color: isPending
+                                    ? TenantTheme.warning
+                                    : (isUpcoming ? TenantTheme.textMuted : TenantTheme.danger),
+                                fontWeight: (isPending || !isUpcoming) ? FontWeight.w600 : FontWeight.w500,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
@@ -3651,9 +3656,16 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
-                  child: Text(
-                    'Close Receipt',
-                    style: GoogleFonts.lato(fontSize: 14, fontWeight: FontWeight.w800),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'Close Receipt',
+                      style: GoogleFonts.lato(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -4554,16 +4566,20 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         children: [
                           Row(
                             children: [
-                              Text(
-                                'Security Recovery PIN',
-                                style: GoogleFonts.lato(
-                                  fontSize: 15.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: TenantTheme.textPrimary,
-                                  letterSpacing: -0.3,
+                              Flexible(
+                                child: Text(
+                                  'Security Recovery PIN',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.lato(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                    color: TenantTheme.textPrimary,
+                                    letterSpacing: -0.3,
+                                  ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 6),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                 decoration: BoxDecoration(
@@ -4775,13 +4791,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
-                    height: 46,
+                    height: 48,
                     child: ElevatedButton(
                       onPressed: _isUpdatingPin ? null : _handleTenantUpdateSecurityPin,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF6366F1),
                         foregroundColor: Colors.white,
                         elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -4795,11 +4812,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 color: Colors.white,
                               ),
                             )
-                          : Text(
-                              hasPin ? 'Update Security PIN' : 'Save Security PIN',
-                              style: GoogleFonts.lato(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
+                          : FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                hasPin ? 'Update Security PIN' : 'Save Security PIN',
+                                style: GoogleFonts.lato(
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                     ),
@@ -5109,13 +5130,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
-                    height: 46,
+                    height: 48,
                     child: ElevatedButton(
                       onPressed: _isChangingPassword ? null : _handleTenantChangePassword,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: TenantTheme.primary,
                         foregroundColor: Colors.white,
                         elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -5129,11 +5151,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 color: Colors.white,
                               ),
                             )
-                          : Text(
-                              'Update Password',
-                              style: GoogleFonts.lato(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
+                          : FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                'Update Password',
+                                style: GoogleFonts.lato(
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                     ),
@@ -5246,6 +5272,12 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
+              if (mounted) {
+                try {
+                  context.read<AppProvider>().reset();
+                  context.read<NotificationProvider>().reset();
+                } catch (_) {}
+              }
               await ApiService.clearAuthToken();
               if (mounted) context.go('/login');
             },
@@ -5254,7 +5286,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: Text('Log Out', style: GoogleFonts.lato(fontWeight: FontWeight.w700)),
+            child: Text('Log Out', style: GoogleFonts.lato(fontWeight: FontWeight.w700, color: Colors.white)),
           ),
         ],
       ),

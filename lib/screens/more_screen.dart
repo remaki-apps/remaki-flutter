@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
+import '../providers/notification_provider.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/export_data_modal.dart';
@@ -70,6 +71,12 @@ class MoreScreen extends StatelessWidget {
             ),
             onPressed: () async {
               Navigator.of(ctx).pop();
+              if (context.mounted) {
+                try {
+                  context.read<AppProvider>().reset();
+                  context.read<NotificationProvider>().reset();
+                } catch (_) {}
+              }
               await ApiService.clearAuthToken();
               if (context.mounted) {
                 context.go('/login');

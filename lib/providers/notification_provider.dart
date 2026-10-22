@@ -57,6 +57,13 @@ class NotificationProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void reset() {
+    _notifications.clear();
+    _readIds.clear();
+    _shownBannerIds.clear();
+    notifyListeners();
+  }
+
   Future<void> _saveReadIds() async {
     try {
       final prefs = await SharedPreferences.getInstance();

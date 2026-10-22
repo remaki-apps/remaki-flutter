@@ -11,8 +11,8 @@ class AppProvider with ChangeNotifier {
   List<Payment> payments = [];
 
   // Admin/PG identity — fetched from backend, replaces hardcoded strings
-  String pgName = 'Your PG';
-  String adminName = 'Admin';
+  String pgName = '';
+  String adminName = '';
   String pgAddress = '';
   List<PropertyItem> properties = [];
   String? selectedPropertyId;
@@ -31,9 +31,31 @@ class AppProvider with ChangeNotifier {
   static const String _roomsKey = 'sunshine_pg_rooms';
   static const String _tenantsKey = 'sunshine_pg_tenants';
   static const String _paymentsKey = 'sunshine_pg_payments';
+  static const String _pgNameKey = 'sunshine_pg_name';
+  static const String _adminNameKey = 'sunshine_pg_admin_name';
+  static const String _pgAddressKey = 'sunshine_pg_address';
 
-  AppProvider() {
-    loadFromAPI();
+  AppProvider({bool autoLoad = true}) {
+    if (autoLoad && ApiService.isLoggedIn) {
+      loadFromAPI();
+    } else {
+      isLoading = false;
+      loadFromStorage();
+    }
+  }
+
+  void prepareForLogin() {
+    isLoading = true;
+    pgName = '';
+    adminName = '';
+    pgAddress = '';
+    rooms = [];
+    tenants = [];
+    payments = [];
+    properties = [];
+    selectedPropertyId = null;
+    lastSyncError = null;
+    notifyListeners();
   }
 
   void selectProperty(String? propertyId) {
@@ -57,10 +79,35 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void>? _activeLoadFuture;
+
   Future<void> loadFromAPI({bool showLoading = true}) async {
-    if (showLoading && rooms.isEmpty && tenants.isEmpty) {
+    if (!ApiService.isLoggedIn) {
+      isLoading = false;
+      await loadFromStorage();
+      return;
+    }
+    if (_activeLoadFuture != null) {
+      return _activeLoadFuture!;
+    }
+    _activeLoadFuture = _performLoadFromAPI(showLoading: showLoading);
+    try {
+      await _activeLoadFuture;
+    } finally {
+      _activeLoadFuture = null;
+    }
+  }
+
+  Future<void> _performLoadFromAPI({bool showLoading = true}) async {
+    if (showLoading && !isLoading) {
       isLoading = true;
-      notifyListeners();
+      try {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          notifyListeners();
+        });
+      } catch (_) {
+        notifyListeners();
+      }
     }
     lastSyncError = null;
     try {
@@ -72,7 +119,7 @@ class AppProvider with ChangeNotifier {
       if (ApiService.role == 'ADMIN') {
         final adminData = await ApiService.fetchAdminProfile();
         if (adminData != null) {
-          adminName = adminData['adminName'] ?? 'Admin';
+          adminName = adminData['adminName'] ?? adminData['name'] ?? '';
           platformFee = (adminData['platformFee'] as num?)?.toDouble() ?? 9.0;
 
           final rawProps = (adminData['properties'] as List<dynamic>?) ?? [];
@@ -100,7 +147,7 @@ class AppProvider with ChangeNotifier {
               pgAddress = parts.isNotEmpty ? parts.join(', ') : currentProp.address;
             }
           } else {
-            pgName = adminData['pgName'] ?? 'Your PG';
+            pgName = adminData['pgName'] ?? adminData['name'] ?? '';
             pgAddress = adminData['pgAddress'] ?? '';
           }
         }
@@ -265,6 +312,19 @@ class AppProvider with ChangeNotifier {
         payments = decoded.map((e) => Payment.fromJson(e as Map<String, dynamic>)).toList();
       }
 
+      final storedPgName = prefs.getString(_pgNameKey);
+      if (storedPgName != null && storedPgName.isNotEmpty) {
+        pgName = storedPgName;
+      }
+      final storedAdminName = prefs.getString(_adminNameKey);
+      if (storedAdminName != null && storedAdminName.isNotEmpty) {
+        adminName = storedAdminName;
+      }
+      final storedPgAddress = prefs.getString(_pgAddressKey);
+      if (storedPgAddress != null && storedPgAddress.isNotEmpty) {
+        pgAddress = storedPgAddress;
+      }
+
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading from storage: $e');
@@ -277,6 +337,15 @@ class AppProvider with ChangeNotifier {
       await prefs.setString(_roomsKey, jsonEncode(rooms.map((r) => r.toJson()).toList()));
       await prefs.setString(_tenantsKey, jsonEncode(tenants.map((t) => t.toJson()).toList()));
       await prefs.setString(_paymentsKey, jsonEncode(payments.map((p) => p.toJson()).toList()));
+      if (pgName.isNotEmpty) {
+        await prefs.setString(_pgNameKey, pgName);
+      }
+      if (adminName.isNotEmpty) {
+        await prefs.setString(_adminNameKey, adminName);
+      }
+      if (pgAddress.isNotEmpty) {
+        await prefs.setString(_pgAddressKey, pgAddress);
+      }
     } catch (e) {
       debugPrint('Error saving to storage: $e');
     }
@@ -607,6 +676,29 @@ class AppProvider with ChangeNotifier {
       await saveToStorage();
       notifyListeners();
     }
+  }
+
+  void reset() {
+    rooms = [];
+    tenants = [];
+    payments = [];
+    properties = [];
+    selectedPropertyId = null;
+    pgName = '';
+    adminName = '';
+    pgAddress = '';
+    isLoading = false;
+    lastSyncError = null;
+    isNavBarHidden = false;
+    notifyListeners();
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.remove(_roomsKey);
+      prefs.remove(_tenantsKey);
+      prefs.remove(_paymentsKey);
+      prefs.remove(_pgNameKey);
+      prefs.remove(_adminNameKey);
+      prefs.remove(_pgAddressKey);
+    }).catchError((_) {});
   }
 }
 

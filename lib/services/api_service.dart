@@ -147,112 +147,167 @@ class ApiService {
     return message.isNotEmpty ? message : 'An unexpected error occurred.';
   }
 
-  static Future<Map<String, dynamic>> performQuery(String query, {Map<String, dynamic>? variables}) async {
+  static DateTime? _lastWarmupTime;
+
+  /// Sends a non-blocking background ping to wake up the sleeping Render backend instance early.
+  /// Free/hobby instances on Render spin down after 15 minutes of inactivity. Warming up at app start
+  /// ensures the server is ready by the time the user enters credentials.
+  static void warmupServer() {
+    final now = DateTime.now();
+    if (_lastWarmupTime != null && now.difference(_lastWarmupTime!).inMinutes < 5) {
+      return;
+    }
+    _lastWarmupTime = now;
     try {
-      final headers = <String, String>{
-        'Content-Type': 'application/json',
-      };
-      
-      if (_token != null) {
-        headers['Authorization'] = 'Bearer $_token';
-      }
+      http
+          .get(Uri.parse('https://remaki-backend.onrender.com/'))
+          .timeout(const Duration(seconds: 15))
+          .then((_) {
+            debugPrint('Render backend warmup ping acknowledged.');
+          })
+          .catchError((e) {
+            debugPrint('Render backend warmup ping dispatched ($e).');
+          });
+    } catch (_) {}
+  }
 
-      final response = await http.post(
-        Uri.parse(_baseUrl),
-        headers: headers,
-        body: jsonEncode({
-          'query': query,
-          'variables': variables ?? {},
-        }),
-      ).timeout(const Duration(seconds: 30));
-
-      Map<String, dynamic>? responseJson;
+  static Future<Map<String, dynamic>> performQuery(
+    String query, {
+    Map<String, dynamic>? variables,
+    int maxRetries = 1,
+    Duration timeout = const Duration(seconds: 55),
+  }) async {
+    int attempts = 0;
+    while (true) {
+      attempts++;
       try {
-        if (response.body.isNotEmpty) {
-          final decoded = jsonDecode(response.body);
-          if (decoded is Map<String, dynamic>) {
-            responseJson = decoded;
+        final headers = <String, String>{
+          'Content-Type': 'application/json',
+        };
+        
+        if (_token != null) {
+          headers['Authorization'] = 'Bearer $_token';
+        }
+
+        final response = await http.post(
+          Uri.parse(_baseUrl),
+          headers: headers,
+          body: jsonEncode({
+            'query': query,
+            'variables': variables ?? {},
+          }),
+        ).timeout(timeout);
+
+        // If Cloudflare / Render returns 502/503/504 Bad Gateway / Service Unavailable during container spinup, retry!
+        if ((response.statusCode == 502 || response.statusCode == 503 || response.statusCode == 504) && attempts <= maxRetries) {
+          debugPrint('Backend server spinning up (HTTP ${response.statusCode}), retrying in 2s (attempt $attempts)...');
+          await Future.delayed(const Duration(seconds: 2));
+          continue;
+        }
+
+        Map<String, dynamic>? responseJson;
+        try {
+          if (response.body.isNotEmpty) {
+            final decoded = jsonDecode(response.body);
+            if (decoded is Map<String, dynamic>) {
+              responseJson = decoded;
+            }
+          }
+        } catch (_) {
+          // Body is not valid JSON
+        }
+
+        // 1. Inspect response body for GraphQL errors array (can be present on HTTP 200, 400, or 500)
+        if (responseJson != null && responseJson.containsKey('errors') && responseJson['errors'] != null) {
+          final errorsList = responseJson['errors'];
+          if (errorsList is List && errorsList.isNotEmpty) {
+            debugPrint('GraphQL Errors: $errorsList');
+            final firstErr = errorsList[0];
+            String msg = 'An unknown backend error occurred.';
+            if (firstErr is Map && firstErr['message'] != null) {
+              msg = firstErr['message'].toString();
+            } else if (firstErr is String) {
+              msg = firstErr;
+            }
+
+            final lower = msg.toLowerCase();
+            if (lower.contains('unauthorized') || lower.contains('unauthenticated') || lower.contains('jwt expired')) {
+              await clearAuthToken();
+            }
+            throw ApiException(cleanErrorMessage(msg));
           }
         }
-      } catch (_) {
-        // Body is not valid JSON
+
+        // 2. Inspect response body for NestJS / Express HTTP exception payload: {statusCode, message, error}
+        if (response.statusCode != 200 && responseJson != null) {
+          String? extractedMsg;
+          if (responseJson['message'] != null) {
+            if (responseJson['message'] is List) {
+              extractedMsg = (responseJson['message'] as List).map((e) => e.toString()).join('\n');
+            } else {
+              extractedMsg = responseJson['message'].toString();
+            }
+          } else if (responseJson['error'] != null) {
+            extractedMsg = responseJson['error'].toString();
+          }
+
+          if (extractedMsg != null && extractedMsg.trim().isNotEmpty) {
+            final lower = extractedMsg.toLowerCase();
+            if (lower.contains('unauthorized') || lower.contains('unauthenticated') || lower.contains('jwt expired')) {
+              await clearAuthToken();
+            }
+            throw ApiException(cleanErrorMessage(extractedMsg));
+          }
+        }
+
+        // 3. Status code routing
+        if (response.statusCode == 200) {
+          if (responseJson != null) {
+            final rootData = responseJson['data'];
+            if (rootData is Map<String, dynamic>) {
+              return rootData;
+            }
+            return responseJson;
+          }
+          return <String, dynamic>{};
+        } else if (response.statusCode == 401) {
+          await clearAuthToken();
+          throw ApiException('Your session has expired. Please log in again.');
+        } else if (response.statusCode == 403) {
+          throw ApiException('You do not have permission to perform this action.');
+        } else if (response.statusCode == 404) {
+          throw ApiException('The requested resource was not found.');
+        } else if (response.statusCode >= 500) {
+          throw ApiException('Server error (${response.statusCode}). Please try again shortly.');
+        } else {
+          throw ApiException('Request failed with status ${response.statusCode}. Please try again.');
+        }
+      } on SocketException catch (_) {
+        if (attempts <= maxRetries) {
+          debugPrint('SocketException on attempt $attempts, retrying in 2s...');
+          await Future.delayed(const Duration(seconds: 2));
+          continue;
+        }
+        throw ApiException('Unable to connect to server. Please check your internet connection.');
+      } on http.ClientException catch (_) {
+        if (attempts <= maxRetries) {
+          debugPrint('ClientException on attempt $attempts, retrying in 2s...');
+          await Future.delayed(const Duration(seconds: 2));
+          continue;
+        }
+        throw ApiException('Unable to connect to server. Please check your internet connection.');
+      } on TimeoutException catch (_) {
+        if (attempts <= maxRetries) {
+          debugPrint('Request timed out on attempt $attempts (cold start), retrying once...');
+          await Future.delayed(const Duration(milliseconds: 1500));
+          continue;
+        }
+        throw ApiException('Request timed out. The server took too long to respond. Please try again.');
+      } catch (e) {
+        debugPrint('ApiService Error: $e');
+        if (e is ApiException) rethrow;
+        throw ApiException(cleanErrorMessage(e));
       }
-
-      // 1. Inspect response body for GraphQL errors array (can be present on HTTP 200, 400, or 500)
-      if (responseJson != null && responseJson.containsKey('errors') && responseJson['errors'] != null) {
-        final errorsList = responseJson['errors'];
-        if (errorsList is List && errorsList.isNotEmpty) {
-          debugPrint('GraphQL Errors: $errorsList');
-          final firstErr = errorsList[0];
-          String msg = 'An unknown backend error occurred.';
-          if (firstErr is Map && firstErr['message'] != null) {
-            msg = firstErr['message'].toString();
-          } else if (firstErr is String) {
-            msg = firstErr;
-          }
-
-          final lower = msg.toLowerCase();
-          if (lower.contains('unauthorized') || lower.contains('unauthenticated') || lower.contains('jwt expired')) {
-            await clearAuthToken();
-          }
-          throw ApiException(cleanErrorMessage(msg));
-        }
-      }
-
-      // 2. Inspect response body for NestJS / Express HTTP exception payload: {statusCode, message, error}
-      if (response.statusCode != 200 && responseJson != null) {
-        String? extractedMsg;
-        if (responseJson['message'] != null) {
-          if (responseJson['message'] is List) {
-            extractedMsg = (responseJson['message'] as List).map((e) => e.toString()).join('\n');
-          } else {
-            extractedMsg = responseJson['message'].toString();
-          }
-        } else if (responseJson['error'] != null) {
-          extractedMsg = responseJson['error'].toString();
-        }
-
-        if (extractedMsg != null && extractedMsg.trim().isNotEmpty) {
-          final lower = extractedMsg.toLowerCase();
-          if (lower.contains('unauthorized') || lower.contains('unauthenticated') || lower.contains('jwt expired')) {
-            await clearAuthToken();
-          }
-          throw ApiException(cleanErrorMessage(extractedMsg));
-        }
-      }
-
-      // 3. Status code routing
-      if (response.statusCode == 200) {
-        if (responseJson != null) {
-          final rootData = responseJson['data'];
-          if (rootData is Map<String, dynamic>) {
-            return rootData;
-          }
-          return responseJson;
-        }
-        return <String, dynamic>{};
-      } else if (response.statusCode == 401) {
-        await clearAuthToken();
-        throw ApiException('Your session has expired. Please log in again.');
-      } else if (response.statusCode == 403) {
-        throw ApiException('You do not have permission to perform this action.');
-      } else if (response.statusCode == 404) {
-        throw ApiException('The requested resource was not found.');
-      } else if (response.statusCode >= 500) {
-        throw ApiException('Server error (${response.statusCode}). Please try again shortly.');
-      } else {
-        throw ApiException('Request failed with status ${response.statusCode}. Please try again.');
-      }
-    } on SocketException catch (_) {
-      throw ApiException('Unable to connect to server. Please check your internet connection.');
-    } on http.ClientException catch (_) {
-      throw ApiException('Unable to connect to server. Please check your internet connection.');
-    } on TimeoutException catch (_) {
-      throw ApiException('Request timed out. The server took too long to respond. Please try again.');
-    } catch (e) {
-      debugPrint('ApiService Error: $e');
-      if (e is ApiException) rethrow;
-      throw ApiException(cleanErrorMessage(e));
     }
   }
 

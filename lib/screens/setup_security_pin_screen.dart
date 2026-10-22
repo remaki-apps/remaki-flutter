@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../providers/app_provider.dart';
+import '../providers/notification_provider.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/fancy_toast.dart';
@@ -112,6 +115,10 @@ class _SetupSecurityPinScreenState extends State<SetupSecurityPinScreen> {
     );
 
     if (confirm == true && mounted) {
+      try {
+        context.read<AppProvider>().reset();
+        context.read<NotificationProvider>().reset();
+      } catch (_) {}
       await ApiService.clearAuthToken();
       if (mounted) context.go('/login');
     }
@@ -479,6 +486,7 @@ class _SetupSecurityPinScreenState extends State<SetupSecurityPinScreen> {
                                           style: GoogleFonts.lato(
                                             fontSize: 15,
                                             fontWeight: FontWeight.w700,
+                                            color: Colors.white,
                                           ),
                                         ),
                                       ],

@@ -31,7 +31,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _loadPendingApprovals();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final appProvider = Provider.of<AppProvider>(context, listen: false);
+      if (appProvider.pgName.isEmpty || appProvider.rooms.isEmpty || appProvider.isLoading) {
+        appProvider.loadFromAPI(showLoading: true);
+      }
+      _loadPendingApprovals();
+    });
   }
 
   Future<void> _loadPendingApprovals() async {
@@ -118,6 +125,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final expectedRent = appProvider.expectedRent;
     final collectedRent = appProvider.collectedRent;
     final pendingRent = appProvider.pendingRent;
+    final bool isDataLoading = appProvider.isLoading ||
+        (appProvider.pgName.isEmpty && appProvider.rooms.isEmpty && appProvider.lastSyncError == null);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -125,7 +134,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: RefreshIndicator(
           onRefresh: _handleRefresh,
           color: AppTheme.primaryColor,
-          child: appProvider.isLoading
+          child: isDataLoading
               ? const DashboardSkeleton()
               : Scrollbar(
                   child: SingleChildScrollView(
@@ -181,7 +190,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildPGIdentityCard(BuildContext context, AppProvider appProvider) {
     final greeting = _getGreeting();
     final ownerName = appProvider.adminName.isNotEmpty ? appProvider.adminName : 'Owner';
-    final pgName = appProvider.pgName.isNotEmpty ? appProvider.pgName : 'Your PG';
+    final pgName = appProvider.pgName.isNotEmpty
+        ? appProvider.pgName
+        : (appProvider.properties.isNotEmpty ? appProvider.properties.first.name : '');
     final pgAddress = appProvider.pgAddress;
     final canSwitchProperty = appProvider.properties.length > 1;
 

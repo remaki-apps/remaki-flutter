@@ -33,6 +33,12 @@ class _RoomsScreenState extends State<RoomsScreen> {
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
     final allRooms = appProvider.currentRooms;

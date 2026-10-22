@@ -659,7 +659,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         ),
                         child: _isLoading
                             ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                            : Text('Reset Password', style: GoogleFonts.lato(fontSize: 15, fontWeight: FontWeight.bold)),
+                            : FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  'Reset Password',
+                                  style: GoogleFonts.lato(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                                ),
+                              ),
                       ),
                     ),
                   ],
