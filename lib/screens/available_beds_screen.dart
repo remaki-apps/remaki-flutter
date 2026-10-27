@@ -41,7 +41,7 @@ class AvailableBedsScreen extends StatelessWidget {
     final Map<String, List<({Room room, Bed bed})>> bedsByFloor = {};
     int totalAvailableBeds = 0;
 
-    for (final room in appProvider.rooms) {
+    for (final room in appProvider.currentRooms) {
       final floorName = _normalizeFloorName(room.floor);
       for (final bed in room.beds) {
         if (bed.isAvailable) {
@@ -152,39 +152,45 @@ class AvailableBedsScreen extends StatelessWidget {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Room ${item.room.number} - ${item.bed.name}',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            'Room ${item.room.number} - ${item.bed.name}',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
                                           ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Row(
-                                          children: [
-                                            Container(
-                                              width: 8,
-                                              height: 8,
-                                              decoration: const BoxDecoration(
-                                                color: AppTheme.success,
-                                                shape: BoxShape.circle,
+                                          const SizedBox(height: 2),
+                                          Row(
+                                            children: [
+                                              Container(
+                                                width: 8,
+                                                height: 8,
+                                                decoration: const BoxDecoration(
+                                                  color: AppTheme.success,
+                                                  shape: BoxShape.circle,
+                                                ),
                                               ),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            const Text(
-                                              'Available',
-                                              style: TextStyle(
-                                                color: AppTheme.textSecondary,
-                                                fontSize: 12,
+                                              const SizedBox(width: 4),
+                                              const Text(
+                                                'Available',
+                                                style: TextStyle(
+                                                  color: AppTheme.textSecondary,
+                                                  fontSize: 12,
+                                                ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
+                                    const SizedBox(width: 12),
                                     ElevatedButton(
                                       onPressed: () => context.push(
                                         '/allocate_tenant?roomId=${item.room.id}&bedId=${item.bed.id}',

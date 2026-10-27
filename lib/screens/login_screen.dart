@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -32,9 +35,16 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   late Animation<Offset> _formSlide;
   late Animation<double> _formFade;
 
+  String _loadingStatus = '';
+  Timer? _slowLoadingTimer;
+  Timer? _verySlowLoadingTimer;
+
   @override
   void initState() {
     super.initState();
+    ApiService.warmupServer();
+
+    final isTestEnvironment = !kIsWeb && Platform.environment.containsKey('FLUTTER_TEST');
 
     _mainController = AnimationController(
       vsync: this,
@@ -44,7 +54,10 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 3000),
-    )..repeat(reverse: true);
+    );
+    if (!isTestEnvironment) {
+      _pulseController.repeat(reverse: true);
+    }
 
     _logoScale = Tween<double>(begin: 0.4, end: 1.0).animate(
       CurvedAnimation(
@@ -86,6 +99,8 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
   @override
   void dispose() {
+    _slowLoadingTimer?.cancel();
+    _verySlowLoadingTimer?.cancel();
     _phoneController.dispose();
     _passwordController.dispose();
     _mainController.dispose();
@@ -110,6 +125,22 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     } else if (cleanPhone.startsWith('0') && cleanPhone.length == 11) {
       cleanPhone = cleanPhone.substring(1);
     }
+
+    _slowLoadingTimer?.cancel();
+    _verySlowLoadingTimer?.cancel();
+    _loadingStatus = '';
+
+    _slowLoadingTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted && _isLoading) {
+        setState(() => _loadingStatus = 'Connecting to server... waking up backend');
+      }
+    });
+
+    _verySlowLoadingTimer = Timer(const Duration(seconds: 12), () {
+      if (mounted && _isLoading) {
+        setState(() => _loadingStatus = 'Cloud server is waking up, please hold on...');
+      }
+    });
 
     setState(() {
       _isLoading = true;
@@ -143,13 +174,17 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       final role = result['customLogin']['user']['role'];
       final bool hasSecurityPin = result['customLogin']['user']['hasSecurityPin'] == true;
 
+      if (role == 'ADMIN') {
+        appProvider.prepareForLogin();
+      }
+
       // Save token in ApiService (persisted via SharedPreferences)
       await ApiService.setAuthToken(token, role, hasSecurityPin: hasSecurityPin);
 
       if (mounted) {
         if (role == 'ADMIN') {
-          // Load initial admin data
-          await appProvider.loadFromAPI();
+          // Load initial admin data with shimmer
+          appProvider.loadFromAPI(showLoading: true);
           if (mounted) context.go('/');
         } else {
           // For Tenants: Check if they have setup their compulsory 4-digit Security Recovery PIN
@@ -165,10 +200,14 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         final cleanMsg = ApiService.cleanErrorMessage(e);
         setState(() {
           _isLoading = false;
+          _loadingStatus = '';
           _errorMessage = cleanMsg;
         });
         FancyToast.showError(context, 'Login Failed', message: cleanMsg);
       }
+    } finally {
+      _slowLoadingTimer?.cancel();
+      _verySlowLoadingTimer?.cancel();
     }
   }
 
@@ -704,6 +743,37 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                                         ),
                                 ),
                               ),
+                              if (_isLoading && _loadingStatus.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                AnimatedOpacity(
+                                  opacity: 1.0,
+                                  duration: const Duration(milliseconds: 300),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const SizedBox(
+                                        width: 13,
+                                        height: 13,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 1.8,
+                                          color: Color(0xFF6366F1),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Flexible(
+                                        child: Text(
+                                          _loadingStatus,
+                                          style: GoogleFonts.inter(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                            color: const Color(0xFF64748B),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),

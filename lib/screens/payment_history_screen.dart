@@ -23,7 +23,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   String _selectedFilter = 'ALL'; // ALL, UPI, CASH, BANK
   final Set<String> _expandedPaymentIds = {};
 
-  DateTime? _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+  DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
 
   DateTime get _currentMonth => DateTime(DateTime.now().year, DateTime.now().month, 1);
 
@@ -40,8 +40,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
 
   void _prevMonth(DateTime earliestMonth) {
     setState(() {
-      final cur = _selectedMonth ?? _currentMonth;
-      final prev = DateTime(cur.year, cur.month - 1, 1);
+      final prev = DateTime(_selectedMonth.year, _selectedMonth.month - 1, 1);
       if (!prev.isBefore(earliestMonth)) {
         _selectedMonth = prev;
       }
@@ -50,26 +49,9 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
 
   void _nextMonth() {
     setState(() {
-      final cur = _selectedMonth ?? _currentMonth;
-      final next = DateTime(cur.year, cur.month + 1, 1);
+      final next = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1);
       if (!next.isAfter(_currentMonth)) {
         _selectedMonth = next;
-      }
-    });
-  }
-
-  void _resetToCurrentMonth() {
-    setState(() {
-      _selectedMonth = _currentMonth;
-    });
-  }
-
-  void _toggleAllTime() {
-    setState(() {
-      if (_selectedMonth == null) {
-        _selectedMonth = _currentMonth;
-      } else {
-        _selectedMonth = null;
       }
     });
   }
@@ -97,26 +79,18 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
     final appProvider = Provider.of<AppProvider>(context);
     final allSortedPayments = [...appProvider.currentPayments]..sort((a, b) => b.date.compareTo(a.date));
     final earliestMonth = _getEarliestPaymentMonth(allSortedPayments);
-    final bool isCurrentMonth = _selectedMonth != null &&
-        _selectedMonth!.year == _currentMonth.year &&
-        _selectedMonth!.month == _currentMonth.month;
-    final bool canGoPrev = _selectedMonth != null && _selectedMonth!.isAfter(earliestMonth);
-    final bool canGoNext = _selectedMonth != null && _selectedMonth!.isBefore(_currentMonth);
+    final bool canGoPrev = _selectedMonth.isAfter(earliestMonth);
+    final bool canGoNext = _selectedMonth.isBefore(_currentMonth);
 
-    // Filter by selected month if not All Time
-    final sortedPayments = _selectedMonth == null
-        ? allSortedPayments
-        : allSortedPayments.where((p) {
-            final targetMonthStr = DateFormat('yyyy-MM').format(_selectedMonth!);
-            if (p.billingMonth != null && p.billingMonth!.isNotEmpty) {
-              if (p.billingMonth == targetMonthStr) return true;
-            }
-            final local = p.date.toLocal();
-            return local.year == _selectedMonth!.year && local.month == _selectedMonth!.month;
-          }).toList();
-
-    // Calculate total amount collected from all payments
-    final double totalCollected = sortedPayments.fold(0.0, (sum, p) => sum + p.amount);
+    // Filter by selected month
+    final sortedPayments = allSortedPayments.where((p) {
+      final targetMonthStr = DateFormat('yyyy-MM').format(_selectedMonth);
+      if (p.billingMonth != null && p.billingMonth!.isNotEmpty) {
+        if (p.billingMonth == targetMonthStr) return true;
+      }
+      final local = p.date.toLocal();
+      return local.year == _selectedMonth.year && local.month == _selectedMonth.month;
+    }).toList();
 
     // Counts for filter chips
     final int upiCount = sortedPayments.where((p) => p.method.toUpperCase().contains('UPI')).length;
@@ -150,52 +124,65 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leadingWidth: 54,
+        scrolledUnderElevation: 0,
+        leadingWidth: 50,
         leading: Padding(
           padding: const EdgeInsets.only(left: 14.0),
           child: Center(
-            child: GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-                ),
-                child: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  size: 15,
-                  color: Color(0xFF0F172A),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => Navigator.of(context).pop(),
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x060F172A),
+                        blurRadius: 4,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 2.0),
+                      child: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 15,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
         ),
-        title: Column(
-          children: [
-            Text(
-              'Payment History',
-              style: GoogleFonts.lato(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.3,
-                color: const Color(0xFF0F172A),
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              '${sortedPayments.length} Recorded Transactions',
-              style: GoogleFonts.lato(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF64748B),
-              ),
-            ),
-          ],
+        titleSpacing: 8,
+        title: Text(
+          'Payment History',
+          style: GoogleFonts.lato(
+            fontSize: 17.5,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.3,
+            color: const Color(0xFF0F172A),
+          ),
         ),
-        centerTitle: true,
+        centerTitle: false,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 14.0),
+            child: Center(
+              child: _buildAppBarMonthChooser(context, allSortedPayments, earliestMonth, canGoPrev, canGoNext),
+            ),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(color: const Color(0xFFE2E8F0), height: 1),
@@ -208,243 +195,23 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
             ? const PaymentHistorySkeleton()
             : SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-          padding: EdgeInsets.fromLTRB(16, 16, 16, 32 + MediaQuery.of(context).padding.bottom),
+          padding: EdgeInsets.fromLTRB(14, 10, 14, 24 + MediaQuery.of(context).padding.bottom),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 0. Month Navigation Bar with Previous, Next, and All Time Toggle
+              // 1. Compact Search Input Field
               Container(
-                margin: const EdgeInsets.only(bottom: 14),
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                height: 38,
+                margin: const EdgeInsets.only(bottom: 8),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x060F172A),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        Icons.chevron_left_rounded,
-                        size: 22,
-                        color: canGoPrev ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1),
-                      ),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-                      splashRadius: 18,
-                      onPressed: canGoPrev ? () => _prevMonth(earliestMonth) : null,
-                      tooltip: canGoPrev ? 'Previous Month' : 'First Recorded Month',
-                    ),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          if (_selectedMonth != null && !isCurrentMonth) {
-                            _resetToCurrentMonth();
-                          }
-                        },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.calendar_month_rounded,
-                              size: 15,
-                              color: _selectedMonth != null ? AppTheme.primaryColor : const Color(0xFF64748B),
-                            ),
-                            const SizedBox(width: 5),
-                            Flexible(
-                              child: Text(
-                                _selectedMonth == null
-                                    ? 'All Time'
-                                    : DateFormat('MMMM yyyy').format(_selectedMonth!),
-                                style: GoogleFonts.lato(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF0F172A),
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (_selectedMonth != null) ...[
-                              const SizedBox(width: 5),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 5.5, vertical: 1.5),
-                                decoration: BoxDecoration(
-                                  color: isCurrentMonth ? const Color(0xFFEEF2FF) : const Color(0xFFF1F5F9),
-                                  borderRadius: BorderRadius.circular(5),
-                                  border: Border.all(
-                                    color: isCurrentMonth ? const Color(0xFFC7D2FE) : const Color(0xFFE2E8F0),
-                                    width: 0.6,
-                                  ),
-                                ),
-                                child: Text(
-                                  isCurrentMonth ? 'Current' : 'Reset',
-                                  style: GoogleFonts.lato(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w700,
-                                    color: isCurrentMonth ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.chevron_right_rounded,
-                        size: 22,
-                        color: canGoNext ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1),
-                      ),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-                      splashRadius: 18,
-                      onPressed: canGoNext ? _nextMonth : null,
-                      tooltip: canGoNext ? 'Next Month' : 'Current Month',
-                    ),
-                    const SizedBox(width: 4),
-                    GestureDetector(
-                      onTap: _toggleAllTime,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: _selectedMonth == null ? AppTheme.primaryColor : const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          _selectedMonth == null ? 'Month View' : 'All Time',
-                          style: GoogleFonts.lato(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            color: _selectedMonth == null ? Colors.white : const Color(0xFF475569),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // 1. Total Collections Metric Card (Fintech Hero Card)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(18),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x180F172A),
-                      blurRadius: 16,
-                      offset: Offset(0, 6),
-                    ),
-                    BoxShadow(
-                      color: Color(0x0A0F172A),
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              width: 1,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.account_balance_wallet_rounded,
-                            color: Colors.white,
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _selectedMonth == null
-                                    ? 'TOTAL RECORDED PAYMENTS'
-                                    : 'COLLECTIONS FOR ${DateFormat('MMMM yyyy').format(_selectedMonth!).toUpperCase()}',
-                                style: GoogleFonts.lato(
-                                  fontSize: 10.5,
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.8,
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                '₹${_formatCurrency(totalCollected)}',
-                                style: GoogleFonts.lato(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -0.5,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              width: 1,
-                            ),
-                          ),
-                          child: Text(
-                            '${sortedPayments.length} Transactions',
-                            style: GoogleFonts.lato(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // 2. Modern Search Input Field
-              Container(
-                height: 46,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
                   boxShadow: const [
                     BoxShadow(
                       color: Color(0x040F172A),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
+                      blurRadius: 6,
+                      offset: Offset(0, 1),
                     ),
                   ],
                 ),
@@ -452,25 +219,28 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                   controller: _searchController,
                   onChanged: (val) => setState(() => _searchQuery = val.trim()),
                   style: GoogleFonts.lato(
-                    fontSize: 13.5,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF0F172A),
                   ),
                   decoration: InputDecoration(
                     hintText: 'Search by tenant, room, mode, or notes...',
                     hintStyle: GoogleFonts.lato(
-                      fontSize: 12.5,
+                      fontSize: 11.5,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF94A3B8),
                     ),
                     prefixIcon: const Icon(
                       Icons.search_rounded,
-                      size: 20,
+                      size: 17,
                       color: Color(0xFF64748B),
                     ),
+                    prefixIconConstraints: const BoxConstraints(minWidth: 34, minHeight: 34),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.cancel_rounded, size: 18, color: Color(0xFF94A3B8)),
+                            icon: const Icon(Icons.cancel_rounded, size: 16, color: Color(0xFF94A3B8)),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                             onPressed: () {
                               _searchController.clear();
                               setState(() => _searchQuery = '');
@@ -478,53 +248,53 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                           )
                         : null,
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 9),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
 
-              // 3. Fintech Segmented Filter Chips
+              // 2. Compact Segmented Filter Chips
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
                     _buildFilterChip('ALL', 'All', sortedPayments.length),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     _buildFilterChip('UPI', 'UPI', upiCount),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     _buildFilterChip('CASH', 'Cash', cashCount),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     _buildFilterChip('BANK', 'Bank', bankCount),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
 
-              // 4. Section Label
+              // 3. Section Label
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     'TRANSACTIONS',
                     style: GoogleFonts.lato(
-                      fontSize: 11,
+                      fontSize: 10,
                       fontWeight: FontWeight.w800,
                       color: const Color(0xFF94A3B8),
-                      letterSpacing: 0.9,
+                      letterSpacing: 0.8,
                     ),
                   ),
                   Text(
                     '${filteredPayments.length} results',
                     style: GoogleFonts.lato(
-                      fontSize: 11,
+                      fontSize: 10.5,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFF64748B),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
 
               // 5. Payment Cards List
               if (sortedPayments.isEmpty)
@@ -596,7 +366,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: filteredPayments.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, __) => const SizedBox(height: 7),
                   itemBuilder: (context, index) {
                     final payment = filteredPayments[index];
                     final paidDateStr = _formatPaymentDate(payment.date);
@@ -613,17 +383,12 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                     return Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
                         boxShadow: const [
                           BoxShadow(
                             color: Color(0x040F172A),
-                            blurRadius: 8,
-                            offset: Offset(0, 2),
-                          ),
-                          BoxShadow(
-                            color: Color(0x020F172A),
-                            blurRadius: 2,
+                            blurRadius: 6,
                             offset: Offset(0, 1),
                           ),
                         ],
@@ -638,9 +403,9 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                             }
                           });
                         },
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(14),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8.5),
                           child: Column(
                             children: [
                               Row(
@@ -650,16 +415,16 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                   Container(
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
                                     ),
                                     child: TenantAvatar(
                                       name: payment.tenantName ?? tenant?.name ?? 'Tenant',
                                       imageUrl: tenant?.imageUrl,
-                                      radius: 20,
+                                      radius: 17,
                                       enablePreview: true,
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: 10),
 
                                   // Tenant Name, Room & Date
                                   Expanded(
@@ -719,12 +484,16 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                               color: Color(0xFF94A3B8),
                                             ),
                                             const SizedBox(width: 4),
-                                            Text(
-                                              paidDateStr,
-                                              style: GoogleFonts.lato(
-                                                fontSize: 11.5,
-                                                fontWeight: FontWeight.w500,
-                                                color: const Color(0xFF64748B),
+                                            Expanded(
+                                              child: Text(
+                                                paidDateStr,
+                                                style: GoogleFonts.lato(
+                                                  fontSize: 11.5,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: const Color(0xFF64748B),
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
                                           ],
@@ -750,7 +519,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                       Text(
                                         '₹${_formatCurrency(payment.amount)}',
                                         style: GoogleFonts.lato(
-                                          fontSize: 15,
+                                          fontSize: 14,
                                           fontWeight: FontWeight.w800,
                                           letterSpacing: -0.3,
                                           color: const Color(0xFF0F172A),
@@ -846,16 +615,298 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
     );
   }
 
+  Widget _buildAppBarMonthChooser(
+    BuildContext context,
+    List<Payment> allSortedPayments,
+    DateTime earliestMonth,
+    bool canGoPrev,
+    bool canGoNext,
+  ) {
+    final isCurrent = _selectedMonth.year == _currentMonth.year && _selectedMonth.month == _currentMonth.month;
+    final monthStr = DateFormat('MMM').format(_selectedMonth);
+    final displayMonth = _selectedMonth.year == _currentMonth.year
+        ? monthStr
+        : "$monthStr '${_selectedMonth.year.toString().substring(2)}";
+
+    return Container(
+      height: 32,
+      decoration: BoxDecoration(
+        color: isCurrent ? const Color(0xFFEEF2FF) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isCurrent ? const Color(0xFFC7D2FE) : const Color(0xFFCBD5E1),
+          width: 1.2,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x080F172A),
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: canGoPrev ? () => _prevMonth(earliestMonth) : null,
+              borderRadius: const BorderRadius.horizontal(left: Radius.circular(20)),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 6, right: 3, top: 4, bottom: 4),
+                child: Icon(
+                  Icons.chevron_left_rounded,
+                  size: 18,
+                  color: canGoPrev
+                      ? (isCurrent ? const Color(0xFF4F46E5) : const Color(0xFF1E293B))
+                      : const Color(0xFFCBD5E1),
+                ),
+              ),
+            ),
+          ),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _showMonthPickerSheet(context, allSortedPayments, earliestMonth),
+              borderRadius: BorderRadius.circular(6),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      displayMonth,
+                      style: GoogleFonts.lato(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.2,
+                        color: isCurrent ? const Color(0xFF4F46E5) : const Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 15,
+                      color: isCurrent ? const Color(0xFF6366F1) : const Color(0xFF64748B),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: canGoNext ? _nextMonth : null,
+              borderRadius: const BorderRadius.horizontal(right: Radius.circular(20)),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 3, right: 6, top: 4, bottom: 4),
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: canGoNext
+                      ? (isCurrent ? const Color(0xFF4F46E5) : const Color(0xFF1E293B))
+                      : const Color(0xFFCBD5E1),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showMonthPickerSheet(
+    BuildContext context,
+    List<Payment> allSortedPayments,
+    DateTime earliestMonth,
+  ) {
+    final List<DateTime> months = [];
+    DateTime cursor = _currentMonth;
+    final DateTime stop = DateTime(earliestMonth.year, earliestMonth.month, 1);
+    while (!cursor.isBefore(stop)) {
+      months.add(cursor);
+      cursor = DateTime(cursor.year, cursor.month - 1, 1);
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: EdgeInsets.fromLTRB(20, 12, 20, 20 + MediaQuery.of(ctx).padding.bottom),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Select Month',
+                    style: GoogleFonts.lato(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF0F172A),
+                    ),
+                  ),
+                  Text(
+                    '${months.length} ${months.length == 1 ? "Month" : "Months"}',
+                    style: GoogleFonts.lato(
+                      fontSize: 12,
+                      color: const Color(0xFF64748B),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(ctx).size.height * 0.45,
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: months.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                  itemBuilder: (_, index) {
+                    final m = months[index];
+                    final isSelected = m.year == _selectedMonth.year && m.month == _selectedMonth.month;
+                    final isCurrent = m.year == _currentMonth.year && m.month == _currentMonth.month;
+                    final count = allSortedPayments.where((p) {
+                      final targetMonthStr = DateFormat('yyyy-MM').format(m);
+                      if (p.billingMonth != null && p.billingMonth!.isNotEmpty) {
+                        return p.billingMonth == targetMonthStr;
+                      }
+                      final local = p.date.toLocal();
+                      return local.year == m.year && local.month == m.month;
+                    }).length;
+
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                      minLeadingWidth: 32,
+                      leading: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: isSelected ? const Color(0xFFEEF2FF) : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isSelected ? const Color(0xFFC7D2FE) : const Color(0xFFE2E8F0),
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.calendar_month_rounded,
+                          size: 17,
+                          color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
+                        ),
+                      ),
+                      title: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              DateFormat('MMMM yyyy').format(m),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.lato(
+                                fontSize: 13.5,
+                                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFF0F172A),
+                              ),
+                            ),
+                          ),
+                          if (isCurrent) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEEF2FF),
+                                borderRadius: BorderRadius.circular(5),
+                                border: Border.all(color: const Color(0xFFC7D2FE), width: 0.6),
+                              ),
+                              child: Text(
+                                'Current',
+                                style: GoogleFonts.lato(
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF4F46E5),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6.5, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isSelected ? const Color(0xFFEEF2FF) : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: isSelected ? const Color(0xFFC7D2FE) : const Color(0xFFE2E8F0),
+                                width: 0.7,
+                              ),
+                            ),
+                            child: Text(
+                              '$count ${count == 1 ? "txn" : "txns"}',
+                              style: GoogleFonts.lato(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
+                              ),
+                            ),
+                          ),
+                          if (isSelected) ...[
+                            const SizedBox(width: 6),
+                            const Icon(Icons.check_circle_rounded, color: Color(0xFF4F46E5), size: 17),
+                          ],
+                        ],
+                      ),
+                      onTap: () {
+                        setState(() {
+                          _selectedMonth = m;
+                        });
+                        Navigator.pop(ctx);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildFilterChip(String key, String label, int count) {
     final isSelected = _selectedFilter == key;
     return GestureDetector(
       onTap: () => setState(() => _selectedFilter = key),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF0F172A) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0),
             width: 1,
@@ -863,9 +914,9 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
           boxShadow: isSelected
               ? const [
                   BoxShadow(
-                    color: Color(0x200F172A),
-                    blurRadius: 6,
-                    offset: Offset(0, 2),
+                    color: Color(0x180F172A),
+                    blurRadius: 4,
+                    offset: Offset(0, 1),
                   ),
                 ]
               : null,
@@ -876,24 +927,24 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
             Text(
               label,
               style: GoogleFonts.lato(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                 color: isSelected ? Colors.white : const Color(0xFF475569),
               ),
             ),
-            const SizedBox(width: 5),
+            const SizedBox(width: 4),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1),
               decoration: BoxDecoration(
                 color: isSelected
                     ? Colors.white.withValues(alpha: 0.2)
                     : const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 '$count',
                 style: GoogleFonts.lato(
-                  fontSize: 10,
+                  fontSize: 9,
                   fontWeight: FontWeight.w700,
                   color: isSelected ? Colors.white : const Color(0xFF64748B),
                 ),

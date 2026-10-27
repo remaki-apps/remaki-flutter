@@ -48,11 +48,22 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
       _isPrefilled.add(true);
     }
     while (_bedNameControllers.length > _capacity) {
-      _bedNameControllers.removeLast();
+      final removed = _bedNameControllers.removeLast();
+      removed.dispose();
       if (_isPrefilled.isNotEmpty) {
         _isPrefilled.removeLast();
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _roomNumberController.dispose();
+    for (final c in _bedNameControllers) {
+      c.dispose();
+    }
+    _bedNameControllers.clear();
+    super.dispose();
   }
 
   @override

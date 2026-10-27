@@ -13,6 +13,8 @@ import '../widgets/app_shimmer.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/payment_splitup_card.dart';
 import '../widgets/export_data_modal.dart';
+import '../providers/notification_provider.dart';
+import '../widgets/in_app_notification_center.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -25,33 +27,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _pendingApprovalsCount = 0;
   int _pendingComplaintsCount = 0;
   bool _isLoadingApprovals = false;
-  DateTime _selectedPaymentMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
   bool _isPaymentHistoryExpanded = false;
   final Set<String> _expandedPaymentIds = {};
-
-  void _prevPaymentMonth() {
-    setState(() {
-      _selectedPaymentMonth = DateTime(_selectedPaymentMonth.year, _selectedPaymentMonth.month - 1, 1);
-    });
-  }
-
-  void _nextPaymentMonth() {
-    setState(() {
-      _selectedPaymentMonth = DateTime(_selectedPaymentMonth.year, _selectedPaymentMonth.month + 1, 1);
-    });
-  }
-
-  void _resetToCurrentPaymentMonth() {
-    setState(() {
-      _selectedPaymentMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
-    });
-  }
 
   @override
   void initState() {
     super.initState();
-    _loadPendingApprovals();
-    _loadPendingComplaints();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final appProvider = Provider.of<AppProvider>(context, listen: false);
+      if (appProvider.pgName.isEmpty || appProvider.rooms.isEmpty || appProvider.isLoading) {
+        appProvider.loadFromAPI(showLoading: true);
+      }
+      _loadPendingApprovals();
+      _loadPendingComplaints();
+    });
   }
 
   Future<void> _loadPendingComplaints() async {
@@ -74,7 +64,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (mounted) {
         // Filter to only count requests for the currently selected property
         final currentTenantIds = appProvider.currentTenants.map((t) => t.id).toSet();
-        final count = reqs.where((r) {
+        final filteredReqs = reqs.where((r) {
           if (appProvider.properties.length <= 1 ||
               appProvider.selectedPropertyId == null ||
               appProvider.selectedPropertyId == 'ALL') {
@@ -82,10 +72,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
           }
           final tid = r['tenantProfileId']?.toString() ?? '';
           return currentTenantIds.contains(tid);
-        }).length;
+        }).toList();
+
         setState(() {
-          _pendingApprovalsCount = count;
+          _pendingApprovalsCount = filteredReqs.length;
         });
+
+        // Evaluate Owner In-App Notifications
+        final notifProvider = Provider.of<NotificationProvider>(context, listen: false);
+        notifProvider.checkOwnerNotifications(
+          appProvider: appProvider,
+          pendingRequests: filteredReqs,
+          context: context,
+        );
       }
     } catch (_) {
       // Gracefully ignore if offline or error
@@ -141,6 +140,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final expectedRent = appProvider.expectedRent;
     final collectedRent = appProvider.collectedRent;
     final pendingRent = appProvider.pendingRent;
+    final bool isDataLoading = appProvider.isLoading ||
+        (appProvider.pgName.isEmpty && appProvider.rooms.isEmpty && appProvider.lastSyncError == null);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -148,7 +149,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: RefreshIndicator(
           onRefresh: _handleRefresh,
           color: AppTheme.primaryColor,
-          child: appProvider.isLoading
+          child: isDataLoading
               ? const DashboardSkeleton()
               : Scrollbar(
                   child: SingleChildScrollView(
@@ -204,12 +205,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildPGIdentityCard(BuildContext context, AppProvider appProvider) {
     final greeting = _getGreeting();
     final ownerName = appProvider.adminName.isNotEmpty ? appProvider.adminName : 'Owner';
-    final pgName = appProvider.pgName.isNotEmpty ? appProvider.pgName : 'Your PG';
+    final pgName = appProvider.pgName.isNotEmpty
+        ? appProvider.pgName
+        : (appProvider.properties.isNotEmpty ? appProvider.properties.first.name : '');
     final pgAddress = appProvider.pgAddress;
+    final canSwitchProperty = appProvider.properties.length > 1;
 
-    final cardContent = Container(
+    return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -222,156 +225,196 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x204F46E5),
-                  blurRadius: 6,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.apartment_rounded,
-              color: Colors.white,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: canSwitchProperty ? () => _showPropertySelectorModal(context, appProvider) : null,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        '$greeting, $ownerName',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.lato(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF64748B),
-                        ),
-                      ),
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    const SizedBox(width: 4),
-                    const Text('👋', style: TextStyle(fontSize: 10)),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0FDF4),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFDCFCE7), width: 1),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x204F46E5),
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.apartment_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
                         children: [
-                          Container(
-                            width: 5,
-                            height: 5,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF16A34A),
-                              shape: BoxShape.circle,
+                          Flexible(
+                            child: Text(
+                              '$greeting, $ownerName',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.lato(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF64748B),
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 3),
-                          const Text(
-                            'Active',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF15803D),
+                          const SizedBox(width: 4),
+                          const Text('👋', style: TextStyle(fontSize: 10)),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFDCFCE7), width: 1),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 5,
+                                  height: 5,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF16A34A),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 3),
+                                const Text(
+                                  'Active',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF15803D),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  appProvider.selectedPropertyId == 'ALL' ? 'All Properties' : pgName,
-                  style: GoogleFonts.lato(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.3,
-                    color: const Color(0xFF0F172A),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (pgAddress.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on_rounded,
-                        size: 11,
-                        color: Color(0xFF94A3B8),
-                      ),
-                      const SizedBox(width: 2),
-                      Expanded(
-                        child: Text(
-                          pgAddress,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF64748B),
-                            fontWeight: FontWeight.w500,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      const SizedBox(height: 2),
+                      Text(
+                        appProvider.selectedPropertyId == 'ALL' ? 'All Properties' : pgName,
+                        style: GoogleFonts.lato(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.3,
+                          color: const Color(0xFF0F172A),
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
+                      if (pgAddress.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on_rounded,
+                              size: 11,
+                              color: Color(0xFF94A3B8),
+                            ),
+                            const SizedBox(width: 2),
+                            Expanded(
+                              child: Text(
+                                pgAddress,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF64748B),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
-                ],
+                ),
+                // Notification Bell Button with live unread badge
+                const SizedBox(width: 8),
+                Consumer<NotificationProvider>(
+                  builder: (context, notifProvider, _) {
+                    final unread = notifProvider.unreadCount;
+                    return GestureDetector(
+                      onTap: () => InAppNotificationCenter.show(context),
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: unread > 0 ? const Color(0xFFEEF2FF) : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: unread > 0 ? const Color(0xFFC7D2FE) : const Color(0xFFE2E8F0),
+                            width: 1.2,
+                          ),
+                        ),
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Center(
+                              child: Icon(
+                                unread > 0 ? Icons.notifications_active_rounded : Icons.notifications_none_rounded,
+                                color: unread > 0 ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
+                                size: 22,
+                              ),
+                            ),
+                            if (unread > 0)
+                              Positioned(
+                                top: -3,
+                                right: -3,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEF4444),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: Colors.white, width: 1.5),
+                                  ),
+                                  child: Text(
+                                    unread > 9 ? '9+' : '$unread',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ],
             ),
           ),
-          if (appProvider.properties.length > 1) ...[
-            const SizedBox(width: 10),
-            Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEEF2FF),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFC7D2FE), width: 1),
-              ),
-              child: const Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: 20,
-                color: Color(0xFF4F46E5),
-              ),
-            ),
-          ],
-        ],
+        ),
       ),
-    );
-
-    if (appProvider.properties.length <= 1) {
-      return cardContent;
-    }
-
-    return InkWell(
-      onTap: () => _showPropertySelectorModal(context, appProvider),
-      borderRadius: BorderRadius.circular(16),
-      child: cardContent,
     );
   }
 
@@ -1321,23 +1364,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required AppProvider appProvider,
     required List<Payment> payments,
   }) {
-    final targetMonthKey = DateFormat('yyyy-MM').format(_selectedPaymentMonth);
-    final monthPayments = payments.where((p) {
+    final now = DateTime.now();
+    final targetMonthKey = DateFormat('yyyy-MM').format(now);
+    final currentMonthStr = DateFormat('MMMM yyyy').format(now);
+
+    final currentMonthPayments = payments.where((p) {
       if (p.billingMonth != null && p.billingMonth!.isNotEmpty) {
         return p.billingMonth == targetMonthKey;
       }
-      return p.date.year == _selectedPaymentMonth.year && p.date.month == _selectedPaymentMonth.month;
+      return p.date.year == now.year && p.date.month == now.month;
     }).toList();
-    monthPayments.sort((a, b) => b.date.compareTo(a.date));
-
-    final double monthTotalCollected = monthPayments.fold(0.0, (sum, p) => sum + p.amount);
-    final now = DateTime.now();
-    final isCurrentMonth = _selectedPaymentMonth.year == now.year && _selectedPaymentMonth.month == now.month;
-    final selectedMonthStr = DateFormat('MMMM yyyy').format(_selectedPaymentMonth);
+    currentMonthPayments.sort((a, b) => b.date.compareTo(a.date));
 
     final displayList = _isPaymentHistoryExpanded
-        ? monthPayments
-        : monthPayments.take(3).toList();
+        ? currentMonthPayments
+        : currentMonthPayments.take(3).toList();
 
     return Container(
       width: double.infinity,
@@ -1362,7 +1403,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Header with Title and "View All" Link
+          // 1. Header with Title, Count Badge, and "View All" Link
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1396,7 +1437,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                     ),
-                    if (payments.isNotEmpty) ...[
+                    if (currentMonthPayments.isNotEmpty) ...[
                       const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
@@ -1406,7 +1447,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
                         ),
                         child: Text(
-                          '${payments.length}',
+                          '${currentMonthPayments.length}',
                           style: GoogleFonts.lato(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
@@ -1445,167 +1486,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 14),
 
-          // 2. Month Navigation Bar with Previous and Next Arrows
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.chevron_left_rounded, size: 22, color: Color(0xFF1E293B)),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-                  splashRadius: 18,
-                  onPressed: _prevPaymentMonth,
-                  tooltip: 'Previous Month',
-                ),
-                GestureDetector(
-                  onTap: isCurrentMonth ? null : _resetToCurrentPaymentMonth,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.calendar_month_rounded, size: 15, color: AppTheme.primaryColor),
-                      const SizedBox(width: 6),
-                      Text(
-                        selectedMonthStr,
-                        style: GoogleFonts.lato(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF0F172A),
-                        ),
-                      ),
-                      if (isCurrentMonth) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEEF2FF),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: const Color(0xFFC7D2FE), width: 0.6),
-                          ),
-                          child: Text(
-                            'Current',
-                            style: GoogleFonts.lato(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF4F46E5),
-                            ),
-                          ),
-                        ),
-                      ] else ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            'Reset',
-                            style: GoogleFonts.lato(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF64748B),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.chevron_right_rounded, size: 22, color: Color(0xFF1E293B)),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-                  splashRadius: 18,
-                  onPressed: _nextPaymentMonth,
-                  tooltip: 'Next Month',
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // 3. Month Summary Statistics Card
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFF8FAFC), Color(0xFFF1F5F9)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '$selectedMonthStr Collections',
-                      style: GoogleFonts.lato(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF64748B),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '₹${NumberFormat('#,##,###').format(monthTotalCollected)}',
-                      style: GoogleFonts.lato(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.4,
-                        color: const Color(0xFF0F172A),
-                      ),
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: monthPayments.isNotEmpty ? const Color(0xFFDCFCE7) : const Color(0xFFFFFFFF),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: monthPayments.isNotEmpty ? const Color(0xFF86EFAC) : const Color(0xFFE2E8F0),
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        monthPayments.isNotEmpty ? Icons.check_circle_rounded : Icons.info_outline_rounded,
-                        size: 13,
-                        color: monthPayments.isNotEmpty ? const Color(0xFF16A34A) : const Color(0xFF64748B),
-                      ),
-                      const SizedBox(width: 4.5),
-                      Text(
-                        '${monthPayments.length} ${monthPayments.length == 1 ? "Payment" : "Payments"}',
-                        style: GoogleFonts.lato(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: monthPayments.isNotEmpty ? const Color(0xFF16A34A) : const Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // 4. Transactions List or Month Empty State
-          if (monthPayments.isEmpty)
+          // 2. Transactions List or Current Month Empty State
+          if (currentMonthPayments.isEmpty)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
@@ -1623,7 +1505,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'No transactions in $selectedMonthStr',
+                    'No transactions in $currentMonthStr',
                     style: GoogleFonts.lato(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -1632,7 +1514,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    'Use the arrows above to inspect previous or upcoming months.',
+                    'Payments recorded this month will appear here.',
                     style: GoogleFonts.lato(
                       fontSize: 11,
                       color: const Color(0xFF94A3B8),
@@ -1657,8 +1539,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               },
             ),
 
-            // 5. "Show More" / "Show Less" Expandable Button
-            if (monthPayments.length > 3) ...[
+            // "Show More" / "Show Less" Expandable Button
+            if (currentMonthPayments.length > 3) ...[
               const SizedBox(height: 12),
               GestureDetector(
                 onTap: () {
@@ -1681,7 +1563,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Text(
                         _isPaymentHistoryExpanded
                             ? 'Show Summary'
-                            : 'Show More (${monthPayments.length - 3} more in $selectedMonthStr)',
+                            : 'Show More (${currentMonthPayments.length - 3} more)',
                         style: GoogleFonts.lato(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -1798,11 +1680,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(height: 2),
                       Row(
                         children: [
-                          Text(
-                            paidDateStr,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF64748B),
+                          Flexible(
+                            child: Text(
+                              paidDateStr,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF64748B),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           if (payment.notes != null && payment.notes!.isNotEmpty) ...[

@@ -156,25 +156,32 @@ class ExportService {
       final cleanPgName = provider.pgName.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');
       final fileName = '${cleanPgName}_Backup_$timestamp.csv';
 
-      String? targetPath;
-
-      // On Android, attempt to save directly in the public Downloads folder
+      // On Android, attempt to save in the public Downloads folder if accessible
       if (!kIsWeb && Platform.isAndroid) {
-        final downloadDir = Directory('/storage/emulated/0/Download');
-        if (await downloadDir.exists()) {
-          targetPath = '${downloadDir.path}/$fileName';
+        try {
+          final downloadDir = Directory('/storage/emulated/0/Download');
+          if (await downloadDir.exists()) {
+            final testFile = File('${downloadDir.path}/$fileName');
+            await testFile.writeAsString(csvContent, flush: true);
+            return ExportResult(
+              success: true,
+              fileName: fileName,
+              filePath: testFile.path,
+              recordCount: provider.tenants.length + provider.rooms.length + provider.payments.length,
+            );
+          }
+        } catch (e) {
+          debugPrint('Could not write to public Downloads (scoped storage): $e');
         }
       }
 
-      // Fallback or iOS / desktop: use App Documents Directory or Downloads directory
-      if (targetPath == null) {
-        Directory? dir;
-        try {
-          dir = await getDownloadsDirectory();
-        } catch (_) {}
-        dir ??= await getApplicationDocumentsDirectory();
-        targetPath = '${dir.path}/$fileName';
-      }
+      // Fallback or iOS / desktop: use Downloads directory or App Documents Directory
+      Directory? dir;
+      try {
+        dir = await getDownloadsDirectory();
+      } catch (_) {}
+      dir ??= await getApplicationDocumentsDirectory();
+      final targetPath = '${dir.path}/$fileName';
 
       final file = File(targetPath);
       await file.writeAsString(csvContent, flush: true);

@@ -89,7 +89,9 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
       'Invalid UTR Number',
     ];
 
-    final reason = await showDialog<String>(
+    String? reason;
+    try {
+      reason = await showDialog<String>(
       context: context,
       builder: (c) => StatefulBuilder(
         builder: (context, setDialogState) {
@@ -257,6 +259,9 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
         },
       ),
     );
+  } finally {
+    reasonController.dispose();
+  }
 
     if (reason != null && reason.isNotEmpty) {
       if (!mounted) return;
@@ -278,7 +283,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
           final msg = Uri.encodeComponent('Your request for marking rent payment as paid is rejected. Reason: $reason. Kindly upload a valid screenshot.');
           final url = Uri.parse('https://wa.me/${tenant.phone}?text=$msg');
           if (await canLaunchUrl(url)) {
-            await launchUrl(url);
+            await launchUrl(url, mode: LaunchMode.externalApplication);
           }
         }
 

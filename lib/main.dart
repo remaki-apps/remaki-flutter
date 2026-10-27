@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import 'models/models.dart';
 import 'providers/app_provider.dart';
+import 'providers/notification_provider.dart';
 import 'services/api_service.dart';
 import 'theme/app_theme.dart';
 import 'screens/main_shell.dart';
@@ -53,10 +54,12 @@ void main() async {
     ),
   );
   await ApiService.initToken();
+  ApiService.warmupServer();
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AppProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: const RemakiApp(),
     ),
@@ -119,6 +122,26 @@ final router = GoRouter(
       return ApiService.role == 'TENANT' ? '/tenant_home' : '/';
     }
 
+    // Role-Based Access Control
+    if (ApiService.role == 'TENANT') {
+      const allowedTenantRoutes = {
+        '/tenant_home',
+        '/tenant_my_profile',
+        '/setup_security_pin',
+        '/about',
+        '/terms',
+        '/privacy',
+        '/help_support',
+      };
+      if (!allowedTenantRoutes.contains(location)) {
+        return '/tenant_home';
+      }
+    } else if (ApiService.role == 'ADMIN') {
+      if (location == '/tenant_home' || location == '/tenant_my_profile') {
+        return '/';
+      }
+    }
+
     return null;
   },
   routes: [
@@ -157,11 +180,15 @@ final router = GoRouter(
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/tenant_home',
-      pageBuilder: (context, state) => _buildPageWithTransition(
-        context: context,
-        state: state,
-        child: const TenantHomeScreen(),
-      ),
+      pageBuilder: (context, state) {
+        final tabStr = state.uri.queryParameters['tab'];
+        final tab = int.tryParse(tabStr ?? '') ?? 0;
+        return _buildPageWithTransition(
+          context: context,
+          state: state,
+          child: TenantHomeScreen(initialTab: tab),
+        );
+      },
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

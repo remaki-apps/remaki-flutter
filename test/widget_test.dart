@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:sunshine_pg_app/main.dart';
 import 'package:sunshine_pg_app/providers/app_provider.dart';
+import 'package:sunshine_pg_app/providers/notification_provider.dart';
 
 void main() {
   testWidgets('Sunshine PG App smoke test', (WidgetTester tester) async {
@@ -11,12 +12,15 @@ void main() {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
-          ChangeNotifierProvider(create: (_) => AppProvider()),
+          ChangeNotifierProvider(create: (_) => AppProvider(autoLoad: false)),
+          ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ],
         child: const RemakiApp(),
       ),
     );
 
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
 
     expect(find.text('Phone Number'), findsOneWidget);

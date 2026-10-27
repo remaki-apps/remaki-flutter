@@ -61,7 +61,17 @@ class UnpaidTenantsScreen extends StatelessWidget {
         ? appProvider.unpaidBillsTenants
         : filter == 'rent'
             ? appProvider.unpaidRentTenants
-            : appProvider.unpaidTenants;
+            : filter == 'overdue'
+                ? appProvider.currentTenants.where((t) => t.isOverdue || (t.pendingRentAmount > 0 && DateTime.now().difference(t.rentDueDate).inDays >= 3)).toList()
+                : appProvider.unpaidTenants;
+
+    final String screenTitle = filter == 'overdue'
+        ? 'Overdue Tenants (3+ Days)'
+        : filter == 'bills'
+            ? 'Unpaid Bills'
+            : filter == 'rent'
+                ? 'Unpaid Rent'
+                : 'Unpaid Tenants';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
@@ -73,9 +83,9 @@ class UnpaidTenantsScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          'Unpaid Tenants',
-          style: TextStyle(
+        title: Text(
+          screenTitle,
+          style: const TextStyle(
             color: Color(0xFF0F172A),
             fontWeight: FontWeight.bold,
             fontSize: 18,
@@ -93,42 +103,48 @@ class UnpaidTenantsScreen extends StatelessWidget {
         child: appProvider.isLoading
             ? const SimpleListSkeleton()
             : unpaidTenants.isEmpty
-                ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      'assets/images/no_tenant1.png',
-                      height: 140,
-                      fit: BoxFit.contain,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No Unpaid Tenants!',
-                      style: GoogleFonts.lato(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF0F172A),
-                        letterSpacing: -0.3,
+                ? SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.7,
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Image.asset(
+                                'assets/images/no_tenant1.png',
+                                height: 140,
+                                fit: BoxFit.contain,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No Unpaid Tenants!',
+                                style: GoogleFonts.lato(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF0F172A),
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'All dues are clear for this month.',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.lato(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF64748B),
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'All dues are clear for this month.',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.lato(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF64748B),
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
+                  )
           : ListView.builder(
               padding: EdgeInsets.fromLTRB(16, 12, 16, 30 + MediaQuery.of(context).padding.bottom),
               physics: const BouncingScrollPhysics(),
