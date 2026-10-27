@@ -12,6 +12,7 @@ import '../widgets/tenant_avatar.dart';
 import '../widgets/app_shimmer.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/payment_splitup_card.dart';
+import '../widgets/export_data_modal.dart';
 // import '../providers/notification_provider.dart';
 // import '../widgets/in_app_notification_center.dart';
 
@@ -24,6 +25,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _pendingApprovalsCount = 0;
+  int _pendingComplaintsCount = 0;
   bool _isLoadingApprovals = false;
   bool _isPaymentHistoryExpanded = false;
   final Set<String> _expandedPaymentIds = {};
@@ -38,7 +40,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
         appProvider.loadFromAPI(showLoading: true);
       }
       _loadPendingApprovals();
+      _loadPendingComplaints();
     });
+  }
+
+  Future<void> _loadPendingComplaints() async {
+    try {
+      final list = await ApiService.fetchAdminComplaints(status: 'PENDING');
+      if (mounted) {
+        setState(() {
+          _pendingComplaintsCount = list.length;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadPendingApprovals() async {
@@ -88,6 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await Future.wait([
       appProvider.loadFromAPI(),
       _loadPendingApprovals(),
+      _loadPendingComplaints(),
     ]);
     if (mounted && appProvider.lastSyncError != null) {
       FancyToast.showError(
@@ -815,6 +830,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 await context.push('/approvals');
                 _loadPendingApprovals();
               },
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            _buildQuickActionButton(
+              label: 'Complaints',
+              icon: Icons.assignment_late_outlined,
+              bgColor: const Color(0xFFFEF3C7),
+              iconColor: const Color(0xFFD97706),
+              badgeCount: _pendingComplaintsCount,
+              onTap: () async {
+                await context.push('/admin_complaints');
+                _loadPendingComplaints();
+              },
+            ),
+            const SizedBox(width: 10),
+            _buildQuickActionButton(
+              label: 'PG Owners',
+              icon: Icons.people_outline_rounded,
+              bgColor: const Color(0xFFEEF2FF),
+              iconColor: const Color(0xFF4338CA),
+              onTap: () => context.push('/pg_owners'),
+            ),
+            const SizedBox(width: 10),
+            _buildQuickActionButton(
+              label: 'Available',
+              icon: Icons.bed_outlined,
+              bgColor: const Color(0xFFF0FDF4),
+              iconColor: const Color(0xFF16A34A),
+              onTap: () => context.push('/available_beds'),
+            ),
+            const SizedBox(width: 10),
+            _buildQuickActionButton(
+              label: 'Export Data',
+              icon: Icons.cloud_download_outlined,
+              bgColor: const Color(0xFFF1F5F9),
+              iconColor: const Color(0xFF475569),
+              onTap: () => ExportDataModal.show(context),
             ),
           ],
         ),

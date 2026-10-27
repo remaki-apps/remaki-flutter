@@ -395,15 +395,53 @@ class _RoomsScreenState extends State<RoomsScreen> {
                                                       child: Column(
                                                         crossAxisAlignment: CrossAxisAlignment.start,
                                                         children: [
-                                                          Text(
-                                                            'Room ${room.number}',
-                                                            style: const TextStyle(
-                                                              fontSize: 15,
-                                                              fontWeight: FontWeight.bold,
-                                                              color: Color(0xFF0F172A),
-                                                            ),
-                                                            maxLines: 1,
-                                                            overflow: TextOverflow.ellipsis,
+                                                          Row(
+                                                            mainAxisSize: MainAxisSize.min,
+                                                            children: [
+                                                              Flexible(
+                                                                child: Text(
+                                                                  'Room ${room.number}',
+                                                                  style: const TextStyle(
+                                                                    fontSize: 15,
+                                                                    fontWeight: FontWeight.bold,
+                                                                    color: Color(0xFF0F172A),
+                                                                  ),
+                                                                  maxLines: 1,
+                                                                  overflow: TextOverflow.ellipsis,
+                                                                ),
+                                                              ),
+                                                              const SizedBox(width: 6),
+                                                              Container(
+                                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                                decoration: BoxDecoration(
+                                                                  color: room.isAc ? const Color(0xFFEFF6FF) : const Color(0xFFF1F5F9),
+                                                                  borderRadius: BorderRadius.circular(6),
+                                                                  border: Border.all(
+                                                                    color: room.isAc ? const Color(0xFF93C5FD) : const Color(0xFFCBD5E1),
+                                                                    width: 0.8,
+                                                                  ),
+                                                                ),
+                                                                child: Row(
+                                                                  mainAxisSize: MainAxisSize.min,
+                                                                  children: [
+                                                                    Icon(
+                                                                      room.isAc ? Icons.ac_unit_rounded : Icons.air_rounded,
+                                                                      size: 11,
+                                                                      color: room.isAc ? const Color(0xFF1D4ED8) : const Color(0xFF475569),
+                                                                    ),
+                                                                    const SizedBox(width: 3),
+                                                                    Text(
+                                                                      room.isAc ? 'AC' : 'Non-AC',
+                                                                      style: TextStyle(
+                                                                        fontSize: 10,
+                                                                        fontWeight: FontWeight.w700,
+                                                                        color: room.isAc ? const Color(0xFF1D4ED8) : const Color(0xFF475569),
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ],
                                                           ),
                                                           const SizedBox(height: 2),
                                                           Text(

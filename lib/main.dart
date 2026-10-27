@@ -37,6 +37,9 @@ import 'screens/privacy_policy_screen.dart';
 import 'screens/help_support_screen.dart';
 import 'screens/payment_history_screen.dart';
 import 'screens/splash_screen.dart';
+import 'screens/pg_owners_screen.dart';
+import 'screens/tenant_complaints_screen.dart';
+import 'screens/admin_complaints_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -314,6 +317,21 @@ final router = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/announcements',
       builder: (context, state) => const AnnouncementsScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/pg_owners',
+      builder: (context, state) => const PgOwnersScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/tenant_complaints',
+      builder: (context, state) => const TenantComplaintsScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/admin_complaints',
+      builder: (context, state) => const AdminComplaintsScreen(),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

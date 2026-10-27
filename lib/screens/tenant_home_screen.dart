@@ -1355,7 +1355,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 bgColor: TenantTheme.actionPayRentBg,
                 onTap: () => setState(() => _currentNavIndex = 1),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               _buildQuickActionTile(
                 icon: Icons.meeting_room_rounded,
                 label: 'My Stay',
@@ -1363,7 +1363,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 bgColor: TenantTheme.actionStayBg,
                 onTap: _openMyStayDetails,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
+              _buildQuickActionTile(
+                icon: Icons.assignment_late_outlined,
+                label: 'Complaints',
+                iconColor: const Color(0xFFD97706),
+                bgColor: const Color(0xFFFEF3C7),
+                onTap: () => context.push('/tenant_complaints'),
+              ),
+              const SizedBox(width: 8),
               _buildQuickActionTile(
                 icon: Icons.campaign_rounded,
                 label: 'Notices',
