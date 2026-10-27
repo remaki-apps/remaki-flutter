@@ -122,6 +122,7 @@ class Room {
   String number;
   String floor;
   int capacity;
+  String roomType; // 'AC' or 'NON_AC'
   List<Bed> beds;
   String propertyId;
 
@@ -130,10 +131,12 @@ class Room {
     required this.number,
     this.floor = 'Ground Floor',
     required this.capacity,
+    this.roomType = 'NON_AC',
     required this.beds,
     this.propertyId = '',
   });
 
+  bool get isAc => roomType.toUpperCase() == 'AC';
   int get availableBeds => beds.where((b) => b.isAvailable).length;
   bool get isFull => availableBeds == 0;
   bool get isEmpty => availableBeds == capacity;
@@ -143,6 +146,7 @@ class Room {
         'number': number,
         'floor': floor,
         'capacity': capacity,
+        'roomType': roomType,
         'beds': beds.map((b) => b.toJson()).toList(),
         'propertyId': propertyId,
       };
@@ -152,6 +156,7 @@ class Room {
         number: json['number']?.toString() ?? '',
         floor: json['floor']?.toString() ?? 'Ground Floor',
         capacity: (json['capacity'] as num?)?.toInt() ?? 0,
+        roomType: json['roomType']?.toString() ?? 'NON_AC',
         propertyId: json['propertyId']?.toString() ?? '',
         beds: (json['beds'] as List<dynamic>?)
             ?.whereType<Map<String, dynamic>>()
@@ -521,4 +526,112 @@ class Payment {
         billingMonth: json['billingMonth'] as String?,
       );
 }
+
+class PropertyOwnerItem {
+  final String id;
+  final String userId;
+  final String name;
+  final String phoneNumber;
+  final String role;
+  final bool isPrimary;
+  final DateTime createdAt;
+
+  PropertyOwnerItem({
+    required this.id,
+    required this.userId,
+    required this.name,
+    required this.phoneNumber,
+    required this.role,
+    required this.isPrimary,
+    required this.createdAt,
+  });
+
+  factory PropertyOwnerItem.fromJson(Map<String, dynamic> json) => PropertyOwnerItem(
+        id: json['id']?.toString() ?? '',
+        userId: json['userId']?.toString() ?? '',
+        name: json['name']?.toString() ?? 'Owner',
+        phoneNumber: json['phoneNumber']?.toString() ?? '',
+        role: json['role']?.toString() ?? 'CO_OWNER',
+        isPrimary: json['isPrimary'] == true,
+        createdAt: json['createdAt'] != null
+            ? (DateTime.tryParse(json['createdAt'].toString())?.toLocal() ?? DateTime.now())
+            : DateTime.now(),
+      );
+}
+
+class Complaint {
+  final String id;
+  final String tenantProfileId;
+  final String adminId;
+  final String category;
+  final String title;
+  final String description;
+  final String? mediaUrl;
+  final String status; // 'PENDING', 'IN_PROGRESS', 'RESOLVED'
+  final String? adminReply;
+  final DateTime? repliedAt;
+  final DateTime? resolvedAt;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final String tenantName;
+  final String tenantPhone;
+  final String? roomNumber;
+  final String? bedLabel;
+
+  Complaint({
+    required this.id,
+    required this.tenantProfileId,
+    required this.adminId,
+    required this.category,
+    required this.title,
+    required this.description,
+    this.mediaUrl,
+    required this.status,
+    this.adminReply,
+    this.repliedAt,
+    this.resolvedAt,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.tenantName,
+    required this.tenantPhone,
+    this.roomNumber,
+    this.bedLabel,
+  });
+
+  bool get isPending => status == 'PENDING';
+  bool get isInProgress => status == 'IN_PROGRESS';
+  bool get isResolved => status == 'RESOLVED';
+
+  factory Complaint.fromJson(Map<String, dynamic> json) {
+    final tenantJson = json['tenant'] as Map<String, dynamic>? ?? {};
+    return Complaint(
+      id: json['id']?.toString() ?? '',
+      tenantProfileId: json['tenantProfileId']?.toString() ?? '',
+      adminId: json['adminId']?.toString() ?? '',
+      category: json['category']?.toString() ?? 'OTHER',
+      title: json['title']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      mediaUrl: json['mediaUrl']?.toString(),
+      status: json['status']?.toString() ?? 'PENDING',
+      adminReply: json['adminReply']?.toString(),
+      repliedAt: json['repliedAt'] != null
+          ? DateTime.tryParse(json['repliedAt'].toString())?.toLocal()
+          : null,
+      resolvedAt: json['resolvedAt'] != null
+          ? DateTime.tryParse(json['resolvedAt'].toString())?.toLocal()
+          : null,
+      createdAt: json['createdAt'] != null
+          ? (DateTime.tryParse(json['createdAt'].toString())?.toLocal() ?? DateTime.now())
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null
+          ? (DateTime.tryParse(json['updatedAt'].toString())?.toLocal() ?? DateTime.now())
+          : DateTime.now(),
+      tenantName: tenantJson['name']?.toString() ?? 'Tenant',
+      tenantPhone: tenantJson['phoneNumber']?.toString() ?? '',
+      roomNumber: tenantJson['roomNumber']?.toString(),
+      bedLabel: tenantJson['bedLabel']?.toString(),
+    );
+  }
+}
+
 

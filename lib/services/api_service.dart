@@ -605,6 +605,7 @@ class ApiService {
           roomNumber
           floorNumber
           capacity
+          roomType
           status
           occupiedBeds
           availableBeds
@@ -673,6 +674,7 @@ class ApiService {
           roomNumber
           floorNumber
           capacity
+          roomType
           beds {
             id
             bedLabel
@@ -888,5 +890,215 @@ class ApiService {
         'message': 'Please contact organization support to recover your Security Recovery PIN (MPIN).',
       };
     }
+  }
+
+  // ===========================================================================
+  // PROPERTY OWNERS (MULTIPLE LOGIN SUPPORT UP TO 10 OWNERS)
+  // ===========================================================================
+
+  static Future<List<dynamic>> fetchPropertyOwners() async {
+    const String query = '''
+      query {
+        propertyOwners {
+          id
+          userId
+          name
+          phoneNumber
+          role
+          isPrimary
+          createdAt
+        }
+      }
+    ''';
+    final data = await performQuery(query);
+    return data['propertyOwners'] ?? [];
+  }
+
+  static Future<Map<String, dynamic>> addPropertyOwner({
+    required String name,
+    required String phoneNumber,
+    required String password,
+  }) async {
+    const String mutation = '''
+      mutation AddPropertyOwner(\$input: AddPropertyOwnerInput!) {
+        addPropertyOwner(input: \$input) {
+          id
+          userId
+          name
+          phoneNumber
+          role
+          isPrimary
+          createdAt
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {
+      'input': {
+        'name': name,
+        'phoneNumber': phoneNumber,
+        'password': password,
+      }
+    });
+    return data['addPropertyOwner'] as Map<String, dynamic>;
+  }
+
+  static Future<bool> removePropertyOwner(String id) async {
+    const String mutation = '''
+      mutation RemovePropertyOwner(\$id: ID!) {
+        removePropertyOwner(id: \$id)
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'id': id});
+    return data['removePropertyOwner'] == true;
+  }
+
+  // ===========================================================================
+  // COMPLAINTS (INDIVIDUAL COMPLAINT FLOW WITH MEDIA)
+  // ===========================================================================
+
+  static Future<List<dynamic>> fetchMyComplaints() async {
+    const String query = '''
+      query {
+        myComplaints {
+          id
+          tenantProfileId
+          adminId
+          category
+          title
+          description
+          mediaUrl
+          status
+          adminReply
+          repliedAt
+          resolvedAt
+          createdAt
+          updatedAt
+          tenant {
+            name
+            phoneNumber
+            roomNumber
+            bedLabel
+          }
+        }
+      }
+    ''';
+    final data = await performQuery(query);
+    return data['myComplaints'] ?? [];
+  }
+
+  static Future<List<dynamic>> fetchAdminComplaints({String? status}) async {
+    const String query = '''
+      query AdminComplaints(\$status: ComplaintStatus) {
+        adminComplaints(status: \$status) {
+          id
+          tenantProfileId
+          adminId
+          category
+          title
+          description
+          mediaUrl
+          status
+          adminReply
+          repliedAt
+          resolvedAt
+          createdAt
+          updatedAt
+          tenant {
+            name
+            phoneNumber
+            roomNumber
+            bedLabel
+          }
+        }
+      }
+    ''';
+    final data = await performQuery(query, variables: status != null ? {'status': status} : {});
+    return data['adminComplaints'] ?? [];
+  }
+
+  static Future<Map<String, dynamic>> createComplaint({
+    required String category,
+    required String title,
+    required String description,
+    String? mediaBase64,
+  }) async {
+    const String mutation = '''
+      mutation CreateComplaint(\$input: CreateComplaintInput!) {
+        createComplaint(input: \$input) {
+          id
+          tenantProfileId
+          adminId
+          category
+          title
+          description
+          mediaUrl
+          status
+          createdAt
+          tenant {
+            name
+            phoneNumber
+            roomNumber
+            bedLabel
+          }
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {
+      'input': {
+        'category': category,
+        'title': title,
+        'description': description,
+        if (mediaBase64 != null && mediaBase64.isNotEmpty) 'mediaBase64': mediaBase64,
+      }
+    });
+    return data['createComplaint'] as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> replyComplaint({
+    required String complaintId,
+    required String reply,
+    String? status,
+  }) async {
+    const String mutation = '''
+      mutation ReplyComplaint(\$input: ReplyComplaintInput!) {
+        replyComplaint(input: \$input) {
+          id
+          status
+          adminReply
+          repliedAt
+          resolvedAt
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {
+      'input': {
+        'complaintId': complaintId,
+        'reply': reply,
+        if (status != null) 'status': status,
+      }
+    });
+    return data['replyComplaint'] as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> updateComplaintStatus({
+    required String complaintId,
+    required String status,
+  }) async {
+    const String mutation = '''
+      mutation UpdateComplaintStatus(\$input: UpdateComplaintStatusInput!) {
+        updateComplaintStatus(input: \$input) {
+          id
+          status
+          resolvedAt
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {
+      'input': {
+        'complaintId': complaintId,
+        'status': status,
+      }
+    });
+    return data['updateComplaintStatus'] as Map<String, dynamic>;
   }
 }

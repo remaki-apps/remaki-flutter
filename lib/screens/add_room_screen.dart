@@ -23,6 +23,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
   String? _errorMessage;
   bool _isLoading = false;
   int _capacity = 2;
+  String _roomType = 'NON_AC'; // 'AC' or 'NON_AC'
   final List<TextEditingController> _bedNameControllers = [];
   final List<bool> _isPrefilled = [];
 
@@ -179,6 +180,127 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                     controller: _roomNumberController,
                     decoration: _inputDecoration(hintText: 'Enter room number or name'),
                     validator: (val) => val == null || val.trim().isEmpty ? 'Please enter room number or name' : null,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Card 3: Room Type (AC vs Non-AC)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFF1F5F9)),
+                    boxShadow: const [
+                      BoxShadow(color: Color(0x06000000), blurRadius: 10, offset: Offset(0, 2)),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEEF2FF),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.mode_fan_off_outlined, color: AppTheme.primaryColor, size: 18),
+                          ),
+                          const SizedBox(width: 10),
+                          _buildLabelText('Room Type', isRequired: true),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => setState(() => _roomType = 'NON_AC'),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                                decoration: BoxDecoration(
+                                  color: _roomType == 'NON_AC' ? const Color(0xFFEEF2FF) : const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: _roomType == 'NON_AC' ? AppTheme.primaryColor : const Color(0xFFE2E8F0),
+                                    width: _roomType == 'NON_AC' ? 1.8 : 1.0,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.air_rounded,
+                                      size: 18,
+                                      color: _roomType == 'NON_AC' ? AppTheme.primaryColor : const Color(0xFF64748B),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Non-AC',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: _roomType == 'NON_AC' ? FontWeight.w700 : FontWeight.w600,
+                                        color: _roomType == 'NON_AC' ? AppTheme.primaryColor : const Color(0xFF64748B),
+                                      ),
+                                    ),
+                                    if (_roomType == 'NON_AC') ...[
+                                      const SizedBox(width: 6),
+                                      const Icon(Icons.check_circle_rounded, size: 16, color: AppTheme.primaryColor),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => setState(() => _roomType = 'AC'),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                                decoration: BoxDecoration(
+                                  color: _roomType == 'AC' ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: _roomType == 'AC' ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
+                                    width: _roomType == 'AC' ? 1.8 : 1.0,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.ac_unit_rounded,
+                                      size: 18,
+                                      color: _roomType == 'AC' ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'AC Room',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: _roomType == 'AC' ? FontWeight.w700 : FontWeight.w600,
+                                        color: _roomType == 'AC' ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                                      ),
+                                    ),
+                                    if (_roomType == 'AC') ...[
+                                      const SizedBox(width: 6),
+                                      const Icon(Icons.check_circle_rounded, size: 16, color: Color(0xFF2563EB)),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -531,6 +653,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
           number: _roomNumberController.text.trim(),
           floor: _selectedFloor!,
           capacity: _capacity,
+          roomType: _roomType,
           beds: [],
         );
 

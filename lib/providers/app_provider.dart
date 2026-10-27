@@ -434,6 +434,7 @@ class AppProvider with ChangeNotifier {
         'roomNumber': room.number,
         'floorNumber': room.floor,
         'capacity': room.capacity,
+        'roomType': room.roomType,
         if (bedLabels != null && bedLabels.isNotEmpty) 'bedLabels': bedLabels,
       });
       await loadFromAPI();
