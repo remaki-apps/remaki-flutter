@@ -20,8 +20,8 @@ import '../utils/image_compress_util.dart';
 import '../widgets/payment_splitup_card.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
-import '../providers/notification_provider.dart';
-import '../widgets/in_app_notification_center.dart';
+// import '../providers/notification_provider.dart';
+// import '../widgets/in_app_notification_center.dart';
 import '../providers/app_provider.dart';
 import '../utils/web_update_util.dart';
 
@@ -287,15 +287,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           }
         });
 
-        // Trigger tenant in-app notification check (payment status)
-        final notifProvider = Provider.of<NotificationProvider>(context, listen: false);
-        notifProvider.checkTenantNotifications(
-          profileData: profile,
-          totalDue: totalDueAmount,
-          isPending: isPendingApproval,
-          rejectionReason: rawRejection,
-          context: context,
-        );
+        // Trigger tenant in-app notification check (payment status) - Commented out notification flow
+        // final notifProvider = Provider.of<NotificationProvider>(context, listen: false);
+        // notifProvider.checkTenantNotifications(
+        //   profileData: profile,
+        //   totalDue: totalDueAmount,
+        //   isPending: isPendingApproval,
+        //   rejectionReason: rawRejection,
+        //   context: context,
+        // );
       }
     } else {
       if (mounted) {
@@ -1121,7 +1121,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // In-App Notification Bell Button with live unread badge
+                  // In-App Notification Bell Button with live unread badge (Commented out notification flow)
+                  /*
                   Consumer<NotificationProvider>(
                     builder: (context, notifProvider, _) {
                       final unread = notifProvider.unreadCount;
@@ -1193,6 +1194,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     },
                   ),
                   const SizedBox(width: 10),
+                  */
                   GestureDetector(
                     onTap: () => setState(() => _currentNavIndex = 2),
                     child: Container(
@@ -5275,7 +5277,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               if (mounted) {
                 try {
                   context.read<AppProvider>().reset();
-                  context.read<NotificationProvider>().reset();
+                  // context.read<NotificationProvider>().reset();
                 } catch (_) {}
               }
               await ApiService.clearAuthToken();

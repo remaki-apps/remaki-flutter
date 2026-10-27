@@ -12,8 +12,8 @@ import '../widgets/tenant_avatar.dart';
 import '../widgets/app_shimmer.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/payment_splitup_card.dart';
-import '../providers/notification_provider.dart';
-import '../widgets/in_app_notification_center.dart';
+// import '../providers/notification_provider.dart';
+// import '../widgets/in_app_notification_center.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -64,13 +64,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _pendingApprovalsCount = filteredReqs.length;
         });
 
-        // Evaluate Owner In-App Notifications
-        final notifProvider = Provider.of<NotificationProvider>(context, listen: false);
-        notifProvider.checkOwnerNotifications(
-          appProvider: appProvider,
-          pendingRequests: filteredReqs,
-          context: context,
-        );
+        // Evaluate Owner In-App Notifications (Commented out notification flow)
+        // final notifProvider = Provider.of<NotificationProvider>(context, listen: false);
+        // notifProvider.checkOwnerNotifications(
+        //   appProvider: appProvider,
+        //   pendingRequests: filteredReqs,
+        //   context: context,
+        // );
       }
     } catch (_) {
       // Gracefully ignore if offline or error
@@ -339,7 +339,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                 ),
-                // Notification Bell Button with live unread badge
+                // Notification Bell Button with live unread badge (Commented out notification flow)
+                /*
                 const SizedBox(width: 8),
                 Consumer<NotificationProvider>(
                   builder: (context, notifProvider, _) {
@@ -395,6 +396,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     );
                   },
                 ),
+                */
               ],
             ),
           ),
@@ -1176,7 +1178,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(width: 8),
               GestureDetector(
-                onTap: () => context.push('/rent'),
+                onTap: () => context.go('/rent'),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                   decoration: BoxDecoration(

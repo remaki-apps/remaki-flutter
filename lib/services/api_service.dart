@@ -41,7 +41,7 @@ class ApiService {
     }
   }
 
-  static Future<void> setAuthToken(String token, String role, {bool? hasSecurityPin}) async {
+  static Future<void> setAuthToken(String token, String role, {bool? hasSecurityPin, bool persist = true}) async {
     _token = token;
     _role = role;
     if (hasSecurityPin != null) {
@@ -50,10 +50,16 @@ class ApiService {
     authNotifier.value = isLoggedIn;
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('auth_token', token);
-      await prefs.setString('user_role', role);
-      if (hasSecurityPin != null) {
-        await prefs.setBool('user_has_security_pin', hasSecurityPin);
+      if (persist) {
+        await prefs.setString('auth_token', token);
+        await prefs.setString('user_role', role);
+        if (hasSecurityPin != null) {
+          await prefs.setBool('user_has_security_pin', hasSecurityPin);
+        }
+      } else {
+        await prefs.remove('auth_token');
+        await prefs.remove('user_role');
+        await prefs.remove('user_has_security_pin');
       }
     } catch (e) {
       debugPrint('ApiService setAuthToken error: $e');
@@ -933,13 +939,13 @@ class ApiService {
       final info = data['organizationSupportInfo'];
       return {
         'email': info?['email']?.toString() ?? 'support@remaki.in',
-        'phone': info?['phone']?.toString() ?? '+91 98765 43210',
+        'phone': info?['phone']?.toString() ?? '9940328087',
         'message': info?['message']?.toString() ?? 'Please contact organization support to recover your Security Recovery PIN (MPIN).',
       };
     } catch (_) {
       return {
         'email': 'support@remaki.in',
-        'phone': '+91 98765 43210',
+        'phone': '9940328087',
         'message': 'Please contact organization support to recover your Security Recovery PIN (MPIN).',
       };
     }

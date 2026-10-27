@@ -9,7 +9,8 @@ class FancyToast {
     String? message,
     Duration duration = const Duration(seconds: 3),
   }) {
-    final overlay = Overlay.of(context);
+    final overlay = Overlay.maybeOf(context, rootOverlay: true) ?? Overlay.maybeOf(context);
+    if (overlay == null) return;
     late OverlayEntry entry;
 
     entry = OverlayEntry(
@@ -35,7 +36,8 @@ class FancyToast {
     String? message,
     Duration duration = const Duration(seconds: 4),
   }) {
-    final overlay = Overlay.of(context);
+    final overlay = Overlay.maybeOf(context, rootOverlay: true) ?? Overlay.maybeOf(context);
+    if (overlay == null) return;
     late OverlayEntry entry;
 
     entry = OverlayEntry(

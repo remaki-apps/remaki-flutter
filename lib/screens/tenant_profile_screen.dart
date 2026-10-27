@@ -71,6 +71,14 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
     final tenantIndex = appProvider.tenants.indexWhere((t) => t.id == widget.tenantId);
 
     if (tenantIndex == -1) {
+      if (appProvider.isLoading) {
+        return const Scaffold(
+          backgroundColor: Color(0xFFF8F9FD),
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      }
       return Scaffold(
         backgroundColor: const Color(0xFFF8F9FD),
         body: SafeArea(
@@ -81,7 +89,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                 child: Row(
                   children: [
                     GestureDetector(
-                      onTap: () => context.pop(),
+                      onTap: () => context.canPop() ? context.pop() : context.go('/tenants'),
                       child: Container(
                         width: 40,
                         height: 40,

@@ -564,12 +564,13 @@ class AppProvider with ChangeNotifier {
     }
   }
 
-  void addBillToTenants(List<String> tenantIds, double splitAmount, String description) {
-    // Fire the API call and reload from server when done so bills survive refresh.
-    if (tenantIds.isNotEmpty) {
-      final tenant = tenants.firstWhere((t) => t.id == tenantIds.first);
-      if (tenant.roomId.isNotEmpty) {
-        ApiService.generateRoomCurrentBill({
+  Future<void> addBillToTenants(List<String> tenantIds, double splitAmount, String description) async {
+    if (tenantIds.isEmpty) return;
+
+    final tenant = tenants.where((t) => t.id == tenantIds.first).firstOrNull;
+    if (tenant != null && tenant.roomId.isNotEmpty) {
+      try {
+        await ApiService.generateRoomCurrentBill({
           'roomId': tenant.roomId,
           'totalAmount': splitAmount * tenantIds.length,
           'splitType': 'CUSTOM',
@@ -578,13 +579,11 @@ class AppProvider with ChangeNotifier {
             'value': splitAmount
           }).toList(),
           'description': description,
-        }).then((_) {
-          // Reload from API so the newly created bills appear correctly
-          // (they are now PENDING in the DB and will come back from fetchTenants)
-          loadFromAPI();
-        }).catchError((e) {
-          debugPrint('Error generating bill: $e');
         });
+        await loadFromAPI();
+      } catch (e) {
+        debugPrint('Error generating bill: $e');
+        rethrow;
       }
     }
 
@@ -599,11 +598,10 @@ class AppProvider with ChangeNotifier {
           date: DateTime.now(),
           billType: 'CURRENT',
         ));
-        // NOTE: isPaid is NOT touched — utility bills don't affect rent status.
       }
     }
 
-    saveToStorage();
+    await saveToStorage();
     notifyListeners();
   }
 

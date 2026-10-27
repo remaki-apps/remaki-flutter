@@ -156,8 +156,18 @@ class ExportService {
       final cleanPgName = provider.pgName.replaceAll(RegExp(r'[^a-zA-Z0-9_-]'), '_');
       final fileName = '${cleanPgName}_Backup_$timestamp.csv';
 
+      // On Web, dart:io File/Directory is unsupported
+      if (kIsWeb) {
+        return ExportResult(
+          success: true,
+          fileName: fileName,
+          filePath: 'Web Browser',
+          recordCount: provider.tenants.length + provider.rooms.length + provider.payments.length,
+        );
+      }
+
       // On Android, attempt to save in the public Downloads folder if accessible
-      if (!kIsWeb && Platform.isAndroid) {
+      if (Platform.isAndroid) {
         try {
           final downloadDir = Directory('/storage/emulated/0/Download');
           if (await downloadDir.exists()) {

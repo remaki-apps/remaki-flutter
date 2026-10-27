@@ -141,7 +141,10 @@ class _RentScreenState extends State<RentScreen> {
         expectedAmount = math.max(billsExpectedFromCharges, collectedAmount);
         pendingAmount = math.max(0.0, expectedAmount - collectedAmount);
         paidCount = allMonthCharges.where((item) => (item['charge'] as AdditionalCharge).status == 'PAID').map((item) => (item['tenant'] as Tenant).id).toSet().length;
-        unpaidCount = allMonthCharges.where((item) => (item['charge'] as AdditionalCharge).status == 'PENDING').map((item) => (item['tenant'] as Tenant).id).toSet().length;
+        unpaidCount = allMonthCharges.where((item) {
+          final s = (item['charge'] as AdditionalCharge).status;
+          return s == 'PENDING' || s == 'UNPAID';
+        }).map((item) => (item['tenant'] as Tenant).id).toSet().length;
       }
     }
 

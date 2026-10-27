@@ -66,10 +66,10 @@ class AdditionalCharge {
         id: json['id']?.toString() ?? '',
         description: json['description']?.toString() ?? '',
         amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
-        date: (DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now()).toLocal(),
-        billType: json['billType'] as String? ?? 'OTHER',
+        date: (DateTime.tryParse(json['date']?.toString() ?? json['createdAt']?.toString() ?? '') ?? DateTime.now()).toLocal(),
+        billType: (json['billType'] ?? json['type']) as String? ?? 'OTHER',
         status: json['status'] as String? ?? 'PENDING',
-        billDueDate: json['billDueDate'] != null ? DateTime.tryParse(json['billDueDate'] as String)?.toLocal() : null,
+        billDueDate: (json['billDueDate'] ?? json['dueDate']) != null ? DateTime.tryParse((json['billDueDate'] ?? json['dueDate']).toString())?.toLocal() : null,
       );
 }
 
@@ -199,9 +199,9 @@ class Tenant {
   }
 
   String get statusBadgeLabel {
-    if (isPaid || totalDue == 0) return 'PAID';
+    if (totalDue == 0) return 'PAID';
     if (isPending) return 'PENDING';
-    if (isPartiallyPaid) return 'PARTIAL';
+    if (isPartiallyPaid || (isPaid && totalPendingBills > 0)) return 'PARTIAL';
     if (isUpcoming) return 'UPCOMING';
     if (isOverdue) return 'OVERDUE';
     return 'UNPAID';
@@ -447,7 +447,9 @@ class Tenant {
         propertyId: json['propertyId'] as String? ?? (json['room'] != null && json['room']['propertyId'] != null ? json['room']['propertyId'].toString() : ''),
         rentDueDate: (DateTime.tryParse(json['rentDueDate']?.toString() ?? '') ?? DateTime.now()).toLocal(),
         pendingRentAmount: (json['pendingRentAmount'] as num?)?.toDouble() ?? 0,
-        additionalCharges: (json['additionalCharges'] as List<dynamic>?)?.map((e) => AdditionalCharge.fromJson(e as Map<String, dynamic>)).toList() ?? [],
+        additionalCharges: (json['additionalCharges'] as List<dynamic>?)?.map((e) => AdditionalCharge.fromJson(e as Map<String, dynamic>)).toList() ??
+            (json['bills'] as List<dynamic>?)?.map((e) => AdditionalCharge.fromJson(e as Map<String, dynamic>)).toList() ??
+            [],
         imageUrl: json['imageUrl'] as String?,
         credentialsSent: json['credentialsSent'] as bool? ?? false,
         password: (json['tempPassword'] ?? json['password']) as String? ?? generateEasyPassword(),

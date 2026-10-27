@@ -28,6 +28,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
   String _paymentType = 'BOTH';
   DateTime _paymentDate = DateTime.now();
   bool _isLoading = false;
+  bool _initializedTenant = false;
 
   @override
   void initState() {
@@ -89,6 +90,23 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
     final tenantIndex = appProvider.tenants.indexWhere((t) => t.id == widget.tenantId);
 
     if (tenantIndex == -1) {
+      if (appProvider.isLoading) {
+        return Scaffold(
+          backgroundColor: const Color(0xFFF8F9FD),
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
+              onPressed: () => context.canPop() ? context.pop() : context.go('/rent'),
+            ),
+            title: const Text('Record Payment'),
+          ),
+          body: const Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      }
       return Scaffold(
         backgroundColor: const Color(0xFFF8F9FD),
         appBar: AppBar(
@@ -96,7 +114,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Color(0xFF0F172A)),
-            onPressed: () => context.pop(),
+            onPressed: () => context.canPop() ? context.pop() : context.go('/rent'),
           ),
           title: const Text('Record Payment'),
         ),
@@ -107,6 +125,23 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
     }
 
     final tenant = appProvider.tenants[tenantIndex];
+    if (!_initializedTenant) {
+      _initializedTenant = true;
+      if (_amountController.text.isEmpty) {
+        if (tenant.totalDue > 0) {
+          _amountController.text = tenant.totalDue.toStringAsFixed(0);
+        } else if (tenant.rentAmount > 0) {
+          _amountController.text = tenant.rentAmount.toStringAsFixed(0);
+        }
+      }
+      if (tenant.pendingRentAmount > 0 && tenant.totalPendingBills == 0) {
+        _paymentType = 'RENT';
+      } else if (tenant.totalPendingBills > 0 && tenant.pendingRentAmount == 0) {
+        _paymentType = 'BILLS';
+      } else {
+        _paymentType = 'BOTH';
+      }
+    }
     final roomIndex = appProvider.rooms.indexWhere((r) => r.id == tenant.roomId);
     final roomNumber = roomIndex != -1 ? appProvider.rooms[roomIndex].number : 'N/A';
     final bedName = (roomIndex != -1)

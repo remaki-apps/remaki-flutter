@@ -178,8 +178,8 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         appProvider.prepareForLogin();
       }
 
-      // Save token in ApiService (persisted via SharedPreferences)
-      await ApiService.setAuthToken(token, role, hasSecurityPin: hasSecurityPin);
+      // Save token in ApiService (persisted via SharedPreferences only if _keepLoggedIn is true)
+      await ApiService.setAuthToken(token, role, hasSecurityPin: hasSecurityPin, persist: _keepLoggedIn);
 
       if (mounted) {
         if (role == 'ADMIN') {

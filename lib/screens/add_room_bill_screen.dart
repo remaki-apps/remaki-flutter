@@ -21,6 +21,7 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
   Set<String> _selectedTenantIds = {};
   double _totalAmount = 0.0;
   String? _selectedCategory;
+  bool _isSubmitting = false;
 
   final List<Map<String, dynamic>> _quickCategories = [
     {'label': 'Electricity', 'icon': Icons.bolt_rounded, 'color': Color(0xFFF59E0B)},
@@ -649,23 +650,40 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton.icon(
-                      onPressed: _selectedTenantIds.isEmpty || _totalAmount <= 0
+                      onPressed: _selectedTenantIds.isEmpty || _totalAmount <= 0 || _isSubmitting
                           ? null
-                          : () {
+                          : () async {
+                              setState(() => _isSubmitting = true);
                               final desc = _descController.text.trim().isEmpty
                                   ? 'Room Bill'
                                   : _descController.text.trim();
-                              appProvider.addBillToTenants(
-                                _selectedTenantIds.toList(),
-                                splitAmount,
-                                desc,
-                              );
-                              FancyToast.showSuccess(
-                                context,
-                                'Bill Split Successfully!',
-                                message: '₹${splitAmount.toStringAsFixed(2)} added to ${_selectedTenantIds.length} tenant(s).',
-                              );
-                              context.pop();
+                              try {
+                                await appProvider.addBillToTenants(
+                                  _selectedTenantIds.toList(),
+                                  splitAmount,
+                                  desc,
+                                );
+                                if (!context.mounted) return;
+                                FancyToast.showSuccess(
+                                  context,
+                                  'Bill Split Successfully!',
+                                  message: '₹${splitAmount.toStringAsFixed(2)} added to ${_selectedTenantIds.length} tenant(s).',
+                                );
+                                if (context.canPop()) {
+                                  context.pop();
+                                }
+                              } catch (e) {
+                                if (!context.mounted) return;
+                                FancyToast.showError(
+                                  context,
+                                  'Failed to split bill',
+                                  message: e.toString().replaceAll('Exception: ', ''),
+                                );
+                              } finally {
+                                if (mounted) {
+                                  setState(() => _isSubmitting = false);
+                                }
+                              }
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
@@ -673,10 +691,19 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
-                      icon: const Icon(Icons.receipt_long_rounded, color: Colors.white, size: 20),
-                      label: const Text(
-                        'Split Bill',
-                        style: TextStyle(
+                      icon: _isSubmitting
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.receipt_long_rounded, color: Colors.white, size: 20),
+                      label: Text(
+                        _isSubmitting ? 'Splitting Bill...' : 'Split Bill',
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
