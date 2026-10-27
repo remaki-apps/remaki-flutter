@@ -82,6 +82,7 @@ class PropertyItem {
   final String pincode;
   final String? description;
   final int totalFloors;
+  final double platformFee;
 
   PropertyItem({
     required this.id,
@@ -92,6 +93,7 @@ class PropertyItem {
     this.pincode = '',
     this.description,
     this.totalFloors = 0,
+    this.platformFee = 9.0,
   });
 
   factory PropertyItem.fromJson(Map<String, dynamic> json) => PropertyItem(
@@ -103,6 +105,7 @@ class PropertyItem {
         pincode: json['pincode']?.toString() ?? '',
         description: json['description']?.toString(),
         totalFloors: (json['totalFloors'] as num?)?.toInt() ?? 0,
+        platformFee: (json['platformFee'] as num?)?.toDouble() ?? 9.0,
       );
 
   Map<String, dynamic> toJson() => {
@@ -113,6 +116,7 @@ class PropertyItem {
         'state': state,
         'pincode': pincode,
         'description': description,
+        'platformFee': platformFee,
         'totalFloors': totalFloors,
       };
 }

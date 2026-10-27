@@ -490,6 +490,7 @@ class ApiService {
             pincode
             description
             totalFloors
+            platformFee
           }
         }
       }

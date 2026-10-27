@@ -64,12 +64,14 @@ class AppProvider with ChangeNotifier {
       if (propertyId == 'ALL' || propertyId == null) {
         pgName = 'All Properties';
         pgAddress = '${properties.length} Properties Managed';
+        platformFee = properties.isNotEmpty ? properties.first.platformFee : 9.0;
       } else {
         final currentProp = properties.firstWhere(
           (p) => p.id == propertyId,
           orElse: () => properties.first,
         );
         pgName = currentProp.name;
+        platformFee = currentProp.platformFee;
         final parts = [currentProp.address, currentProp.city, currentProp.state]
             .where((s) => s.trim().isNotEmpty)
             .toList();
@@ -135,12 +137,14 @@ class AppProvider with ChangeNotifier {
             if (selectedPropertyId == 'ALL') {
               pgName = 'All Properties';
               pgAddress = '${properties.length} Properties Managed';
+              platformFee = properties.isNotEmpty ? properties.first.platformFee : 9.0;
             } else {
               final currentProp = properties.firstWhere(
                 (p) => p.id == selectedPropertyId,
                 orElse: () => properties.first,
               );
               pgName = currentProp.name;
+              platformFee = currentProp.platformFee;
               final parts = [currentProp.address, currentProp.city, currentProp.state]
                   .where((s) => s.trim().isNotEmpty)
                   .toList();

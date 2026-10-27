@@ -621,15 +621,19 @@ class _AdminComplaintsScreenState extends State<AdminComplaintsScreen> {
                     Row(
                       children: [
                         if (complaint.roomNumber != null) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: Text(
-                              'Room ${complaint.roomNumber}${complaint.bedLabel != null ? " • ${complaint.bedLabel}" : ""}',
-                              style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: Text(
+                                'Room ${complaint.roomNumber}${complaint.bedLabel != null ? " • ${complaint.bedLabel}" : ""}',
+                                style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -660,26 +664,32 @@ class _AdminComplaintsScreenState extends State<AdminComplaintsScreen> {
           // Category + Status
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: (catInfo['color'] as Color).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(catInfo['icon'] as IconData, size: 13, color: catInfo['color'] as Color),
-                    const SizedBox(width: 4),
-                    Text(
-                      catInfo['label'] as String,
-                      style: GoogleFonts.lato(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: catInfo['color'] as Color,
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: (catInfo['color'] as Color).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(catInfo['icon'] as IconData, size: 13, color: catInfo['color'] as Color),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          catInfo['label'] as String,
+                          style: GoogleFonts.lato(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: catInfo['color'] as Color,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(width: 8),

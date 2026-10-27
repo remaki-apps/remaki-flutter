@@ -12,7 +12,6 @@ import '../widgets/tenant_avatar.dart';
 import '../widgets/app_shimmer.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/payment_splitup_card.dart';
-import '../widgets/export_data_modal.dart';
 // import '../providers/notification_provider.dart';
 // import '../widgets/in_app_notification_center.dart';
 
@@ -801,7 +800,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               iconColor: const Color(0xFF4F46E5),
               onTap: () => context.push('/add_tenant'),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             // Notice action
             _buildQuickActionButton(
               label: 'Notice',
@@ -810,7 +809,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               iconColor: const Color(0xFFD97706),
               onTap: () => context.push('/announcements'),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             _buildQuickActionButton(
               label: 'Unpaid Dues',
               icon: Icons.pending_actions_rounded,
@@ -819,7 +818,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               badgeCount: appProvider.unpaidTenants.length,
               onTap: () => context.push('/unpaid_tenants'),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             _buildQuickActionButton(
               label: 'Approvals',
               icon: Icons.fact_check_outlined,
@@ -831,11 +830,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _loadPendingApprovals();
               },
             ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
+            const SizedBox(width: 8),
             _buildQuickActionButton(
               label: 'Complaints',
               icon: Icons.assignment_late_outlined,
@@ -846,30 +841,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 await context.push('/admin_complaints');
                 _loadPendingComplaints();
               },
-            ),
-            const SizedBox(width: 10),
-            _buildQuickActionButton(
-              label: 'PG Owners',
-              icon: Icons.people_outline_rounded,
-              bgColor: const Color(0xFFEEF2FF),
-              iconColor: const Color(0xFF4338CA),
-              onTap: () => context.push('/pg_owners'),
-            ),
-            const SizedBox(width: 10),
-            _buildQuickActionButton(
-              label: 'Available',
-              icon: Icons.bed_outlined,
-              bgColor: const Color(0xFFF0FDF4),
-              iconColor: const Color(0xFF16A34A),
-              onTap: () => context.push('/available_beds'),
-            ),
-            const SizedBox(width: 10),
-            _buildQuickActionButton(
-              label: 'Export Data',
-              icon: Icons.cloud_download_outlined,
-              bgColor: const Color(0xFFF1F5F9),
-              iconColor: const Color(0xFF475569),
-              onTap: () => ExportDataModal.show(context),
             ),
           ],
         ),
@@ -889,10 +860,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
             boxShadow: const [
               BoxShadow(
@@ -909,20 +880,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 clipBehavior: Clip.none,
                 children: [
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
                       color: bgColor,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(icon, color: iconColor, size: 20),
+                    child: Icon(icon, color: iconColor, size: 18),
                   ),
                   if (badgeCount != null && badgeCount > 0)
                     Positioned(
                       top: -4,
                       right: -6,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
                         decoration: BoxDecoration(
                           color: const Color(0xFFDC2626),
                           borderRadius: BorderRadius.circular(10),
@@ -935,12 +906,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           ],
                         ),
-                        constraints: const BoxConstraints(minWidth: 16),
+                        constraints: const BoxConstraints(minWidth: 15),
                         child: Text(
                           '$badgeCount',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 9,
+                            fontSize: 8.5,
                             fontWeight: FontWeight.bold,
                           ),
                           textAlign: TextAlign.center,
@@ -949,13 +920,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
                   label,
                   style: GoogleFonts.lato(
-                    fontSize: 11.5,
+                    fontSize: 10.5,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF334155),
                   ),

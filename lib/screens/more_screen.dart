@@ -384,17 +384,6 @@ class MoreScreen extends StatelessWidget {
                   const SizedBox(height: 8),
 
                   _buildActionCard(
-                    icon: Icons.people_outline_rounded,
-                    iconColor: const Color(0xFF4338CA),
-                    iconBg: const Color(0xFFEEF2FF),
-                    title: 'PG Owners & Logins',
-                    subtitle: 'Manage co-owners (up to 10 phone number logins)',
-                    badge: 'Up to 10',
-                    onTap: () => context.push('/pg_owners'),
-                  ),
-                  const SizedBox(height: 8),
-
-                  _buildActionCard(
                     icon: Icons.assignment_late_outlined,
                     iconColor: const Color(0xFFD97706),
                     iconBg: const Color(0xFFFEF3C7),

@@ -127,6 +127,8 @@ final router = GoRouter(
       const allowedTenantRoutes = {
         '/tenant_home',
         '/tenant_my_profile',
+        '/tenant_complaints',
+        '/announcements',
         '/setup_security_pin',
         '/about',
         '/terms',
@@ -326,7 +328,11 @@ final router = GoRouter(
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/tenant_complaints',
-      builder: (context, state) => const TenantComplaintsScreen(),
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: const TenantComplaintsScreen(),
+      ),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

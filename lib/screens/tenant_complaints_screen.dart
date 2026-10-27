@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -477,7 +478,13 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF0F172A), size: 18),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/tenant_home');
+            }
+          },
         ),
         title: Text(
           'My Complaints',
@@ -683,28 +690,35 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: (catInfo['color'] as Color).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(catInfo['icon'] as IconData, size: 13, color: catInfo['color'] as Color),
-                    const SizedBox(width: 4),
-                    Text(
-                      catInfo['label'] as String,
-                      style: GoogleFonts.lato(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: catInfo['color'] as Color,
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: (catInfo['color'] as Color).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(catInfo['icon'] as IconData, size: 13, color: catInfo['color'] as Color),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          catInfo['label'] as String,
+                          style: GoogleFonts.lato(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: catInfo['color'] as Color,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
@@ -806,10 +820,17 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
                         style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.primaryColor),
                       ),
                       if (complaint.repliedAt != null) ...[
-                        const Spacer(),
-                        Text(
-                          DateFormat('dd MMM, hh:mm a').format(complaint.repliedAt!),
-                          style: GoogleFonts.lato(fontSize: 10.5, color: const Color(0xFF6366F1)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              DateFormat('dd MMM, hh:mm a').format(complaint.repliedAt!),
+                              style: GoogleFonts.lato(fontSize: 10.5, color: const Color(0xFF6366F1)),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ),
                       ],
                     ],
