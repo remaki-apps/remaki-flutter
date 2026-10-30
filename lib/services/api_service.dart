@@ -1201,4 +1201,39 @@ class ApiService {
     });
     return data['updateComplaintStatus'] as Map<String, dynamic>;
   }
+
+  static Future<Map<String, dynamic>> fetchPropertyPlatformFeeSummary({
+    String? propertyId,
+    String? month,
+  }) async {
+    const String query = '''
+      query PropertyPlatformFeeSummary(\$propertyId: ID, \$month: String) {
+        propertyPlatformFeeSummary(propertyId: \$propertyId, month: \$month) {
+          propertyId
+          propertyName
+          billingMonth
+          monthlyPlatformFeeCollected
+          feePerTenant
+          totalTenantsContributed
+          resetsOn
+          items {
+            id
+            tenantName
+            tenantPhone
+            roomNumber
+            bedLabel
+            amount
+            month
+            status
+            date
+          }
+        }
+      }
+    ''';
+    final data = await performQuery(query, variables: {
+      if (propertyId != null) 'propertyId': propertyId,
+      if (month != null) 'month': month,
+    });
+    return data['propertyPlatformFeeSummary'] as Map<String, dynamic>;
+  }
 }

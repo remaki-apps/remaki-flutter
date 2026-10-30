@@ -42,6 +42,7 @@ import 'config/env_config.dart';
 import 'screens/pg_owners_screen.dart';
 import 'screens/tenant_complaints_screen.dart';
 import 'screens/admin_complaints_screen.dart';
+import 'screens/platform_fee_summary_screen.dart';
 
 Future<void> bootstrapApp() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -366,6 +367,11 @@ final router = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/unpaid_tenants',
       builder: (context, state) => UnpaidTenantsScreen(filter: state.uri.queryParameters['filter']),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/platform_fee_summary',
+      builder: (context, state) => const PlatformFeeSummaryScreen(),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

@@ -25,6 +25,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _pendingApprovalsCount = 0;
   int _pendingComplaintsCount = 0;
+  double _monthlyPlatformFeeCollected = 0.0;
   bool _isLoadingApprovals = false;
   bool _isPaymentHistoryExpanded = false;
   final Set<String> _expandedPaymentIds = {};
@@ -40,7 +41,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
       _loadPendingApprovals();
       _loadPendingComplaints();
+      _loadPlatformFeeSummary();
     });
+  }
+
+  Future<void> _loadPlatformFeeSummary() async {
+    try {
+      final appProvider = Provider.of<AppProvider>(context, listen: false);
+      final propId = appProvider.selectedPropertyId != 'ALL' ? appProvider.selectedPropertyId : null;
+      final data = await ApiService.fetchPropertyPlatformFeeSummary(propertyId: propId);
+      if (mounted) {
+        setState(() {
+          _monthlyPlatformFeeCollected = (data['monthlyPlatformFeeCollected'] as num?)?.toDouble() ?? 0.0;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadPendingComplaints() async {
@@ -102,6 +117,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appProvider.loadFromAPI(),
       _loadPendingApprovals(),
       _loadPendingComplaints(),
+      _loadPlatformFeeSummary(),
     ]);
     if (mounted && appProvider.lastSyncError != null) {
       FancyToast.showError(
@@ -791,6 +807,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         const SizedBox(height: 10),
+        // Row 1: Add Tenant, Notice, Unpaid Dues
         Row(
           children: [
             _buildQuickActionButton(
@@ -801,7 +818,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onTap: () => context.push('/add_tenant'),
             ),
             const SizedBox(width: 8),
-            // Notice action
             _buildQuickActionButton(
               label: 'Notice',
               icon: Icons.campaign_rounded,
@@ -818,7 +834,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               badgeCount: appProvider.unpaidTenants.length,
               onTap: () => context.push('/unpaid_tenants'),
             ),
-            const SizedBox(width: 8),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // Row 2: Approvals, Complaints, Platform Fee
+        Row(
+          children: [
             _buildQuickActionButton(
               label: 'Approvals',
               icon: Icons.fact_check_outlined,
@@ -842,6 +863,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _loadPendingComplaints();
               },
             ),
+            const SizedBox(width: 8),
+            _buildQuickActionButton(
+              label: 'Platform Fee',
+              icon: Icons.receipt_long_rounded,
+              bgColor: const Color(0xFFF0FDFA),
+              iconColor: const Color(0xFF0D9488),
+              subLabel: '₹${_monthlyPlatformFeeCollected.toStringAsFixed(0)}',
+              subLabelColor: const Color(0xFF0D9488),
+              onTap: () async {
+                await context.push('/platform_fee_summary');
+                _loadPlatformFeeSummary();
+              },
+            ),
           ],
         ),
       ],
@@ -854,13 +888,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required Color bgColor,
     required Color iconColor,
     int? badgeCount,
+    String? subLabel,
+    Color? subLabelColor,
     required VoidCallback onTap,
   }) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
@@ -886,7 +922,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       color: bgColor,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(icon, color: iconColor, size: 18),
+                    child: Icon(icon, color: iconColor, size: 19),
                   ),
                   if (badgeCount != null && badgeCount > 0)
                     Positioned(
@@ -925,8 +961,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   label,
-                  style: GoogleFonts.lato(
-                    fontSize: 10.5,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF334155),
                   ),
@@ -935,6 +971,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   textAlign: TextAlign.center,
                 ),
               ),
+              if (subLabel != null) ...[
+                const SizedBox(height: 3),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: (subLabelColor ?? const Color(0xFF0D9488)).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    subLabel,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: subLabelColor ?? const Color(0xFF0D9488),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
