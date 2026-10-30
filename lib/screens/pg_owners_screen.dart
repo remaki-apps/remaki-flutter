@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -161,6 +162,10 @@ class _PgOwnersScreenState extends State<PgOwnersScreen> {
                 TextField(
                   controller: phoneCtrl,
                   keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
                   decoration: _inputDecoration(
                     hint: '10-digit mobile number',
                     icon: Icons.phone_android_rounded,
@@ -245,6 +250,11 @@ class _PgOwnersScreenState extends State<PgOwnersScreen> {
 
                             if (name.isEmpty || phone.isEmpty || pass.isEmpty) {
                               setModalState(() => modalError = 'Please fill in all required fields.');
+                              return;
+                            }
+
+                            if (phone.length != 10) {
+                              setModalState(() => modalError = 'Mobile number must be exactly 10 digits.');
                               return;
                             }
 

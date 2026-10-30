@@ -98,48 +98,56 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
     final mediaQuery = MediaQuery.of(context);
     final availableHeight = mediaQuery.size.height;
     final keyboardPadding = mediaQuery.viewInsets.bottom;
+    final isKeyboardOpen = keyboardPadding > 0;
 
-    return AnimatedPadding(
-      padding: EdgeInsets.only(bottom: keyboardPadding),
-      duration: const Duration(milliseconds: 150),
-      child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: Colors.white,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        child: Container(
-          constraints: BoxConstraints(
-            maxWidth: 450,
-            maxHeight: (availableHeight * 0.85).clamp(300.0, 700.0),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'Edit Financials',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+    final maxDialogHeight = isKeyboardOpen
+        ? (availableHeight - keyboardPadding - 32.0).clamp(240.0, 560.0)
+        : (availableHeight * 0.85).clamp(300.0, 720.0);
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: Colors.white,
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: isKeyboardOpen ? 12 : 24,
+      ),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        constraints: BoxConstraints(
+          maxWidth: 450,
+          maxHeight: maxDialogHeight,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Edit Financials',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => context.pop(),
-                        child: const Icon(Icons.close, color: Color(0xFF64748B)),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => context.pop(),
+                      child: const Icon(Icons.close, color: Color(0xFF64748B)),
+                    ),
+                  ],
+                ),
               const SizedBox(height: 20),
               
               const Text('Monthly Rent (₹)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF334155))),
@@ -219,8 +227,7 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
         ),
       ),
     ),
-  ),
-);
+  );
 }
 
   InputDecoration _inputDecoration() {

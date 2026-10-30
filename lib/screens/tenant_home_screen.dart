@@ -3036,28 +3036,35 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(7),
-                  decoration: BoxDecoration(
-                    color: TenantTheme.primarySoft,
-                    borderRadius: BorderRadius.circular(10),
+            Expanded(
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: TenantTheme.primarySoft,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.history_rounded, color: TenantTheme.primary, size: 17),
                   ),
-                  child: const Icon(Icons.history_rounded, color: TenantTheme.primary, size: 17),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'Payment History',
-                  style: GoogleFonts.lato(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: TenantTheme.textPrimary,
-                    letterSpacing: -0.4,
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Text(
+                      'Payment History',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.lato(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: TenantTheme.textPrimary,
+                        letterSpacing: -0.4,
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
+            const SizedBox(width: 8),
             if (isHomepage)
               GestureDetector(
                 onTap: () => setState(() => _currentNavIndex = 1),
@@ -3123,42 +3130,50 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 onPressed: _prevPaymentMonth,
                 tooltip: 'Previous Month',
               ),
-              GestureDetector(
-                onTap: isCurrentMonth ? null : _resetToCurrentPaymentMonth,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.calendar_month_rounded, size: 15, color: TenantTheme.primary),
-                    const SizedBox(width: 6),
-                    Text(
-                      selectedMonthStr,
-                      style: GoogleFonts.lato(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF0F172A),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6.5, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: isCurrentMonth ? const Color(0xFFEEF2FF) : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: isCurrentMonth ? const Color(0xFFC7D2FE) : const Color(0xFFE2E8F0),
-                          width: 0.6,
+              Expanded(
+                child: Center(
+                  child: GestureDetector(
+                    onTap: isCurrentMonth ? null : _resetToCurrentPaymentMonth,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.calendar_month_rounded, size: 15, color: TenantTheme.primary),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            selectedMonthStr,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.lato(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF0F172A),
+                            ),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        isCurrentMonth ? 'Current' : 'Reset',
-                        style: GoogleFonts.lato(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w700,
-                          color: isCurrentMonth ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6.5, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isCurrentMonth ? const Color(0xFFEEF2FF) : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: isCurrentMonth ? const Color(0xFFC7D2FE) : const Color(0xFFE2E8F0),
+                              width: 0.6,
+                            ),
+                          ),
+                          child: Text(
+                            isCurrentMonth ? 'Current' : 'Reset',
+                            style: GoogleFonts.lato(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              color: isCurrentMonth ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
               IconButton(
@@ -3177,56 +3192,66 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         // Monthly Summary Metric Card (Frosted Glass Container)
         _buildGlassContainer(
           borderRadius: 16,
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: totalPaidThisMonth > 0 ? const Color(0xFFECFDF5) : const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: totalPaidThisMonth > 0 ? const Color(0xFFA7F3D0) : const Color(0xFFE2E8F0),
-                        width: 0.8,
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.account_balance_wallet_rounded,
-                      size: 18,
-                      color: totalPaidThisMonth > 0 ? const Color(0xFF10B981) : const Color(0xFF64748B),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'TOTAL PAID FOR ${selectedMonthStr.toUpperCase()}',
-                        style: GoogleFonts.lato(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: TenantTheme.textMuted,
-                          letterSpacing: 0.4,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: totalPaidThisMonth > 0 ? const Color(0xFFECFDF5) : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: totalPaidThisMonth > 0 ? const Color(0xFFA7F3D0) : const Color(0xFFE2E8F0),
+                          width: 0.8,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '₹${NumberFormat('#,##,###').format(totalPaidThisMonth)}',
-                        style: GoogleFonts.lato(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: TenantTheme.textPrimary,
-                          letterSpacing: -0.4,
-                        ),
+                      child: Icon(
+                        Icons.account_balance_wallet_rounded,
+                        size: 18,
+                        color: totalPaidThisMonth > 0 ? const Color(0xFF10B981) : const Color(0xFF64748B),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'TOTAL PAID FOR ${selectedMonthStr.toUpperCase()}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.lato(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: TenantTheme.textMuted,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '₹${NumberFormat('#,##,###').format(totalPaidThisMonth)}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.lato(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: TenantTheme.textPrimary,
+                              letterSpacing: -0.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                 decoration: BoxDecoration(

@@ -490,13 +490,6 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
           'My Complaints',
           style: GoogleFonts.lato(fontWeight: FontWeight.w800, fontSize: 18, color: const Color(0xFF0F172A)),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF0F172A)),
-            onPressed: _fetchComplaints,
-            tooltip: 'Refresh',
-          ),
-        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(color: const Color(0xFFF1F5F9), height: 1),
