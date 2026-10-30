@@ -12,6 +12,14 @@ class RoomDetailsScreen extends StatelessWidget {
   final String roomId;
   const RoomDetailsScreen({super.key, required this.roomId});
 
+  void _navigateBack(BuildContext context) {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/rooms');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
@@ -29,37 +37,46 @@ class RoomDetailsScreen extends StatelessWidget {
           ),
         );
       }
-      return Scaffold(
-        backgroundColor: const Color(0xFFF8F9FD),
-        body: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => context.canPop() ? context.pop() : context.go('/rooms'),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: const Color(0xFFF1F5F9)),
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) {
+            _navigateBack(context);
+          }
+        },
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF8F9FD),
+          body: SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _navigateBack(context),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xFFF1F5F9)),
+                          ),
+                          child: const Icon(Icons.arrow_back, color: Color(0xFF0F172A), size: 20),
                         ),
-                        child: const Icon(Icons.arrow_back, color: Color(0xFF0F172A), size: 20),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const Expanded(
-                child: Center(
-                  child: Text('Room not found', style: TextStyle(color: Color(0xFF64748B))),
+                const Expanded(
+                  child: Center(
+                    child: Text('Room not found', style: TextStyle(color: Color(0xFF64748B))),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
@@ -69,37 +86,45 @@ class RoomDetailsScreen extends StatelessWidget {
     final totalMonthlyRent = roomTenants.fold(0.0, (sum, t) => sum + t.rentAmount);
     final occupiedBeds = room.capacity - room.availableBeds;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () => appProvider.loadFromAPI(),
-          color: AppTheme.primaryColor,
-          child: appProvider.isLoading
-              ? const SimpleListSkeleton()
-              : Column(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          _navigateBack(context);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F9FD),
+        body: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: () => appProvider.loadFromAPI(),
+            color: AppTheme.primaryColor,
+            child: appProvider.isLoading
+                ? const SimpleListSkeleton()
+                : Column(
+                    children: [
+              // Top Header Row
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                child: Row(
                   children: [
-            // Top Header Row
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => context.pop(),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFF1F5F9)),
-                        boxShadow: const [
-                          BoxShadow(color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 2)),
-                        ],
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _navigateBack(context),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFFF1F5F9)),
+                          boxShadow: const [
+                            BoxShadow(color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 2)),
+                          ],
+                        ),
+                        child: const Icon(Icons.arrow_back, color: Color(0xFF0F172A), size: 20),
                       ),
-                      child: const Icon(Icons.arrow_back, color: Color(0xFF0F172A), size: 20),
                     ),
-                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -309,7 +334,7 @@ class RoomDetailsScreen extends StatelessWidget {
                     elevation: 2,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  onPressed: () => context.push('/add_room_bill/${room.id}'),
+                  onPressed: () => context.push('/enter_split_amount/${room.id}'),
                 ),
               ),
             ),
@@ -317,7 +342,8 @@ class RoomDetailsScreen extends StatelessWidget {
         ),
       ),
     ),
-    );
+  ),
+);
   }
 
   Widget _buildSummaryBox({
