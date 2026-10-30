@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../config/env_config.dart';
+
 class ApiException implements Exception {
   final String message;
   ApiException(this.message);
@@ -14,24 +16,8 @@ class ApiException implements Exception {
 }
 
 class ApiService {
-  static const String _prodUrl = 'https://remaki-backend.onrender.com/graphql';
-  static const String _defaultQaUrl = 'https://remaki-backend-qa.onrender.com/graphql';
-
-  static String get _baseUrl {
-    // 1. Explicit override via --dart-define=API_URL=...
-    const customUrl = String.fromEnvironment('API_URL');
-    if (customUrl.isNotEmpty) return customUrl;
-
-    // 2. Automatic Web Host detection
-    if (kIsWeb) {
-      final host = Uri.base.host.toLowerCase();
-      if (host.contains('qa') || host.contains('preview')) {
-        return _defaultQaUrl;
-      }
-    }
-
-    return _prodUrl;
-  }
+  static String get _baseUrl => EnvConfig.apiUrl;
+  static String get baseUrl => EnvConfig.apiUrl;
   // Note: Appending /graphql as this is a GraphQL backend
 
   static final ValueNotifier<bool> authNotifier = ValueNotifier<bool>(isLoggedIn);
@@ -183,10 +169,10 @@ class ApiService {
     _lastWarmupTime = now;
     try {
       http
-          .get(Uri.parse('https://remaki-backend.onrender.com/'))
+          .get(Uri.parse(EnvConfig.warmupUrl))
           .timeout(const Duration(seconds: 15))
           .then((_) {
-            debugPrint('Render backend warmup ping acknowledged.');
+            debugPrint('Render backend warmup ping acknowledged (${EnvConfig.appName}).');
           })
           .catchError((e) {
             debugPrint('Render backend warmup ping dispatched ($e).');

@@ -37,11 +37,12 @@ import 'screens/privacy_policy_screen.dart';
 import 'screens/help_support_screen.dart';
 import 'screens/payment_history_screen.dart';
 import 'screens/splash_screen.dart';
+import 'config/env_config.dart';
 import 'screens/pg_owners_screen.dart';
 import 'screens/tenant_complaints_screen.dart';
 import 'screens/admin_complaints_screen.dart';
 
-void main() async {
+Future<void> bootstrapApp() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(
@@ -64,6 +65,11 @@ void main() async {
       child: const RemakiApp(),
     ),
   );
+}
+
+void main() async {
+  EnvConfig.initialize(Environment.prod);
+  await bootstrapApp();
 }
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -426,13 +432,33 @@ class RemakiApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'Remaki',
+    Widget app = MaterialApp.router(
+      title: EnvConfig.appName,
       theme: AppTheme.lightTheme,
       scrollBehavior: const AppScrollBehavior(),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );
+
+    if (EnvConfig.isQa) {
+      app = Directionality(
+        textDirection: TextDirection.ltr,
+        child: Banner(
+          message: 'QA',
+          location: BannerLocation.topEnd,
+          color: const Color(0xFFEAB308),
+          textStyle: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            letterSpacing: 1.0,
+          ),
+          child: app,
+        ),
+      );
+    }
+
+    return app;
   }
 }
 
