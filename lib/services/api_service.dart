@@ -14,7 +14,24 @@ class ApiException implements Exception {
 }
 
 class ApiService {
-  static const String _baseUrl = 'https://remaki-backend.onrender.com/graphql';
+  static const String _prodUrl = 'https://remaki-backend.onrender.com/graphql';
+  static const String _defaultQaUrl = 'https://remaki-backend-qa.onrender.com/graphql';
+
+  static String get _baseUrl {
+    // 1. Explicit override via --dart-define=API_URL=...
+    const customUrl = String.fromEnvironment('API_URL');
+    if (customUrl.isNotEmpty) return customUrl;
+
+    // 2. Automatic Web Host detection
+    if (kIsWeb) {
+      final host = Uri.base.host.toLowerCase();
+      if (host.contains('qa') || host.contains('preview')) {
+        return _defaultQaUrl;
+      }
+    }
+
+    return _prodUrl;
+  }
   // Note: Appending /graphql as this is a GraphQL backend
 
   static final ValueNotifier<bool> authNotifier = ValueNotifier<bool>(isLoggedIn);
