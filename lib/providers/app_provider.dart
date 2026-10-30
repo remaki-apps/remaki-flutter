@@ -610,6 +610,52 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> addBillWithCustomSplits({
+    required String roomId,
+    required double totalAmount,
+    required Map<String, double> splitsByTenantId,
+    required String description,
+  }) async {
+    final nonZeroSplits = splitsByTenantId.entries.where((e) => e.value > 0).toList();
+    if (nonZeroSplits.isEmpty) return;
+
+    try {
+      await ApiService.generateRoomCurrentBill({
+        'roomId': roomId,
+        'totalAmount': totalAmount,
+        'splitType': 'CUSTOM',
+        'customSplits': nonZeroSplits.map((e) => {
+          'tenantProfileId': e.key,
+          'value': e.value,
+        }).toList(),
+        'description': description,
+      });
+      await loadFromAPI();
+    } catch (e) {
+      debugPrint('Error generating custom split bill: $e');
+      rethrow;
+    }
+
+    // Optimistically add charges to local state so the UI updates immediately
+    for (var entry in nonZeroSplits) {
+      final tenantId = entry.key;
+      final amount = entry.value;
+      final idx = tenants.indexWhere((t) => t.id == tenantId);
+      if (idx != -1) {
+        tenants[idx].additionalCharges.add(AdditionalCharge(
+          id: 'ac_${DateTime.now().millisecondsSinceEpoch}_$tenantId',
+          description: description,
+          amount: amount,
+          date: DateTime.now(),
+          billType: 'CURRENT',
+        ));
+      }
+    }
+
+    await saveToStorage();
+    notifyListeners();
+  }
+
   Future<void> allocateTenant(String tenantId, String roomId, String bedId, {
     double rentAmount = 0.0,
     double securityDeposit = 0.0,

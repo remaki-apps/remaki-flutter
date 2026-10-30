@@ -14,6 +14,7 @@ import 'screens/dashboard_screen.dart';
 import 'screens/rooms_screen.dart';
 import 'screens/room_details_screen.dart';
 import 'screens/add_room_bill_screen.dart';
+import 'screens/enter_split_amount_screen.dart';
 import 'screens/add_tenant_screen.dart';
 import 'screens/allocate_tenant_screen.dart';
 import 'screens/tenants_screen.dart';
@@ -227,12 +228,28 @@ final router = GoRouter(
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
-      path: '/add_room_bill/:roomId',
+      path: '/enter_split_amount/:roomId',
       pageBuilder: (context, state) => _buildPageWithTransition(
         context: context,
         state: state,
-        child: AddRoomBillScreen(roomId: state.pathParameters['roomId']!),
+        child: EnterSplitAmountScreen(roomId: state.pathParameters['roomId']!),
       ),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/add_room_bill/:roomId',
+      pageBuilder: (context, state) {
+        final amountStr = state.uri.queryParameters['amount'];
+        final initialAmount = amountStr != null ? double.tryParse(amountStr) : (state.extra as double?);
+        return _buildPageWithTransition(
+          context: context,
+          state: state,
+          child: AddRoomBillScreen(
+            roomId: state.pathParameters['roomId']!,
+            initialAmount: initialAmount,
+          ),
+        );
+      },
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
