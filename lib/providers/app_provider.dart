@@ -414,7 +414,7 @@ class AppProvider with ChangeNotifier {
   List<Tenant> get unpaidRentTenants => currentTenants.where((t) => t.pendingRentAmount > 0).toList();
   List<Tenant> get unpaidBillsTenants => currentTenants.where((t) => t.totalPendingBills > 0).toList();
 
-  Future<String?> addTenant(Tenant tenant) async {
+  Future<String?> addTenant(Tenant tenant, {int dueDay = 5}) async {
     tenants.add(tenant);
     // update bed status if assigned
     final roomIdx = rooms.indexWhere((r) => r.id == tenant.roomId);
@@ -436,7 +436,7 @@ class AppProvider with ChangeNotifier {
         'bedId': tenant.bedId.isNotEmpty ? tenant.bedId : null,
         'monthlyRent': tenant.rentAmount,
         'securityDeposit': tenant.securityDeposit,
-        'dueDay': 5,
+        'dueDay': dueDay,
         'moveInDate': tenant.moveInDate.toIso8601String(),
       });
       await loadFromAPI();

@@ -684,6 +684,18 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
       return;
     }
 
+    final dueDayMatch = RegExp(r'\d+').firstMatch(_rentDueDate);
+    final selectedDueDay = dueDayMatch != null ? int.tryParse(dueDayMatch.group(0)!) ?? 5 : 5;
+
+    DateTime firstDueDate;
+    if (_moveInDate.day > selectedDueDay) {
+      firstDueDate = DateTime(_moveInDate.year, _moveInDate.month + 1, selectedDueDay);
+    } else {
+      firstDueDate = DateTime(_moveInDate.year, _moveInDate.month, selectedDueDay);
+    }
+
+    final isUpcomingCycle = DateTime.now().isBefore(DateTime(firstDueDate.year, firstDueDate.month, firstDueDate.day));
+
     var tenant = Tenant(
       id: 't_${DateTime.now().millisecondsSinceEpoch}',
       name: _nameController.text.trim(),
@@ -695,8 +707,9 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
       moveInDate: _moveInDate,
       rentAmount: double.tryParse(_rentController.text) ?? 0.0,
       securityDeposit: double.tryParse(_securityController.text) ?? 0.0,
-      rentDueDate: DateTime.now().add(const Duration(days: 30)),
-      pendingRentAmount: double.tryParse(_rentController.text) ?? 0.0,
+      rentDueDate: firstDueDate,
+      pendingRentAmount: isUpcomingCycle ? 0.0 : (double.tryParse(_rentController.text) ?? 0.0),
+      paymentStatus: isUpcomingCycle ? 'UPCOMING' : 'UNPAID',
     );
 
     final room = provider.rooms.firstWhere(
@@ -707,7 +720,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
     setState(() => _isLoading = true);
     
     try {
-      final tempPassword = await provider.addTenant(tenant);
+      final tempPassword = await provider.addTenant(tenant, dueDay: selectedDueDay);
 
       if (!mounted) return;
       

@@ -196,30 +196,31 @@ class Tenant {
   bool get isPartiallyPaid => paymentStatus == 'PARTIAL' || (pendingRentAmount > 0 && pendingRentAmount < rentAmount);
 
   bool get isUpcoming {
-    if (isPaid || isPending || isPartiallyPaid) return false;
+    if (paymentStatus == 'PAID' && isPaid) return false;
+    if (isPending || isPartiallyPaid) return false;
     if (paymentStatus == 'UPCOMING') return true;
-    if (paymentStatus == 'OVERDUE' || paymentStatus == 'UNPAID') return false;
+    if (paymentStatus == 'OVERDUE') return false;
     final dueStart = DateTime(rentDueDate.year, rentDueDate.month, rentDueDate.day);
     return DateTime.now().isBefore(dueStart);
   }
 
   bool get isOverdue {
-    if (isPaid || isPending || isPartiallyPaid) return false;
+    if (isPaid || isPending || isPartiallyPaid || isUpcoming) return false;
     if (paymentStatus == 'OVERDUE') return true;
     final graceDate = DateTime(rentDueDate.year, rentDueDate.month, rentDueDate.day).add(const Duration(days: 3));
     return DateTime.now().isAfter(graceDate);
   }
 
   bool get isUnpaid {
-    if (isPaid || isPending || isPartiallyPaid) return false;
-    return !isUpcoming && !isOverdue;
+    if (isPaid || isPending || isPartiallyPaid || isUpcoming || isOverdue) return false;
+    return true;
   }
 
   String get statusBadgeLabel {
-    if (totalDue == 0) return 'PAID';
+    if (isUpcoming) return 'UPCOMING';
     if (isPending) return 'PENDING';
     if (isPartiallyPaid || (isPaid && totalPendingBills > 0)) return 'PARTIAL';
-    if (isUpcoming) return 'UPCOMING';
+    if (totalDue == 0 || isPaid) return 'PAID';
     if (isOverdue) return 'OVERDUE';
     return 'UNPAID';
   }

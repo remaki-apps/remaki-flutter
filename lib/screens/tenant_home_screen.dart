@@ -255,8 +255,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           (profile['paymentStatus'] == 'REJECTED' ||
            (rawRejection != null && rawRejection.isNotEmpty));
 
-      // 4. Mark paid via totalDueAmount <= 0 only if not pending and not rejected
-      if (!isPaid && !isPendingApproval && !isBackendRejected && totalDueAmount <= 0) {
+      bool isUpcomingCycle = profile['paymentStatus'] == 'UPCOMING';
+
+      // 4. Mark paid via totalDueAmount <= 0 only if not pending, not rejected, and not upcoming
+      if (!isPaid && !isPendingApproval && !isBackendRejected && !isUpcomingCycle && totalDueAmount <= 0) {
         isPaid = true;
       }
 
@@ -1077,8 +1079,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     final isPending = _hasSubmittedForApproval ||
         _profileData?['paymentStatus'] == 'PENDING' ||
         _profileData?['hasPendingRequest'] == true;
-    final isPaid = !isPending && _totalDue <= 0;
-    final isUpcoming = !isPaid && !isPending && (_profileData?['paymentStatus'] == 'UPCOMING' || (_profileData?['paymentStatus'] != 'UNPAID' && _profileData?['rentDueDate'] != null && DateTime.now().isBefore(DateTime.parse(_profileData!['rentDueDate'].toString()).add(const Duration(days: 1)))));
+    final isUpcoming = !isPending && (_profileData?['paymentStatus'] == 'UPCOMING' || (_profileData?['paymentStatus'] != 'UNPAID' && _profileData?['rentDueDate'] != null && DateTime.now().isBefore(DateTime.parse(_profileData!['rentDueDate'].toString()).add(const Duration(days: 1)))));
+    final isPaid = !isPending && !isUpcoming && _totalDue <= 0;
 
     final double displayRentAmount = _totalDue > 0
         ? _totalDue
@@ -2012,8 +2014,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     final isPending = _hasSubmittedForApproval ||
         _profileData?['paymentStatus'] == 'PENDING' ||
         _profileData?['hasPendingRequest'] == true;
-    final isPaid = !isPending && _totalDue <= 0;
-    final isUpcoming = !isPaid && !isPending && (_profileData?['paymentStatus'] == 'UPCOMING' || (_profileData?['paymentStatus'] != 'UNPAID' && _profileData?['rentDueDate'] != null && DateTime.now().isBefore(DateTime.parse(_profileData!['rentDueDate'].toString()).add(const Duration(days: 1)))));
+    final isUpcoming = !isPending && (_profileData?['paymentStatus'] == 'UPCOMING' || (_profileData?['paymentStatus'] != 'UNPAID' && _profileData?['rentDueDate'] != null && DateTime.now().isBefore(DateTime.parse(_profileData!['rentDueDate'].toString()).add(const Duration(days: 1)))));
+    final isPaid = !isPending && !isUpcoming && _totalDue <= 0;
     final double monthlyRentVal = ((_profileData?['monthlyRent'] as num?)?.toDouble() ?? 0.0);
     final double displayRent = _totalDue > 0 ? _totalDue : monthlyRentVal;
     final rentDueDateStr = _profileData?['rentDueDate'] != null
@@ -3022,10 +3024,18 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           statusColor = TenantTheme.danger;
         }
       } else {
-        statusBadge = 'NO DUES';
-        statusBg = const Color(0xFFF1F5F9);
-        statusBorder = const Color(0xFFCBD5E1);
-        statusColor = const Color(0xFF64748B);
+        final isUpcomingCycle = _profileData?['paymentStatus'] == 'UPCOMING';
+        if (isUpcomingCycle) {
+          statusBadge = 'UPCOMING';
+          statusBg = const Color(0xFFEFF6FF);
+          statusBorder = const Color(0xFFBFDBFE);
+          statusColor = const Color(0xFF2563EB);
+        } else {
+          statusBadge = 'NO DUES';
+          statusBg = const Color(0xFFF1F5F9);
+          statusBorder = const Color(0xFFCBD5E1);
+          statusColor = const Color(0xFF64748B);
+        }
       }
     } else if (isPastMonth) {
       statusBadge = 'NO PAYMENTS';
