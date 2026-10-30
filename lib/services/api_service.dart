@@ -434,6 +434,10 @@ class ApiService {
           }
           pendingConvenienceFee
           platformFee
+          propertyId
+          propertyName
+          propertyUpiId
+          propertyUpiPayeeName
         }
       }
     ''';
@@ -494,6 +498,8 @@ class ApiService {
             description
             totalFloors
             platformFee
+            upiId
+            upiPayeeName
           }
         }
       }
@@ -504,6 +510,35 @@ class ApiService {
     } catch (e) {
       debugPrint('Error fetching admin profile: $e');
       return null;
+    }
+  }
+
+  static Future<bool> updatePropertyUpi({
+    required String propertyId,
+    required String upiId,
+    String? upiPayeeName,
+  }) async {
+    const mutation = '''
+      mutation UpdateProperty(\$id: ID!, \$input: UpdatePropertyInput!) {
+        updateProperty(id: \$id, input: \$input) {
+          id
+          upiId
+          upiPayeeName
+        }
+      }
+    ''';
+    try {
+      final res = await performQuery(mutation, variables: {
+        'id': propertyId,
+        'input': {
+          'upiId': upiId,
+          'upiPayeeName': upiPayeeName,
+        },
+      });
+      return res['updateProperty'] != null;
+    } catch (e) {
+      debugPrint('Error updating property UPI: $e');
+      rethrow;
     }
   }
 

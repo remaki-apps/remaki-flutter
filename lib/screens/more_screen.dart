@@ -92,6 +92,194 @@ class MoreScreen extends StatelessWidget {
     );
   }
 
+  void _showUpiSettingsDialog(BuildContext context) {
+    final appProvider = context.read<AppProvider>();
+    final properties = appProvider.properties;
+    if (properties.isEmpty) {
+      FancyToast.showError(context, 'No Properties', message: 'No property found to configure UPI.');
+      return;
+    }
+
+    final selectedProp = properties.firstWhere(
+      (p) => p.id == appProvider.selectedPropertyId,
+      orElse: () => properties.first,
+    );
+
+    final upiCtrl = TextEditingController(text: selectedProp.upiId ?? '');
+    final payeeCtrl = TextEditingController(text: selectedProp.upiPayeeName ?? selectedProp.name);
+    bool isSaving = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+            titlePadding: const EdgeInsets.fromLTRB(22, 22, 22, 0),
+            contentPadding: const EdgeInsets.fromLTRB(22, 16, 22, 20),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(9),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.qr_code_rounded, color: Color(0xFF2563EB), size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'UPI Payment Settings',
+                        style: GoogleFonts.lato(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                      Text(
+                        selectedProp.name,
+                        style: GoogleFonts.lato(
+                          fontSize: 12,
+                          color: const Color(0xFF64748B),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0FDF4),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFBBF7D0)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.verified_rounded, color: Color(0xFF16A34A), size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Tenants pay directly to this UPI ID with 0% fee. All rent funds settle instantly in your bank account.',
+                            style: GoogleFonts.lato(fontSize: 11.5, color: const Color(0xFF166534), height: 1.35),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'UPI ID / VPA *',
+                    style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: upiCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. pgowner@okhdfcbank or 9876543210@paytm',
+                      hintStyle: GoogleFonts.lato(fontSize: 12.5, color: const Color(0xFF94A3B8)),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5)),
+                    ),
+                    style: GoogleFonts.lato(fontSize: 13.5, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'Payee / Merchant Display Name',
+                    style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: payeeCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. Sri Sai Luxury PG',
+                      hintStyle: GoogleFonts.lato(fontSize: 12.5, color: const Color(0xFF94A3B8)),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5)),
+                    ),
+                    style: GoogleFonts.lato(fontSize: 13.5, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+            actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+            actions: [
+              TextButton(
+                onPressed: isSaving ? null : () => Navigator.of(ctx).pop(),
+                child: Text('Cancel', style: GoogleFonts.lato(color: const Color(0xFF64748B), fontWeight: FontWeight.w600)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                        final upi = upiCtrl.text.trim();
+                        final payee = payeeCtrl.text.trim();
+                        if (upi.isEmpty) {
+                          FancyToast.showError(context, 'Required', message: 'Please enter a valid UPI ID.');
+                          return;
+                        }
+                        if (!upi.contains('@')) {
+                          FancyToast.showError(context, 'Invalid UPI ID', message: 'UPI ID must contain "@" (e.g. name@okhdfcbank).');
+                          return;
+                        }
+
+                        setDialogState(() => isSaving = true);
+                        try {
+                          await ApiService.updatePropertyUpi(
+                            propertyId: selectedProp.id,
+                            upiId: upi,
+                            upiPayeeName: payee.isNotEmpty ? payee : selectedProp.name,
+                          );
+                          await appProvider.loadFromAPI();
+                          if (ctx.mounted) Navigator.of(ctx).pop();
+                          if (context.mounted) {
+                            FancyToast.showSuccess(context, 'UPI settings updated successfully!');
+                          }
+                        } catch (e) {
+                          setDialogState(() => isSaving = false);
+                          if (context.mounted) {
+                            FancyToast.showError(context, 'Update Failed', message: ApiService.cleanErrorMessage(e));
+                          }
+                        }
+                      },
+                child: isSaving
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : Text('Save UPI Settings', style: GoogleFonts.lato(fontWeight: FontWeight.w800)),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -372,6 +560,17 @@ class MoreScreen extends StatelessWidget {
                   const SizedBox(height: 10),
 
                   // 2. Individual Separate Containers using App Brand Theme Colors
+                  _buildActionCard(
+                    icon: Icons.qr_code_rounded,
+                    iconColor: const Color(0xFF2563EB),
+                    iconBg: const Color(0xFFEFF6FF),
+                    title: 'UPI Payment Settings',
+                    subtitle: 'Set UPI ID & Payee Name for rent collection',
+                    badge: '0% Fee',
+                    onTap: () => _showUpiSettingsDialog(context),
+                  ),
+                  const SizedBox(height: 8),
+
                   _buildActionCard(
                     icon: Icons.cloud_download_outlined,
                     iconColor: AppTheme.primaryColor,

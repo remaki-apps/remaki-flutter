@@ -18,6 +18,7 @@ import 'complete_profile_dialog.dart';
 import '../widgets/app_shimmer.dart';
 import '../utils/image_compress_util.dart';
 import '../widgets/payment_splitup_card.dart';
+import '../widgets/universal_upi_checkout_modal.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 // import '../providers/notification_provider.dart';
@@ -528,6 +529,35 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _openUpiPaymentModal() {
+    if (_totalDue <= 0) {
+      FancyToast.showError(context, 'No Dues', message: 'No outstanding dues to pay.');
+      return;
+    }
+
+    final rawUpi = _profileData?['propertyUpiId'] as String?;
+    final upiId = (rawUpi != null && rawUpi.trim().isNotEmpty)
+        ? rawUpi.trim()
+        : 'remakiapps@okhdfcbank';
+
+    final rawPayee = _profileData?['propertyUpiPayeeName'] as String?;
+    final propName = _profileData?['propertyName'] as String?;
+    final payeeName = (rawPayee != null && rawPayee.trim().isNotEmpty)
+        ? rawPayee.trim()
+        : (propName ?? 'PG Property');
+
+    UniversalUpiCheckoutModal.show(
+      context,
+      amount: _totalDue,
+      upiId: upiId,
+      payeeName: payeeName,
+      propertyName: propName,
+      tenantName: _profileData?['name'],
+      note: 'Rent payment - ${_profileData?['name'] ?? "Tenant"}',
+      onProceedToUpload: _pickImage,
+    );
   }
 
   String _getGreeting() {
@@ -2652,6 +2682,67 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
+
+                  // 1-Click Direct Multi-UPI Pay Button
+                  GestureDetector(
+                    onTap: _openUpiPaymentModal,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF2563EB).withValues(alpha: 0.35),
+                            blurRadius: 12,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.bolt_rounded, color: Colors.white, size: 22),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Pay ₹${_totalDue.toStringAsFixed(0)} via UPI / GPay / QR',
+                            style: GoogleFonts.lato(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  Row(
+                    children: [
+                      const Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          'THEN ATTACH SCREENSHOT',
+                          style: GoogleFonts.lato(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.8,
+                            color: const Color(0xFF94A3B8),
+                          ),
+                        ),
+                      ),
+                      const Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
 
                   // Compact / Clean Image Upload Button
                   GestureDetector(

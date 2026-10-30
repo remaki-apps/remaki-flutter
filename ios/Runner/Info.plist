@@ -57,6 +57,11 @@
 			<string>tel</string>
 			<string>https</string>
 			<string>http</string>
+			<string>upi</string>
+			<string>tez</string>
+			<string>gpay</string>
+			<string>phonepe</string>
+			<string>paytmmp</string>
 		</array>
 	</dict>
 </plist>
