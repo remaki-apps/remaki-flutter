@@ -407,70 +407,79 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
               ),
             ),
 
-            // Tab Selector
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              height: 42,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: TabBar(
-                controller: _tabController,
-                indicator: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
+            // If on Desktop: Display QR code directly without mobile UPI app buttons
+            // If on Mobile (iOS / Android): Display full tabs (Pay via App & Scan QR Code)
+            if (!_isDesktop) ...[
+              // Tab Selector
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: TabBar(
+                  controller: _tabController,
+                  indicator: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  labelColor: const Color(0xFF0F172A),
+                  unselectedLabelColor: const Color(0xFF64748B),
+                  labelStyle: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w800),
+                  unselectedLabelStyle: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w600),
+                  tabs: const [
+                    Tab(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.touch_app_rounded, size: 16),
+                          SizedBox(width: 6),
+                          Text('Pay via App'),
+                        ],
+                      ),
+                    ),
+                    Tab(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.qr_code_rounded, size: 16),
+                          SizedBox(width: 6),
+                          Text('Scan QR Code'),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-                indicatorSize: TabBarIndicatorSize.tab,
-                labelColor: const Color(0xFF0F172A),
-                unselectedLabelColor: const Color(0xFF64748B),
-                labelStyle: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w800),
-                unselectedLabelStyle: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w600),
-                tabs: const [
-                  Tab(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.touch_app_rounded, size: 16),
-                        SizedBox(width: 6),
-                        Text('Pay via App'),
-                      ],
-                    ),
-                  ),
-                  Tab(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.qr_code_rounded, size: 16),
-                        SizedBox(width: 6),
-                        Text('Scan QR Code'),
-                      ],
-                    ),
-                  ),
-                ],
               ),
-            ),
 
-            // Tab Content
-            Flexible(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  // Tab 1: App buttons
-                  _buildAppOptionsTab(),
+              // Tab Content
+              Flexible(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    // Tab 1: Mobile App buttons (GPay, PhonePe, Paytm, CRED)
+                    _buildAppOptionsTab(),
 
-                  // Tab 2: Dynamic QR code
-                  _buildQrCodeTab(universalUpiString, formattedAmount),
-                ],
+                    // Tab 2: Dynamic QR code
+                    _buildQrCodeTab(universalUpiString, formattedAmount),
+                  ],
+                ),
               ),
-            ),
+            ] else ...[
+              // Desktop View: Direct, prominent QR code without mobile UPI app buttons
+              Flexible(
+                child: _buildQrCodeTab(universalUpiString, formattedAmount),
+              ),
+            ],
 
             const Divider(height: 1, color: Color(0xFFE2E8F0)),
 
