@@ -83,5 +83,10 @@
         <package android:name="com.phonepe.app" />
         <package android:name="net.one97.paytm" />
         <package android:name="in.org.npci.upiapp" />
+        <package android:name="com.dreamplug.androidapp" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="credpay" />
+        </intent>
     </queries>
 </manifest>

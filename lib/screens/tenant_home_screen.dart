@@ -51,6 +51,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   String? _rejectionReason;
   Uint8List? _selectedImageBytes;
   final TextEditingController _descriptionController = TextEditingController();
+  String? _currentTransactionRef;
   List<dynamic> _announcements = [];
   List<dynamic> _payments = [];
   DateTime _selectedPaymentMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
@@ -477,6 +478,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     try {
       final base64Image = base64Encode(_selectedImageBytes!);
 
+      final refPrefix = _currentTransactionRef != null ? '[Ref: $_currentTransactionRef] ' : '';
+      final userDesc = _descriptionController.text.trim();
+      final finalDesc = '$refPrefix$userDesc'.trim();
+
       await ApiService.performQuery('''
         mutation SubmitPaymentRequest(\$input: SubmitPaymentRequestInput!) {
           submitPaymentRequest(input: \$input) {
@@ -486,15 +491,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       ''', variables: {
         'input': {
           'tenantId': _profileData?['id'] ?? '',
-          'amount': _totalDue,
+          'amount': _totalDue > 0 ? _totalDue : _pendingBills,
           'paymentType': _paymentType,
           'proofImageBase64': 'data:image/jpeg;base64,$base64Image',
-          'description': _descriptionController.text.trim().isNotEmpty ? _descriptionController.text.trim() : null,
+          'description': finalDesc.isNotEmpty ? finalDesc : null,
         }
       });
 
       if (mounted) {
-        FancyToast.showSuccess(context, 'Payment request submitted for admin approval!');
+        FancyToast.showSuccess(context, 'Payment submitted for review', message: 'Your landlord will verify against bank statement before settling.');
         await _setLocalPendingStatus(true, _profileData?['id']);
         setState(() {
           _selectedImageBytes = null;
@@ -540,6 +545,16 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         ? rawUpi.trim()
         : 'remakiapps@okhdfcbank';
 
+    // Validate VPA upfront with a clear user-facing check
+    if (!UniversalUpiCheckoutModal.isValidVpa(upiId)) {
+      FancyToast.showError(
+        context,
+        'Invalid UPI ID',
+        message: 'The property UPI ID "$upiId" is invalid. Please contact property manager.',
+      );
+      return;
+    }
+
     final rawPayee = _profileData?['propertyUpiPayeeName'] as String?;
     final propName = _profileData?['propertyName'] as String?;
     final payeeName = (rawPayee != null && rawPayee.trim().isNotEmpty)
@@ -550,6 +565,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         ? 'Utility bill - ${_profileData?['name'] ?? "Tenant"}'
         : 'Rent payment - ${_profileData?['name'] ?? "Tenant"}';
 
+    // Generate and track transactionRef for bank reconciliation
+    final txnRef = 'RMK${DateTime.now().millisecondsSinceEpoch}';
+    _currentTransactionRef = txnRef;
+
     UniversalUpiCheckoutModal.show(
       context,
       amount: effectiveDue,
@@ -558,6 +577,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       propertyName: propName,
       tenantName: _profileData?['name'],
       note: note,
+      transactionRef: txnRef,
       onProceedToUpload: _pickImage,
     );
   }

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/web_upi_util.dart';
+import 'fancy_toast.dart';
 
 class UniversalUpiCheckoutModal extends StatefulWidget {
   final double amount;
@@ -14,6 +15,7 @@ class UniversalUpiCheckoutModal extends StatefulWidget {
   final String? propertyName;
   final String? tenantName;
   final String? note;
+  final String? transactionRef;
   final VoidCallback onProceedToUpload;
 
   const UniversalUpiCheckoutModal({
@@ -24,8 +26,26 @@ class UniversalUpiCheckoutModal extends StatefulWidget {
     this.propertyName,
     this.tenantName,
     this.note,
+    this.transactionRef,
     required this.onProceedToUpload,
   });
+
+  static final RegExp _vpaRegex = RegExp(r'^[\w.\-]{2,256}@[a-zA-Z]{2,64}$');
+
+  static bool isValidVpa(String? vpa) {
+    if (vpa == null) return false;
+    return _vpaRegex.hasMatch(vpa.trim());
+  }
+
+  static String sanitizePayeeName(String raw) {
+    final clean = raw
+        .trim()
+        .replaceAll(RegExp(r'[^a-zA-Z0-9 .]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    if (clean.isEmpty) return 'Remaki Property';
+    return clean.length > 22 ? clean.substring(0, 22).trim() : clean;
+  }
 
   static Future<void> show(
     BuildContext context, {
@@ -35,8 +55,18 @@ class UniversalUpiCheckoutModal extends StatefulWidget {
     String? propertyName,
     String? tenantName,
     String? note,
+    String? transactionRef,
     required VoidCallback onProceedToUpload,
   }) {
+    if (amount <= 0) {
+      FancyToast.showError(context, 'Invalid Amount', message: 'Payment amount must be greater than zero.');
+      return Future.value();
+    }
+    if (!isValidVpa(upiId)) {
+      FancyToast.showError(context, 'Invalid UPI ID', message: 'The payment UPI ID "$upiId" is invalid or misconfigured.');
+      return Future.value();
+    }
+
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -49,6 +79,7 @@ class UniversalUpiCheckoutModal extends StatefulWidget {
         propertyName: propertyName,
         tenantName: tenantName,
         note: note,
+        transactionRef: transactionRef,
         onProceedToUpload: onProceedToUpload,
       ),
     );
@@ -65,6 +96,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
   late double _currentAmount;
   bool _isSplitMode = false;
   late TextEditingController _splitController;
+  late String _effectiveTxnRef;
 
   bool get _isDesktop {
     if (kIsWeb) {
@@ -80,6 +112,8 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
   @override
   void initState() {
     super.initState();
+    assert(UniversalUpiCheckoutModal.isValidVpa(widget.upiId), 'Invalid UPI VPA passed to checkout: ${widget.upiId}');
+    _effectiveTxnRef = widget.transactionRef ?? 'RMK${DateTime.now().millisecondsSinceEpoch}';
     // Desktop defaults to Scan QR Code tab (index 1).
     // iOS Safari / Mobile Browser / App defaults to Pay via App tab (index 0).
     _currentAmount = widget.amount;
@@ -96,16 +130,14 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
   }
 
   String _buildUpiUri({String? scheme}) {
-    // 1. Sanitize Payee Name (alphanumeric & spaces only - max 40 chars)
-    final cleanPayeeName = widget.payeeName.trim()
-        .replaceAll(RegExp(r'[^a-zA-Z0-9 ]'), ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-    final finalPayee = cleanPayeeName.isNotEmpty
-        ? (cleanPayeeName.length > 40 ? cleanPayeeName.substring(0, 40).trim() : cleanPayeeName)
-        : 'Remaki Property';
+    if (_currentAmount <= 0) return 'upi://pay';
 
-    // 2. Sanitize Note (plain letters, numbers, spaces only - max 28 chars)
+    // 1. Sanitize Payee Name (alphanumeric, dots & spaces only - max 22 chars safe length)
+    final finalPayee = UniversalUpiCheckoutModal.sanitizePayeeName(
+      widget.payeeName.isNotEmpty ? widget.payeeName : (widget.propertyName ?? 'Remaki Property')
+    );
+
+    // 2. Sanitize Note (plain letters, numbers, spaces only - max 24 chars)
     // Avoid special characters like hyphens or parentheses which cause bank CBS rejections
     final rawNote = widget.note?.trim().isNotEmpty == true
         ? widget.note!.trim()
@@ -115,18 +147,10 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
     final finalNote = cleanNote.isNotEmpty
-        ? (cleanNote.length > 28 ? cleanNote.substring(0, 28).trim() : cleanNote)
+        ? (cleanNote.length > 24 ? cleanNote.substring(0, 24).trim() : cleanNote)
         : 'Rent payment';
 
     // 3. Build standard P2P query parameters.
-    // CRITICAL: NEVER include 'tr' (Transaction Reference).
-    // NPCI UPI specification mandates that 'tr' is reserved for registered P2M merchant accounts.
-    // When 'tr' is passed to a personal/savings UPI ID (e.g. kishoremagesh1@okhdfcbank or PG owner),
-    // HDFC and other banks' UPI switch reject the transaction with error U16/ZM, displayed in
-    // Google Pay and PhonePe as:
-    // "You've exceeded the bank limit for this payment. Retry with a smaller amount. Check UPI limit per bank."
-    // even for small amounts like Rs. 15!
-    // Without 'tr', it is processed as a standard P2P payment, which succeeds without merchant terminal validation.
     final queryParams = <String, String>{
       'pa': widget.upiId.trim(),
       'pn': finalPayee,
@@ -210,7 +234,8 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
           );
         }
       }
-    } catch (_) {
+    } catch (e, stack) {
+      debugPrint('[UniversalUpi] Launch app error ($schemeName): $e\n$stack');
       if (mounted) {
         _tabController.animateTo(1);
       }
@@ -397,13 +422,23 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          'UPI ID',
-                          style: GoogleFonts.lato(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF94A3B8),
-                          ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Ref: ${_effectiveTxnRef.length > 14 ? "${_effectiveTxnRef.substring(0, 12)}..." : _effectiveTxnRef}',
+                              style: GoogleFonts.lato(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF38BDF8),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            GestureDetector(
+                              onTap: () => _copyToClipboard(_effectiveTxnRef, 'Ref ID'),
+                              child: const Icon(Icons.copy_rounded, color: Color(0xFF38BDF8), size: 11),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 2),
                         Row(
