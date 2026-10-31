@@ -6,13 +6,14 @@
 //   - Never cache API calls
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CACHE_NAME = 'remaki-cache-v2';
+const CACHE_NAME = 'remaki-cache-v3';
 
 // Essential entry files that must always be fresh from server when online
 const NETWORK_FIRST_URLS = [
   '/',
   '/index.html',
   '/flutter_bootstrap.js',
+  '/main.dart.js',
   '/version.json',
 ];
 

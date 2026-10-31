@@ -207,6 +207,12 @@
 
       showBanner: function() {
         if (this.bannerShown) return;
+        try {
+          const dismissedAt = sessionStorage.getItem('remaki_update_dismissed');
+          if (dismissedAt && (Date.now() - parseInt(dismissedAt, 10)) < 300000) {
+            return;
+          }
+        } catch (_) {}
         this.bannerShown = true;
         const banner = document.getElementById('remaki-update-banner');
         if (banner) {
@@ -219,6 +225,9 @@
         if (banner) {
           banner.classList.remove('remaki-show');
         }
+        try {
+          sessionStorage.setItem('remaki_update_dismissed', Date.now().toString());
+        } catch (_) {}
       },
 
       clearCacheAndReload: async function() {
@@ -233,6 +242,14 @@
         }
 
         console.log('[Remaki Update] Clearing app cache & service workers...');
+
+        try {
+          if (window._latestServerVersion) {
+            sessionStorage.setItem('remaki_app_build', window._latestServerVersion);
+            localStorage.setItem('remaki_app_build', window._latestServerVersion);
+          }
+          sessionStorage.setItem('remaki_last_refreshed_at', Date.now().toString());
+        } catch (_) {}
 
         try {
           // 1. Tell service worker to skip waiting
@@ -276,6 +293,13 @@
 
     async function checkServerVersion() {
       try {
+        const lastRefreshed = sessionStorage.getItem('remaki_last_refreshed_at');
+        if (lastRefreshed && (Date.now() - parseInt(lastRefreshed, 10)) < 60000) {
+          return;
+        }
+      } catch (_) {}
+
+      try {
         const res = await fetch('/version.json?_t=' + Date.now(), {
           cache: 'no-store',
           headers: { 'Cache-Control': 'no-cache, no-store', 'Pragma': 'no-cache' }
@@ -283,6 +307,7 @@
         if (res.ok) {
           const data = await res.json();
           const serverVersion = (data.buildTime || data.version || '').toString();
+          window._latestServerVersion = serverVersion;
           if (!currentAppVersion) {
             currentAppVersion = serverVersion;
             try {

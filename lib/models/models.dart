@@ -217,11 +217,12 @@ class Tenant {
   }
 
   String get statusBadgeLabel {
-    if (isUpcoming) return 'UPCOMING';
+    if (isPaid || paymentStatus == 'PAID') return 'PAID';
     if (isPending) return 'PENDING';
     if (isPartiallyPaid || (isPaid && totalPendingBills > 0)) return 'PARTIAL';
-    if (totalDue == 0 || isPaid) return 'PAID';
+    if (isUpcoming) return 'UPCOMING';
     if (isOverdue) return 'OVERDUE';
+    if (totalDue == 0 && rentAmount == 0) return 'NO DUES';
     return 'UNPAID';
   }
 
@@ -499,6 +500,8 @@ class Payment {
   String? notes;
   String? propertyId;
   String? billingMonth;
+  double platformFee;
+  double rentAmount;
 
   Payment({
     required this.id,
@@ -511,6 +514,8 @@ class Payment {
     this.notes,
     this.propertyId,
     this.billingMonth,
+    this.platformFee = 0.0,
+    this.rentAmount = 0.0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -524,22 +529,31 @@ class Payment {
         'notes': notes,
         'propertyId': propertyId,
         'billingMonth': billingMonth,
+        'platformFee': platformFee,
+        'rentAmount': rentAmount,
       };
 
-  factory Payment.fromJson(Map<String, dynamic> json) => Payment(
-        id: json['id'] as String? ?? '',
-        tenantId: json['tenantId'] as String? ?? '',
-        amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
-        date: json['date'] != null
-            ? (DateTime.tryParse(json['date'] as String)?.toLocal() ?? DateTime.now())
-            : DateTime.now(),
-        method: json['method'] as String? ?? 'UPI',
-        tenantName: json['tenantName'] as String?,
-        roomNumber: json['roomNumber'] as String?,
-        notes: json['notes'] as String?,
-        propertyId: json['propertyId'] as String?,
-        billingMonth: json['billingMonth'] as String?,
-      );
+  factory Payment.fromJson(Map<String, dynamic> json) {
+    final amt = (json['amount'] as num?)?.toDouble() ?? 0.0;
+    final fee = (json['platformFee'] as num?)?.toDouble() ?? 0.0;
+    final rent = (json['rentAmount'] as num?)?.toDouble() ?? amt;
+    return Payment(
+      id: json['id'] as String? ?? '',
+      tenantId: json['tenantId'] as String? ?? '',
+      amount: amt,
+      date: json['date'] != null
+          ? (DateTime.tryParse(json['date'] as String)?.toLocal() ?? DateTime.now())
+          : DateTime.now(),
+      method: json['method'] as String? ?? 'UPI',
+      tenantName: json['tenantName'] as String?,
+      roomNumber: json['roomNumber'] as String?,
+      notes: json['notes'] as String?,
+      propertyId: json['propertyId'] as String?,
+      billingMonth: json['billingMonth'] as String?,
+      platformFee: fee,
+      rentAmount: rent,
+    );
+  }
 }
 
 class PropertyOwnerItem {

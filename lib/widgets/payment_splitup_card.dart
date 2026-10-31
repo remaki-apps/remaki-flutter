@@ -64,45 +64,53 @@ class PaymentSplitupCard extends StatelessWidget {
       }
     }
 
-    if (rentAmount > 0 && paymentAmount > rentAmount) {
-      rentPortion = rentAmount;
-      double diff = paymentAmount - rentPortion;
+    final double effectiveFee = platformFee > 0 ? platformFee : 0.0;
 
-      // Platform fee check: e.g. 5034 = 5000 + 25 + 9
-      if (platformFee > 0 && (diff >= platformFee - 0.01)) {
-        feePortion = platformFee;
-        billsPortion = diff - feePortion;
-      } else {
-        billsPortion = diff;
-      }
-    } else if (rentAmount > 0 && paymentAmount == rentAmount) {
-      rentPortion = rentAmount;
-      feePortion = 0.0;
-      billsPortion = 0.0;
-    } else if (rentAmount > 0 && paymentAmount < rentAmount) {
-      // Check if it exactly matches one of the utility bills
-      final matchingBill = normalizedBills.firstWhere(
-        (b) => (((b['amount'] as num?)?.toDouble() ?? 0.0) - paymentAmount).abs() < 0.01,
-        orElse: () => {},
-      );
-
-      if (matchingBill.isNotEmpty) {
-        billsPortion = paymentAmount;
-        rentPortion = 0.0;
-        feePortion = 0.0;
-        itemizedBills.add({
-          'name': matchingBill['name'],
-          'amount': paymentAmount,
-        });
-      } else {
-        // Partial rent payment
-        rentPortion = paymentAmount;
-        feePortion = 0.0;
+    if (rentAmount > 0) {
+      if (paymentAmount >= rentAmount + effectiveFee - 0.01 && effectiveFee > 0) {
+        rentPortion = rentAmount;
+        feePortion = effectiveFee;
+        billsPortion = (paymentAmount - rentPortion - feePortion).clamp(0.0, double.infinity);
+      } else if (paymentAmount > rentAmount) {
+        rentPortion = rentAmount;
+        double diff = paymentAmount - rentPortion;
+        if (effectiveFee > 0 && diff >= effectiveFee - 0.01) {
+          feePortion = effectiveFee;
+          billsPortion = diff - feePortion;
+        } else {
+          feePortion = effectiveFee;
+          billsPortion = diff;
+        }
+      } else if (paymentAmount == rentAmount) {
+        rentPortion = rentAmount;
+        feePortion = effectiveFee;
         billsPortion = 0.0;
+      } else if (paymentAmount < rentAmount) {
+        // Check if it exactly matches one of the utility bills
+        final matchingBill = normalizedBills.firstWhere(
+          (b) => (((b['amount'] as num?)?.toDouble() ?? 0.0) - paymentAmount).abs() < 0.01,
+          orElse: () => {},
+        );
+
+        if (matchingBill.isNotEmpty) {
+          billsPortion = paymentAmount;
+          rentPortion = 0.0;
+          feePortion = 0.0;
+          itemizedBills.add({
+            'name': matchingBill['name'],
+            'amount': paymentAmount,
+          });
+        } else {
+          // Partial rent payment
+          rentPortion = paymentAmount;
+          feePortion = effectiveFee;
+          billsPortion = 0.0;
+        }
       }
     } else {
       // Default fallback
       rentPortion = paymentAmount;
+      feePortion = effectiveFee;
     }
 
     // Itemize bills if billsPortion > 0 and not already itemized

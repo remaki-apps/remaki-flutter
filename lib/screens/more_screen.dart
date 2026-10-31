@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../providers/notification_provider.dart';
 import '../services/api_service.dart';
@@ -100,13 +101,13 @@ class MoreScreen extends StatelessWidget {
       return;
     }
 
-    final selectedProp = properties.firstWhere(
+    PropertyItem currentSelectedProp = properties.firstWhere(
       (p) => p.id == appProvider.selectedPropertyId,
       orElse: () => properties.first,
     );
 
-    final upiCtrl = TextEditingController(text: selectedProp.upiId ?? '');
-    final payeeCtrl = TextEditingController(text: selectedProp.upiPayeeName ?? selectedProp.name);
+    final upiCtrl = TextEditingController(text: currentSelectedProp.upiId ?? '');
+    final payeeCtrl = TextEditingController(text: currentSelectedProp.upiPayeeName ?? currentSelectedProp.name);
     bool isSaving = false;
 
     showDialog(
@@ -141,7 +142,7 @@ class MoreScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        selectedProp.name,
+                        currentSelectedProp.name,
                         style: GoogleFonts.lato(
                           fontSize: 12,
                           color: const Color(0xFF64748B),
@@ -158,6 +159,43 @@ class MoreScreen extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (properties.length > 1) ...[
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFCBD5E1)),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: currentSelectedProp.id,
+                          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF4F46E5)),
+                          items: properties.map((prop) {
+                            return DropdownMenuItem<String>(
+                              value: prop.id,
+                              child: Text(
+                                prop.name,
+                                style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A)),
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (propId) {
+                            if (propId != null) {
+                              final found = properties.firstWhere((p) => p.id == propId);
+                              setDialogState(() {
+                                currentSelectedProp = found;
+                                upiCtrl.text = found.upiId ?? '';
+                                payeeCtrl.text = found.upiPayeeName ?? found.name;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -253,9 +291,9 @@ class MoreScreen extends StatelessWidget {
                         setDialogState(() => isSaving = true);
                         try {
                           await ApiService.updatePropertyUpi(
-                            propertyId: selectedProp.id,
+                            propertyId: currentSelectedProp.id,
                             upiId: upi,
-                            upiPayeeName: payee.isNotEmpty ? payee : selectedProp.name,
+                            upiPayeeName: payee.isNotEmpty ? payee : currentSelectedProp.name,
                           );
                           await appProvider.loadFromAPI();
                           if (ctx.mounted) Navigator.of(ctx).pop();

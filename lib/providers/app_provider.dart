@@ -410,7 +410,7 @@ class AppProvider with ChangeNotifier {
   double get pendingBillsOnly => currentTenants.fold(0.0, (sum, t) => sum + t.totalPendingBills);
 
   List<Tenant> get newTenantsThisMonth => currentTenants.where((t) => t.moveInDate.month == DateTime.now().month).toList();
-  List<Tenant> get unpaidTenants => currentTenants.where((t) => t.totalDue > 0).toList();
+  List<Tenant> get unpaidTenants => currentTenants.where((t) => !t.isPaid && t.paymentStatus != 'PAID' && (t.totalDue > 0 || t.rentAmount > 0)).toList();
   List<Tenant> get unpaidRentTenants => currentTenants.where((t) => t.pendingRentAmount > 0).toList();
   List<Tenant> get unpaidBillsTenants => currentTenants.where((t) => t.totalPendingBills > 0).toList();
 

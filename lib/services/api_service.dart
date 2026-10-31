@@ -669,6 +669,8 @@ class ApiService {
               notes
               propertyId
               billingMonth
+              platformFee
+              rentAmount
             }
           }
         ''';
@@ -684,6 +686,8 @@ class ApiService {
               notes
               propertyId
               billingMonth
+              platformFee
+              rentAmount
             }
           }
         ''';

@@ -113,14 +113,14 @@ class _RentScreenState extends State<RentScreen> {
         expectedAmount = appProvider.expectedRentOnly;
         collectedAmount = appProvider.collectedRentOnly;
         pendingAmount = appProvider.pendingRentOnly;
-        paidCount = appProvider.currentTenants.where((t) => t.pendingRentAmount == 0 && t.rentAmount > 0).length;
-        unpaidCount = appProvider.currentTenants.where((t) => t.pendingRentAmount > 0).length;
+        paidCount = appProvider.currentTenants.where((t) => (t.isPaid || t.paymentStatus == 'PAID') && t.rentAmount > 0).length;
+        unpaidCount = appProvider.currentTenants.where((t) => !t.isPaid && t.paymentStatus != 'PAID' && t.rentAmount > 0).length;
       } else {
         final rentExpectedRaw = appProvider.currentTenants.fold(0.0, (sum, t) {
           if (t.moveInDate.isAfter(DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1))) return sum;
           return sum + t.rentAmount;
         });
-        collectedAmount = monthRentPayments.fold(0.0, (sum, p) => sum + p.amount);
+        collectedAmount = monthRentPayments.fold(0.0, (sum, p) => sum + (p.rentAmount > 0 ? p.rentAmount : p.amount));
         expectedAmount = math.max(rentExpectedRaw, collectedAmount);
         pendingAmount = math.max(0.0, expectedAmount - collectedAmount);
         paidCount = monthRentPayments.map((p) => p.tenantId).toSet().length;

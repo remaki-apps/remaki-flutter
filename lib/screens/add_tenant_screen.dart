@@ -708,7 +708,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
       rentAmount: double.tryParse(_rentController.text) ?? 0.0,
       securityDeposit: double.tryParse(_securityController.text) ?? 0.0,
       rentDueDate: firstDueDate,
-      pendingRentAmount: isUpcomingCycle ? 0.0 : (double.tryParse(_rentController.text) ?? 0.0),
+      pendingRentAmount: double.tryParse(_rentController.text) ?? 0.0,
       paymentStatus: isUpcomingCycle ? 'UPCOMING' : 'UNPAID',
     );
 
