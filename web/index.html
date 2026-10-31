@@ -15,15 +15,17 @@
   <meta name="mobile-web-app-capable" content="yes">
 
   <!-- iOS touch icons -->
-  <link rel="apple-touch-icon" sizes="192x192" href="icons/Icon-192.png">
-  <link rel="apple-touch-icon" sizes="512x512" href="icons/Icon-512.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/Icon-192.png?v=2">
+  <link rel="apple-touch-icon" sizes="512x512" href="icons/Icon-512.png?v=2">
 
   <!-- Theme color for browser chrome (Android) and iOS status bar -->
   <meta name="theme-color" content="#1E1B4B">
   <meta name="msapplication-navbutton-color" content="#1E1B4B">
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <!-- Favicon & Website Tab Icon -->
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon.png?v=2"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=2"/>
+  <link rel="shortcut icon" href="favicon.png?v=2" type="image/png"/>
 
   <title>Remaki</title>
   <link rel="manifest" href="manifest.json">
@@ -426,9 +428,10 @@
   <!-- Loading indicator shown while Flutter initializes -->
   <div id="loading">
     <div style="text-align: center;">
-      <div style="font-size: 24px; margin-bottom: 20px;">🏠 Remaki</div>
-      <div style="animation: spin 1s linear infinite;">⏳</div>
-      <div style="margin-top: 20px; font-size: 14px;">Loading...</div>
+      <img src="favicon.png" alt="Remaki" style="width: 72px; height: 72px; border-radius: 18px; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.25);" onerror="this.style.display='none';">
+      <div style="font-size: 22px; font-weight: 700; margin-bottom: 12px; letter-spacing: -0.3px;">Remaki</div>
+      <div style="animation: spin 1.2s linear infinite; font-size: 20px;">⏳</div>
+      <div style="margin-top: 14px; font-size: 13px; opacity: 0.8;">Loading...</div>
     </div>
   </div>
 
