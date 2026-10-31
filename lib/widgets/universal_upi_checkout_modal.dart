@@ -61,8 +61,10 @@ class UniversalUpiCheckoutModal extends StatefulWidget {
 class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late String _transactionRef;
   bool _isLaunching = false;
+  late double _currentAmount;
+  bool _isSplitMode = false;
+  late TextEditingController _splitController;
 
   bool get _isDesktop {
     if (kIsWeb) {
@@ -80,30 +82,57 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
     super.initState();
     // Desktop defaults to Scan QR Code tab (index 1).
     // iOS Safari / Mobile Browser / App defaults to Pay via App tab (index 0).
+    _currentAmount = widget.amount;
+    _splitController = TextEditingController(text: widget.amount > 0 ? (widget.amount / 2).toStringAsFixed(0) : '0');
     final initialTabIndex = _isDesktop ? 1 : 0;
     _tabController = TabController(length: 2, vsync: this, initialIndex: initialTabIndex);
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    _transactionRef = 'RMK$timestamp';
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _splitController.dispose();
     super.dispose();
   }
 
   String _buildUpiUri({String? scheme}) {
-    final note = widget.note?.trim().isNotEmpty == true
-        ? widget.note!.trim()
-        : 'Rent payment for ${widget.propertyName ?? "PG"}';
+    // 1. Sanitize Payee Name (alphanumeric & spaces only - max 40 chars)
+    final cleanPayeeName = widget.payeeName.trim()
+        .replaceAll(RegExp(r'[^a-zA-Z0-9 ]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final finalPayee = cleanPayeeName.isNotEmpty
+        ? (cleanPayeeName.length > 40 ? cleanPayeeName.substring(0, 40).trim() : cleanPayeeName)
+        : 'Remaki Property';
 
-    final queryParams = {
+    // 2. Sanitize Note (plain letters, numbers, spaces only - max 28 chars)
+    // Avoid special characters like hyphens or parentheses which cause bank CBS rejections
+    final rawNote = widget.note?.trim().isNotEmpty == true
+        ? widget.note!.trim()
+        : 'Rent payment';
+    final cleanNote = rawNote
+        .replaceAll(RegExp(r'[^a-zA-Z0-9 ]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final finalNote = cleanNote.isNotEmpty
+        ? (cleanNote.length > 28 ? cleanNote.substring(0, 28).trim() : cleanNote)
+        : 'Rent payment';
+
+    // 3. Build standard P2P query parameters.
+    // CRITICAL: NEVER include 'tr' (Transaction Reference).
+    // NPCI UPI specification mandates that 'tr' is reserved for registered P2M merchant accounts.
+    // When 'tr' is passed to a personal/savings UPI ID (e.g. kishoremagesh1@okhdfcbank or PG owner),
+    // HDFC and other banks' UPI switch reject the transaction with error U16/ZM, displayed in
+    // Google Pay and PhonePe as:
+    // "You've exceeded the bank limit for this payment. Retry with a smaller amount. Check UPI limit per bank."
+    // even for small amounts like Rs. 15!
+    // Without 'tr', it is processed as a standard P2P payment, which succeeds without merchant terminal validation.
+    final queryParams = <String, String>{
       'pa': widget.upiId.trim(),
-      'pn': widget.payeeName.trim(),
-      'am': widget.amount.toStringAsFixed(2),
+      'pn': finalPayee,
+      if (_currentAmount > 0) 'am': _currentAmount.toStringAsFixed(2),
       'cu': 'INR',
-      'tn': note,
-      'tr': _transactionRef,
+      'tn': finalNote,
     };
 
     final queryString = queryParams.entries
@@ -218,7 +247,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
   @override
   Widget build(BuildContext context) {
     final currencyFormat = NumberFormat('#,##,###');
-    final formattedAmount = '₹${currencyFormat.format(widget.amount)}';
+    final formattedAmount = '₹${currencyFormat.format(_currentAmount)}';
     final universalUpiString = _buildUpiUri();
 
     return Container(
@@ -406,6 +435,147 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
                 ],
               ),
             ),
+
+            // Split Payment Helper Toggle & Controls
+            if (widget.amount > 100) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _isSplitMode ? 'Paying in parts (Split Mode)' : 'Bank Limit Helper:',
+                      style: GoogleFonts.lato(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _isSplitMode = !_isSplitMode;
+                          if (!_isSplitMode) {
+                            _currentAmount = widget.amount;
+                          } else {
+                            final parsed = double.tryParse(_splitController.text);
+                            if (parsed != null && parsed > 0 && parsed <= widget.amount) {
+                              _currentAmount = parsed;
+                            } else {
+                              _currentAmount = (widget.amount / 2).roundToDouble();
+                              _splitController.text = _currentAmount.toStringAsFixed(0);
+                            }
+                          }
+                        });
+                      },
+                      icon: Icon(
+                        _isSplitMode ? Icons.check_circle_rounded : Icons.call_split_rounded,
+                        size: 15,
+                        color: const Color(0xFF2563EB),
+                      ),
+                      label: Text(
+                        _isSplitMode ? 'Pay Full (₹${currencyFormat.format(widget.amount)})' : 'Split Payment / Pay in Parts',
+                        style: GoogleFonts.lato(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF2563EB),
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (_isSplitMode)
+                Container(
+                  margin: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFBFDBFE)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.info_outline_rounded, color: Color(0xFF2563EB), size: 16),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Enter amount to pay now (Total due: ₹${currencyFormat.format(widget.amount)}):',
+                              style: GoogleFonts.lato(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF1E40AF),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: const Color(0xFF93C5FD)),
+                              ),
+                              child: TextField(
+                                controller: _splitController,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                style: GoogleFonts.lato(fontSize: 14, fontWeight: FontWeight.w700),
+                                decoration: const InputDecoration(
+                                  prefixText: ' ₹ ',
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                ),
+                                onChanged: (val) {
+                                  final numVal = double.tryParse(val);
+                                  if (numVal != null && numVal > 0) {
+                                    setState(() => _currentAmount = numVal);
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ActionChip(
+                            label: const Text('50%'),
+                            labelStyle: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1E40AF)),
+                            backgroundColor: Colors.white,
+                            side: const BorderSide(color: Color(0xFF93C5FD)),
+                            onPressed: () {
+                              final half = (widget.amount / 2).roundToDouble();
+                              _splitController.text = half.toStringAsFixed(0);
+                              setState(() => _currentAmount = half);
+                            },
+                          ),
+                          const SizedBox(width: 4),
+                          ActionChip(
+                            label: const Text('100%'),
+                            labelStyle: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1E40AF)),
+                            backgroundColor: Colors.white,
+                            side: const BorderSide(color: Color(0xFF93C5FD)),
+                            onPressed: () {
+                              _splitController.text = widget.amount.toStringAsFixed(0);
+                              setState(() => _currentAmount = widget.amount);
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+            ],
 
             // If on Desktop: Display QR code directly without mobile UPI app buttons
             // If on Mobile (iOS / Android): Display full tabs (Pay via App & Scan QR Code)
@@ -615,6 +785,40 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
                     'On iOS Safari or Chrome? Tapping an app will open it directly on your device. You can also switch to "Scan QR Code" tab or copy the UPI ID.',
                     style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF475569), height: 1.3),
                   ),
+                ),
+              ],
+            ),
+          ),
+
+          // Bank Limit Advice Card
+          Container(
+            margin: const EdgeInsets.only(top: 14),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBEB),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFFDE68A)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.shield_outlined, color: Color(0xFFD97706), size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Bank Limit Tips for UPI',
+                      style: GoogleFonts.lato(fontSize: 12.5, fontWeight: FontWeight.w800, color: const Color(0xFF92400E)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '• If your bank says "Exceeded bank limit", many banks cap single transfers at ₹25,000–₹50,000 (or ₹5,000 for new UPI accounts).\n'
+                  '• You can use "Split Payment" above to pay in smaller installments.\n'
+                  '• You can also copy the UPI ID directly and send via any UPI app or Net Banking (IMPS/NEFT).\n'
+                  '• After payment, tap "Proceed to Upload Proof" to submit your screenshot.',
+                  style: GoogleFonts.lato(fontSize: 11.5, color: const Color(0xFF78350F), height: 1.4),
                 ),
               ],
             ),

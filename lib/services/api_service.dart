@@ -155,6 +155,15 @@ class ApiService {
     if (lower.contains('unauthorized') || lower.contains('unauthenticated')) {
       return 'Authentication failed. Please verify your credentials or log in again.';
     }
+    if (lower.contains('unique constraint failed') || lower.contains('duplicate key')) {
+      if (lower.contains('phone')) {
+        return 'An account with this mobile number already exists. Each account must have a unique mobile number.';
+      }
+      if (lower.contains('email')) {
+        return 'An account with this email address already exists. Please use a different email.';
+      }
+      return 'An account with these details already exists. Duplicate entries are not allowed.';
+    }
 
     // If message is in raw GraphQL error array format: [{message: Bed is occupied}]
     if (message.startsWith('[') && message.endsWith(']')) {
