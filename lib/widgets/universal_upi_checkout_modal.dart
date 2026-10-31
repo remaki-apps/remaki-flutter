@@ -139,15 +139,10 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
         .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
         .join('&');
 
-    if (scheme == 'tez' || scheme == 'gpay') {
-      return 'tez://upi/pay?$queryString';
-    } else if (scheme == 'phonepe') {
-      return 'phonepe://pay?$queryString';
-    } else if (scheme == 'paytmmp' || scheme == 'paytm') {
-      return 'paytmmp://pay?$queryString';
-    } else if (scheme == 'credpay') {
-      return 'credpay://pay?$queryString';
-    }
+    // Standard NPCI P2P UPI URI.
+    // NOTE: Avoid custom schemes like tez://, phonepe://, or paytmmp:// as they trigger
+    // merchant acquiring terminal validation on newer app builds, causing 'Bank limit exceeded'
+    // rejections on personal savings VPAs. Universal upi://pay routes directly to personal P2P.
     return 'upi://pay?$queryString';
   }
 
@@ -712,7 +707,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
             badgeColor: const Color(0xFF2563EB),
             badgeBg: const Color(0xFFEFF6FF),
             iconWidget: _buildGPayIcon(),
-            onTap: () => _launchUpiApp('Google Pay', customScheme: 'tez'),
+            onTap: () => _launchUpiApp('Google Pay'),
           ),
 
           const SizedBox(height: 10),
@@ -722,7 +717,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
             title: 'PhonePe',
             subtitle: 'Pay directly via PhonePe UPI',
             iconWidget: _buildPhonePeIcon(),
-            onTap: () => _launchUpiApp('PhonePe', customScheme: 'phonepe'),
+            onTap: () => _launchUpiApp('PhonePe'),
           ),
 
           const SizedBox(height: 10),
@@ -732,7 +727,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
             title: 'Paytm',
             subtitle: 'Pay via Paytm UPI or Wallet',
             iconWidget: _buildPaytmIcon(),
-            onTap: () => _launchUpiApp('Paytm', customScheme: 'paytmmp'),
+            onTap: () => _launchUpiApp('Paytm'),
           ),
 
           const SizedBox(height: 10),
@@ -745,7 +740,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
             badgeColor: const Color(0xFF0F172A),
             badgeBg: const Color(0xFFF1F5F9),
             iconWidget: _buildCredIcon(),
-            onTap: () => _launchUpiApp('CRED', customScheme: 'credpay'),
+            onTap: () => _launchUpiApp('CRED'),
           ),
 
           const SizedBox(height: 10),
@@ -814,7 +809,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '• If your bank says "Exceeded bank limit", many banks cap single transfers at ₹25,000–₹50,000 (or ₹5,000 for new UPI accounts).\n'
+                  '• If paying to your own UPI ID, Indian banks reject self-transfers with "Bank limit exceeded" (NPCI code U16). Please test with another UPI ID or bank account.\n                  • If your bank says "Exceeded bank limit", many banks cap single transfers at ₹25,000–₹50,000 (or ₹5,000 for new UPI accounts).\n'
                   '• You can use "Split Payment" above to pay in smaller installments.\n'
                   '• You can also copy the UPI ID directly and send via any UPI app or Net Banking (IMPS/NEFT).\n'
                   '• After payment, tap "Proceed to Upload Proof" to submit your screenshot.',
