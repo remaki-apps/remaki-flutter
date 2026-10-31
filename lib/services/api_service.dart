@@ -1225,6 +1225,8 @@ class ApiService {
           feePerTenant
           totalTenantsContributed
           resetsOn
+          organizationUpiId
+          organizationPayeeName
           items {
             id
             tenantName

@@ -62,8 +62,15 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
     }
   }
 
-  static const String organizationUpiId = 'kishoremagesh1@okhdfcbank';
-  static const String organizationPayeeName = 'Remaki Organization';
+  String get _resolvedOrganizationUpiId {
+    final upi = _summaryData?['organizationUpiId'] as String?;
+    return (upi != null && upi.trim().isNotEmpty) ? upi.trim() : 'kishoremagesh1@okhdfcbank';
+  }
+
+  String get _resolvedOrganizationPayeeName {
+    final payee = _summaryData?['organizationPayeeName'] as String?;
+    return (payee != null && payee.trim().isNotEmpty) ? payee.trim() : 'Remaki Organization';
+  }
 
   void _openOrganizationPaymentModal() {
     final totalCollected = (_summaryData?['monthlyPlatformFeeCollected'] as num?)?.toDouble() ?? 0.0;
@@ -84,8 +91,8 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
     UniversalUpiCheckoutModal.show(
       context,
       amount: totalCollected,
-      upiId: organizationUpiId,
-      payeeName: organizationPayeeName,
+      upiId: _resolvedOrganizationUpiId,
+      payeeName: _resolvedOrganizationPayeeName,
       propertyName: pgName,
       note: 'Platform fee - $pgName ($billingMonth)',
       onProceedToUpload: () {
@@ -191,7 +198,7 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Payee UPI:', style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF64748B))),
-                        Text(organizationUpiId, style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A))),
+                        Text(_resolvedOrganizationUpiId, style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A))),
                       ],
                     ),
                     const SizedBox(height: 4),
