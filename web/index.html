@@ -30,6 +30,13 @@
   <title>Remaki</title>
   <link rel="manifest" href="manifest.json">
 
+  <!-- ─── Embedded Deployment Build ID (Replaced at build time by build.sh) ─── -->
+  <meta name="remaki-build" content="%%REMAKI_BUILD_TIME%%">
+  <script>
+    window.REMAKI_CURRENT_BUILD = '%%REMAKI_BUILD_TIME%%';
+    window.REMAKI_GIT_HASH = '%%REMAKI_GIT_HASH%%';
+  </script>
+
   <!-- ─── Modern Refresh / Update UI Styling ─── -->
   <style>
     body {
@@ -439,22 +446,44 @@
     // ──────────────────────────────────────────────────────────────────────────
     // Remaki Smart Update & Cache Clearing Engine
     // ──────────────────────────────────────────────────────────────────────────
+    function getRunningBuild() {
+      const b = window.REMAKI_CURRENT_BUILD;
+      if (b && typeof b === 'string' && !b.startsWith('%')) {
+        return b.trim();
+      }
+      try {
+        return sessionStorage.getItem('remaki_app_build') || localStorage.getItem('remaki_app_build');
+      } catch (_) {
+        return null;
+      }
+    }
+
     window.remakiAppUpdate = {
       isUpdating: false,
       bannerShown: false,
 
-      showBanner: function() {
+      showBanner: function(newVersion) {
         if (this.bannerShown) return;
+        const runningBuild = getRunningBuild();
+        const targetVersion = (newVersion || window._latestServerVersion || '').toString().trim();
+
+        // 1. If running build is known and matches server build, page is up-to-date!
+        if (targetVersion && runningBuild && targetVersion === runningBuild) {
+          return;
+        }
+
+        // 2. If user already dismissed update banner for this exact build version, do not repeat
         try {
-          const dismissedAt = sessionStorage.getItem('remaki_update_dismissed');
-          if (dismissedAt && (Date.now() - parseInt(dismissedAt, 10)) < 900000) {
+          const dismissedFor = sessionStorage.getItem('remaki_dismissed_version');
+          if (dismissedFor && targetVersion && dismissedFor === targetVersion) {
             return;
           }
           const lastRefreshed = sessionStorage.getItem('remaki_last_refreshed_at');
-          if (lastRefreshed && (Date.now() - parseInt(lastRefreshed, 10)) < 60000) {
+          if (lastRefreshed && (Date.now() - parseInt(lastRefreshed, 10)) < 120000) {
             return;
           }
         } catch (_) {}
+
         this.bannerShown = true;
         const banner = document.getElementById('remaki-update-banner');
         if (banner) {
@@ -468,7 +497,9 @@
           banner.classList.remove('remaki-show');
         }
         try {
-          sessionStorage.setItem('remaki_update_dismissed', Date.now().toString());
+          if (window._latestServerVersion) {
+            sessionStorage.setItem('remaki_dismissed_version', window._latestServerVersion);
+          }
         } catch (_) {}
       },
 
@@ -491,6 +522,8 @@
         try {
           if (window._latestServerVersion) {
             localStorage.setItem('remaki_app_build', window._latestServerVersion);
+            sessionStorage.setItem('remaki_app_build', window._latestServerVersion);
+            sessionStorage.removeItem('remaki_dismissed_version');
           }
           sessionStorage.setItem('remaki_last_refreshed_at', Date.now().toString());
         } catch (_) {}
@@ -529,12 +562,10 @@
     };
 
     // ── Version Polling & Auto-Detection ─────────────────────────────────────
-    let currentAppVersion = null;
-
     async function checkServerVersion() {
       try {
         const lastRefreshed = sessionStorage.getItem('remaki_last_refreshed_at');
-        if (lastRefreshed && (Date.now() - parseInt(lastRefreshed, 10)) < 60000) {
+        if (lastRefreshed && (Date.now() - parseInt(lastRefreshed, 10)) < 120000) {
           return;
         }
       } catch (_) {}
@@ -546,16 +577,24 @@
         });
         if (res.ok) {
           const data = await res.json();
-          const serverVersion = (data.buildTime || data.version || '').toString();
+          const serverVersion = (data.buildTime || data.version || '').toString().trim();
+          if (!serverVersion) return;
           window._latestServerVersion = serverVersion;
-          if (!currentAppVersion) {
-            currentAppVersion = serverVersion;
+
+          const runningBuild = getRunningBuild();
+
+          if (runningBuild) {
+            // Compare running build strictly with server version
+            if (serverVersion !== runningBuild) {
+              console.log('[Remaki] New deployment detected on Vercel:', serverVersion, 'current:', runningBuild);
+              window.remakiAppUpdate.showBanner(serverVersion);
+            }
+          } else {
+            // First time initialization on non-injected local runs
             try {
               sessionStorage.setItem('remaki_app_build', serverVersion);
+              localStorage.setItem('remaki_app_build', serverVersion);
             } catch (_) {}
-          } else if (serverVersion && serverVersion !== currentAppVersion) {
-            console.log('[Remaki] New build version detected:', serverVersion, 'current:', currentAppVersion);
-            window.remakiAppUpdate.showBanner();
           }
         }
       } catch (e) {
@@ -563,15 +602,11 @@
       }
     }
 
-    try {
-      currentAppVersion = sessionStorage.getItem('remaki_app_build') || localStorage.getItem('remaki_app_build');
-    } catch (_) {}
+    // Initial check after app finishes bootstrapping (8 seconds)
+    setTimeout(checkServerVersion, 8000);
 
-    // Check version after app loads (5 seconds)
-    setTimeout(checkServerVersion, 5000);
-
-    // Periodic check every 60 seconds
-    setInterval(checkServerVersion, 60 * 1000);
+    // Periodic check every 3 minutes (180s)
+    setInterval(checkServerVersion, 180 * 1000);
 
     document.addEventListener('visibilitychange', function() {
       if (document.visibilityState === 'visible') {
@@ -600,7 +635,8 @@
               if (installingWorker.state === 'installed') {
                 if (navigator.serviceWorker.controller) {
                   installingWorker.postMessage({ type: 'SKIP_WAITING' });
-                  window.remakiAppUpdate.showBanner();
+                  // Re-verify against server version before triggering banner
+                  checkServerVersion();
                 }
               }
             });

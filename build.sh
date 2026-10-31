@@ -58,3 +58,14 @@ if [ -f "build/web/flutter_bootstrap.js" ]; then
   sed -i "s/main\.dart\.js/main\.dart\.js?v=$BUILD_TIME/g" build/web/flutter_bootstrap.js 2>/dev/null || true
 fi
 
+echo "=== Injecting build version into index.html ==="
+if [ -f "build/web/index.html" ]; then
+  sed -i "s/%%REMAKI_BUILD_TIME%%/$BUILD_TIME/g" build/web/index.html 2>/dev/null || true
+  sed -i "s/%%REMAKI_GIT_HASH%%/$GIT_HASH/g" build/web/index.html 2>/dev/null || true
+fi
+
+echo "=== Versioning service worker cache ==="
+if [ -f "build/web/flutter_service_worker.js" ]; then
+  sed -i "s/remaki-cache-v3/remaki-cache-$BUILD_TIME/g" build/web/flutter_service_worker.js 2>/dev/null || true
+fi
+
