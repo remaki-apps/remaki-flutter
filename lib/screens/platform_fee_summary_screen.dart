@@ -1,10 +1,15 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/app_provider.dart';
 import '../services/api_service.dart';
+import '../utils/image_compress_util.dart';
+import '../widgets/fancy_toast.dart';
+import '../widgets/universal_upi_checkout_modal.dart';
 
 class PlatformFeeSummaryScreen extends StatefulWidget {
   final String? propertyId;
@@ -55,6 +60,299 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
         });
       }
     }
+  }
+
+  static const String organizationUpiId = 'kishoremagesh1@okhdfcbank';
+  static const String organizationPayeeName = 'Remaki Organization';
+
+  void _openOrganizationPaymentModal() {
+    final totalCollected = (_summaryData?['monthlyPlatformFeeCollected'] as num?)?.toDouble() ?? 0.0;
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    final pgName = _summaryData?['propertyName'] ?? appProvider.pgName;
+    final billingMonth = _summaryData?['billingMonth'] as String? ??
+        DateFormat('yyyy-MM').format(DateTime.now());
+
+    if (totalCollected <= 0) {
+      FancyToast.showError(
+        context,
+        'No Fees Collected',
+        message: 'No tenant platform fee has been collected yet to remit for this cycle.',
+      );
+      return;
+    }
+
+    UniversalUpiCheckoutModal.show(
+      context,
+      amount: totalCollected,
+      upiId: organizationUpiId,
+      payeeName: organizationPayeeName,
+      propertyName: pgName,
+      note: 'Platform fee - $pgName ($billingMonth)',
+      onProceedToUpload: () {
+        _pickAndConfirmProof(totalCollected, pgName, billingMonth);
+      },
+    );
+  }
+
+  Future<void> _pickAndConfirmProof(
+    double amount,
+    String pgName,
+    String billingMonth,
+  ) async {
+    try {
+      final picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1200,
+        maxHeight: 1600,
+      );
+      if (image == null) return;
+
+      final bytes = await image.readAsBytes();
+      final compressed = await ImageCompressUtil.compressDocumentOrBill(bytes);
+
+      if (!mounted) return;
+      _showProofConfirmationDialog(compressed, amount, pgName, billingMonth);
+    } catch (e) {
+      if (mounted) {
+        FancyToast.showError(
+          context,
+          'Image Selection Error',
+          message: e.toString(),
+        );
+      }
+    }
+  }
+
+  void _showProofConfirmationDialog(
+    Uint8List imageBytes,
+    double amount,
+    String pgName,
+    String billingMonth,
+  ) {
+    final utrController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDFA),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.receipt_long_rounded, color: Color(0xFF0D9488), size: 20),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Remittance Proof',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 6),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Amount Remitted:', style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF64748B))),
+                        Text('₹${amount.toStringAsFixed(0)}', style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFF0F766E))),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Payee UPI:', style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF64748B))),
+                        Text(organizationUpiId, style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A))),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Property:', style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF64748B))),
+                        Text(pgName, style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF334155))),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Payment Screenshot',
+                style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
+              ),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  height: 180,
+                  width: double.infinity,
+                  color: const Color(0xFFF1F5F9),
+                  child: Image.memory(
+                    imageBytes,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'UPI Reference / UTR (Optional)',
+                style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: utrController,
+                decoration: InputDecoration(
+                  hintText: 'e.g. 12-digit UTR (423891823901)',
+                  hintStyle: GoogleFonts.lato(fontSize: 12.5, color: const Color(0xFF94A3B8)),
+                  filled: true,
+                  fillColor: const Color(0xFFF8FAFC),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFF0D9488), width: 1.5),
+                  ),
+                ),
+                style: GoogleFonts.lato(fontSize: 13),
+              ),
+              const SizedBox(height: 6),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.lato(color: const Color(0xFF64748B), fontWeight: FontWeight.w600),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              FancyToast.showSuccess(
+                context,
+                'Remittance Submitted',
+                message: 'Platform fee payment proof of ₹${amount.toStringAsFixed(0)} sent to Remaki Organization.',
+              );
+              _loadSummary();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0D9488),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text(
+              'Submit Remittance',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13.5),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomPayBar(double totalCollected) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: const Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 10,
+            offset: const Offset(0, -3),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Collected Platform Fee',
+                    style: GoogleFonts.lato(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
+                  Text(
+                    '₹${totalCollected.toStringAsFixed(0)}',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF0F172A),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: _openOrganizationPaymentModal,
+              icon: const Icon(Icons.payment_rounded, size: 18),
+              label: Text(
+                'Send Payment',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0D9488),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -376,6 +674,7 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
                     ),
                   ),
                 ),
+      bottomNavigationBar: totalCollected > 0 ? _buildBottomPayBar(totalCollected) : null,
     );
   }
 
@@ -503,6 +802,63 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
                 Container(height: 24, width: 1, color: Colors.white.withValues(alpha: 0.2)),
                 _buildStatColumn('Next Reset', resetsOn),
               ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _openOrganizationPaymentModal,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF0FDFA),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.send_rounded,
+                        size: 15,
+                        color: Color(0xFF0F766E),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      totalCollected > 0
+                          ? 'Send Payment to Organization (₹${totalCollected.toStringAsFixed(0)})'
+                          : 'Send Payment to Organization',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF0F766E),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 12,
+                      color: Color(0xFF0F766E),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],

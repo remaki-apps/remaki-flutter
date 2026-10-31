@@ -1423,10 +1423,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildPlatformFeeCard(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
+    return GestureDetector(
+      onTap: () async {
+        await context.push('/platform_fee_summary');
+        _loadPlatformFeeSummary();
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
@@ -1564,8 +1569,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildPaymentHistorySection({
     required BuildContext context,
