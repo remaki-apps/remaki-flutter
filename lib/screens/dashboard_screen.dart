@@ -156,9 +156,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final appProvider = Provider.of<AppProvider>(context);
     final monthYear = DateFormat('MMMM yyyy').format(DateTime.now());
 
-    final expectedRent = appProvider.expectedRent;
-    final collectedRent = appProvider.collectedRent;
-    final pendingRent = appProvider.pendingRent;
+    final expectedRent = appProvider.expectedRentOnly;
+    final collectedRent = appProvider.collectedRentOnly;
+    final pendingRent = appProvider.pendingRentOnly;
     final bool isDataLoading = appProvider.isLoading ||
         (appProvider.pgName.isEmpty && appProvider.rooms.isEmpty && appProvider.lastSyncError == null);
 
@@ -1880,7 +1880,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 border: Border.all(color: const Color(0xFFE2E8F0), width: 0.5),
                               ),
                               child: Text(
-                                payment.roomNumber!,
+                                formatRoomName(payment.roomNumber),
                                 style: GoogleFonts.lato(
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.w700,
@@ -1931,7 +1931,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '₹${_formatCurrency(payment.amount)}',
+                      '₹${_formatCurrency(payment.calculateTotalPaid(tenant))}',
                       style: GoogleFonts.lato(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w800,
@@ -2005,9 +2005,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             if (isExpanded)
               PaymentSplitupCard(
-                paymentAmount: payment.amount,
-                rentAmount: tenant?.rentAmount ?? payment.amount,
-                platformFee: tenant?.platformFee ?? 9.0,
+                paymentAmount: payment.calculateTotalPaid(tenant),
+                rentAmount: payment.rentAmount > 0 ? payment.rentAmount : (tenant?.rentAmount ?? payment.amount),
+                platformFee: payment.platformFee > 0 ? payment.platformFee : (tenant?.platformFee ?? 9.0),
                 bills: tenant?.additionalCharges,
                 method: payment.method,
                 notes: payment.notes,

@@ -116,7 +116,7 @@ class NotificationProvider extends ChangeNotifier {
           orElse: () => Room(id: '', number: '', floor: '', capacity: 0, beds: []),
         );
         if (room.number.isNotEmpty) {
-          roomStr = 'Room ${room.number}';
+          roomStr = formatRoomName(room.number);
         }
       }
 
@@ -180,7 +180,7 @@ class NotificationProvider extends ChangeNotifier {
             (r) => r.id == t.roomId,
             orElse: () => Room(id: '', number: '', floor: '', capacity: 0, beds: []),
           );
-          final roomStr = room.number.isNotEmpty ? 'Room ${room.number}' : 'Assigned Bed';
+          final roomStr = room.number.isNotEmpty ? formatRoomName(room.number) : 'Assigned Bed';
           final overdueId = 'overdue_${t.id}_${now.year}_${now.month}_${now.day}';
           final isRead = _readIds.contains(overdueId);
 

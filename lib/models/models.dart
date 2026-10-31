@@ -10,6 +10,35 @@ String generateEasyPassword() {
   return '$prefix$number';
 }
 
+/// Formats room string without duplicate "Room" prefix (e.g. "Room 101", never "Room Room 101")
+String formatRoomName(String? room) {
+  if (room == null || room.trim().isEmpty) return '';
+  var trimmed = room.trim();
+  while (RegExp(r'^room\s*[:\-]?\s*', caseSensitive: false).hasMatch(trimmed)) {
+    trimmed = trimmed.replaceFirst(RegExp(r'^room\s*[:\-]?\s*', caseSensitive: false), '').trim();
+  }
+  return trimmed.isEmpty ? 'Room' : 'Room $trimmed';
+}
+
+/// Formats bed string without duplicate "Bed" prefix (e.g. "Bed 1", never "Bed Bed 1")
+String formatBedName(String? bed) {
+  if (bed == null || bed.trim().isEmpty) return '';
+  var trimmed = bed.trim();
+  while (RegExp(r'^bed\s*[:\-]?\s*', caseSensitive: false).hasMatch(trimmed)) {
+    trimmed = trimmed.replaceFirst(RegExp(r'^bed\s*[:\-]?\s*', caseSensitive: false), '').trim();
+  }
+  return trimmed.isEmpty ? 'Bed' : 'Bed $trimmed';
+}
+
+/// Formats combined Room and Bed string cleanly (e.g. "Room 101 • Bed 1")
+String formatRoomAndBed(String? room, String? bed, {String separator = ' • '}) {
+  final r = formatRoomName(room);
+  final b = formatBedName(bed);
+  if (r.isNotEmpty && b.isNotEmpty) return '$r$separator$b';
+  if (r.isNotEmpty) return r;
+  return b;
+}
+
 class Bed {
   String id;
   String name;
@@ -347,7 +376,7 @@ class Tenant {
     final totalStr = (totalDue > 0 ? totalDue : rentAmount).toStringAsFixed(0);
 
     final roomDetailStr = roomNumber.isNotEmpty
-        ? 'Room $roomNumber${floorName.isNotEmpty ? ' ($floorName)' : ''}'
+        ? '${formatRoomName(roomNumber)}${floorName.isNotEmpty ? ' ($floorName)' : ''}'
         : 'Assigned Room';
 
     return Uri.encodeComponent(
@@ -553,6 +582,18 @@ class Payment {
       platformFee: fee,
       rentAmount: rent,
     );
+  }
+
+  /// Returns total amount paid including rent, utility bills, and platform fee
+  double calculateTotalPaid(Tenant? tenant) {
+    if (tenant == null) return amount;
+    final fee = platformFee > 0 ? platformFee : tenant.platformFee;
+    final rent = rentAmount > 0 ? rentAmount : tenant.rentAmount;
+    final paidBills = tenant.additionalCharges
+        .where((c) => c.billType != 'RENT' && c.status == 'PAID')
+        .fold(0.0, (sum, c) => sum + c.amount);
+    final combined = rent + paidBills + fee;
+    return max(amount, combined);
   }
 }
 

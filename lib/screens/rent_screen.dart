@@ -862,8 +862,8 @@ class _RentScreenState extends State<RentScreen> {
                 final roomIdx = tenant != null ? appProvider.rooms.indexWhere((r) => r.id == tenant.roomId) : -1;
                 final tenantRoomNum = roomIdx != -1 ? appProvider.rooms[roomIdx].number : '';
                 final roomInfo = (p.roomNumber != null && p.roomNumber!.isNotEmpty)
-                    ? 'Room ${p.roomNumber}'
-                    : (tenantRoomNum.isNotEmpty ? 'Room $tenantRoomNum' : 'PG Tenant');
+                    ? formatRoomName(p.roomNumber)
+                    : (tenantRoomNum.isNotEmpty ? formatRoomName(tenantRoomNum) : 'PG Tenant');
                 final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(p.date);
 
                 return ListTile(

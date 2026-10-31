@@ -134,7 +134,7 @@ class RoomDetailsScreen extends StatelessWidget {
                           children: [
                             Flexible(
                               child: Text(
-                                'Room ${room.number}',
+                                formatRoomName(room.number),
                                 style: const TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w800,
@@ -518,7 +518,7 @@ class RoomDetailsScreen extends StatelessWidget {
         FancyToast.showSuccess(
           context,
           'Bed Removed!',
-          message: '${bed.name} has been removed from Room ${room.number}.',
+          message: '${formatBedName(bed.name)} has been removed from ${formatRoomName(room.number)}.',
         );
       },
       child: cardContent,
@@ -570,7 +570,7 @@ class RoomDetailsScreen extends StatelessWidget {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Are you sure you want to remove ${bed.name} from Room ${room.number}? This action cannot be undone.',
+                  'Are you sure you want to remove ${formatBedName(bed.name)} from ${formatRoomName(room.number)}? This action cannot be undone.',
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF64748B),
@@ -616,7 +616,7 @@ class RoomDetailsScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Room ${room.number} • ${room.floor}',
+                            '${formatRoomName(room.number)} • ${room.floor}',
                             style: const TextStyle(
                               fontSize: 11,
                               color: Color(0xFF64748B),

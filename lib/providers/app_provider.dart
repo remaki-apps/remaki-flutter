@@ -235,11 +235,11 @@ class AppProvider with ChangeNotifier {
         if (roomInfo == null && matchedTenant != null && matchedTenant.roomId.isNotEmpty) {
           try {
             final r = rooms.firstWhere((room) => room.id == matchedTenant!.roomId);
-            String label = 'Room ${r.number}';
+            String label = formatRoomName(r.number);
             if (matchedTenant.bedId.isNotEmpty) {
               try {
                 final b = r.beds.firstWhere((bed) => bed.id == matchedTenant!.bedId);
-                label = 'Room ${r.number} (${b.name})';
+                label = '${formatRoomName(r.number)} (${formatBedName(b.name)})';
               } catch (_) {}
             }
             roomInfo = label;

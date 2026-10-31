@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../services/api_service.dart';
 import '../utils/image_compress_util.dart';
@@ -912,12 +913,7 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
       }
     }
 
-    String roomBedInfo = '';
-    if (roomNumber.isNotEmpty && bedLabel.isNotEmpty) {
-      roomBedInfo = 'Room $roomNumber • Bed $bedLabel';
-    } else if (roomNumber.isNotEmpty) {
-      roomBedInfo = 'Room $roomNumber';
-    }
+    final roomBedInfo = formatRoomAndBed(roomNumber, bedLabel);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

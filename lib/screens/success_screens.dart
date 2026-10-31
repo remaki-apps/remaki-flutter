@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tenant_avatar.dart';
@@ -269,7 +270,7 @@ class _TenantAddedSuccessScreenState extends State<TenantAddedSuccessScreen> {
 
     final stayDetailsText = (currentRoom.isNotEmpty || currentFloor.isNotEmpty)
       ? '🏠 *Stay Details:*\n'
-        '${currentRoom.isNotEmpty ? '• *Room:* Room $currentRoom\n' : ''}'
+        '${currentRoom.isNotEmpty ? '• *Room:* ${formatRoomName(currentRoom)}\n' : ''}'
         '${currentFloor.isNotEmpty ? '• *Floor:* $currentFloor\n' : ''}\n'
       : '';
 
@@ -363,7 +364,7 @@ class _TenantAddedSuccessScreenState extends State<TenantAddedSuccessScreen> {
     if (displayPassword.isEmpty) displayPassword = 'hi123';
 
     final String roomDisplay = currentRoom.isNotEmpty
-        ? 'Room $currentRoom${currentFloor.isNotEmpty ? ' ($currentFloor)' : ''}'
+        ? '${formatRoomName(currentRoom)}${currentFloor.isNotEmpty ? ' ($currentFloor)' : ''}'
         : widget.roomBed;
 
     return SuccessScreen(

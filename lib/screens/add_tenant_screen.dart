@@ -488,7 +488,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
               hintText: 'Select Available Room',
               icon: Icons.meeting_room_outlined,
               items: availableRooms
-                  .map((r) => DropdownOption(value: r.id, label: 'Room ${r.number} [${r.availableBeds} beds left]'))
+                  .map((r) => DropdownOption(value: r.id, label: '${formatRoomName(r.number)} [${r.availableBeds} beds left]'))
                   .toList(),
               onChanged: (val) => setState(() {
                 _selectedRoomId = val;
@@ -728,7 +728,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
       _selectedRoomId = null;
       setState(() => _isLoading = false);
 
-      context.go('/tenant_added_success?tenantId=${tenant.id}&password=${Uri.encodeComponent(tempPassword ?? '')}&name=${Uri.encodeComponent(tenant.name)}&phone=${Uri.encodeComponent(tenant.phone)}&roomNumber=${Uri.encodeComponent(room.number)}&floor=${Uri.encodeComponent(room.floor)}&roomBed=${Uri.encodeComponent('Room ${room.number}')}&rent=${tenant.rentAmount}&moveIn=${Uri.encodeComponent(_moveInController.text)}');
+      context.go('/tenant_added_success?tenantId=${tenant.id}&password=${Uri.encodeComponent(tempPassword ?? '')}&name=${Uri.encodeComponent(tenant.name)}&phone=${Uri.encodeComponent(tenant.phone)}&roomNumber=${Uri.encodeComponent(room.number)}&floor=${Uri.encodeComponent(room.floor)}&roomBed=${Uri.encodeComponent(formatRoomName(room.number))}&rent=${tenant.rentAmount}&moveIn=${Uri.encodeComponent(_moveInController.text)}');
     } catch (e) {
       if (!mounted) return;
       

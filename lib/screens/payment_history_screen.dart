@@ -464,7 +464,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                                   border: Border.all(color: const Color(0xFFE2E8F0), width: 0.5),
                                                 ),
                                                 child: Text(
-                                                  payment.roomNumber!,
+                                                  formatRoomName(payment.roomNumber),
                                                   style: GoogleFonts.lato(
                                                     fontSize: 9.5,
                                                     fontWeight: FontWeight.w700,
@@ -517,7 +517,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        '₹${_formatCurrency(payment.amount)}',
+                                        '₹${_formatCurrency(payment.calculateTotalPaid(tenant))}',
                                         style: GoogleFonts.lato(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w800,
@@ -618,7 +618,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                               ),
                               if (isExpanded)
                                 PaymentSplitupCard(
-                                  paymentAmount: payment.amount,
+                                  paymentAmount: payment.calculateTotalPaid(tenant),
                                   rentAmount: payment.rentAmount > 0 ? payment.rentAmount : (tenant?.rentAmount ?? payment.amount),
                                   platformFee: payment.platformFee > 0 ? payment.platformFee : (tenant?.platformFee ?? 0.0),
                                   bills: tenant?.additionalCharges,
