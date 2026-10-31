@@ -841,6 +841,11 @@ class ApiService {
       mutation UpdateTenantFinancials(\$tenantId: ID!, \$rentAmount: Float, \$securityDeposit: Float, \$rentDueDay: Int, \$paymentMode: String) {
         updateTenantFinancials(tenantId: \$tenantId, rentAmount: \$rentAmount, securityDeposit: \$securityDeposit, rentDueDay: \$rentDueDay, paymentMode: \$paymentMode) {
           id
+          monthlyRent
+          pendingRentAmount
+          rentDueDate
+          securityDeposit
+          paymentStatus
         }
       }
     ''';
