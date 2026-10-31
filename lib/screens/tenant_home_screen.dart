@@ -1694,6 +1694,33 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           ),
                         ],
                       ),
+                      if (_announcements.first['imageUrl'] != null && (_announcements.first['imageUrl'] as String).isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: TenantTheme.primaryBorder.withValues(alpha: 0.5)),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: (_announcements.first['imageUrl'] as String).startsWith('data:')
+                                ? Image.memory(
+                                    base64Decode((_announcements.first['imageUrl'] as String).split(',').last),
+                                    height: 160,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                                  )
+                                : Image.network(
+                                    _announcements.first['imageUrl'] as String,
+                                    height: 160,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                                  ),
+                          ),
+                        ),
+                      ],
                     ],
                   )
                 : Center(
@@ -4070,13 +4097,21 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             border: Border.all(color: TenantTheme.glassBorder),
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: Image.network(
-                            imgUrl,
-                            height: 170,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (ctx, err, st) => const SizedBox(),
-                          ),
+                          child: imgUrl.startsWith('data:')
+                              ? Image.memory(
+                                  base64Decode(imgUrl.split(',').last),
+                                  height: 170,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                                )
+                              : Image.network(
+                                  imgUrl,
+                                  height: 170,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (ctx, err, st) => const SizedBox(),
+                                ),
                         ),
                       ),
                     ],
