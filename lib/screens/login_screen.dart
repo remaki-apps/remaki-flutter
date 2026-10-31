@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -496,6 +497,12 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                               TextField(
                                 controller: _phoneController,
                                 keyboardType: TextInputType.phone,
+                                maxLength: 10,
+                                buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(10),
+                                ],
                                 autocorrect: false,
                                 enableSuggestions: false,
                                 style: GoogleFonts.inter(
