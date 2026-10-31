@@ -129,57 +129,75 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
     super.dispose();
   }
 
-  String _buildUpiUri({String? scheme}) {
-    if (_currentAmount <= 0) return 'upi://pay';
+  String _buildQueryString() {
+    // 1. Lowercase and trim VPA for strict bank switch compatibility
+    final cleanVpa = widget.upiId.trim().toLowerCase();
 
-    // 1. Sanitize Payee Name (alphanumeric, dots & spaces only - max 22 chars safe length)
+    // 2. Sanitize Payee Name (alphanumeric, spaces & dot only - strictly capped at 20 chars)
     final finalPayee = UniversalUpiCheckoutModal.sanitizePayeeName(
       widget.payeeName.isNotEmpty ? widget.payeeName : (widget.propertyName ?? 'Remaki Property')
     );
 
-    // 2. Sanitize Note (plain letters, numbers, spaces only - max 24 chars)
-    // Avoid special characters like hyphens or parentheses which cause bank CBS rejections
-    final rawNote = widget.note?.trim().isNotEmpty == true
-        ? widget.note!.trim()
-        : 'Rent payment';
+    // 3. Clean Note: Keep note neutral ('Payment') to avoid bank AML filters that flag P2P 'Rent' transfers
+    final rawNote = widget.note?.trim().isNotEmpty == true ? widget.note!.trim() : 'Payment';
     final cleanNote = rawNote
         .replaceAll(RegExp(r'[^a-zA-Z0-9 ]'), ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
     final finalNote = cleanNote.isNotEmpty
-        ? (cleanNote.length > 24 ? cleanNote.substring(0, 24).trim() : cleanNote)
-        : 'Rent payment';
+        ? (cleanNote.length > 20 ? cleanNote.substring(0, 20).trim() : cleanNote)
+        : 'Payment';
 
-    // 3. Build standard P2P query parameters.
     final queryParams = <String, String>{
-      'pa': widget.upiId.trim(),
+      'pa': cleanVpa,
       'pn': finalPayee,
       if (_currentAmount > 0) 'am': _currentAmount.toStringAsFixed(2),
       'cu': 'INR',
       'tn': finalNote,
     };
 
-    final queryString = queryParams.entries
+    return queryParams.entries
         .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
         .join('&');
+  }
 
-    // Standard NPCI P2P UPI URI.
-    // NOTE: Avoid custom schemes like tez://, phonepe://, or paytmmp:// as they trigger
-    // merchant acquiring terminal validation on newer app builds, causing 'Bank limit exceeded'
-    // rejections on personal savings VPAs. Universal upi://pay routes directly to personal P2P.
+  String _buildGenericUpiUri() {
+    final queryString = _buildQueryString();
     return 'upi://pay?$queryString';
   }
 
-  Future<void> _launchUpiApp(String schemeName, {String? customScheme}) async {
+  String _buildTargetedUpiUri({String? packageName, String? iosScheme}) {
+    final queryString = _buildQueryString();
+
+    // iOS custom scheme routing
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+      if (iosScheme != null && iosScheme.isNotEmpty) {
+        if (iosScheme == 'gpay') return 'gpay://upi/pay?$queryString';
+        if (iosScheme == 'phonepe') return 'phonepe://pay?$queryString';
+        if (iosScheme == 'paytmmp') return 'paytmmp://pay?$queryString';
+        if (iosScheme == 'credpay') return 'credpay://pay?$queryString';
+      }
+      return 'upi://pay?$queryString';
+    }
+
+    // Android Direct App Intent Routing (Chrome on Android + Native Android)
+    // Using Android intent URI with package targets the specific app DIRECTLY without 'Open with' chooser!
+    if (packageName != null && packageName.isNotEmpty) {
+      return 'intent://pay?$queryString#Intent;scheme=upi;package=$packageName;end';
+    }
+
+    return 'upi://pay?$queryString';
+  }
+
+  Future<void> _launchUpiApp(String schemeName, {String? packageName, String? iosScheme}) async {
     setState(() => _isLaunching = true);
-    final upiUrl = _buildUpiUri(scheme: customScheme);
-    final fallbackUrl = _buildUpiUri();
+    final targetedUrl = _buildTargetedUpiUri(packageName: packageName, iosScheme: iosScheme);
+    final genericFallback = _buildGenericUpiUri();
 
     try {
       if (kIsWeb) {
-        // Direct trigger for mobile browsers (iOS Safari, mobile browsers)
-        // just like Flipkart and RedBus without failing on canLaunchUrl checks.
-        WebUpiUtil.launchUpi(upiUrl);
+        // Mobile Chrome on Android parses intent://package=... and opens the app DIRECTLY!
+        WebUpiUtil.launchUpi(targetedUrl);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -190,7 +208,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Opening $schemeName... If app does not open, switch to "Scan QR" tab or copy UPI ID.',
+                      'Redirecting to $schemeName directly... If app does not open, switch to "Scan QR" tab or copy UPI ID.',
                       style: GoogleFonts.lato(fontSize: 12.5, color: Colors.white),
                     ),
                   ),
@@ -204,16 +222,16 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
           );
         }
       } else {
-        // Native mobile application (Android / iOS native)
-        final uri = Uri.parse(upiUrl);
+        // Native Android / iOS application
+        final uri = Uri.parse(targetedUrl);
         bool launched = false;
 
         if (await canLaunchUrl(uri)) {
           launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
         }
 
-        if (!launched && customScheme != null) {
-          final fallbackUri = Uri.parse(fallbackUrl);
+        if (!launched) {
+          final fallbackUri = Uri.parse(genericFallback);
           if (await canLaunchUrl(fallbackUri)) {
             launched = await launchUrl(fallbackUri, mode: LaunchMode.externalApplication);
           }
@@ -236,8 +254,15 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
       }
     } catch (e, stack) {
       debugPrint('[UniversalUpi] Launch app error ($schemeName): $e\n$stack');
-      if (mounted) {
-        _tabController.animateTo(1);
+      try {
+        final fallbackUri = Uri.parse(genericFallback);
+        if (await canLaunchUrl(fallbackUri)) {
+          await launchUrl(fallbackUri, mode: LaunchMode.externalApplication);
+        } else if (mounted) {
+          _tabController.animateTo(1);
+        }
+      } catch (_) {
+        if (mounted) _tabController.animateTo(1);
       }
     } finally {
       if (mounted) setState(() => _isLaunching = false);
@@ -268,7 +293,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
   Widget build(BuildContext context) {
     final currencyFormat = NumberFormat('#,##,###');
     final formattedAmount = '₹${currencyFormat.format(_currentAmount)}';
-    final universalUpiString = _buildUpiUri();
+    final universalUpiString = _buildGenericUpiUri();
 
     return Container(
       constraints: BoxConstraints(
@@ -734,48 +759,67 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
           ),
           const SizedBox(height: 10),
 
-          // Google Pay
+          // Google Pay - Direct package redirect (no 'Open with' chooser)
           _buildUpiTile(
             title: 'Google Pay',
-            subtitle: 'Instant payment via GPay app',
-            badgeText: 'FASTEST',
+            subtitle: 'Direct redirect to GPay app',
+            badgeText: 'DIRECT',
             badgeColor: const Color(0xFF2563EB),
             badgeBg: const Color(0xFFEFF6FF),
             iconWidget: _buildGPayIcon(),
-            onTap: () => _launchUpiApp('Google Pay'),
+            onTap: () => _launchUpiApp(
+              'Google Pay',
+              packageName: 'com.google.android.apps.nbu.paisa.user',
+              iosScheme: 'gpay',
+            ),
           ),
 
           const SizedBox(height: 10),
 
-          // PhonePe
+          // PhonePe - Direct package redirect
           _buildUpiTile(
             title: 'PhonePe',
-            subtitle: 'Pay directly via PhonePe UPI',
+            subtitle: 'Direct redirect to PhonePe app',
+            badgeText: 'DIRECT',
+            badgeColor: const Color(0xFF6739B7),
+            badgeBg: const Color(0xFFF3E8FF),
             iconWidget: _buildPhonePeIcon(),
-            onTap: () => _launchUpiApp('PhonePe'),
+            onTap: () => _launchUpiApp(
+              'PhonePe',
+              packageName: 'com.phonepe.app',
+              iosScheme: 'phonepe',
+            ),
           ),
 
           const SizedBox(height: 10),
 
-          // Paytm
+          // Paytm - Direct package redirect
           _buildUpiTile(
             title: 'Paytm',
-            subtitle: 'Pay via Paytm UPI or Wallet',
+            subtitle: 'Direct redirect to Paytm app',
             iconWidget: _buildPaytmIcon(),
-            onTap: () => _launchUpiApp('Paytm'),
+            onTap: () => _launchUpiApp(
+              'Paytm',
+              packageName: 'net.one97.paytm',
+              iosScheme: 'paytmmp',
+            ),
           ),
 
           const SizedBox(height: 10),
 
-          // CRED
+          // CRED - Direct package redirect
           _buildUpiTile(
             title: 'CRED',
-            subtitle: 'Pay via CRED UPI app',
+            subtitle: 'Direct redirect to CRED app',
             badgeText: 'POPULAR',
             badgeColor: const Color(0xFF0F172A),
             badgeBg: const Color(0xFFF1F5F9),
             iconWidget: _buildCredIcon(),
-            onTap: () => _launchUpiApp('CRED'),
+            onTap: () => _launchUpiApp(
+              'CRED',
+              packageName: 'com.dreamplug.androidapp',
+              iosScheme: 'credpay',
+            ),
           ),
 
           const SizedBox(height: 10),
@@ -844,9 +888,11 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '• If paying to your own UPI ID, Indian banks reject self-transfers with "Bank limit exceeded" (NPCI code U16). Please test with another UPI ID or bank account.\n                  • If your bank says "Exceeded bank limit", many banks cap single transfers at ₹25,000–₹50,000 (or ₹5,000 for new UPI accounts).\n'
-                  '• You can use "Split Payment" above to pay in smaller installments.\n'
-                  '• You can also copy the UPI ID directly and send via any UPI app or Net Banking (IMPS/NEFT).\n'
+                  '• Self-Transfer Restriction: Indian banks (HDFC, SBI, Axis, ICICI) automatically decline payments if you try to pay your own UPI ID (${widget.upiId}) from the same bank account or linked phone number. The bank surfaces this as "Bank limit exceeded" even for small amounts like ₹15 or ₹25.\n'
+                  '• What to do if you see limit exceeded:\n'
+                  '  1. Switch to the "Scan QR Code" tab above and scan from another bank account.\n'
+                  '  2. Or copy the UPI ID (${widget.upiId}) and pay via Net Banking (IMPS/NEFT) or another UPI app.\n'
+                  '  3. If paying a large amount, use the "Split Payment" option above to pay in parts.\n'
                   '• After payment, tap "Proceed to Upload Proof" to submit your screenshot.',
                   style: GoogleFonts.lato(fontSize: 11.5, color: const Color(0xFF78350F), height: 1.4),
                 ),

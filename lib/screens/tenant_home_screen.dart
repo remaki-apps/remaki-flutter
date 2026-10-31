@@ -2316,81 +2316,90 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Amount & Receipt Action Row
+                        // Amount & Receipt Action Row - Safe Expanded Layout to Prevent Overflows
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  isRentPaidBillsDue
-                                      ? 'Utility Bill Due (Rent Paid ✓)'
-                                      : (isPaid ? 'Cleared Rent' : 'Payable Amount'),
-                                  style: GoogleFonts.lato(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white.withValues(alpha: 0.78),
-                                    letterSpacing: 0.2,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '₹${NumberFormat('#,##,###').format(displayRent)}',
-                                  style: GoogleFonts.lato(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                    letterSpacing: -0.8,
-                                    height: 1.1,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      isRentPaidBillsDue
-                                          ? Icons.bolt_rounded
-                                          : (isPaid
-                                              ? Icons.verified_rounded
-                                              : (isPending
-                                                  ? Icons.hourglass_top_rounded
-                                                  : (isUpcoming
-                                                      ? Icons.schedule_rounded
-                                                      : Icons.error_outline_rounded))),
-                                      size: 13,
-                                      color: isRentPaidBillsDue
-                                          ? const Color(0xFFFDE68A)
-                                          : (isPaid
-                                              ? const Color(0xFF6EE7B7)
-                                              : (isPending
-                                                  ? const Color(0xFFFDE68A)
-                                                  : (isUpcoming
-                                                      ? const Color(0xFFBFDBFE)
-                                                      : const Color(0xFFFCA5A5)))),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isRentPaidBillsDue
+                                        ? 'Utility Bill Due (Rent Paid ✓)'
+                                        : (isPaid ? 'Cleared Rent' : 'Payable Amount'),
+                                    style: GoogleFonts.lato(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white.withValues(alpha: 0.78),
+                                      letterSpacing: 0.2,
                                     ),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      isRentPaidBillsDue
-                                          ? 'Rent is paid • ₹${NumberFormat('#,##,###').format(_pendingBills)} utility bill split due'
-                                          : (isPaid
-                                              ? 'All dues cleared for this cycle'
-                                              : (isPending
-                                                  ? 'Payment submitted • Under Admin Review'
-                                                  : (isUpcoming
-                                                      ? 'Rent payable by $rentDueDateStr • No late fee'
-                                                      : 'Overdue since $rentDueDateStr'))),
-                                      style: GoogleFonts.lato(
-                                        fontSize: 11.5,
-                                        color: Colors.white.withValues(alpha: 0.85),
-                                        fontWeight: FontWeight.w500,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '₹${NumberFormat('#,##,###').format(displayRent)}',
+                                    style: GoogleFonts.lato(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                      letterSpacing: -0.8,
+                                      height: 1.1,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        isRentPaidBillsDue
+                                            ? Icons.bolt_rounded
+                                            : (isPaid
+                                                ? Icons.verified_rounded
+                                                : (isPending
+                                                    ? Icons.hourglass_top_rounded
+                                                    : (isUpcoming
+                                                        ? Icons.schedule_rounded
+                                                        : Icons.error_outline_rounded))),
+                                        size: 13,
+                                        color: isRentPaidBillsDue
+                                            ? const Color(0xFFFDE68A)
+                                            : (isPaid
+                                                ? const Color(0xFF6EE7B7)
+                                                : (isPending
+                                                    ? const Color(0xFFFDE68A)
+                                                    : (isUpcoming
+                                                        ? const Color(0xFFBFDBFE)
+                                                        : const Color(0xFFFCA5A5)))),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                      const SizedBox(width: 5),
+                                      Expanded(
+                                        child: Text(
+                                          isRentPaidBillsDue
+                                              ? 'Rent paid • ₹${NumberFormat('#,##,###').format(_pendingBills)} bill due'
+                                              : (isPaid
+                                                  ? 'All dues cleared for this cycle'
+                                                  : (isPending
+                                                      ? 'Payment submitted • Under Review'
+                                                      : (isUpcoming
+                                                          ? 'Rent payable by $rentDueDateStr'
+                                                          : 'Overdue since $rentDueDateStr'))),
+                                          style: GoogleFonts.lato(
+                                            fontSize: 11.5,
+                                            color: Colors.white.withValues(alpha: 0.85),
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
+                            const SizedBox(width: 8),
                             if (isPaid || isRentPaidBillsDue)
                               Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -2401,7 +2410,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                       onTap: () => _showReceiptDialog(currentMonthStr, monthlyRentVal, rentDueDateStr),
                                       borderRadius: BorderRadius.circular(14),
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
                                         decoration: BoxDecoration(
                                           color: Colors.white.withValues(alpha: 0.18),
                                           borderRadius: BorderRadius.circular(14),
@@ -2420,9 +2429,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                             const Icon(
                                               Icons.receipt_long_rounded,
                                               color: Colors.white,
-                                              size: 15,
+                                              size: 14,
                                             ),
-                                            const SizedBox(width: 5),
+                                            const SizedBox(width: 4),
                                             Text(
                                               'Receipt',
                                               style: GoogleFonts.lato(
@@ -2437,14 +2446,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                     ),
                                   ),
                                   if (isRentPaidBillsDue) ...[
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 6),
                                     Material(
                                       color: Colors.transparent,
                                       child: InkWell(
                                         onTap: _openUpiPaymentModal,
                                         borderRadius: BorderRadius.circular(14),
                                         child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
                                           decoration: BoxDecoration(
                                             gradient: const LinearGradient(
                                               colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
