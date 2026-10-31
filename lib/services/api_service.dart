@@ -35,10 +35,18 @@ class ApiService {
   static Future<void> initToken() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      _token = prefs.getString('auth_token');
-      _role = prefs.getString('user_role');
-      _hasSecurityPin = prefs.getBool('user_has_security_pin');
-      authNotifier.value = isLoggedIn;
+      final currentEnv = EnvConfig.environment.name;
+      final savedEnv = prefs.getString('auth_env');
+      if (savedEnv != null && savedEnv != currentEnv) {
+        // Environment switched (e.g. was QA, now Prod on same origin)
+        // Clear cached token to prevent invalid cross-environment sessions
+        await clearAuthToken();
+      } else {
+        _token = prefs.getString('auth_token');
+        _role = prefs.getString('user_role');
+        _hasSecurityPin = prefs.getBool('user_has_security_pin');
+        authNotifier.value = isLoggedIn;
+      }
     } catch (e) {
       debugPrint('ApiService initToken error: $e');
     }
@@ -54,12 +62,14 @@ class ApiService {
     try {
       final prefs = await SharedPreferences.getInstance();
       if (persist) {
+        await prefs.setString('auth_env', EnvConfig.environment.name);
         await prefs.setString('auth_token', token);
         await prefs.setString('user_role', role);
         if (hasSecurityPin != null) {
           await prefs.setBool('user_has_security_pin', hasSecurityPin);
         }
       } else {
+        await prefs.remove('auth_env');
         await prefs.remove('auth_token');
         await prefs.remove('user_role');
         await prefs.remove('user_has_security_pin');
@@ -86,6 +96,7 @@ class ApiService {
     authNotifier.value = false;
     try {
       final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('auth_env');
       await prefs.remove('auth_token');
       await prefs.remove('user_role');
       await prefs.remove('user_has_security_pin');

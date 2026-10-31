@@ -32,8 +32,8 @@ if [ "$GIT_BRANCH" = "qa" ] || [ "$ENV" = "qa" ] || [[ "$GIT_BRANCH" == *"qa"* ]
   echo "Targeting QA environment (-t lib/main_qa.dart --dart-define=ENV=qa)..."
   flutter build web --release -t lib/main_qa.dart --dart-define=ENV=qa
 else
-  echo "Targeting standard environment (-t lib/main.dart)..."
-  flutter build web --release -t lib/main.dart
+  echo "Targeting standard production environment (-t lib/main.dart --dart-define=ENV=prod)..."
+  flutter build web --release -t lib/main.dart --dart-define=ENV=prod
 fi
 
 echo "=== Ensuring custom flutter_service_worker.js is in place ==="

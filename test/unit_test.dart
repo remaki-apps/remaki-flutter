@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sunshine_pg_app/models/models.dart';
 import 'package:sunshine_pg_app/providers/app_provider.dart';
 import 'package:sunshine_pg_app/services/api_service.dart';
+import 'package:sunshine_pg_app/config/env_config.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -425,6 +426,55 @@ void main() {
       expect(pinRegex.hasMatch('12a4'), isFalse);
       expect(pinRegex.hasMatch(''), isFalse);
       expect(pinRegex.hasMatch(' 1234 '), isFalse);
+    });
+  });
+
+  group('EnvConfig & Cross-Environment Safety Tests', () {
+    test('EnvConfig configures Prod correctly', () {
+      EnvConfig.initialize(Environment.prod);
+      expect(EnvConfig.isProd, isTrue);
+      expect(EnvConfig.isQa, isFalse);
+      expect(EnvConfig.appName, 'Remaki');
+      expect(EnvConfig.apiUrl, EnvConfig.prodApiUrl);
+      expect(EnvConfig.warmupUrl, 'https://remaki-backend.onrender.com/');
+    });
+
+    test('EnvConfig configures QA correctly', () {
+      EnvConfig.initialize(Environment.qa);
+      expect(EnvConfig.isQa, isTrue);
+      expect(EnvConfig.isProd, isFalse);
+      expect(EnvConfig.appName, 'Remaki QA');
+      expect(EnvConfig.apiUrl, EnvConfig.qaApiUrl);
+      expect(EnvConfig.warmupUrl, 'https://remaki-backend-qa.onrender.com/');
+    });
+
+    test('ApiService clears token if saved auth_env does not match current environment', () async {
+      EnvConfig.initialize(Environment.prod);
+      SharedPreferences.setMockInitialValues({
+        'auth_token': 'qa_token_123',
+        'user_role': 'ADMIN',
+        'auth_env': 'qa',
+      });
+
+      await ApiService.initToken();
+      expect(ApiService.isLoggedIn, isFalse);
+      expect(ApiService.token, isNull);
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('auth_token'), isNull);
+    });
+
+    test('ApiService preserves token if saved auth_env matches current environment', () async {
+      EnvConfig.initialize(Environment.prod);
+      SharedPreferences.setMockInitialValues({
+        'auth_token': 'prod_token_abc',
+        'user_role': 'ADMIN',
+        'auth_env': 'prod',
+      });
+
+      await ApiService.initToken();
+      expect(ApiService.isLoggedIn, isTrue);
+      expect(ApiService.token, 'prod_token_abc');
     });
   });
 }

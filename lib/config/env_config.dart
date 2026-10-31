@@ -17,29 +17,52 @@ class EnvConfig {
   }
 
   static Environment get environment {
+    // 1. Web URL runtime inspection takes highest priority when running in a browser.
+    // This ensures production domains (remaki.in, remaki.vercel.app) ALWAYS connect to prod
+    // and never show the QA badge, while QA domains (remaki-qa.vercel.app, qa.remaki.in) connect to QA.
+    if (kIsWeb) {
+      final host = Uri.base.host.toLowerCase();
+      final href = Uri.base.toString().toLowerCase();
+
+      // Explicit URL query param overrides (useful for testing or debugging)
+      if (href.contains('env=prod')) return Environment.prod;
+      if (href.contains('env=qa')) return Environment.qa;
+
+      // Explicit QA domain patterns
+      if (host == 'remaki-qa.vercel.app' ||
+          host == 'qa.remaki.in' ||
+          host.startsWith('qa.') ||
+          host.contains('remaki-qa') ||
+          host.contains('-qa.') ||
+          host.contains('-qa-')) {
+        return Environment.qa;
+      }
+
+      // Explicit Production domain patterns
+      if (host == 'remaki.in' ||
+          host == 'www.remaki.in' ||
+          host == 'remaki.vercel.app' ||
+          (host.endsWith('.remaki.in') && !host.startsWith('qa.'))) {
+        return Environment.prod;
+      }
+
+      // Local development on localhost / 127.0.0.1 defaults to QA for safety
+      if (host == 'localhost' || host == '127.0.0.1') {
+        return Environment.qa;
+      }
+    }
+
+    // 2. If manually initialized (e.g. main_qa.dart or main.dart)
     if (_manuallyConfigured) return _environment;
 
-    // Detect from --dart-define=ENV=qa or prod
+    // 3. Detect from compile-time --dart-define=ENV=qa or prod
     const envDefine = String.fromEnvironment('ENV', defaultValue: '');
     if (envDefine.toLowerCase() == 'qa') return Environment.qa;
     if (envDefine.toLowerCase() == 'prod') return Environment.prod;
 
-    // Detect from Flutter app flavor (Android / iOS flavor)
+    // 4. Detect from Flutter app flavor (Android / iOS flavor)
     if (appFlavor == 'qa') return Environment.qa;
-
-    // Detect from Web URL
-    if (kIsWeb) {
-      final host = Uri.base.host.toLowerCase();
-      final href = Uri.base.toString().toLowerCase();
-      if (host.contains('qa') ||
-          host.contains('preview') ||
-          host.contains('vercel.app') ||
-          host.contains('localhost') ||
-          host.contains('127.0.0.1') ||
-          href.contains('env=qa')) {
-        return Environment.qa;
-      }
-    }
+    if (appFlavor == 'prod') return Environment.prod;
 
     return Environment.prod;
   }
