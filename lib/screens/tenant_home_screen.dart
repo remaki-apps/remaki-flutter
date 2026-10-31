@@ -304,20 +304,230 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final XFile? image = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-      maxWidth: 1200,
-      maxHeight: 1600,
-    );
-    if (image == null) return;
+    try {
+      final picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1200,
+        maxHeight: 1600,
+      );
+      if (image == null) return;
 
-    final bytes = await image.readAsBytes();
-    final compressed = await ImageCompressUtil.compressDocumentOrBill(bytes);
-    setState(() {
-      _selectedImageBytes = compressed;
-    });
+      final bytes = await image.readAsBytes();
+      final compressed = await ImageCompressUtil.compressDocumentOrBill(bytes);
+      setState(() {
+        _selectedImageBytes = compressed;
+      });
+
+      if (mounted) {
+        _showProofConfirmationDialog(compressed);
+      }
+    } catch (e) {
+      debugPrint('[TenantHome] Pick image error: $e');
+      if (mounted) {
+        FancyToast.showError(context, 'Image Error', message: 'Could not process selected screenshot: $e');
+      }
+    }
+  }
+
+  void _showProofConfirmationDialog(Uint8List imageBytes) {
+    final effectiveDue = _totalDue > 0 ? _totalDue : _pendingBills;
+    final paymentLabel = _pendingRent > 0 ? 'Rent & Dues' : 'Utility Bill Split';
+    final txnRef = _currentTransactionRef ?? 'RMK${DateTime.now().millisecondsSinceEpoch}';
+
+    showDialog(
+      context: context,
+      barrierDismissible: !_isLoading,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 420),
+              padding: const EdgeInsets.all(20),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.receipt_long_rounded, color: Color(0xFF2563EB), size: 20),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Confirm Payment Proof',
+                              style: GoogleFonts.lato(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: TenantTheme.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (!_isLoading)
+                          GestureDetector(
+                            onTap: () => Navigator.of(dialogCtx).pop(),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.grey.withValues(alpha: 0.15),
+                              ),
+                              child: const Icon(Icons.close_rounded, size: 18, color: Color(0xFF64748B)),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Summary Card
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Payment Amount:', style: GoogleFonts.lato(fontSize: 12.5, color: const Color(0xFF64748B))),
+                              Text('₹${NumberFormat('#,##,###').format(effectiveDue)}',
+                                  style: GoogleFonts.lato(fontSize: 17, fontWeight: FontWeight.w800, color: TenantTheme.primary)),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('For:', style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF64748B))),
+                              Text(paymentLabel, style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A))),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Session Ref:', style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF64748B))),
+                              Text(txnRef, style: GoogleFonts.lato(fontSize: 11.5, fontWeight: FontWeight.w700, color: const Color(0xFF2563EB))),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Screenshot Preview
+                    Text(
+                      'ATTACHED SCREENSHOT',
+                      style: GoogleFonts.lato(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.8, color: const Color(0xFF94A3B8)),
+                    ),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        height: 200,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F172A),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Image.memory(
+                          imageBytes,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Change Photo Button
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: _isLoading
+                            ? null
+                            : () {
+                                Navigator.of(dialogCtx).pop();
+                                _pickImage();
+                              },
+                        icon: const Icon(Icons.photo_library_outlined, size: 14),
+                        label: Text('Change Screenshot', style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Note input
+                    TextField(
+                      controller: _descriptionController,
+                      enabled: !_isLoading,
+                      decoration: InputDecoration(
+                        hintText: 'Add optional note or UTR number...',
+                        hintStyle: GoogleFonts.lato(fontSize: 12.5, color: const Color(0xFF94A3B8)),
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+
+                    // Action Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        onPressed: _isLoading
+                            ? null
+                            : () async {
+                                setDialogState(() => _isLoading = true);
+                                final ok = await _submitRequest();
+                                if (ok && dialogCtx.mounted) {
+                                  Navigator.of(dialogCtx).pop();
+                                } else if (dialogCtx.mounted) {
+                                  setDialogState(() => _isLoading = false);
+                                }
+                              },
+                        icon: _isLoading
+                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : const Icon(Icons.cloud_upload_rounded, size: 18),
+                        label: Text(
+                          _isLoading ? 'Uploading Proof...' : 'Submit for Admin Approval',
+                          style: GoogleFonts.lato(fontSize: 14, fontWeight: FontWeight.w800),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF16A34A),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   void _showImagePreviewDialog(BuildContext context, Uint8List imageBytes) {
@@ -464,14 +674,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     );
   }
 
-  Future<void> _submitRequest() async {
-    if (_totalDue <= 0) {
+  Future<bool> _submitRequest() async {
+    final effectiveDue = _totalDue > 0 ? _totalDue : _pendingBills;
+    if (effectiveDue <= 0) {
       FancyToast.showError(context, 'No Dues', message: 'No outstanding dues to pay.');
-      return;
+      return false;
     }
     if (_selectedImageBytes == null) {
       FancyToast.showError(context, 'Screenshot Required', message: 'Please upload a UPI payment screenshot.');
-      return;
+      return false;
     }
 
     setState(() => _isLoading = true);
@@ -491,7 +702,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       ''', variables: {
         'input': {
           'tenantId': _profileData?['id'] ?? '',
-          'amount': _totalDue > 0 ? _totalDue : _pendingBills,
+          'amount': effectiveDue,
           'paymentType': _paymentType,
           'proofImageBase64': 'data:image/jpeg;base64,$base64Image',
           'description': finalDesc.isNotEmpty ? finalDesc : null,
@@ -509,6 +720,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         });
         await _loadAllData();
       }
+      return true;
     } catch (e) {
       final cleanMsg = ApiService.cleanErrorMessage(e);
       if (cleanMsg.contains('already have a pending payment request') || cleanMsg.contains('pending payment request')) {
@@ -523,10 +735,12 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           FancyToast.showSuccess(context, 'Payment Under Review', message: 'You already have a payment request pending admin approval.');
           await _loadAllData();
         }
+        return true;
       } else {
         if (mounted) {
           FancyToast.showError(context, 'Submission Failed', message: cleanMsg);
         }
+        return false;
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

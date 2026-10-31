@@ -194,6 +194,10 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
     final targetedUrl = _buildTargetedUpiUri(packageName: packageName, iosScheme: iosScheme);
     final genericFallback = _buildGenericUpiUri();
 
+    // Diagnostic logging for exact link verification
+    debugPrint('🔍 UPI Targeted URI ($schemeName): $targetedUrl');
+    debugPrint('🔍 UPI Generic Fallback: $genericFallback');
+
     try {
       if (kIsWeb) {
         // Mobile Chrome on Android parses intent://package=... and opens the app DIRECTLY!
@@ -222,18 +226,26 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
           );
         }
       } else {
-        // Native Android / iOS application
+        // Native Android / iOS application - Belt-and-suspenders direct launch
+        // Avoid gating on canLaunchUrl as some OEM Android skins (MIUI, ColorOS) return false even when installed
         final uri = Uri.parse(targetedUrl);
         bool launched = false;
 
-        if (await canLaunchUrl(uri)) {
+        try {
           launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } catch (e) {
+          debugPrint('[UniversalUpi] Targeted launch failed: $e');
+          launched = false;
         }
 
+        // If targeted scheme/intent failed (e.g. app not installed), try universal upi://pay which QR test proved works
         if (!launched) {
-          final fallbackUri = Uri.parse(genericFallback);
-          if (await canLaunchUrl(fallbackUri)) {
+          try {
+            final fallbackUri = Uri.parse(genericFallback);
             launched = await launchUrl(fallbackUri, mode: LaunchMode.externalApplication);
+          } catch (e) {
+            debugPrint('[UniversalUpi] Generic fallback failed: $e');
+            launched = false;
           }
         }
 
@@ -256,11 +268,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
       debugPrint('[UniversalUpi] Launch app error ($schemeName): $e\n$stack');
       try {
         final fallbackUri = Uri.parse(genericFallback);
-        if (await canLaunchUrl(fallbackUri)) {
-          await launchUrl(fallbackUri, mode: LaunchMode.externalApplication);
-        } else if (mounted) {
-          _tabController.animateTo(1);
-        }
+        await launchUrl(fallbackUri, mode: LaunchMode.externalApplication);
       } catch (_) {
         if (mounted) _tabController.animateTo(1);
       }
