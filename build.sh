@@ -23,8 +23,23 @@ flutter config --enable-web
 echo "=== Getting Packages ==="
 flutter pub get
 
+echo "=== Detecting Target Environment ==="
+GIT_BRANCH="${VERCEL_GIT_COMMIT_REF:-$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '')}"
+echo "Current Branch / Commit Ref: $GIT_BRANCH"
+
 echo "=== Building Flutter Web Release ==="
-flutter build web --release
+if [ "$GIT_BRANCH" = "qa" ] || [ "$ENV" = "qa" ] || [[ "$GIT_BRANCH" == *"qa"* ]]; then
+  echo "Targeting QA environment (-t lib/main_qa.dart --dart-define=ENV=qa)..."
+  flutter build web --release -t lib/main_qa.dart --dart-define=ENV=qa
+else
+  echo "Targeting standard environment (-t lib/main.dart)..."
+  flutter build web --release -t lib/main.dart
+fi
+
+echo "=== Ensuring custom flutter_service_worker.js is in place ==="
+if [ -f "web/flutter_service_worker.js" ]; then
+  cp web/flutter_service_worker.js build/web/flutter_service_worker.js || true
+fi
 
 echo "=== Generating version.json for auto-update detection ==="
 BUILD_TIME=$(date +%s%3N)
@@ -37,4 +52,20 @@ cat <<EOF > build/web/version.json
 }
 EOF
 echo "Generated version.json: buildTime=$BUILD_TIME, gitHash=$GIT_HASH"
+
+echo "=== Cache busting main.dart.js in flutter_bootstrap.js ==="
+if [ -f "build/web/flutter_bootstrap.js" ]; then
+  sed -i "s/main\.dart\.js/main\.dart\.js?v=$BUILD_TIME/g" build/web/flutter_bootstrap.js 2>/dev/null || true
+fi
+
+echo "=== Injecting build version into index.html ==="
+if [ -f "build/web/index.html" ]; then
+  sed -i "s/%%REMAKI_BUILD_TIME%%/$BUILD_TIME/g" build/web/index.html 2>/dev/null || true
+  sed -i "s/%%REMAKI_GIT_HASH%%/$GIT_HASH/g" build/web/index.html 2>/dev/null || true
+fi
+
+echo "=== Versioning service worker cache ==="
+if [ -f "build/web/flutter_service_worker.js" ]; then
+  sed -i "s/remaki-cache-v3/remaki-cache-$BUILD_TIME/g" build/web/flutter_service_worker.js 2>/dev/null || true
+fi
 

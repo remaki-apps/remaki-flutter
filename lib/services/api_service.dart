@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../config/env_config.dart';
+
 class ApiException implements Exception {
   final String message;
   ApiException(this.message);
@@ -14,7 +16,8 @@ class ApiException implements Exception {
 }
 
 class ApiService {
-  static const String _baseUrl = 'https://remaki-backend.onrender.com/graphql';
+  static String get _baseUrl => EnvConfig.apiUrl;
+  static String get baseUrl => EnvConfig.apiUrl;
   // Note: Appending /graphql as this is a GraphQL backend
 
   static final ValueNotifier<bool> authNotifier = ValueNotifier<bool>(isLoggedIn);
@@ -166,10 +169,10 @@ class ApiService {
     _lastWarmupTime = now;
     try {
       http
-          .get(Uri.parse('https://remaki-backend.onrender.com/'))
+          .get(Uri.parse(EnvConfig.warmupUrl))
           .timeout(const Duration(seconds: 15))
           .then((_) {
-            debugPrint('Render backend warmup ping acknowledged.');
+            debugPrint('Render backend warmup ping acknowledged (${EnvConfig.appName}).');
           })
           .catchError((e) {
             debugPrint('Render backend warmup ping dispatched ($e).');
@@ -431,6 +434,10 @@ class ApiService {
           }
           pendingConvenienceFee
           platformFee
+          propertyId
+          propertyName
+          propertyUpiId
+          propertyUpiPayeeName
         }
       }
     ''';
@@ -491,6 +498,8 @@ class ApiService {
             description
             totalFloors
             platformFee
+            upiId
+            upiPayeeName
           }
         }
       }
@@ -501,6 +510,35 @@ class ApiService {
     } catch (e) {
       debugPrint('Error fetching admin profile: $e');
       return null;
+    }
+  }
+
+  static Future<bool> updatePropertyUpi({
+    required String propertyId,
+    required String upiId,
+    String? upiPayeeName,
+  }) async {
+    const mutation = '''
+      mutation UpdateProperty(\$id: ID!, \$input: UpdatePropertyInput!) {
+        updateProperty(id: \$id, input: \$input) {
+          id
+          upiId
+          upiPayeeName
+        }
+      }
+    ''';
+    try {
+      final res = await performQuery(mutation, variables: {
+        'id': propertyId,
+        'input': {
+          'upiId': upiId,
+          'upiPayeeName': upiPayeeName,
+        },
+      });
+      return res['updateProperty'] != null;
+    } catch (e) {
+      debugPrint('Error updating property UPI: $e');
+      rethrow;
     }
   }
 
@@ -631,6 +669,8 @@ class ApiService {
               notes
               propertyId
               billingMonth
+              platformFee
+              rentAmount
             }
           }
         ''';
@@ -646,6 +686,8 @@ class ApiService {
               notes
               propertyId
               billingMonth
+              platformFee
+              rentAmount
             }
           }
         ''';
@@ -799,6 +841,11 @@ class ApiService {
       mutation UpdateTenantFinancials(\$tenantId: ID!, \$rentAmount: Float, \$securityDeposit: Float, \$rentDueDay: Int, \$paymentMode: String) {
         updateTenantFinancials(tenantId: \$tenantId, rentAmount: \$rentAmount, securityDeposit: \$securityDeposit, rentDueDay: \$rentDueDay, paymentMode: \$paymentMode) {
           id
+          monthlyRent
+          pendingRentAmount
+          rentDueDate
+          securityDeposit
+          paymentStatus
         }
       }
     ''';
@@ -1162,5 +1209,42 @@ class ApiService {
       }
     });
     return data['updateComplaintStatus'] as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> fetchPropertyPlatformFeeSummary({
+    String? propertyId,
+    String? month,
+  }) async {
+    const String query = '''
+      query PropertyPlatformFeeSummary(\$propertyId: ID, \$month: String) {
+        propertyPlatformFeeSummary(propertyId: \$propertyId, month: \$month) {
+          propertyId
+          propertyName
+          billingMonth
+          monthlyPlatformFeeCollected
+          feePerTenant
+          totalTenantsContributed
+          resetsOn
+          organizationUpiId
+          organizationPayeeName
+          items {
+            id
+            tenantName
+            tenantPhone
+            roomNumber
+            bedLabel
+            amount
+            month
+            status
+            date
+          }
+        }
+      }
+    ''';
+    final data = await performQuery(query, variables: {
+      if (propertyId != null) 'propertyId': propertyId,
+      if (month != null) 'month': month,
+    });
+    return data['propertyPlatformFeeSummary'] as Map<String, dynamic>;
   }
 }

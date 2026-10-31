@@ -36,6 +36,20 @@ android {
         versionName = flutter.versionName
     }
 
+    flavorDimensions += "environment"
+
+    productFlavors {
+        create("prod") {
+            dimension = "environment"
+            resValue("string", "app_name", "Remaki")
+        }
+        create("qa") {
+            dimension = "environment"
+            applicationIdSuffix = ".qa"
+            resValue("string", "app_name", "Remaki QA")
+        }
+    }
+
     signingConfigs {
         create("release") {
             keyAlias = keystoreProperties["keyAlias"] as String? ?: ""

@@ -488,7 +488,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
               hintText: 'Select Available Room',
               icon: Icons.meeting_room_outlined,
               items: availableRooms
-                  .map((r) => DropdownOption(value: r.id, label: 'Room ${r.number} [${r.availableBeds} beds left]'))
+                  .map((r) => DropdownOption(value: r.id, label: '${formatRoomName(r.number)} [${r.availableBeds} beds left]'))
                   .toList(),
               onChanged: (val) => setState(() {
                 _selectedRoomId = val;
@@ -684,6 +684,18 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
       return;
     }
 
+    final dueDayMatch = RegExp(r'\d+').firstMatch(_rentDueDate);
+    final selectedDueDay = dueDayMatch != null ? int.tryParse(dueDayMatch.group(0)!) ?? 5 : 5;
+
+    DateTime firstDueDate;
+    if (_moveInDate.day > selectedDueDay) {
+      firstDueDate = DateTime(_moveInDate.year, _moveInDate.month + 1, selectedDueDay);
+    } else {
+      firstDueDate = DateTime(_moveInDate.year, _moveInDate.month, selectedDueDay);
+    }
+
+    final isUpcomingCycle = DateTime.now().isBefore(DateTime(firstDueDate.year, firstDueDate.month, firstDueDate.day));
+
     var tenant = Tenant(
       id: 't_${DateTime.now().millisecondsSinceEpoch}',
       name: _nameController.text.trim(),
@@ -695,8 +707,9 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
       moveInDate: _moveInDate,
       rentAmount: double.tryParse(_rentController.text) ?? 0.0,
       securityDeposit: double.tryParse(_securityController.text) ?? 0.0,
-      rentDueDate: DateTime.now().add(const Duration(days: 30)),
+      rentDueDate: firstDueDate,
       pendingRentAmount: double.tryParse(_rentController.text) ?? 0.0,
+      paymentStatus: isUpcomingCycle ? 'UPCOMING' : 'UNPAID',
     );
 
     final room = provider.rooms.firstWhere(
@@ -707,7 +720,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
     setState(() => _isLoading = true);
     
     try {
-      final tempPassword = await provider.addTenant(tenant);
+      final tempPassword = await provider.addTenant(tenant, dueDay: selectedDueDay);
 
       if (!mounted) return;
       
@@ -715,7 +728,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
       _selectedRoomId = null;
       setState(() => _isLoading = false);
 
-      context.go('/tenant_added_success?tenantId=${tenant.id}&password=${Uri.encodeComponent(tempPassword ?? '')}&name=${Uri.encodeComponent(tenant.name)}&phone=${Uri.encodeComponent(tenant.phone)}&roomNumber=${Uri.encodeComponent(room.number)}&floor=${Uri.encodeComponent(room.floor)}&roomBed=${Uri.encodeComponent('Room ${room.number}')}&rent=${tenant.rentAmount}&moveIn=${Uri.encodeComponent(_moveInController.text)}');
+      context.go('/tenant_added_success?tenantId=${tenant.id}&password=${Uri.encodeComponent(tempPassword ?? '')}&name=${Uri.encodeComponent(tenant.name)}&phone=${Uri.encodeComponent(tenant.phone)}&roomNumber=${Uri.encodeComponent(room.number)}&floor=${Uri.encodeComponent(room.floor)}&roomBed=${Uri.encodeComponent(formatRoomName(room.number))}&rent=${tenant.rentAmount}&moveIn=${Uri.encodeComponent(_moveInController.text)}');
     } catch (e) {
       if (!mounted) return;
       

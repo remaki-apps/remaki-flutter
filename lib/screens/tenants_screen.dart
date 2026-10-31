@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tenant_avatar.dart';
@@ -31,12 +32,12 @@ class _TenantsScreenState extends State<TenantsScreen> {
     final appProvider = Provider.of<AppProvider>(context);
 
     final totalCount = appProvider.currentTenants.length;
-    final paidCount = appProvider.currentTenants.where((t) => t.totalDue == 0).length;
-    final unpaidCount = appProvider.currentTenants.where((t) => t.totalDue > 0).length;
+    final paidCount = appProvider.currentTenants.where((t) => t.isPaid || t.paymentStatus == 'PAID').length;
+    final unpaidCount = appProvider.currentTenants.where((t) => !t.isPaid && t.paymentStatus != 'PAID').length;
 
     var filteredTenants = appProvider.currentTenants.where((t) {
-      if (_filter == 'Paid' && t.totalDue > 0) return false;
-      if (_filter == 'Unpaid' && t.totalDue == 0) return false;
+      if (_filter == 'Paid' && !t.isPaid && t.paymentStatus != 'PAID') return false;
+      if (_filter == 'Unpaid' && (t.isPaid || t.paymentStatus == 'PAID')) return false;
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
         final roomIndex = appProvider.rooms.indexWhere((r) => r.id == t.roomId);
@@ -342,7 +343,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                           borderRadius: BorderRadius.circular(6),
                                         ),
                                         child: Text(
-                                          'Room $roomNumber',
+                                          formatRoomName(roomNumber),
                                           style: const TextStyle(
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,

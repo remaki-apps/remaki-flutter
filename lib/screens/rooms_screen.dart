@@ -400,7 +400,7 @@ class _RoomsScreenState extends State<RoomsScreen> {
                                                             children: [
                                                               Flexible(
                                                                 child: Text(
-                                                                  'Room ${room.number}',
+                                                                  formatRoomName(room.number),
                                                                   style: const TextStyle(
                                                                     fontSize: 15,
                                                                     fontWeight: FontWeight.bold,

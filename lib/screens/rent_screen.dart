@@ -113,14 +113,14 @@ class _RentScreenState extends State<RentScreen> {
         expectedAmount = appProvider.expectedRentOnly;
         collectedAmount = appProvider.collectedRentOnly;
         pendingAmount = appProvider.pendingRentOnly;
-        paidCount = appProvider.currentTenants.where((t) => t.pendingRentAmount == 0 && t.rentAmount > 0).length;
-        unpaidCount = appProvider.currentTenants.where((t) => t.pendingRentAmount > 0).length;
+        paidCount = appProvider.currentTenants.where((t) => (t.isPaid || t.paymentStatus == 'PAID') && t.rentAmount > 0).length;
+        unpaidCount = appProvider.currentTenants.where((t) => !t.isPaid && t.paymentStatus != 'PAID' && t.rentAmount > 0).length;
       } else {
         final rentExpectedRaw = appProvider.currentTenants.fold(0.0, (sum, t) {
           if (t.moveInDate.isAfter(DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1))) return sum;
           return sum + t.rentAmount;
         });
-        collectedAmount = monthRentPayments.fold(0.0, (sum, p) => sum + p.amount);
+        collectedAmount = monthRentPayments.fold(0.0, (sum, p) => sum + (p.rentAmount > 0 ? p.rentAmount : p.amount));
         expectedAmount = math.max(rentExpectedRaw, collectedAmount);
         pendingAmount = math.max(0.0, expectedAmount - collectedAmount);
         paidCount = monthRentPayments.map((p) => p.tenantId).toSet().length;
@@ -148,9 +148,25 @@ class _RentScreenState extends State<RentScreen> {
       }
     }
 
-    final double collectionRate = expectedAmount > 0
-        ? ((collectedAmount / expectedAmount) * 100).clamp(0.0, 100.0)
+    final double rawRate = expectedAmount > 0
+        ? (collectedAmount / expectedAmount) * 100
         : 0.0;
+    // If there are pending dues, never let the collection rate display or round to 100%
+    final double collectionRate = (pendingAmount > 0 && rawRate >= 99.9)
+        ? 99.9
+        : rawRate.clamp(0.0, 100.0);
+
+    final String collectionRateText;
+    if (expectedAmount <= 0) {
+      collectionRateText = '0% Collected';
+    } else if (pendingAmount <= 0 && collectedAmount >= expectedAmount) {
+      collectionRateText = '100% Collected';
+    } else if (pendingAmount > 0 && rawRate >= 99.9) {
+      collectionRateText = '99.9% Collected';
+    } else {
+      final formatted = collectionRate.toStringAsFixed(1);
+      collectionRateText = '${formatted.endsWith('.0') ? collectionRate.toInt() : formatted}% Collected';
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
@@ -321,7 +337,7 @@ class _RentScreenState extends State<RentScreen> {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            '${collectionRate.toStringAsFixed(1)}% Collected',
+                            collectionRateText,
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
@@ -339,9 +355,13 @@ class _RentScreenState extends State<RentScreen> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(6),
                       child: LinearProgressIndicator(
-                        value: expectedAmount > 0 ? (collectedAmount / expectedAmount).clamp(0.0, 1.0) : 0.0,
+                        value: expectedAmount > 0
+                            ? (pendingAmount > 0
+                                ? (collectedAmount / expectedAmount).clamp(0.0, 0.96)
+                                : (collectedAmount / expectedAmount).clamp(0.0, 1.0))
+                            : 0.0,
                         minHeight: 8,
-                        backgroundColor: const Color(0xFFF1F5F9),
+                        backgroundColor: pendingAmount > 0 ? const Color(0xFFFEE2E2) : const Color(0xFFF1F5F9),
                         valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF16A34A)),
                       ),
                     ),
@@ -360,16 +380,33 @@ class _RentScreenState extends State<RentScreen> {
                               final List<PieChartSectionData> chartSections;
 
                               if (hasCollected && hasPending) {
+                                final total = collectedAmount + pendingAmount;
+                                // Guarantee a minimum visual ratio of 6% (~21.6 degrees) for any non-zero slice
+                                // so neither sliver collapses or gets erased by section spacing in fl_chart
+                                const minRatio = 0.06;
+                                final minVal = total * minRatio;
+
+                                double visualCollected = collectedAmount;
+                                double visualPending = pendingAmount;
+
+                                if (visualPending < minVal) {
+                                  visualPending = minVal;
+                                  visualCollected = total - minVal;
+                                } else if (visualCollected < minVal) {
+                                  visualCollected = minVal;
+                                  visualPending = total - minVal;
+                                }
+
                                 chartSections = [
                                   PieChartSectionData(
                                     color: const Color(0xFF16A34A),
-                                    value: collectedAmount,
+                                    value: visualCollected,
                                     title: '',
                                     radius: 22,
                                   ),
                                   PieChartSectionData(
                                     color: AppTheme.danger,
-                                    value: pendingAmount,
+                                    value: visualPending,
                                     title: '',
                                     radius: 22,
                                   ),
@@ -825,8 +862,8 @@ class _RentScreenState extends State<RentScreen> {
                 final roomIdx = tenant != null ? appProvider.rooms.indexWhere((r) => r.id == tenant.roomId) : -1;
                 final tenantRoomNum = roomIdx != -1 ? appProvider.rooms[roomIdx].number : '';
                 final roomInfo = (p.roomNumber != null && p.roomNumber!.isNotEmpty)
-                    ? 'Room ${p.roomNumber}'
-                    : (tenantRoomNum.isNotEmpty ? 'Room $tenantRoomNum' : 'PG Tenant');
+                    ? formatRoomName(p.roomNumber)
+                    : (tenantRoomNum.isNotEmpty ? formatRoomName(tenantRoomNum) : 'PG Tenant');
                 final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(p.date);
 
                 return ListTile(

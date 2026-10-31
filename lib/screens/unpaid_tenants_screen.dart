@@ -219,7 +219,7 @@ class UnpaidTenantsScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      'Room $roomNumber${bedName.isNotEmpty ? ' - $bedName' : ''}',
+                                      formatRoomAndBed(roomNumber, bedName, separator: ' - '),
                                       style: const TextStyle(
                                         fontSize: 12,
                                         color: Color(0xFF64748B),

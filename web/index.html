@@ -15,18 +15,27 @@
   <meta name="mobile-web-app-capable" content="yes">
 
   <!-- iOS touch icons -->
-  <link rel="apple-touch-icon" sizes="192x192" href="icons/Icon-192.png">
-  <link rel="apple-touch-icon" sizes="512x512" href="icons/Icon-512.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/Icon-192.png?v=2">
+  <link rel="apple-touch-icon" sizes="512x512" href="icons/Icon-512.png?v=2">
 
   <!-- Theme color for browser chrome (Android) and iOS status bar -->
   <meta name="theme-color" content="#1E1B4B">
   <meta name="msapplication-navbutton-color" content="#1E1B4B">
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <!-- Favicon & Website Tab Icon -->
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon.png?v=2"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=2"/>
+  <link rel="shortcut icon" href="favicon.png?v=2" type="image/png"/>
 
   <title>Remaki</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- ─── Embedded Deployment Build ID (Replaced at build time by build.sh) ─── -->
+  <meta name="remaki-build" content="%%REMAKI_BUILD_TIME%%">
+  <script>
+    window.REMAKI_CURRENT_BUILD = '%%REMAKI_BUILD_TIME%%';
+    window.REMAKI_GIT_HASH = '%%REMAKI_GIT_HASH%%';
+  </script>
 
   <!-- ─── Modern Refresh / Update UI Styling ─── -->
   <style>
@@ -172,6 +181,194 @@
     .remaki-update-dismiss:hover {
       color: #CBD5E1;
     }
+
+    /* ─── Android Play Store Redirect Screen ─── */
+    #remaki-android-screen {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      background: radial-gradient(circle at 50% 20%, #1E1B4B 0%, #0F172A 60%, #020617 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      box-sizing: border-box;
+      z-index: 2147483647;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #F8FAFC;
+    }
+
+    .remaki-android-card {
+      max-width: 420px;
+      width: 100%;
+      background: rgba(30, 41, 59, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 28px;
+      padding: 36px 26px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.75), 0 0 40px rgba(99, 102, 241, 0.25);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      text-align: center;
+      box-sizing: border-box;
+      animation: remaki-card-in 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes remaki-card-in {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .remaki-android-icon-wrapper {
+      width: 82px;
+      height: 82px;
+      margin: 0 auto 18px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, #4338CA 0%, #312E81 100%);
+      border: 2px solid rgba(129, 140, 248, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 30px rgba(79, 70, 229, 0.35);
+      overflow: hidden;
+    }
+
+    .remaki-android-logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      object-fit: cover;
+    }
+
+    .remaki-play-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #A5B4FC;
+      margin-bottom: 14px;
+    }
+
+    .remaki-play-svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .remaki-android-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #FFFFFF;
+      margin: 0 0 10px;
+      letter-spacing: -0.4px;
+    }
+
+    .remaki-android-desc {
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: #94A3B8;
+      margin: 0 0 22px;
+    }
+
+    .remaki-countdown-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(79, 70, 229, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 8px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #C7D2FE;
+      margin-bottom: 20px;
+    }
+
+    .remaki-countdown-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 10px #10B981;
+      animation: remaki-pulse 1.2s infinite ease-in-out;
+    }
+
+    .remaki-playstore-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      background: #000000;
+      color: #FFFFFF;
+      text-decoration: none;
+      padding: 13px 20px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      transition: transform 0.15s ease, filter 0.15s ease;
+      box-sizing: border-box;
+      margin-bottom: 12px;
+    }
+
+    .remaki-playstore-btn:active {
+      transform: scale(0.98);
+    }
+
+    .remaki-play-btn-svg {
+      width: 26px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+
+    .remaki-playstore-btn-text {
+      text-align: left;
+      line-height: 1.15;
+    }
+
+    .remaki-playstore-sub {
+      display: block;
+      font-size: 9px;
+      letter-spacing: 1px;
+      font-weight: 600;
+      color: #94A3B8;
+    }
+
+    .remaki-playstore-main {
+      display: block;
+      font-size: 17px;
+      font-weight: 700;
+      color: #FFFFFF;
+      letter-spacing: -0.2px;
+    }
+
+    .remaki-manual-btn {
+      background: transparent;
+      border: none;
+      color: #818CF8;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 6px;
+      outline: none;
+      transition: color 0.15s;
+    }
+
+    .remaki-manual-btn:hover {
+      color: #C7D2FE;
+    }
   </style>
 </head>
 <body>
@@ -188,12 +385,60 @@
     <button class="remaki-update-dismiss" onclick="window.remakiAppUpdate.dismiss()" aria-label="Dismiss">✕</button>
   </div>
 
+  <!-- ─── Android Play Store Notice & Auto-Redirect Screen ─── -->
+  <div id="remaki-android-screen" style="display: none;">
+    <div class="remaki-android-card">
+      <div class="remaki-android-icon-wrapper">
+        <img src="icons/Icon-192.png" alt="Remaki" class="remaki-android-logo" onerror="this.style.display='none'; document.getElementById('remaki-android-logo-fallback').style.display='block';">
+        <div id="remaki-android-logo-fallback" style="display:none; font-size: 38px;">🏠</div>
+      </div>
+
+      <div class="remaki-play-badge">
+        <svg viewBox="0 0 24 24" class="remaki-play-svg">
+          <path fill="#4285F4" d="M3.6 1.8L13.7 12 3.6 22.2c-.4-.4-.6-1-.6-1.7V3.5c0-.7.2-1.3.6-1.7z"/>
+          <path fill="#FBBC04" d="M17.1 8.6L14.7 11 13.7 12l2.4 2.4 3.4-1.9c1-.6 1-1.5 0-2.1l-2.4-1.8z"/>
+          <path fill="#EA4335" d="M3.6 1.8l10.1 10.2 3.4-3.4L6.2.7C5.2.1 4.3.4 3.6 1.8z"/>
+          <path fill="#34A853" d="M3.6 22.2c.7 1.4 1.6 1.7 2.6 1.1l10.9-6.2-3.4-3.4-10.1 8.5z"/>
+        </svg>
+        <span>Google Play Store</span>
+      </div>
+
+      <h1 class="remaki-android-title">Remaki is on Google Play</h1>
+      <p class="remaki-android-desc">
+        For the best mobile experience, instant push notifications, and seamless UPI payments on Android, please use our official app.
+      </p>
+
+      <div class="remaki-countdown-box">
+        <div class="remaki-countdown-pulse"></div>
+        <span>Redirecting in <strong id="remaki-sec-count">3</strong>s...</span>
+      </div>
+
+      <a id="remaki-playstore-btn" href="https://play.google.com/store/apps/details?id=com.remaki.app" class="remaki-playstore-btn">
+        <svg viewBox="0 0 24 24" class="remaki-play-btn-svg">
+          <path fill="#4285F4" d="M3.6 1.8L13.7 12 3.6 22.2c-.4-.4-.6-1-.6-1.7V3.5c0-.7.2-1.3.6-1.7z"/>
+          <path fill="#FBBC04" d="M17.1 8.6L14.7 11 13.7 12l2.4 2.4 3.4-1.9c1-.6 1-1.5 0-2.1l-2.4-1.8z"/>
+          <path fill="#EA4335" d="M3.6 1.8l10.1 10.2 3.4-3.4L6.2.7C5.2.1 4.3.4 3.6 1.8z"/>
+          <path fill="#34A853" d="M3.6 22.2c.7 1.4 1.6 1.7 2.6 1.1l10.9-6.2-3.4-3.4-10.1 8.5z"/>
+        </svg>
+        <div class="remaki-playstore-btn-text">
+          <span class="remaki-playstore-sub">GET IT ON</span>
+          <span class="remaki-playstore-main">Google Play</span>
+        </div>
+      </a>
+
+      <button onclick="window.remakiRedirectPlayStore()" class="remaki-manual-btn">
+        Open Immediately →
+      </button>
+    </div>
+  </div>
+
   <!-- Loading indicator shown while Flutter initializes -->
   <div id="loading">
     <div style="text-align: center;">
-      <div style="font-size: 24px; margin-bottom: 20px;">🏠 Remaki</div>
-      <div style="animation: spin 1s linear infinite;">⏳</div>
-      <div style="margin-top: 20px; font-size: 14px;">Loading...</div>
+      <img src="favicon.png" alt="Remaki" style="width: 72px; height: 72px; border-radius: 18px; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.25);" onerror="this.style.display='none';">
+      <div style="font-size: 22px; font-weight: 700; margin-bottom: 12px; letter-spacing: -0.3px;">Remaki</div>
+      <div style="animation: spin 1.2s linear infinite; font-size: 20px;">⏳</div>
+      <div style="margin-top: 14px; font-size: 13px; opacity: 0.8;">Loading...</div>
     </div>
   </div>
 
@@ -201,12 +446,44 @@
     // ──────────────────────────────────────────────────────────────────────────
     // Remaki Smart Update & Cache Clearing Engine
     // ──────────────────────────────────────────────────────────────────────────
+    function getRunningBuild() {
+      const b = window.REMAKI_CURRENT_BUILD;
+      if (b && typeof b === 'string' && !b.startsWith('%')) {
+        return b.trim();
+      }
+      try {
+        return sessionStorage.getItem('remaki_app_build') || localStorage.getItem('remaki_app_build');
+      } catch (_) {
+        return null;
+      }
+    }
+
     window.remakiAppUpdate = {
       isUpdating: false,
       bannerShown: false,
 
-      showBanner: function() {
+      showBanner: function(newVersion) {
         if (this.bannerShown) return;
+        const runningBuild = getRunningBuild();
+        const targetVersion = (newVersion || window._latestServerVersion || '').toString().trim();
+
+        // 1. If running build is known and matches server build, page is up-to-date!
+        if (targetVersion && runningBuild && targetVersion === runningBuild) {
+          return;
+        }
+
+        // 2. If user already dismissed update banner for this exact build version, do not repeat
+        try {
+          const dismissedFor = sessionStorage.getItem('remaki_dismissed_version');
+          if (dismissedFor && targetVersion && dismissedFor === targetVersion) {
+            return;
+          }
+          const lastRefreshed = sessionStorage.getItem('remaki_last_refreshed_at');
+          if (lastRefreshed && (Date.now() - parseInt(lastRefreshed, 10)) < 120000) {
+            return;
+          }
+        } catch (_) {}
+
         this.bannerShown = true;
         const banner = document.getElementById('remaki-update-banner');
         if (banner) {
@@ -219,11 +496,19 @@
         if (banner) {
           banner.classList.remove('remaki-show');
         }
+        try {
+          if (window._latestServerVersion) {
+            sessionStorage.setItem('remaki_dismissed_version', window._latestServerVersion);
+          }
+        } catch (_) {}
       },
 
       clearCacheAndReload: async function() {
         if (this.isUpdating) return;
         this.isUpdating = true;
+
+        const banner = document.getElementById('remaki-update-banner');
+        if (banner) banner.classList.remove('remaki-show');
 
         const btn = document.getElementById('remaki-update-btn');
         if (btn) {
@@ -232,37 +517,42 @@
           btn.style.pointerEvents = 'none';
         }
 
-        console.log('[Remaki Update] Clearing app cache & service workers...');
+        console.log('[Remaki Update] Purging cache and reloading fresh UI...');
 
         try {
-          // 1. Tell service worker to skip waiting
+          if (window._latestServerVersion) {
+            localStorage.setItem('remaki_app_build', window._latestServerVersion);
+            sessionStorage.setItem('remaki_app_build', window._latestServerVersion);
+            sessionStorage.removeItem('remaki_dismissed_version');
+          }
+          sessionStorage.setItem('remaki_last_refreshed_at', Date.now().toString());
+        } catch (_) {}
+
+        try {
+          // 1. Unregister all service workers and signal skipWaiting
           if ('serviceWorker' in navigator) {
             const regs = await navigator.serviceWorker.getRegistrations();
             for (const reg of regs) {
-              if (reg.waiting) {
-                reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-              }
-              await reg.unregister();
+              if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+              if (reg.active) reg.active.postMessage({ type: 'SKIP_WAITING' });
+              await reg.unregister().catch(function() {});
             }
           }
 
           // 2. Clear all browser CacheStorage caches for Remaki
           if ('caches' in window) {
             const keys = await caches.keys();
-            for (const key of keys) {
-              await caches.delete(key);
-            }
+            await Promise.all(keys.map(function(key) { return caches.delete(key); })).catch(function() {});
           }
         } catch (err) {
           console.warn('[Remaki Update] Cache clearing note:', err);
         }
 
-        // 3. Perform hard reload with timestamp cache-buster
+        // 3. Perform clean navigation with timestamp cache-buster
         setTimeout(function() {
-          const currentUrl = new URL(window.location.href);
-          currentUrl.searchParams.set('_v', Date.now().toString());
-          window.location.replace(currentUrl.toString());
-        }, 300);
+          const dest = window.location.origin + window.location.pathname + '?_t=' + Date.now();
+          window.location.href = dest;
+        }, 200);
       }
     };
 
@@ -271,10 +561,15 @@
       window.remakiAppUpdate.clearCacheAndReload();
     };
 
-    // ── Version Polling & Service Worker Monitoring ───────────────────────────
-    let currentAppVersion = null;
-
+    // ── Version Polling & Auto-Detection ─────────────────────────────────────
     async function checkServerVersion() {
+      try {
+        const lastRefreshed = sessionStorage.getItem('remaki_last_refreshed_at');
+        if (lastRefreshed && (Date.now() - parseInt(lastRefreshed, 10)) < 120000) {
+          return;
+        }
+      } catch (_) {}
+
       try {
         const res = await fetch('/version.json?_t=' + Date.now(), {
           cache: 'no-store',
@@ -282,15 +577,24 @@
         });
         if (res.ok) {
           const data = await res.json();
-          const serverVersion = (data.buildTime || data.version || '').toString();
-          if (!currentAppVersion) {
-            currentAppVersion = serverVersion;
+          const serverVersion = (data.buildTime || data.version || '').toString().trim();
+          if (!serverVersion) return;
+          window._latestServerVersion = serverVersion;
+
+          const runningBuild = getRunningBuild();
+
+          if (runningBuild) {
+            // Compare running build strictly with server version
+            if (serverVersion !== runningBuild) {
+              console.log('[Remaki] New deployment detected on Vercel:', serverVersion, 'current:', runningBuild);
+              window.remakiAppUpdate.showBanner(serverVersion);
+            }
+          } else {
+            // First time initialization on non-injected local runs
             try {
               sessionStorage.setItem('remaki_app_build', serverVersion);
+              localStorage.setItem('remaki_app_build', serverVersion);
             } catch (_) {}
-          } else if (serverVersion && serverVersion !== currentAppVersion) {
-            console.log('[Remaki] New build version detected:', serverVersion, 'current:', currentAppVersion);
-            window.remakiAppUpdate.showBanner();
           }
         }
       } catch (e) {
@@ -298,56 +602,48 @@
       }
     }
 
-    // Initialize version from session or current load
-    try {
-      currentAppVersion = sessionStorage.getItem('remaki_app_build');
-    } catch (_) {}
+    // Initial check after app finishes bootstrapping (8 seconds)
+    setTimeout(checkServerVersion, 8000);
 
-    // Initial check after app loads (3 seconds)
-    setTimeout(checkServerVersion, 3000);
+    // Periodic check every 3 minutes (180s)
+    setInterval(checkServerVersion, 180 * 1000);
 
-    // Periodic check every 45 seconds while app is active
-    setInterval(checkServerVersion, 45 * 1000);
-
-    // Also check when user switches back to this browser tab
     document.addEventListener('visibilitychange', function() {
       if (document.visibilityState === 'visible') {
         checkServerVersion();
       }
     });
 
-    // ── Service Worker Registration & Update Listener ─────────────────────────
+    // ── Service Worker Registration & Smooth Auto-Activation ────────────────
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register(
         'flutter_service_worker.js',
         { scope: '/' }
       ).then(function (registration) {
         console.log('[SW] Registered successfully');
+        registration.update().catch(function() {});
 
-        // Check for updates on every page load
-        registration.update();
+        // Automatically activate waiting workers without stalling
+        if (registration.waiting) {
+          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
 
-        // Listen for new service worker being installed
         registration.addEventListener('updatefound', function () {
           const installingWorker = registration.installing;
           if (installingWorker) {
             installingWorker.addEventListener('statechange', function () {
-              if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('[Remaki] New service worker ready - showing update prompt');
-                window.remakiAppUpdate.showBanner();
+              if (installingWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                  installingWorker.postMessage({ type: 'SKIP_WAITING' });
+                  // Re-verify against server version before triggering banner
+                  checkServerVersion();
+                }
               }
             });
           }
         });
       }).catch(function (err) {
-        console.error('[SW] Registration failed:', err);
-      });
-
-      // If a waiting worker is already present
-      navigator.serviceWorker.ready.then(function(reg) {
-        if (reg.waiting) {
-          window.remakiAppUpdate.showBanner();
-        }
+        console.warn('[SW] Registration note:', err);
       });
     }
 
@@ -358,9 +654,84 @@
         loading.style.display = 'none';
       }
     });
-  </script>
 
-  <!-- Flutter app entry point -->
-  <script src="flutter_bootstrap.js" async></script>
+    // ─── Browser Native UPI Deep-Link Trigger (Flipkart / Redbus Style) ────────
+    window.remakiTriggerUpi = function(upiUrl) {
+      if (!upiUrl) return;
+      try {
+        var a = document.createElement('a');
+        a.href = upiUrl;
+        a.rel = 'noopener';
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function() {
+          if (a.parentNode) a.parentNode.removeChild(a);
+        }, 1200);
+      } catch (e) {
+        window.location.href = upiUrl;
+      }
+    };
+
+    // ─── Device / OS Routing: Desktop & iOS Web Allowed; Android Redirects ────
+    (function() {
+      const ua = navigator.userAgent || navigator.vendor || window.opera || '';
+      const isAndroid = /Android/i.test(ua);
+
+      window.remakiRedirectPlayStore = function() {
+        const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.remaki.app';
+        try {
+          window.location.href = 'market://details?id=com.remaki.app';
+          setTimeout(function() {
+            window.location.href = playStoreUrl;
+          }, 600);
+        } catch (_) {
+          window.location.href = playStoreUrl;
+        }
+      };
+
+      if (isAndroid) {
+        console.log('[Remaki] Android device detected. Restricting website and redirecting to Google Play Store.');
+        
+        // Hide loading screen, display Android Play Store card
+        function showAndroidNotice() {
+          const loadingEl = document.getElementById('loading');
+          if (loadingEl) loadingEl.style.display = 'none';
+          const androidScreen = document.getElementById('remaki-android-screen');
+          if (androidScreen) androidScreen.style.display = 'flex';
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', showAndroidNotice);
+        } else {
+          showAndroidNotice();
+        }
+
+        // 3-second countdown timer with automatic redirect
+        var secondsRemaining = 3;
+        var countdownTimer = setInterval(function() {
+          secondsRemaining--;
+          var countEl = document.getElementById('remaki-sec-count');
+          if (countEl) {
+            countEl.textContent = secondsRemaining > 0 ? secondsRemaining : '0';
+          }
+          if (secondsRemaining <= 0) {
+            clearInterval(countdownTimer);
+            window.remakiRedirectPlayStore();
+          }
+        }, 1000);
+
+        // Do not load Flutter for Android
+        return;
+      }
+
+      // Allowed Platforms: Any Desktop (Windows, macOS, Linux, ChromeOS) OR iOS (iPhone/iPad)
+      // Dynamically load Flutter bootstrap with unique cache buster
+      var flutterScript = document.createElement('script');
+      flutterScript.src = 'flutter_bootstrap.js?_t=' + Date.now();
+      flutterScript.async = true;
+      document.body.appendChild(flutterScript);
+    })();
+  </script>
 </body>
 </html>

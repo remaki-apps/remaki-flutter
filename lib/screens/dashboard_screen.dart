@@ -25,6 +25,9 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _pendingApprovalsCount = 0;
   int _pendingComplaintsCount = 0;
+  double _monthlyPlatformFeeCollected = 0.0;
+  int _platformFeeTenantsCount = 0;
+  double _platformFeePerTenant = 5.0;
   bool _isLoadingApprovals = false;
   bool _isPaymentHistoryExpanded = false;
   final Set<String> _expandedPaymentIds = {};
@@ -40,7 +43,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
       _loadPendingApprovals();
       _loadPendingComplaints();
+      _loadPlatformFeeSummary();
     });
+  }
+
+  Future<void> _loadPlatformFeeSummary() async {
+    try {
+      final appProvider = Provider.of<AppProvider>(context, listen: false);
+      final propId = appProvider.selectedPropertyId != 'ALL' ? appProvider.selectedPropertyId : null;
+      final data = await ApiService.fetchPropertyPlatformFeeSummary(propertyId: propId);
+      if (mounted) {
+        setState(() {
+          _monthlyPlatformFeeCollected = (data['monthlyPlatformFeeCollected'] as num?)?.toDouble() ?? 0.0;
+          _platformFeeTenantsCount = (data['totalTenantsContributed'] as num?)?.toInt() ?? 0;
+          _platformFeePerTenant = (data['feePerTenant'] as num?)?.toDouble() ?? 5.0;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadPendingComplaints() async {
@@ -102,6 +121,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appProvider.loadFromAPI(),
       _loadPendingApprovals(),
       _loadPendingComplaints(),
+      _loadPlatformFeeSummary(),
     ]);
     if (mounted && appProvider.lastSyncError != null) {
       FancyToast.showError(
@@ -136,9 +156,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final appProvider = Provider.of<AppProvider>(context);
     final monthYear = DateFormat('MMMM yyyy').format(DateTime.now());
 
-    final expectedRent = appProvider.expectedRent;
-    final collectedRent = appProvider.collectedRent;
-    final pendingRent = appProvider.pendingRent;
+    final expectedRent = appProvider.expectedRentOnly;
+    final collectedRent = appProvider.collectedRentOnly;
+    final pendingRent = appProvider.pendingRentOnly;
     final bool isDataLoading = appProvider.isLoading ||
         (appProvider.pgName.isEmpty && appProvider.rooms.isEmpty && appProvider.lastSyncError == null);
 
@@ -183,7 +203,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            // 5. Payment History (Month-wise Transactions & Summary)
+                            // 5. Dedicated Platform Fee Overview Card
+                            _buildPlatformFeeCard(context),
+                            const SizedBox(height: 16),
+
+                            // 6. Payment History (Month-wise Transactions & Summary)
                             _buildPaymentHistorySection(
                               context: context,
                               appProvider: appProvider,
@@ -313,17 +337,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        appProvider.selectedPropertyId == 'ALL' ? 'All Properties' : pgName,
-                        style: GoogleFonts.lato(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.3,
-                          color: const Color(0xFF0F172A),
+                      const SizedBox(height: 3),
+                      InkWell(
+                        onTap: () => _showPropertySelectorModal(context, appProvider),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 1),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  appProvider.selectedPropertyId == 'ALL' ? 'All Properties' : pgName,
+                                  style: GoogleFonts.lato(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.3,
+                                    color: const Color(0xFF0F172A),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEEF2FF),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: const Color(0xFFC7D2FE), width: 0.8),
+                                ),
+                                child: const Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  size: 16,
+                                  color: Color(0xFF4F46E5),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                       if (pgAddress.isNotEmpty) ...[
                         const SizedBox(height: 2),
@@ -791,6 +843,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         const SizedBox(height: 10),
+        // Row 1: Add Tenant, Notice, Unpaid Dues
         Row(
           children: [
             _buildQuickActionButton(
@@ -801,7 +854,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onTap: () => context.push('/add_tenant'),
             ),
             const SizedBox(width: 8),
-            // Notice action
             _buildQuickActionButton(
               label: 'Notice',
               icon: Icons.campaign_rounded,
@@ -818,7 +870,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               badgeCount: appProvider.unpaidTenants.length,
               onTap: () => context.push('/unpaid_tenants'),
             ),
-            const SizedBox(width: 8),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // Row 2: Approvals, Complaints, Platform Fee
+        Row(
+          children: [
             _buildQuickActionButton(
               label: 'Approvals',
               icon: Icons.fact_check_outlined,
@@ -842,6 +899,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _loadPendingComplaints();
               },
             ),
+            const SizedBox(width: 8),
+            _buildQuickActionButton(
+              label: 'Platform Fee',
+              icon: Icons.receipt_long_rounded,
+              bgColor: const Color(0xFFF0FDFA),
+              iconColor: const Color(0xFF0D9488),
+              subLabel: '₹${_monthlyPlatformFeeCollected.toStringAsFixed(0)}',
+              subLabelColor: const Color(0xFF0D9488),
+              onTap: () async {
+                await context.push('/platform_fee_summary');
+                _loadPlatformFeeSummary();
+              },
+            ),
           ],
         ),
       ],
@@ -854,13 +924,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required Color bgColor,
     required Color iconColor,
     int? badgeCount,
+    String? subLabel,
+    Color? subLabelColor,
     required VoidCallback onTap,
   }) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
@@ -886,7 +958,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       color: bgColor,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(icon, color: iconColor, size: 18),
+                    child: Icon(icon, color: iconColor, size: 19),
                   ),
                   if (badgeCount != null && badgeCount > 0)
                     Positioned(
@@ -925,8 +997,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 fit: BoxFit.scaleDown,
                 child: Text(
                   label,
-                  style: GoogleFonts.lato(
-                    fontSize: 10.5,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF334155),
                   ),
@@ -935,6 +1007,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   textAlign: TextAlign.center,
                 ),
               ),
+              if (subLabel != null) ...[
+                const SizedBox(height: 3),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: (subLabelColor ?? const Color(0xFF0D9488)).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    subLabel,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: subLabelColor ?? const Color(0xFF0D9488),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -1332,6 +1422,157 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Widget _buildPlatformFeeCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () async {
+        await context.push('/platform_fee_summary');
+        _loadPlatformFeeSummary();
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x040F172A),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Color(0x020F172A),
+            blurRadius: 2,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDFA),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.receipt_long_rounded,
+                        size: 17,
+                        color: Color(0xFF0D9488),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'Platform Fee',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.lato(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.2,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDFA),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFCCFBF1), width: 0.8),
+                      ),
+                      child: Text(
+                        'Monthly',
+                        style: GoogleFonts.lato(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF0D9488),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () async {
+                  await context.push('/platform_fee_summary');
+                  _loadPlatformFeeSummary();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0FDFA),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFCCFBF1), width: 1),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'View Details',
+                        style: GoogleFonts.lato(
+                          color: const Color(0xFF0D9488),
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                      const Icon(Icons.chevron_right_rounded, size: 14, color: Color(0xFF0D9488)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              _buildRentStatColumn(
+                title: 'Total Collected',
+                value: '₹${_formatCurrency(_monthlyPlatformFeeCollected)}',
+                color: const Color(0xFF0D9488),
+                icon: Icons.account_balance_wallet_rounded,
+                iconBg: const Color(0xFFF0FDFA),
+                iconColor: const Color(0xFF0D9488),
+              ),
+              Container(width: 1, height: 38, color: const Color(0xFFF1F5F9)),
+              _buildRentStatColumn(
+                title: 'Paid Tenants',
+                value: '$_platformFeeTenantsCount Paid',
+                color: const Color(0xFF4F46E5),
+                icon: Icons.people_alt_rounded,
+                iconBg: const Color(0xFFEEF2FF),
+                iconColor: const Color(0xFF4F46E5),
+              ),
+              Container(width: 1, height: 38, color: const Color(0xFFF1F5F9)),
+              _buildRentStatColumn(
+                title: 'Rate / Tenant',
+                value: '₹${_platformFeePerTenant.toStringAsFixed(0)} / mo',
+                color: const Color(0xFF0F172A),
+                icon: Icons.sell_outlined,
+                iconBg: const Color(0xFFF1F5F9),
+                iconColor: const Color(0xFF475569),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
   Widget _buildPaymentHistorySection({
     required BuildContext context,
     required AppProvider appProvider,
@@ -1639,7 +1880,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 border: Border.all(color: const Color(0xFFE2E8F0), width: 0.5),
                               ),
                               child: Text(
-                                payment.roomNumber!,
+                                formatRoomName(payment.roomNumber),
                                 style: GoogleFonts.lato(
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.w700,
@@ -1690,7 +1931,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '₹${_formatCurrency(payment.amount)}',
+                      '₹${_formatCurrency(payment.calculateTotalPaid(tenant))}',
                       style: GoogleFonts.lato(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w800,
@@ -1764,9 +2005,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             if (isExpanded)
               PaymentSplitupCard(
-                paymentAmount: payment.amount,
-                rentAmount: tenant?.rentAmount ?? payment.amount,
-                platformFee: tenant?.platformFee ?? 9.0,
+                paymentAmount: payment.calculateTotalPaid(tenant),
+                rentAmount: payment.rentAmount > 0 ? payment.rentAmount : (tenant?.rentAmount ?? payment.amount),
+                platformFee: payment.platformFee > 0 ? payment.platformFee : (tenant?.platformFee ?? 9.0),
                 bills: tenant?.additionalCharges,
                 method: payment.method,
                 notes: payment.notes,

@@ -10,6 +10,35 @@ String generateEasyPassword() {
   return '$prefix$number';
 }
 
+/// Formats room string without duplicate "Room" prefix (e.g. "Room 101", never "Room Room 101")
+String formatRoomName(String? room) {
+  if (room == null || room.trim().isEmpty) return '';
+  var trimmed = room.trim();
+  while (RegExp(r'^room\s*[:\-]?\s*', caseSensitive: false).hasMatch(trimmed)) {
+    trimmed = trimmed.replaceFirst(RegExp(r'^room\s*[:\-]?\s*', caseSensitive: false), '').trim();
+  }
+  return trimmed.isEmpty ? 'Room' : 'Room $trimmed';
+}
+
+/// Formats bed string without duplicate "Bed" prefix (e.g. "Bed 1", never "Bed Bed 1")
+String formatBedName(String? bed) {
+  if (bed == null || bed.trim().isEmpty) return '';
+  var trimmed = bed.trim();
+  while (RegExp(r'^bed\s*[:\-]?\s*', caseSensitive: false).hasMatch(trimmed)) {
+    trimmed = trimmed.replaceFirst(RegExp(r'^bed\s*[:\-]?\s*', caseSensitive: false), '').trim();
+  }
+  return trimmed.isEmpty ? 'Bed' : 'Bed $trimmed';
+}
+
+/// Formats combined Room and Bed string cleanly (e.g. "Room 101 • Bed 1")
+String formatRoomAndBed(String? room, String? bed, {String separator = ' • '}) {
+  final r = formatRoomName(room);
+  final b = formatBedName(bed);
+  if (r.isNotEmpty && b.isNotEmpty) return '$r$separator$b';
+  if (r.isNotEmpty) return r;
+  return b;
+}
+
 class Bed {
   String id;
   String name;
@@ -83,6 +112,8 @@ class PropertyItem {
   final String? description;
   final int totalFloors;
   final double platformFee;
+  final String? upiId;
+  final String? upiPayeeName;
 
   PropertyItem({
     required this.id,
@@ -94,6 +125,8 @@ class PropertyItem {
     this.description,
     this.totalFloors = 0,
     this.platformFee = 9.0,
+    this.upiId,
+    this.upiPayeeName,
   });
 
   factory PropertyItem.fromJson(Map<String, dynamic> json) => PropertyItem(
@@ -106,6 +139,8 @@ class PropertyItem {
         description: json['description']?.toString(),
         totalFloors: (json['totalFloors'] as num?)?.toInt() ?? 0,
         platformFee: (json['platformFee'] as num?)?.toDouble() ?? 9.0,
+        upiId: json['upiId']?.toString(),
+        upiPayeeName: json['upiPayeeName']?.toString(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -118,6 +153,8 @@ class PropertyItem {
         'description': description,
         'platformFee': platformFee,
         'totalFloors': totalFloors,
+        'upiId': upiId,
+        'upiPayeeName': upiPayeeName,
       };
 }
 
@@ -188,31 +225,33 @@ class Tenant {
   bool get isPartiallyPaid => paymentStatus == 'PARTIAL' || (pendingRentAmount > 0 && pendingRentAmount < rentAmount);
 
   bool get isUpcoming {
-    if (isPaid || isPending || isPartiallyPaid) return false;
+    if (paymentStatus == 'PAID' && isPaid) return false;
+    if (isPending || isPartiallyPaid) return false;
     if (paymentStatus == 'UPCOMING') return true;
-    if (paymentStatus == 'OVERDUE' || paymentStatus == 'UNPAID') return false;
+    if (paymentStatus == 'OVERDUE') return false;
     final dueStart = DateTime(rentDueDate.year, rentDueDate.month, rentDueDate.day);
     return DateTime.now().isBefore(dueStart);
   }
 
   bool get isOverdue {
-    if (isPaid || isPending || isPartiallyPaid) return false;
+    if (isPaid || isPending || isPartiallyPaid || isUpcoming) return false;
     if (paymentStatus == 'OVERDUE') return true;
     final graceDate = DateTime(rentDueDate.year, rentDueDate.month, rentDueDate.day).add(const Duration(days: 3));
     return DateTime.now().isAfter(graceDate);
   }
 
   bool get isUnpaid {
-    if (isPaid || isPending || isPartiallyPaid) return false;
-    return !isUpcoming && !isOverdue;
+    if (isPaid || isPending || isPartiallyPaid || isUpcoming || isOverdue) return false;
+    return true;
   }
 
   String get statusBadgeLabel {
-    if (totalDue == 0) return 'PAID';
+    if (isPaid || paymentStatus == 'PAID') return 'PAID';
     if (isPending) return 'PENDING';
     if (isPartiallyPaid || (isPaid && totalPendingBills > 0)) return 'PARTIAL';
     if (isUpcoming) return 'UPCOMING';
     if (isOverdue) return 'OVERDUE';
+    if (totalDue == 0 && rentAmount == 0) return 'NO DUES';
     return 'UNPAID';
   }
 
@@ -337,7 +376,7 @@ class Tenant {
     final totalStr = (totalDue > 0 ? totalDue : rentAmount).toStringAsFixed(0);
 
     final roomDetailStr = roomNumber.isNotEmpty
-        ? 'Room $roomNumber${floorName.isNotEmpty ? ' ($floorName)' : ''}'
+        ? '${formatRoomName(roomNumber)}${floorName.isNotEmpty ? ' ($floorName)' : ''}'
         : 'Assigned Room';
 
     return Uri.encodeComponent(
@@ -490,6 +529,8 @@ class Payment {
   String? notes;
   String? propertyId;
   String? billingMonth;
+  double platformFee;
+  double rentAmount;
 
   Payment({
     required this.id,
@@ -502,6 +543,8 @@ class Payment {
     this.notes,
     this.propertyId,
     this.billingMonth,
+    this.platformFee = 0.0,
+    this.rentAmount = 0.0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -515,22 +558,43 @@ class Payment {
         'notes': notes,
         'propertyId': propertyId,
         'billingMonth': billingMonth,
+        'platformFee': platformFee,
+        'rentAmount': rentAmount,
       };
 
-  factory Payment.fromJson(Map<String, dynamic> json) => Payment(
-        id: json['id'] as String? ?? '',
-        tenantId: json['tenantId'] as String? ?? '',
-        amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
-        date: json['date'] != null
-            ? (DateTime.tryParse(json['date'] as String)?.toLocal() ?? DateTime.now())
-            : DateTime.now(),
-        method: json['method'] as String? ?? 'UPI',
-        tenantName: json['tenantName'] as String?,
-        roomNumber: json['roomNumber'] as String?,
-        notes: json['notes'] as String?,
-        propertyId: json['propertyId'] as String?,
-        billingMonth: json['billingMonth'] as String?,
-      );
+  factory Payment.fromJson(Map<String, dynamic> json) {
+    final amt = (json['amount'] as num?)?.toDouble() ?? 0.0;
+    final fee = (json['platformFee'] as num?)?.toDouble() ?? 0.0;
+    final rent = (json['rentAmount'] as num?)?.toDouble() ?? amt;
+    return Payment(
+      id: json['id'] as String? ?? '',
+      tenantId: json['tenantId'] as String? ?? '',
+      amount: amt,
+      date: json['date'] != null
+          ? (DateTime.tryParse(json['date'] as String)?.toLocal() ?? DateTime.now())
+          : DateTime.now(),
+      method: json['method'] as String? ?? 'UPI',
+      tenantName: json['tenantName'] as String?,
+      roomNumber: json['roomNumber'] as String?,
+      notes: json['notes'] as String?,
+      propertyId: json['propertyId'] as String?,
+      billingMonth: json['billingMonth'] as String?,
+      platformFee: fee,
+      rentAmount: rent,
+    );
+  }
+
+  /// Returns total amount paid including rent, utility bills, and platform fee
+  double calculateTotalPaid(Tenant? tenant) {
+    if (tenant == null) return amount;
+    final fee = platformFee > 0 ? platformFee : tenant.platformFee;
+    final rent = rentAmount > 0 ? rentAmount : tenant.rentAmount;
+    final paidBills = tenant.additionalCharges
+        .where((c) => c.billType != 'RENT' && c.status == 'PAID')
+        .fold(0.0, (sum, c) => sum + c.amount);
+    final combined = rent + paidBills + fee;
+    return max(amount, combined);
+  }
 }
 
 class PropertyOwnerItem {

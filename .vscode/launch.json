@@ -1,0 +1,67 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Remaki QA (Android)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main_qa.dart",
+      "args": [
+        "--flavor",
+        "qa"
+      ]
+    },
+    {
+      "name": "Remaki Prod (Android)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--flavor",
+        "prod"
+      ]
+    },
+    {
+      "name": "Remaki QA (Android Local Backend)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main_qa.dart",
+      "args": [
+        "--flavor",
+        "qa",
+        "--dart-define=API_URL=http://10.0.2.2:4000/graphql"
+      ]
+    },
+    {
+      "name": "Remaki QA (Web)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main_qa.dart",
+      "args": [
+        "-d",
+        "chrome"
+      ]
+    },
+    {
+      "name": "Remaki Prod (Web)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "-d",
+        "chrome"
+      ]
+    },
+    {
+      "name": "Remaki QA (Web Local Backend)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main_qa.dart",
+      "args": [
+        "-d",
+        "chrome",
+        "--dart-define=API_URL=http://localhost:4000/graphql"
+      ]
+    }
+  ]
+}

@@ -147,7 +147,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
     final bedName = (roomIndex != -1)
         ? appProvider.rooms[roomIndex].beds.firstWhere((b) => b.id == tenant.bedId, orElse: () => Bed(id: '', name: '')).name
         : '';
-    final roomBedString = 'Room $roomNumber${bedName.isNotEmpty ? ' • Bed $bedName' : ''}';
+    final roomBedString = formatRoomAndBed(roomNumber, bedName);
 
     final currentAmount = double.tryParse(_amountController.text) ?? 0.0;
     final totalDue = tenant.totalDue;
@@ -571,8 +571,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                       );
 
                                       final dateStr = DateFormat('dd-MM-yyyy').format(_paymentDate);
-                                      final bedDisplay = bedName.isNotEmpty ? ' - Bed $bedName' : '';
-                                      final fullRoomBed = 'Room $roomNumber$bedDisplay';
+                                      final fullRoomBed = formatRoomAndBed(roomNumber, bedName, separator: ' - ');
 
                                        if (context.mounted) {
                                          context.pushReplacement(

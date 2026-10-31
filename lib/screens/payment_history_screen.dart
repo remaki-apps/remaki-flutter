@@ -464,7 +464,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                                   border: Border.all(color: const Color(0xFFE2E8F0), width: 0.5),
                                                 ),
                                                 child: Text(
-                                                  payment.roomNumber!,
+                                                  formatRoomName(payment.roomNumber),
                                                   style: GoogleFonts.lato(
                                                     fontSize: 9.5,
                                                     fontWeight: FontWeight.w700,
@@ -517,7 +517,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        '₹${_formatCurrency(payment.amount)}',
+                                        '₹${_formatCurrency(payment.calculateTotalPaid(tenant))}',
                                         style: GoogleFonts.lato(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w800,
@@ -525,6 +525,31 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                           color: const Color(0xFF0F172A),
                                         ),
                                       ),
+                                      if (payment.platformFee > 0 || (tenant != null && tenant.platformFee > 0)) ...[
+                                        const SizedBox(height: 1.5),
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              'Rent: ₹${_formatCurrency(payment.rentAmount > 0 ? payment.rentAmount : payment.amount)}',
+                                              style: GoogleFonts.lato(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w600,
+                                                color: const Color(0xFF64748B),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '• Fee: ₹${(payment.platformFee > 0 ? payment.platformFee : tenant?.platformFee ?? 0).toStringAsFixed(0)}',
+                                              style: GoogleFonts.lato(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w700,
+                                                color: const Color(0xFF0284C7),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                       const SizedBox(height: 4),
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
@@ -593,9 +618,9 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                               ),
                               if (isExpanded)
                                 PaymentSplitupCard(
-                                  paymentAmount: payment.amount,
-                                  rentAmount: tenant?.rentAmount ?? payment.amount,
-                                  platformFee: tenant?.platformFee ?? 9.0,
+                                  paymentAmount: payment.calculateTotalPaid(tenant),
+                                  rentAmount: payment.rentAmount > 0 ? payment.rentAmount : (tenant?.rentAmount ?? payment.amount),
+                                  platformFee: payment.platformFee > 0 ? payment.platformFee : (tenant?.platformFee ?? 0.0),
                                   bills: tenant?.additionalCharges,
                                   method: payment.method,
                                   notes: payment.notes,

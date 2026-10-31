@@ -451,7 +451,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                   'Dear ${tenant.name},\n\n'
                                   'Your tenant portal account is ready on the *Remaki* app. You can now use the app to track your rent payments, view payment receipts, and manage your stay.\n\n'
                                   '🏠 *Stay Details:*\n'
-                                  '• *Room:* Room $roomNumber\n'
+                                  '• *Room:* ${formatRoomName(roomNumber)}\n'
                                   '• *Floor:* $floorName\n\n'
                                   '🔐 *Your Remaki App Login Credentials:*\n'
                                   '────────────────────────────\n'
@@ -1087,7 +1087,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                                   mainAxisSize: MainAxisSize.min,
                                                   children: [
                                                     Text(
-                                                      '₹${payment.amount.toStringAsFixed(0)}',
+                                                      '₹${payment.calculateTotalPaid(tenant).toStringAsFixed(0)}',
                                                       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
                                                     ),
                                                     const SizedBox(width: 8),
@@ -1115,7 +1115,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                             ),
                                             if (isExpanded)
                                               PaymentSplitupCard(
-                                                paymentAmount: payment.amount,
+                                                paymentAmount: payment.calculateTotalPaid(tenant),
                                                 rentAmount: tenant.rentAmount,
                                                 platformFee: tenant.platformFee,
                                                 bills: tenant.additionalCharges,
@@ -1496,7 +1496,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Current: Room $currentRoomNumber • $currentBedName',
+                              'Current: ${formatRoomAndBed(currentRoomNumber, currentBedName)}',
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,

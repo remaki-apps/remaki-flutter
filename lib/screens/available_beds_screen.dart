@@ -158,7 +158,7 @@ class AvailableBedsScreen extends StatelessWidget {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Text(
-                                            'Room ${item.room.number} - ${item.bed.name}',
+                                            formatRoomAndBed(item.room.number, item.bed.name, separator: ' - '),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: const TextStyle(

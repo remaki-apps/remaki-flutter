@@ -5,7 +5,14 @@ import 'dart:html' as html;
 
 void triggerWebCacheClearAndReloadImpl() {
   try {
-    js_util.callMethod(html.window, 'clearRemakiCache', []);
+    if (js_util.hasProperty(html.window, 'clearRemakiCache')) {
+      js_util.callMethod(html.window, 'clearRemakiCache', []);
+      return;
+    }
+  } catch (_) {}
+
+  try {
+    html.window.location.href = '${html.window.location.origin}${html.window.location.pathname}?_t=${DateTime.now().millisecondsSinceEpoch}';
   } catch (_) {
     html.window.location.reload();
   }

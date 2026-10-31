@@ -18,6 +18,7 @@ import 'complete_profile_dialog.dart';
 import '../widgets/app_shimmer.dart';
 import '../utils/image_compress_util.dart';
 import '../widgets/payment_splitup_card.dart';
+import '../widgets/universal_upi_checkout_modal.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 // import '../providers/notification_provider.dart';
@@ -254,10 +255,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           (profile['paymentStatus'] == 'REJECTED' ||
            (rawRejection != null && rawRejection.isNotEmpty));
 
-      // 4. Mark paid via totalDueAmount <= 0 only if not pending and not rejected
-      if (!isPaid && !isPendingApproval && !isBackendRejected && totalDueAmount <= 0) {
-        isPaid = true;
-      }
+      // 4. isPaid is purely driven by backend status == 'PAID'
 
       if (mounted) {
         setState(() {
@@ -528,6 +526,35 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _openUpiPaymentModal() {
+    if (_totalDue <= 0) {
+      FancyToast.showError(context, 'No Dues', message: 'No outstanding dues to pay.');
+      return;
+    }
+
+    final rawUpi = _profileData?['propertyUpiId'] as String?;
+    final upiId = (rawUpi != null && rawUpi.trim().isNotEmpty)
+        ? rawUpi.trim()
+        : 'remakiapps@okhdfcbank';
+
+    final rawPayee = _profileData?['propertyUpiPayeeName'] as String?;
+    final propName = _profileData?['propertyName'] as String?;
+    final payeeName = (rawPayee != null && rawPayee.trim().isNotEmpty)
+        ? rawPayee.trim()
+        : (propName ?? 'PG Property');
+
+    UniversalUpiCheckoutModal.show(
+      context,
+      amount: _totalDue,
+      upiId: upiId,
+      payeeName: payeeName,
+      propertyName: propName,
+      tenantName: _profileData?['name'],
+      note: 'Rent payment - ${_profileData?['name'] ?? "Tenant"}',
+      onProceedToUpload: _pickImage,
+    );
   }
 
   String _getGreeting() {
@@ -1047,8 +1074,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     final isPending = _hasSubmittedForApproval ||
         _profileData?['paymentStatus'] == 'PENDING' ||
         _profileData?['hasPendingRequest'] == true;
-    final isPaid = !isPending && _totalDue <= 0;
-    final isUpcoming = !isPaid && !isPending && (_profileData?['paymentStatus'] == 'UPCOMING' || (_profileData?['paymentStatus'] != 'UNPAID' && _profileData?['rentDueDate'] != null && DateTime.now().isBefore(DateTime.parse(_profileData!['rentDueDate'].toString()).add(const Duration(days: 1)))));
+    final isUpcoming = !isPending && (_profileData?['paymentStatus'] == 'UPCOMING' || (_profileData?['paymentStatus'] != 'UNPAID' && _profileData?['paymentStatus'] != 'PAID' && _profileData?['rentDueDate'] != null && DateTime.now().isBefore(DateTime.parse(_profileData!['rentDueDate'].toString()).add(const Duration(days: 1)))));
+    final isPaid = !isPending && _profileData?['paymentStatus'] == 'PAID';
 
     final double displayRentAmount = _totalDue > 0
         ? _totalDue
@@ -1667,6 +1694,33 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           ),
                         ],
                       ),
+                      if (_announcements.first['imageUrl'] != null && (_announcements.first['imageUrl'] as String).isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: TenantTheme.primaryBorder.withValues(alpha: 0.5)),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: (_announcements.first['imageUrl'] as String).startsWith('data:')
+                                ? Image.memory(
+                                    base64Decode((_announcements.first['imageUrl'] as String).split(',').last),
+                                    height: 160,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                                  )
+                                : Image.network(
+                                    _announcements.first['imageUrl'] as String,
+                                    height: 160,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                                  ),
+                          ),
+                        ),
+                      ],
                     ],
                   )
                 : Center(
@@ -1982,8 +2036,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     final isPending = _hasSubmittedForApproval ||
         _profileData?['paymentStatus'] == 'PENDING' ||
         _profileData?['hasPendingRequest'] == true;
-    final isPaid = !isPending && _totalDue <= 0;
-    final isUpcoming = !isPaid && !isPending && (_profileData?['paymentStatus'] == 'UPCOMING' || (_profileData?['paymentStatus'] != 'UNPAID' && _profileData?['rentDueDate'] != null && DateTime.now().isBefore(DateTime.parse(_profileData!['rentDueDate'].toString()).add(const Duration(days: 1)))));
+    final isUpcoming = !isPending && (_profileData?['paymentStatus'] == 'UPCOMING' || (_profileData?['paymentStatus'] != 'UNPAID' && _profileData?['paymentStatus'] != 'PAID' && _profileData?['rentDueDate'] != null && DateTime.now().isBefore(DateTime.parse(_profileData!['rentDueDate'].toString()).add(const Duration(days: 1)))));
+    final isPaid = !isPending && _profileData?['paymentStatus'] == 'PAID';
     final double monthlyRentVal = ((_profileData?['monthlyRent'] as num?)?.toDouble() ?? 0.0);
     final double displayRent = _totalDue > 0 ? _totalDue : monthlyRentVal;
     final rentDueDateStr = _profileData?['rentDueDate'] != null
@@ -2653,6 +2707,67 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   ),
                   const SizedBox(height: 16),
 
+                  // 1-Click Direct Multi-UPI Pay Button
+                  GestureDetector(
+                    onTap: _openUpiPaymentModal,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF2563EB).withValues(alpha: 0.35),
+                            blurRadius: 12,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.bolt_rounded, color: Colors.white, size: 22),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Pay ₹${_totalDue.toStringAsFixed(0)} via UPI / GPay / QR',
+                            style: GoogleFonts.lato(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  Row(
+                    children: [
+                      const Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          'THEN ATTACH SCREENSHOT',
+                          style: GoogleFonts.lato(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.8,
+                            color: const Color(0xFF94A3B8),
+                          ),
+                        ),
+                      ),
+                      const Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
                   // Compact / Clean Image Upload Button
                   GestureDetector(
                     onTap: _pickImage,
@@ -2894,18 +3009,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     final isPendingApproval = isCurrentMonth && (_hasSubmittedForApproval ||
         _profileData?['paymentStatus'] == 'PENDING' ||
         _profileData?['hasPendingRequest'] == true);
-    final isCurrentPaid = isCurrentMonth && !isPendingApproval && _totalDue <= 0;
-
-    if (monthPayments.isEmpty && isCurrentPaid && monthlyRentVal > 0 && totalPaidThisMonth == 0) {
-      totalPaidThisMonth = monthlyRentVal;
-    }
+    final isCurrentPaid = isCurrentMonth && (_profileData?['paymentStatus'] == 'PAID' || (monthPayments.isNotEmpty && totalPaidThisMonth >= monthlyRentVal));
 
     // Determine status badge
     String statusBadge;
     Color statusBg;
     Color statusBorder;
     Color statusColor;
-    if (totalPaidThisMonth > 0 || monthPayments.isNotEmpty) {
+    if (monthPayments.isNotEmpty || (isCurrentMonth && _profileData?['paymentStatus'] == 'PAID')) {
       statusBadge = 'PAID';
       statusBg = TenantTheme.successBg;
       statusBorder = TenantTheme.successBorder;
@@ -2916,20 +3027,16 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         statusBg = TenantTheme.warningBg;
         statusBorder = TenantTheme.warningBorder;
         statusColor = TenantTheme.warning;
+      } else if (_profileData?['paymentStatus'] == 'UPCOMING') {
+        statusBadge = 'UPCOMING';
+        statusBg = const Color(0xFFEFF6FF);
+        statusBorder = const Color(0xFFBFDBFE);
+        statusColor = const Color(0xFF2563EB);
       } else if (_totalDue > 0) {
-        final isUpcoming = _profileData?['paymentStatus'] == 'UPCOMING' ||
-            (_profileData?['paymentStatus'] != 'UNPAID' && _profileData?['rentDueDate'] != null && DateTime.now().isBefore(DateTime.parse(_profileData!['rentDueDate'].toString()).add(const Duration(days: 1))));
-        if (isUpcoming) {
-          statusBadge = 'UPCOMING';
-          statusBg = const Color(0xFFEFF6FF);
-          statusBorder = const Color(0xFFBFDBFE);
-          statusColor = const Color(0xFF2563EB);
-        } else {
-          statusBadge = 'DUE';
-          statusBg = TenantTheme.dangerBg;
-          statusBorder = TenantTheme.dangerBorder;
-          statusColor = TenantTheme.danger;
-        }
+        statusBadge = 'DUE';
+        statusBg = TenantTheme.dangerBg;
+        statusBorder = TenantTheme.dangerBorder;
+        statusColor = TenantTheme.danger;
       } else {
         statusBadge = 'NO DUES';
         statusBg = const Color(0xFFF1F5F9);
@@ -2982,24 +3089,6 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         if (i < monthPayments.length - 1 || monthBills.isNotEmpty) {
           transactionWidgets.add(const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16));
         }
-      }
-    } else if (monthPayments.isEmpty && isCurrentPaid && monthlyRentVal > 0) {
-      transactionWidgets.add(_buildPaymentRecordTile(
-        title: '$selectedMonthStr Rent',
-        amount: '₹${NumberFormat('#,##,###').format(monthlyRentVal)}',
-        dateStr: _formatPaymentDateTime(DateTime.now()),
-        method: 'UPI',
-        status: 'Paid',
-        isSuccess: true,
-        paymentId: 'synthetic_current_$selectedMonthStr',
-        rawAmount: monthlyRentVal,
-        rawDate: DateTime.now(),
-        rentAmount: monthlyRentVal,
-        platformFee: _effectivePlatformFee > 0 ? _effectivePlatformFee : 9.0,
-        bills: allBills,
-      ));
-      if (monthBills.isNotEmpty) {
-        transactionWidgets.add(const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16));
       }
     }
 
@@ -4008,13 +4097,21 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             border: Border.all(color: TenantTheme.glassBorder),
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: Image.network(
-                            imgUrl,
-                            height: 170,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (ctx, err, st) => const SizedBox(),
-                          ),
+                          child: imgUrl.startsWith('data:')
+                              ? Image.memory(
+                                  base64Decode(imgUrl.split(',').last),
+                                  height: 170,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                                )
+                              : Image.network(
+                                  imgUrl,
+                                  height: 170,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (ctx, err, st) => const SizedBox(),
+                                ),
                         ),
                       ),
                     ],

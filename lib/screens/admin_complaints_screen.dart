@@ -143,7 +143,7 @@ class _AdminComplaintsScreenState extends State<AdminComplaintsScreen> {
                             ),
                           ),
                           Text(
-                            'Tenant: ${complaint.tenantName} (${complaint.roomNumber != null ? "Room ${complaint.roomNumber}" : "No room"})',
+                            'Tenant: ${complaint.tenantName} (${complaint.roomNumber != null ? formatRoomName(complaint.roomNumber) : "No room"})',
                             style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF64748B)),
                           ),
                         ],
@@ -629,7 +629,7 @@ class _AdminComplaintsScreenState extends State<AdminComplaintsScreen> {
                                 borderRadius: BorderRadius.circular(5),
                               ),
                               child: Text(
-                                'Room ${complaint.roomNumber}${complaint.bedLabel != null ? " • ${complaint.bedLabel}" : ""}',
+                                formatRoomAndBed(complaint.roomNumber, complaint.bedLabel),
                                 style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
