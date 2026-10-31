@@ -444,7 +444,11 @@
         if (this.bannerShown) return;
         try {
           const dismissedAt = sessionStorage.getItem('remaki_update_dismissed');
-          if (dismissedAt && (Date.now() - parseInt(dismissedAt, 10)) < 300000) {
+          if (dismissedAt && (Date.now() - parseInt(dismissedAt, 10)) < 900000) {
+            return;
+          }
+          const lastRefreshed = sessionStorage.getItem('remaki_last_refreshed_at');
+          if (lastRefreshed && (Date.now() - parseInt(lastRefreshed, 10)) < 60000) {
             return;
           }
         } catch (_) {}
@@ -469,6 +473,9 @@
         if (this.isUpdating) return;
         this.isUpdating = true;
 
+        const banner = document.getElementById('remaki-update-banner');
+        if (banner) banner.classList.remove('remaki-show');
+
         const btn = document.getElementById('remaki-update-btn');
         if (btn) {
           btn.innerHTML = '⟳ Refreshing...';
@@ -476,45 +483,40 @@
           btn.style.pointerEvents = 'none';
         }
 
-        console.log('[Remaki Update] Clearing app cache & service workers...');
+        console.log('[Remaki Update] Purging cache and reloading fresh UI...');
 
         try {
           if (window._latestServerVersion) {
-            sessionStorage.setItem('remaki_app_build', window._latestServerVersion);
             localStorage.setItem('remaki_app_build', window._latestServerVersion);
           }
           sessionStorage.setItem('remaki_last_refreshed_at', Date.now().toString());
         } catch (_) {}
 
         try {
-          // 1. Tell service worker to skip waiting
+          // 1. Unregister all service workers and signal skipWaiting
           if ('serviceWorker' in navigator) {
             const regs = await navigator.serviceWorker.getRegistrations();
             for (const reg of regs) {
-              if (reg.waiting) {
-                reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-              }
-              await reg.unregister();
+              if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+              if (reg.active) reg.active.postMessage({ type: 'SKIP_WAITING' });
+              await reg.unregister().catch(function() {});
             }
           }
 
           // 2. Clear all browser CacheStorage caches for Remaki
           if ('caches' in window) {
             const keys = await caches.keys();
-            for (const key of keys) {
-              await caches.delete(key);
-            }
+            await Promise.all(keys.map(function(key) { return caches.delete(key); })).catch(function() {});
           }
         } catch (err) {
           console.warn('[Remaki Update] Cache clearing note:', err);
         }
 
-        // 3. Perform hard reload with timestamp cache-buster
+        // 3. Perform clean navigation with timestamp cache-buster
         setTimeout(function() {
-          const currentUrl = new URL(window.location.href);
-          currentUrl.searchParams.set('_v', Date.now().toString());
-          window.location.replace(currentUrl.toString());
-        }, 300);
+          const dest = window.location.origin + window.location.pathname + '?_t=' + Date.now();
+          window.location.href = dest;
+        }, 200);
       }
     };
 
@@ -523,7 +525,7 @@
       window.remakiAppUpdate.clearCacheAndReload();
     };
 
-    // ── Version Polling & Service Worker Monitoring ───────────────────────────
+    // ── Version Polling & Auto-Detection ─────────────────────────────────────
     let currentAppVersion = null;
 
     async function checkServerVersion() {
@@ -558,56 +560,51 @@
       }
     }
 
-    // Initialize version from session or current load
     try {
-      currentAppVersion = sessionStorage.getItem('remaki_app_build');
+      currentAppVersion = sessionStorage.getItem('remaki_app_build') || localStorage.getItem('remaki_app_build');
     } catch (_) {}
 
-    // Initial check after app loads (3 seconds)
-    setTimeout(checkServerVersion, 3000);
+    // Check version after app loads (5 seconds)
+    setTimeout(checkServerVersion, 5000);
 
-    // Periodic check every 45 seconds while app is active
-    setInterval(checkServerVersion, 45 * 1000);
+    // Periodic check every 60 seconds
+    setInterval(checkServerVersion, 60 * 1000);
 
-    // Also check when user switches back to this browser tab
     document.addEventListener('visibilitychange', function() {
       if (document.visibilityState === 'visible') {
         checkServerVersion();
       }
     });
 
-    // ── Service Worker Registration & Update Listener ─────────────────────────
+    // ── Service Worker Registration & Smooth Auto-Activation ────────────────
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register(
         'flutter_service_worker.js',
         { scope: '/' }
       ).then(function (registration) {
         console.log('[SW] Registered successfully');
+        registration.update().catch(function() {});
 
-        // Check for updates on every page load
-        registration.update();
+        // Automatically activate waiting workers without stalling
+        if (registration.waiting) {
+          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
 
-        // Listen for new service worker being installed
         registration.addEventListener('updatefound', function () {
           const installingWorker = registration.installing;
           if (installingWorker) {
             installingWorker.addEventListener('statechange', function () {
-              if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('[Remaki] New service worker ready - showing update prompt');
-                window.remakiAppUpdate.showBanner();
+              if (installingWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                  installingWorker.postMessage({ type: 'SKIP_WAITING' });
+                  window.remakiAppUpdate.showBanner();
+                }
               }
             });
           }
         });
       }).catch(function (err) {
-        console.error('[SW] Registration failed:', err);
-      });
-
-      // If a waiting worker is already present
-      navigator.serviceWorker.ready.then(function(reg) {
-        if (reg.waiting) {
-          window.remakiAppUpdate.showBanner();
-        }
+        console.warn('[SW] Registration note:', err);
       });
     }
 

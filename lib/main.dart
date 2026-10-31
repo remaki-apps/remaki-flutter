@@ -70,7 +70,7 @@ Future<void> bootstrapApp() async {
 }
 
 void main() async {
-  EnvConfig.initialize(Environment.prod);
+  // Let EnvConfig determine environment dynamically (via --dart-define, appFlavor, or web URL)
   await bootstrapApp();
 }
 

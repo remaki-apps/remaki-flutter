@@ -19,9 +19,10 @@ class EnvConfig {
   static Environment get environment {
     if (_manuallyConfigured) return _environment;
 
-    // Detect from --dart-define=ENV=qa
+    // Detect from --dart-define=ENV=qa or prod
     const envDefine = String.fromEnvironment('ENV', defaultValue: '');
     if (envDefine.toLowerCase() == 'qa') return Environment.qa;
+    if (envDefine.toLowerCase() == 'prod') return Environment.prod;
 
     // Detect from Flutter app flavor (Android / iOS flavor)
     if (appFlavor == 'qa') return Environment.qa;
@@ -29,7 +30,13 @@ class EnvConfig {
     // Detect from Web URL
     if (kIsWeb) {
       final host = Uri.base.host.toLowerCase();
-      if (host.contains('qa') || host.contains('preview')) {
+      final href = Uri.base.toString().toLowerCase();
+      if (host.contains('qa') ||
+          host.contains('preview') ||
+          host.contains('vercel.app') ||
+          host.contains('localhost') ||
+          host.contains('127.0.0.1') ||
+          href.contains('env=qa')) {
         return Environment.qa;
       }
     }

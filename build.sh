@@ -23,8 +23,23 @@ flutter config --enable-web
 echo "=== Getting Packages ==="
 flutter pub get
 
+echo "=== Detecting Target Environment ==="
+GIT_BRANCH="${VERCEL_GIT_COMMIT_REF:-$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '')}"
+echo "Current Branch / Commit Ref: $GIT_BRANCH"
+
 echo "=== Building Flutter Web Release ==="
-flutter build web --release
+if [ "$GIT_BRANCH" = "qa" ] || [ "$ENV" = "qa" ] || [[ "$GIT_BRANCH" == *"qa"* ]]; then
+  echo "Targeting QA environment (-t lib/main_qa.dart --dart-define=ENV=qa)..."
+  flutter build web --release -t lib/main_qa.dart --dart-define=ENV=qa
+else
+  echo "Targeting standard environment (-t lib/main.dart)..."
+  flutter build web --release -t lib/main.dart
+fi
+
+echo "=== Ensuring custom flutter_service_worker.js is in place ==="
+if [ -f "web/flutter_service_worker.js" ]; then
+  cp web/flutter_service_worker.js build/web/flutter_service_worker.js || true
+fi
 
 echo "=== Generating version.json for auto-update detection ==="
 BUILD_TIME=$(date +%s%3N)
