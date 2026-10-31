@@ -53,3 +53,8 @@ cat <<EOF > build/web/version.json
 EOF
 echo "Generated version.json: buildTime=$BUILD_TIME, gitHash=$GIT_HASH"
 
+echo "=== Cache busting main.dart.js in flutter_bootstrap.js ==="
+if [ -f "build/web/flutter_bootstrap.js" ]; then
+  sed -i "s/main\.dart\.js/main\.dart\.js?v=$BUILD_TIME/g" build/web/flutter_bootstrap.js 2>/dev/null || true
+fi
+

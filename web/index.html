@@ -687,9 +687,9 @@
       }
 
       // Allowed Platforms: Any Desktop (Windows, macOS, Linux, ChromeOS) OR iOS (iPhone/iPad)
-      // Dynamically load Flutter bootstrap
+      // Dynamically load Flutter bootstrap with unique cache buster
       var flutterScript = document.createElement('script');
-      flutterScript.src = 'flutter_bootstrap.js';
+      flutterScript.src = 'flutter_bootstrap.js?_t=' + Date.now();
       flutterScript.async = true;
       document.body.appendChild(flutterScript);
     })();
