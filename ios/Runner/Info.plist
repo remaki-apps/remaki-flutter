@@ -62,6 +62,7 @@
 			<string>gpay</string>
 			<string>phonepe</string>
 			<string>paytmmp</string>
+			<string>credpay</string>
 		</array>
 	</dict>
 </plist>

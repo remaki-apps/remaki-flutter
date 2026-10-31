@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../utils/web_upi_util.dart';
 
 class UniversalUpiCheckoutModal extends StatefulWidget {
   final double amount;
@@ -62,10 +64,24 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
   late String _transactionRef;
   bool _isLaunching = false;
 
+  bool get _isDesktop {
+    if (kIsWeb) {
+      return defaultTargetPlatform == TargetPlatform.windows ||
+             defaultTargetPlatform == TargetPlatform.macOS ||
+             defaultTargetPlatform == TargetPlatform.linux;
+    }
+    return defaultTargetPlatform == TargetPlatform.windows ||
+           defaultTargetPlatform == TargetPlatform.macOS ||
+           defaultTargetPlatform == TargetPlatform.linux;
+  }
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    // Desktop defaults to Scan QR Code tab (index 1).
+    // iOS Safari / Mobile Browser / App defaults to Pay via App tab (index 0).
+    final initialTabIndex = _isDesktop ? 1 : 0;
+    _tabController = TabController(length: 2, vsync: this, initialIndex: initialTabIndex);
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     _transactionRef = 'RMK$timestamp';
   }
@@ -94,12 +110,14 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
         .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
         .join('&');
 
-    if (scheme == 'tez') {
+    if (scheme == 'tez' || scheme == 'gpay') {
       return 'tez://upi/pay?$queryString';
     } else if (scheme == 'phonepe') {
       return 'phonepe://pay?$queryString';
-    } else if (scheme == 'paytmmp') {
+    } else if (scheme == 'paytmmp' || scheme == 'paytm') {
       return 'paytmmp://pay?$queryString';
+    } else if (scheme == 'credpay') {
+      return 'credpay://pay?$queryString';
     }
     return 'upi://pay?$queryString';
   }
@@ -110,37 +128,65 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
     final fallbackUrl = _buildUpiUri();
 
     try {
-      final uri = Uri.parse(upiUrl);
-      bool launched = false;
+      if (kIsWeb) {
+        // Direct trigger for mobile browsers (iOS Safari, mobile browsers)
+        // just like Flipkart and RedBus without failing on canLaunchUrl checks.
+        WebUpiUtil.launchUpi(upiUrl);
 
-      if (await canLaunchUrl(uri)) {
-        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.touch_app_rounded, color: Color(0xFF38BDF8), size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Opening $schemeName... If app does not open, switch to "Scan QR" tab or copy UPI ID.',
+                      style: GoogleFonts.lato(fontSize: 12.5, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: const Color(0xFF0F172A),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 4),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          );
+        }
+      } else {
+        // Native mobile application (Android / iOS native)
+        final uri = Uri.parse(upiUrl);
+        bool launched = false;
 
-      if (!launched && customScheme != null) {
-        // Fallback to universal upi://
-        final fallbackUri = Uri.parse(fallbackUrl);
-        if (await canLaunchUrl(fallbackUri)) {
-          launched = await launchUrl(fallbackUri, mode: LaunchMode.externalApplication);
+        if (await canLaunchUrl(uri)) {
+          launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+
+        if (!launched && customScheme != null) {
+          final fallbackUri = Uri.parse(fallbackUrl);
+          if (await canLaunchUrl(fallbackUri)) {
+            launched = await launchUrl(fallbackUri, mode: LaunchMode.externalApplication);
+          }
+        }
+
+        if (!launched && mounted) {
+          _tabController.animateTo(1);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '$schemeName app is not directly accessible. Please scan the QR code or copy the UPI ID to pay.',
+                style: GoogleFonts.lato(fontSize: 13, color: Colors.white),
+              ),
+              backgroundColor: const Color(0xFF1E293B),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          );
         }
       }
-
-      if (!launched && mounted) {
-        // App not found or desktop/web browser limitation -> switch to QR tab
-        _tabController.animateTo(1);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '$schemeName app is not directly accessible. Please scan the QR code or copy the UPI ID to pay.',
-              style: GoogleFonts.lato(fontSize: 13, color: Colors.white),
-            ),
-            backgroundColor: const Color(0xFF1E293B),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         _tabController.animateTo(1);
       }
@@ -512,10 +558,23 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
 
           const SizedBox(height: 10),
 
+          // CRED
+          _buildUpiTile(
+            title: 'CRED',
+            subtitle: 'Pay via CRED UPI app',
+            badgeText: 'POPULAR',
+            badgeColor: const Color(0xFF0F172A),
+            badgeBg: const Color(0xFFF1F5F9),
+            iconWidget: _buildCredIcon(),
+            onTap: () => _launchUpiApp('CRED', customScheme: 'credpay'),
+          ),
+
+          const SizedBox(height: 10),
+
           // Universal UPI / Other Apps
           _buildUpiTile(
             title: 'Any UPI App',
-            subtitle: 'BHIM, Cred, Amazon Pay, Axis, SBI, etc.',
+            subtitle: 'BHIM, Amazon Pay, Axis, SBI, etc.',
             iconWidget: Container(
               width: 42,
               height: 42,
@@ -544,7 +603,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Using iOS Safari or PC? Switch to "Scan QR Code" tab or copy the UPI ID below.',
+                    'On iOS Safari or Chrome? Tapping an app will open it directly on your device. You can also switch to "Scan QR Code" tab or copy the UPI ID.',
                     style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF475569), height: 1.3),
                   ),
                 ),
@@ -561,6 +620,29 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
       child: Column(
         children: [
+          if (_isDesktop) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFBFDBFE)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.devices_rounded, color: Color(0xFF2563EB), size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'On Desktop? Open any UPI app (GPay, PhonePe, Paytm, CRED) on your phone and scan this QR code to pay.',
+                      style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF1E40AF), height: 1.3),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           Text(
             'Scan with Google Pay, PhonePe, Paytm, or any UPI app',
             style: GoogleFonts.lato(
@@ -792,6 +874,29 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
             fontSize: 11,
             fontWeight: FontWeight.w900,
             letterSpacing: -0.3,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCredIcon() {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: const Color(0xFF18181B),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF27272A)),
+      ),
+      child: const Center(
+        child: Text(
+          'CRED',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.5,
           ),
         ),
       ),
