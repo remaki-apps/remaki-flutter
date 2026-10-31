@@ -166,32 +166,46 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
     return 'upi://pay?$queryString';
   }
 
-  String _buildTargetedUpiUri({String? packageName, String? iosScheme}) {
+  String _buildTargetedUpiUri({String? customScheme, String? packageName, String? iosScheme}) {
     final queryString = _buildQueryString();
 
-    // iOS custom scheme routing
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
-      if (iosScheme != null && iosScheme.isNotEmpty) {
-        if (iosScheme == 'gpay') return 'gpay://upi/pay?$queryString';
-        if (iosScheme == 'phonepe') return 'phonepe://pay?$queryString';
-        if (iosScheme == 'paytmmp') return 'paytmmp://pay?$queryString';
-        if (iosScheme == 'credpay') return 'credpay://pay?$queryString';
+    // 1. Mobile Chrome Web Browser: intent:// URI with package targets the specific app directly
+    if (kIsWeb) {
+      if (packageName != null && packageName.isNotEmpty) {
+        return 'intent://pay?' + queryString + '#Intent;scheme=upi;package=' + packageName + ';end';
       }
-      return 'upi://pay?$queryString';
+      return 'upi://pay?' + queryString;
     }
 
-    // Android Direct App Intent Routing (Chrome on Android + Native Android)
-    // Using Android intent URI with package targets the specific app DIRECTLY without 'Open with' chooser!
-    if (packageName != null && packageName.isNotEmpty) {
-      return 'intent://pay?$queryString#Intent;scheme=upi;package=$packageName;end';
+    // 2. iOS custom schemes (gpay://, phonepe://, paytmmp://, credpay://)
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      final scheme = iosScheme ?? customScheme;
+      if (scheme != null && scheme.isNotEmpty) {
+        final s = scheme.toLowerCase();
+        if (s == 'gpay' || s == 'tez') return 'gpay://upi/pay?' + queryString;
+        if (s == 'phonepe') return 'phonepe://pay?' + queryString;
+        if (s == 'paytm' || s == 'paytmmp') return 'paytmmp://pay?' + queryString;
+        if (s == 'cred' || s == 'credpay') return 'credpay://pay?' + queryString;
+      }
+      return 'upi://pay?' + queryString;
     }
 
-    return 'upi://pay?$queryString';
+    // 3. Native Android: Registered custom URI schemes (tez://upi/pay, phonepe://pay, paytmmp://pay, credpay://pay)
+    // These launch the respective app directly without showing Android's 'Open with' system chooser!
+    if (customScheme != null && customScheme.isNotEmpty) {
+      final s = customScheme.toLowerCase();
+      if (s == 'tez' || s == 'gpay') return 'tez://upi/pay?' + queryString;
+      if (s == 'phonepe') return 'phonepe://pay?' + queryString;
+      if (s == 'paytm' || s == 'paytmmp') return 'paytmmp://pay?' + queryString;
+      if (s == 'cred' || s == 'credpay') return 'credpay://pay?' + queryString;
+    }
+
+    return 'upi://pay?' + queryString;
   }
 
-  Future<void> _launchUpiApp(String schemeName, {String? packageName, String? iosScheme}) async {
+  Future<void> _launchUpiApp(String schemeName, {String? customScheme, String? packageName, String? iosScheme}) async {
     setState(() => _isLaunching = true);
-    final targetedUrl = _buildTargetedUpiUri(packageName: packageName, iosScheme: iosScheme);
+    final targetedUrl = _buildTargetedUpiUri(customScheme: customScheme, packageName: packageName, iosScheme: iosScheme);
     final genericFallback = _buildGenericUpiUri();
 
     // Diagnostic logging for exact link verification
@@ -767,7 +781,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
           ),
           const SizedBox(height: 10),
 
-          // Google Pay - Direct package redirect (no 'Open with' chooser)
+          // Google Pay - Direct app redirect (tez:// on Android, gpay:// on iOS)
           _buildUpiTile(
             title: 'Google Pay',
             subtitle: 'Direct redirect to GPay app',
@@ -777,6 +791,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
             iconWidget: _buildGPayIcon(),
             onTap: () => _launchUpiApp(
               'Google Pay',
+              customScheme: 'tez',
               packageName: 'com.google.android.apps.nbu.paisa.user',
               iosScheme: 'gpay',
             ),
@@ -784,7 +799,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
 
           const SizedBox(height: 10),
 
-          // PhonePe - Direct package redirect
+          // PhonePe - Direct app redirect (phonepe://)
           _buildUpiTile(
             title: 'PhonePe',
             subtitle: 'Direct redirect to PhonePe app',
@@ -794,6 +809,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
             iconWidget: _buildPhonePeIcon(),
             onTap: () => _launchUpiApp(
               'PhonePe',
+              customScheme: 'phonepe',
               packageName: 'com.phonepe.app',
               iosScheme: 'phonepe',
             ),
@@ -801,13 +817,14 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
 
           const SizedBox(height: 10),
 
-          // Paytm - Direct package redirect
+          // Paytm - Direct app redirect (paytmmp://)
           _buildUpiTile(
             title: 'Paytm',
             subtitle: 'Direct redirect to Paytm app',
             iconWidget: _buildPaytmIcon(),
             onTap: () => _launchUpiApp(
               'Paytm',
+              customScheme: 'paytmmp',
               packageName: 'net.one97.paytm',
               iosScheme: 'paytmmp',
             ),
@@ -815,7 +832,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
 
           const SizedBox(height: 10),
 
-          // CRED - Direct package redirect
+          // CRED - Direct app redirect (credpay://)
           _buildUpiTile(
             title: 'CRED',
             subtitle: 'Direct redirect to CRED app',
@@ -825,6 +842,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
             iconWidget: _buildCredIcon(),
             onTap: () => _launchUpiApp(
               'CRED',
+              customScheme: 'credpay',
               packageName: 'com.dreamplug.androidapp',
               iosScheme: 'credpay',
             ),
