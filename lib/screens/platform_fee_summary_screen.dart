@@ -405,13 +405,6 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Color(0xFF0F172A)),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Color(0xFF0D9488)),
-            tooltip: 'Refresh',
-            onPressed: _loadSummary,
-          ),
-        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(color: const Color(0xFFE2E8F0), height: 1),
@@ -847,14 +840,18 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      totalCollected > 0
-                          ? 'Send Payment to Organization (₹${totalCollected.toStringAsFixed(0)})'
-                          : 'Send Payment to Organization',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF0F766E),
+                    Flexible(
+                      child: Text(
+                        totalCollected > 0
+                            ? 'Pay Organization (₹${totalCollected.toStringAsFixed(0)})'
+                            : 'Pay to Organization',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF0F766E),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 6),
