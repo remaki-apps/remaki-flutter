@@ -1,8 +1,11 @@
+import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/web_upi_util.dart';
@@ -93,6 +96,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isLaunching = false;
+  bool _isDownloadingQr = false;
   late double _currentAmount;
   bool _isSplitMode = false;
   late TextEditingController _splitController;
@@ -267,6 +271,93 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
       }
     } finally {
       if (mounted) setState(() => _isLaunching = false);
+    }
+  }
+
+
+  Future<void> _downloadQrCode(String upiPayload) async {
+    if (_isDownloadingQr) return;
+    setState(() => _isDownloadingQr = true);
+
+    try {
+      final qrValidationResult = QrValidator.validate(
+        data: upiPayload,
+        version: QrVersions.auto,
+        errorCorrectionLevel: QrErrorCorrectLevel.M,
+      );
+
+      if (qrValidationResult.status == QrValidationStatus.valid) {
+        final qrCode = qrValidationResult.qrCode!;
+        final painter = QrPainter.withQr(
+          qr: qrCode,
+          color: const Color(0xFF0F172A),
+          emptyColor: const Color(0xFFFFFFFF),
+          gapless: true,
+        );
+
+        final picData = await painter.toImageData(800, format: ui.ImageByteFormat.png);
+        if (picData != null) {
+          final pngBytes = picData.buffer.asUint8List();
+
+          if (kIsWeb) {
+            WebUpiUtil.downloadBytes(pngBytes, 'remaki_payment_qr.png');
+          } else {
+            Directory? targetDir;
+            if (Platform.isAndroid) {
+              final externalDir = Directory('/storage/emulated/0/Download');
+              if (await externalDir.exists()) {
+                targetDir = externalDir;
+              }
+            }
+            targetDir ??= await getDownloadsDirectory() ?? await getApplicationDocumentsDirectory();
+
+            final filePath = '${targetDir.path}/remaki_payment_qr.png';
+            final file = File(filePath);
+            await file.writeAsBytes(pngBytes);
+          }
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.download_done_rounded, color: Color(0xFF4ADE80), size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'QR Code Downloaded to Gallery!',
+                            style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Open Google Pay, PhonePe, or Paytm, tap Scan QR and choose from gallery.',
+                            style: GoogleFonts.lato(fontSize: 11.5, color: const Color(0xFFE2E8F0)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: const Color(0xFF0F172A),
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[UniversalUpi] Download QR error: $e');
+      if (mounted) {
+        FancyToast.showError(context, 'Download Error', message: 'Could not save QR code: $e');
+      }
+    } finally {
+      if (mounted) setState(() => _isDownloadingQr = false);
     }
   }
 
@@ -833,37 +924,69 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
 
   Widget _buildAppOptionsTab(String universalUpiString, String formattedAmount) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section 1: 1-Tap Direct Apps (Navi, Groww, BHIM)
-          Row(
-            children: [
-              const Icon(Icons.bolt_rounded, color: Color(0xFF16A34A), size: 16),
-              const SizedBox(width: 4),
-              Text(
-                'RECOMMENDED • 1-TAP DIRECT APPS',
-                style: GoogleFonts.lato(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.8,
-                  color: const Color(0xFF16A34A),
+          // Notice banner explaining GPay, PhonePe, Paytm status
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFFDE68A)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.info_rounded, color: Color(0xFFD97706), size: 22),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Google Pay, PhonePe & Paytm Notice',
+                        style: GoogleFonts.lato(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF92400E),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Direct app button transfer is not supported for now due to bank limits on personal accounts.\n\n'
+                        '👉 Switch to the "Scan QR Code" tab above to download the QR code to your gallery and pay via Google Pay, PhonePe, or Paytm.',
+                        style: GoogleFonts.lato(
+                          fontSize: 11.5,
+                          color: const Color(0xFFB45309),
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 3),
+
+          const SizedBox(height: 18),
+
           Text(
-            'Opens app directly with amount pre-filled (no bank limit restrictions):',
-            style: GoogleFonts.lato(fontSize: 11, color: const Color(0xFF64748B)),
+            'DIRECT 1-TAP SUPPORTED APPS',
+            style: GoogleFonts.lato(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+              color: const Color(0xFF16A34A),
+            ),
           ),
           const SizedBox(height: 10),
 
-          // Navi UPI
+          // 1. Navi UPI
           _buildUpiTile(
             title: 'Navi UPI',
-            subtitle: 'Direct 1-tap payment (pre-filled amount)',
+            subtitle: 'Direct 1-tap transfer (pre-filled amount)',
             badgeText: '1-TAP DIRECT',
             badgeColor: const Color(0xFF059669),
             badgeBg: const Color(0xFFECFDF5),
@@ -873,10 +996,10 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
 
           const SizedBox(height: 10),
 
-          // Groww UPI
+          // 2. Groww UPI
           _buildUpiTile(
             title: 'Groww UPI',
-            subtitle: 'Direct 1-tap payment (pre-filled amount)',
+            subtitle: 'Direct 1-tap transfer (pre-filled amount)',
             badgeText: '1-TAP DIRECT',
             badgeColor: const Color(0xFF059669),
             badgeBg: const Color(0xFFECFDF5),
@@ -886,9 +1009,9 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
 
           const SizedBox(height: 10),
 
-          // BHIM & Any UPI App
+          // 3. Any Other UPI App
           _buildUpiTile(
-            title: 'BHIM & Other UPI Apps',
+            title: 'Any Other UPI App',
             subtitle: 'BHIM, CRED, Amazon Pay, Axis, etc.',
             badgeText: 'ALL APPS',
             badgeColor: const Color(0xFF0F172A),
@@ -899,101 +1022,27 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
 
           const SizedBox(height: 18),
 
-          // Section 2: Google Pay & Paytm (1-Tap Copy & Open)
-          Row(
-            children: [
-              const Icon(Icons.content_copy_rounded, color: Color(0xFF2563EB), size: 14),
-              const SizedBox(width: 6),
-              Text(
-                'GOOGLE PAY & PAYTM • 1-TAP COPY & PAY',
-                style: GoogleFonts.lato(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.8,
-                  color: const Color(0xFF2563EB),
+          // Share screenshot hint
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.share_rounded, color: Color(0xFF2563EB), size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'After payment in your UPI app, take a screenshot and tap "Share" -> choose Remaki to submit for approval automatically!',
+                    style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF334155), height: 1.35),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 3),
-          Text(
-            'Copies UPI ID automatically & launches the app to pay without bank blocks:',
-            style: GoogleFonts.lato(fontSize: 11, color: const Color(0xFF64748B)),
-          ),
-          const SizedBox(height: 10),
-
-          // Google Pay
-          _buildUpiTile(
-            title: 'Google Pay',
-            subtitle: '1-Tap copy UPI ID & launch GPay',
-            badgeText: 'COPY & OPEN',
-            badgeColor: const Color(0xFF2563EB),
-            badgeBg: const Color(0xFFEFF6FF),
-            iconWidget: _buildGPayIcon(),
-            onTap: () => _copyAndOpenApp(
-              'Google Pay',
-              packageName: 'com.google.android.apps.nbu.paisa.user',
-              iosScheme: 'gpay',
+              ],
             ),
           ),
-
-          const SizedBox(height: 10),
-
-          // Paytm
-          _buildUpiTile(
-            title: 'Paytm',
-            subtitle: '1-Tap copy UPI ID & launch Paytm',
-            badgeText: 'COPY & OPEN',
-            badgeColor: const Color(0xFF0284C7),
-            badgeBg: const Color(0xFFE0F2FE),
-            iconWidget: _buildPaytmIcon(),
-            onTap: () => _copyAndOpenApp(
-              'Paytm',
-              packageName: 'net.one97.paytm',
-              iosScheme: 'paytmmp',
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          // PhonePe
-          _buildUpiTile(
-            title: 'PhonePe',
-            subtitle: 'Direct 1-tap or copy & pay',
-            badgeText: 'POPULAR',
-            badgeColor: const Color(0xFF6739B7),
-            badgeBg: const Color(0xFFF3E8FF),
-            iconWidget: _buildPhonePeIcon(),
-            onTap: () => _launchUpiApp(
-              'PhonePe',
-              packageName: 'com.phonepe.app',
-              iosScheme: 'phonepe',
-            ),
-          ),
-
-          const SizedBox(height: 18),
-
-          // Section 3: Share with Parent / Roommate on WhatsApp
-          Row(
-            children: [
-              const Icon(Icons.people_alt_rounded, color: Color(0xFF166534), size: 15),
-              const SizedBox(width: 6),
-              Text(
-                'PAY FROM ANOTHER PHONE / PARENT / ROOMIE',
-                style: GoogleFonts.lato(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.8,
-                  color: const Color(0xFF166534),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          _buildWhatsAppTile(universalUpiString, formattedAmount),
-
-          const SizedBox(height: 14),
         ],
       ),
     );
@@ -1028,7 +1077,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
             ),
           ],
           Text(
-            'Scan with Google Pay, PhonePe, Paytm, or any UPI app',
+            'Scan or download QR code with pre-filled amount ($formattedAmount)',
             style: GoogleFonts.lato(
               fontSize: 12.5,
               fontWeight: FontWeight.w600,
@@ -1061,6 +1110,31 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
                 backgroundColor: Colors.white,
                 errorCorrectionLevel: QrErrorCorrectLevel.M,
               ),
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // Download QR Code Button
+          ElevatedButton.icon(
+            onPressed: _isDownloadingQr ? null : () => _downloadQrCode(upiPayload),
+            icon: _isDownloadingQr
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : const Icon(Icons.download_rounded, size: 18),
+            label: Text(
+              _isDownloadingQr ? 'Saving QR Code...' : 'Download QR Code (Save to Gallery)',
+              style: GoogleFonts.lato(fontSize: 13.5, fontWeight: FontWeight.w800),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2563EB),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              elevation: 0,
             ),
           ),
 
@@ -1109,8 +1183,36 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
               ],
             ),
           ),
+
           const SizedBox(height: 14),
-          _buildWhatsAppTile(upiPayload, formattedAmount),
+
+          // How to pay instructions card
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'How to pay via Google Pay, PhonePe, or Paytm:',
+                  style: GoogleFonts.lato(fontSize: 12.5, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '1. Tap "Download QR Code" above.\n'
+                  '2. Open Google Pay, PhonePe, or Paytm.\n'
+                  '3. Tap "Scan QR" -> select this downloaded image from your Gallery.\n'
+                  '4. The amount ($formattedAmount) is pre-filled. Enter your UPI PIN to pay.\n'
+                  '5. After paying, tap "Share" on your payment receipt screenshot and select Remaki to submit for approval automatically!',
+                  style: GoogleFonts.lato(fontSize: 11.5, color: const Color(0xFF475569), height: 1.45),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

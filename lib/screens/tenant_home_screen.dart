@@ -25,6 +25,7 @@ import 'package:provider/provider.dart';
 // import '../widgets/in_app_notification_center.dart';
 import '../providers/app_provider.dart';
 import '../utils/web_update_util.dart';
+import '../services/shared_media_service.dart';
 
 class TenantHomeScreen extends StatefulWidget {
   final int initialTab;
@@ -145,6 +146,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     super.initState();
     _currentNavIndex = widget.initialTab;
     _loadAllData();
+    SharedMediaService.instance.pendingSharedImage.addListener(_handleIncomingSharedScreenshot);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _handleIncomingSharedScreenshot();
+    });
   }
 
   @override
@@ -164,7 +169,25 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     _tenantConfirmPasswordController.dispose();
     _tenantNewPinController.dispose();
     _tenantConfirmNewPinController.dispose();
+    SharedMediaService.instance.pendingSharedImage.removeListener(_handleIncomingSharedScreenshot);
     super.dispose();
+  }
+
+  Future<void> _handleIncomingSharedScreenshot() async {
+    final sharedBytes = SharedMediaService.instance.consumePendingImage();
+    if (sharedBytes != null && mounted) {
+      try {
+        final compressed = await ImageCompressUtil.compressDocumentOrBill(sharedBytes);
+        setState(() {
+          _selectedImageBytes = compressed;
+        });
+        if (mounted) {
+          _showProofConfirmationDialog(compressed);
+        }
+      } catch (e) {
+        debugPrint('[TenantHome] Handle shared screenshot error: $e');
+      }
+    }
   }
 
   Future<void> _loadAllData() async {
@@ -5805,3 +5828,4 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     );
   }
 }
+

@@ -43,9 +43,11 @@ import 'screens/pg_owners_screen.dart';
 import 'screens/tenant_complaints_screen.dart';
 import 'screens/admin_complaints_screen.dart';
 import 'screens/platform_fee_summary_screen.dart';
+import 'services/shared_media_service.dart';
 
 Future<void> bootstrapApp() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SharedMediaService.instance.init();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -484,4 +486,5 @@ class RemakiApp extends StatelessWidget {
     return app;
   }
 }
+
 

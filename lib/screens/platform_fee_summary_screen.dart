@@ -9,6 +9,7 @@ import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../services/api_service.dart';
 import '../utils/image_compress_util.dart';
+import '../services/shared_media_service.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/universal_upi_checkout_modal.dart';
 
@@ -30,6 +31,34 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
   void initState() {
     super.initState();
     _loadSummary();
+    SharedMediaService.instance.pendingSharedImage.addListener(_handleIncomingSharedPlatformFeeScreenshot);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _handleIncomingSharedPlatformFeeScreenshot();
+    });
+  }
+
+  @override
+  void dispose() {
+    SharedMediaService.instance.pendingSharedImage.removeListener(_handleIncomingSharedPlatformFeeScreenshot);
+    super.dispose();
+  }
+
+  Future<void> _handleIncomingSharedPlatformFeeScreenshot() async {
+    final sharedBytes = SharedMediaService.instance.consumePendingImage();
+    if (sharedBytes != null && mounted) {
+      try {
+        final compressed = await ImageCompressUtil.compressDocumentOrBill(sharedBytes);
+        final totalCollected = (_summaryData?['monthlyPlatformFeeCollected'] as num?)?.toDouble() ?? 0.0;
+        final appProvider = Provider.of<AppProvider>(context, listen: false);
+        final pgName = _summaryData?['propertyName'] ?? appProvider.pgName;
+        final billingMonth = _summaryData?['billingMonth'] as String? ?? DateFormat('yyyy-MM').format(DateTime.now());
+        if (mounted) {
+          _showProofConfirmationDialog(compressed, totalCollected, pgName, billingMonth);
+        }
+      } catch (e) {
+        debugPrint('[PlatformFee] Shared screenshot error: $e');
+      }
+    }
   }
 
   Future<void> _loadSummary() async {
@@ -1023,3 +1052,4 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
     );
   }
 }
+
