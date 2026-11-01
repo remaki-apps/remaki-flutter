@@ -290,6 +290,94 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
     );
   }
 
+  Future<void> _copyAndOpenApp(String appName, {String? packageName, String? iosScheme}) async {
+    await Clipboard.setData(ClipboardData(text: widget.upiId.trim()));
+    HapticFeedback.lightImpact();
+
+    final currencyFormat = NumberFormat('#,##,###');
+    final formattedAmt = currencyFormat.format(_currentAmount);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.check_circle_rounded, color: Color(0xFF4ADE80), size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    'UPI ID Copied to Clipboard!',
+                    style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 3),
+              Text(
+                'Opening $appName... Tap "Pay to UPI ID", paste ${widget.upiId}, and pay ₹$formattedAmt.',
+                style: GoogleFonts.lato(fontSize: 11.5, color: const Color(0xFFE2E8F0)),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFF0F172A),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 5),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+      );
+    }
+
+    if (kIsWeb) {
+      WebUpiUtil.launchUpi(_buildGenericUpiUri());
+      return;
+    }
+
+    bool opened = false;
+    if (defaultTargetPlatform == TargetPlatform.iOS && iosScheme != null) {
+      try {
+        opened = await launchUrl(Uri.parse('$iosScheme://'), mode: LaunchMode.externalApplication);
+      } catch (_) {}
+    } else if (defaultTargetPlatform == TargetPlatform.android) {
+      try {
+        if (packageName == 'com.google.android.apps.nbu.paisa.user') {
+          opened = await launchUrl(Uri.parse('gpay://'), mode: LaunchMode.externalApplication);
+        } else if (packageName == 'net.one97.paytm') {
+          opened = await launchUrl(Uri.parse('paytmmp://'), mode: LaunchMode.externalApplication);
+        } else if (packageName == 'com.phonepe.app') {
+          opened = await launchUrl(Uri.parse('phonepe://'), mode: LaunchMode.externalApplication);
+        }
+      } catch (_) {}
+    }
+
+    if (!opened) {
+      try {
+        await launchUrl(Uri.parse(_buildGenericUpiUri()), mode: LaunchMode.externalApplication);
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _shareOnWhatsApp(String universalUpiString, String formattedAmount) async {
+    final text = '🏠 *Remaki Rent Payment*\n'
+        '• Property: ${widget.propertyName ?? "Remaki Property"}\n'
+        '• Amount: ₹$formattedAmount\n'
+        '• Pay to UPI ID: ${widget.upiId}\n\n'
+        '👉 Tap link to pay via any UPI app:\n'
+        '$universalUpiString\n\n'
+        'You can also copy the UPI ID above and pay via Google Pay, PhonePe, Paytm, Navi, or Groww.';
+
+    final whatsappUrl = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(text)}');
+    try {
+      final launched = await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        _copyToClipboard(text, 'Payment Details');
+      }
+    } catch (_) {
+      _copyToClipboard(text, 'Payment Details');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final currencyFormat = NumberFormat('#,##,###');
@@ -693,7 +781,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
                   controller: _tabController,
                   children: [
                     // Tab 1: Mobile App buttons (GPay, PhonePe, Paytm, CRED)
-                    _buildAppOptionsTab(),
+                    _buildAppOptionsTab(universalUpiString, formattedAmount),
 
                     // Tab 2: Dynamic QR code
                     _buildQrCodeTab(universalUpiString, formattedAmount),
@@ -743,34 +831,107 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
     );
   }
 
-  Widget _buildAppOptionsTab() {
+  Widget _buildAppOptionsTab(String universalUpiString, String formattedAmount) {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Section 1: 1-Tap Direct Apps (Navi, Groww, BHIM)
+          Row(
+            children: [
+              const Icon(Icons.bolt_rounded, color: Color(0xFF16A34A), size: 16),
+              const SizedBox(width: 4),
+              Text(
+                'RECOMMENDED • 1-TAP DIRECT APPS',
+                style: GoogleFonts.lato(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
+                  color: const Color(0xFF16A34A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 3),
           Text(
-            'SELECT PAYMENT APP',
-            style: GoogleFonts.lato(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.8,
-              color: const Color(0xFF94A3B8),
-            ),
+            'Opens app directly with amount pre-filled (no bank limit restrictions):',
+            style: GoogleFonts.lato(fontSize: 11, color: const Color(0xFF64748B)),
           ),
           const SizedBox(height: 10),
 
-          // Google Pay - Direct app redirect (tez:// on Android, gpay:// on iOS)
+          // Navi UPI
+          _buildUpiTile(
+            title: 'Navi UPI',
+            subtitle: 'Direct 1-tap payment (pre-filled amount)',
+            badgeText: '1-TAP DIRECT',
+            badgeColor: const Color(0xFF059669),
+            badgeBg: const Color(0xFFECFDF5),
+            iconWidget: _buildNaviIcon(),
+            onTap: () => _launchUpiApp('Navi', packageName: 'com.navi.finance'),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Groww UPI
+          _buildUpiTile(
+            title: 'Groww UPI',
+            subtitle: 'Direct 1-tap payment (pre-filled amount)',
+            badgeText: '1-TAP DIRECT',
+            badgeColor: const Color(0xFF059669),
+            badgeBg: const Color(0xFFECFDF5),
+            iconWidget: _buildGrowwIcon(),
+            onTap: () => _launchUpiApp('Groww', packageName: 'com.nextbillion.groww'),
+          ),
+
+          const SizedBox(height: 10),
+
+          // BHIM & Any UPI App
+          _buildUpiTile(
+            title: 'BHIM & Other UPI Apps',
+            subtitle: 'BHIM, CRED, Amazon Pay, Axis, etc.',
+            badgeText: 'ALL APPS',
+            badgeColor: const Color(0xFF0F172A),
+            badgeBg: const Color(0xFFF1F5F9),
+            iconWidget: _buildBhimIcon(),
+            onTap: () => _launchUpiApp('UPI Apps'),
+          ),
+
+          const SizedBox(height: 18),
+
+          // Section 2: Google Pay & Paytm (1-Tap Copy & Open)
+          Row(
+            children: [
+              const Icon(Icons.content_copy_rounded, color: Color(0xFF2563EB), size: 14),
+              const SizedBox(width: 6),
+              Text(
+                'GOOGLE PAY & PAYTM • 1-TAP COPY & PAY',
+                style: GoogleFonts.lato(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
+                  color: const Color(0xFF2563EB),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 3),
+          Text(
+            'Copies UPI ID automatically & launches the app to pay without bank blocks:',
+            style: GoogleFonts.lato(fontSize: 11, color: const Color(0xFF64748B)),
+          ),
+          const SizedBox(height: 10),
+
+          // Google Pay
           _buildUpiTile(
             title: 'Google Pay',
-            subtitle: 'Direct redirect to GPay app',
-            badgeText: 'DIRECT',
+            subtitle: '1-Tap copy UPI ID & launch GPay',
+            badgeText: 'COPY & OPEN',
             badgeColor: const Color(0xFF2563EB),
             badgeBg: const Color(0xFFEFF6FF),
             iconWidget: _buildGPayIcon(),
-            onTap: () => _launchUpiApp(
+            onTap: () => _copyAndOpenApp(
               'Google Pay',
-              customScheme: 'tez',
               packageName: 'com.google.android.apps.nbu.paisa.user',
               iosScheme: 'gpay',
             ),
@@ -778,32 +939,16 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
 
           const SizedBox(height: 10),
 
-          // PhonePe - Direct app redirect (phonepe://)
-          _buildUpiTile(
-            title: 'PhonePe',
-            subtitle: 'Direct redirect to PhonePe app',
-            badgeText: 'DIRECT',
-            badgeColor: const Color(0xFF6739B7),
-            badgeBg: const Color(0xFFF3E8FF),
-            iconWidget: _buildPhonePeIcon(),
-            onTap: () => _launchUpiApp(
-              'PhonePe',
-              customScheme: 'phonepe',
-              packageName: 'com.phonepe.app',
-              iosScheme: 'phonepe',
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          // Paytm - Direct app redirect (paytmmp://)
+          // Paytm
           _buildUpiTile(
             title: 'Paytm',
-            subtitle: 'Direct redirect to Paytm app',
+            subtitle: '1-Tap copy UPI ID & launch Paytm',
+            badgeText: 'COPY & OPEN',
+            badgeColor: const Color(0xFF0284C7),
+            badgeBg: const Color(0xFFE0F2FE),
             iconWidget: _buildPaytmIcon(),
-            onTap: () => _launchUpiApp(
+            onTap: () => _copyAndOpenApp(
               'Paytm',
-              customScheme: 'paytmmp',
               packageName: 'net.one97.paytm',
               iosScheme: 'paytmmp',
             ),
@@ -811,99 +956,44 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
 
           const SizedBox(height: 10),
 
-          // CRED - Direct app redirect (credpay://)
+          // PhonePe
           _buildUpiTile(
-            title: 'CRED',
-            subtitle: 'Direct redirect to CRED app',
+            title: 'PhonePe',
+            subtitle: 'Direct 1-tap or copy & pay',
             badgeText: 'POPULAR',
-            badgeColor: const Color(0xFF0F172A),
-            badgeBg: const Color(0xFFF1F5F9),
-            iconWidget: _buildCredIcon(),
+            badgeColor: const Color(0xFF6739B7),
+            badgeBg: const Color(0xFFF3E8FF),
+            iconWidget: _buildPhonePeIcon(),
             onTap: () => _launchUpiApp(
-              'CRED',
-              customScheme: 'credpay',
-              packageName: 'com.dreamplug.androidapp',
-              iosScheme: 'credpay',
+              'PhonePe',
+              packageName: 'com.phonepe.app',
+              iosScheme: 'phonepe',
             ),
           ),
 
+          const SizedBox(height: 18),
+
+          // Section 3: Share with Parent / Roommate on WhatsApp
+          Row(
+            children: [
+              const Icon(Icons.people_alt_rounded, color: Color(0xFF166534), size: 15),
+              const SizedBox(width: 6),
+              Text(
+                'PAY FROM ANOTHER PHONE / PARENT / ROOMIE',
+                style: GoogleFonts.lato(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
+                  color: const Color(0xFF166534),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 10),
 
-          // Universal UPI / Other Apps
-          _buildUpiTile(
-            title: 'Any UPI App',
-            subtitle: 'Navi, Groww, BHIM, Amazon Pay, etc.',
-            iconWidget: Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.account_balance_rounded, color: Colors.white, size: 22),
-            ),
-            onTap: () => _launchUpiApp('UPI Apps'),
-          ),
+          _buildWhatsAppTile(universalUpiString, formattedAmount),
 
           const SizedBox(height: 14),
-
-          // Desktop / iOS hint card
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.info_outline_rounded, color: Color(0xFF64748B), size: 18),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'On iOS Safari or Chrome? Tapping an app will open it directly on your device. You can also switch to "Scan QR Code" tab or copy the UPI ID.',
-                    style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF475569), height: 1.3),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Bank Limit Advice Card
-          Container(
-            margin: const EdgeInsets.only(top: 14),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFFBEB),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFFDE68A)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.shield_outlined, color: Color(0xFFD97706), size: 18),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Bank Limit Tips for UPI',
-                      style: GoogleFonts.lato(fontSize: 12.5, fontWeight: FontWeight.w800, color: const Color(0xFF92400E)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '• Self-Transfer Restriction: Indian banks (HDFC, SBI, Axis, ICICI) automatically decline payments if you try to pay your own UPI ID (${widget.upiId}) from the same bank account or linked phone number. The bank surfaces this as "Bank limit exceeded" even for small amounts like ₹15 or ₹25.\n'
-                  '• What to do if you see limit exceeded:\n'
-                  '  1. Switch to the "Scan QR Code" tab above and scan from another bank account.\n'
-                  '  2. Or copy the UPI ID (${widget.upiId}) and pay via Net Banking (IMPS/NEFT) or another UPI app.\n'
-                  '  3. If paying a large amount, use the "Split Payment" option above to pay in parts.\n'
-                  '• After payment, tap "Proceed to Upload Proof" to submit your screenshot.',
-                  style: GoogleFonts.lato(fontSize: 11.5, color: const Color(0xFF78350F), height: 1.4),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
@@ -1019,6 +1109,8 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
               ],
             ),
           ),
+          const SizedBox(height: 14),
+          _buildWhatsAppTile(upiPayload, formattedAmount),
         ],
       ),
     );
@@ -1191,6 +1283,161 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
             fontSize: 10.5,
             fontWeight: FontWeight.w900,
             letterSpacing: 0.5,
+          ),
+        ),
+      ),
+    );
+  }
+  Widget _buildNaviIcon() {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: const Color(0xFF00C087),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF00C087).withValues(alpha: 0.25),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: const Center(
+        child: Text(
+          'navi',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 13,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.5,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGrowwIcon() {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF00D09C), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF00D09C).withValues(alpha: 0.15),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: const Center(
+        child: Text(
+          'G',
+          style: TextStyle(
+            color: Color(0xFF00D09C),
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBhimIcon() {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: const Color(0xFF0D47A1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Center(
+        child: Text(
+          'BHIM',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWhatsAppTile(String universalUpiString, String formattedAmount) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _shareOnWhatsApp(universalUpiString, formattedAmount),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0FDF4),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF86EFAC)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF25D366),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.share_rounded, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Share to WhatsApp',
+                          style: GoogleFonts.lato(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF166534),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDCFCE7),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'ROOMIE / PARENT',
+                            style: GoogleFonts.lato(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFF15803D),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Send pre-filled payment link to whoever is paying',
+                      style: GoogleFonts.lato(
+                        fontSize: 11.5,
+                        color: const Color(0xFF15803D),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFF16A34A), size: 14),
+            ],
           ),
         ),
       ),
