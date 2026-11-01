@@ -138,22 +138,13 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
       widget.payeeName.isNotEmpty ? widget.payeeName : (widget.propertyName ?? 'Remaki Property')
     );
 
-    // 3. Clean Note: Keep note neutral ('Payment') to avoid bank AML filters that flag P2P 'Rent' transfers
-    final rawNote = widget.note?.trim().isNotEmpty == true ? widget.note!.trim() : 'Payment';
-    final cleanNote = rawNote
-        .replaceAll(RegExp(r'[^a-zA-Z0-9 ]'), ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-    final finalNote = cleanNote.isNotEmpty
-        ? (cleanNote.length > 20 ? cleanNote.substring(0, 20).trim() : cleanNote)
-        : 'Payment';
-
+    // Essential payment parameters only (pa, pn, am, cu) without notes (tn)
+    // Eliminates bank-side note rejections, length mismatch errors, and P2P AML flagging
     final queryParams = <String, String>{
       'pa': cleanVpa,
       'pn': finalPayee,
       if (_currentAmount > 0) 'am': _currentAmount.toStringAsFixed(2),
       'cu': 'INR',
-      'tn': finalNote,
     };
 
     return queryParams.entries
