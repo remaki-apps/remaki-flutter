@@ -181,16 +181,9 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
       return 'upi://pay?' + queryString;
     }
 
-    // 3. Native Android: Registered custom URI schemes (tez://upi/pay, phonepe://pay, paytmmp://pay, credpay://pay)
-    // These launch the respective app directly without showing Android's 'Open with' system chooser!
-    if (customScheme != null && customScheme.isNotEmpty) {
-      final s = customScheme.toLowerCase();
-      if (s == 'tez' || s == 'gpay') return 'tez://upi/pay?' + queryString;
-      if (s == 'phonepe') return 'phonepe://pay?' + queryString;
-      if (s == 'paytm' || s == 'paytmmp') return 'paytmmp://pay?' + queryString;
-      if (s == 'cred' || s == 'credpay') return 'credpay://pay?' + queryString;
-    }
-
+    // 3. Android: Universal standard upi://pay intent (same proven method as Navi, Groww, and QR)
+    // Avoids proprietary merchant acquiring schemes (tez://, paytmmp://) that trigger
+    // false-positive "Bank limit exceeded" (U16) declines on personal savings VPAs.
     return 'upi://pay?' + queryString;
   }
 
@@ -844,7 +837,7 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
           // Universal UPI / Other Apps
           _buildUpiTile(
             title: 'Any UPI App',
-            subtitle: 'BHIM, Amazon Pay, Axis, SBI, etc.',
+            subtitle: 'Navi, Groww, BHIM, Amazon Pay, etc.',
             iconWidget: Container(
               width: 42,
               height: 42,
