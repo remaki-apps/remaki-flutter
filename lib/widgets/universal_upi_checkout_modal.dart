@@ -133,16 +133,11 @@ class _UniversalUpiCheckoutModalState extends State<UniversalUpiCheckoutModal>
     // 1. Lowercase and trim VPA for strict bank switch compatibility
     final cleanVpa = widget.upiId.trim().toLowerCase();
 
-    // 2. Sanitize Payee Name (alphanumeric, spaces & dot only - strictly capped at 20 chars)
-    final finalPayee = UniversalUpiCheckoutModal.sanitizePayeeName(
-      widget.payeeName.isNotEmpty ? widget.payeeName : (widget.propertyName ?? 'Remaki Property')
-    );
-
-    // Essential payment parameters only (pa, pn, am, cu) without notes (tn)
-    // Eliminates bank-side note rejections, length mismatch errors, and P2P AML flagging
+    // Keep only UPI ID (pa), Amount (am), and Currency (cu) - omitting Payee Name (pn) and Note (tn)
+    // This allows GPay, Paytm, Navi, Groww to resolve the verified recipient directly from NPCI directory,
+    // avoiding payee mismatch errors and bank limit decline flags.
     final queryParams = <String, String>{
       'pa': cleanVpa,
-      'pn': finalPayee,
       if (_currentAmount > 0) 'am': _currentAmount.toStringAsFixed(2),
       'cu': 'INR',
     };
