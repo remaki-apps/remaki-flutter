@@ -23,6 +23,7 @@ import 'package:provider/provider.dart';
 // import '../providers/notification_provider.dart';
 // import '../widgets/in_app_notification_center.dart';
 import '../providers/app_provider.dart';
+import '../providers/network_provider.dart';
 import '../utils/web_update_util.dart';
 import '../services/shared_media_service.dart';
 
@@ -166,11 +167,18 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   void initState() {
     super.initState();
     _currentNavIndex = widget.initialTab;
+    NetworkProvider.instance.addRestoredListener(_onNetworkRestored);
     _loadAllData();
     SharedMediaService.instance.pendingSharedImage.addListener(_handleIncomingSharedScreenshot);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _handleIncomingSharedScreenshot();
     });
+  }
+
+  void _onNetworkRestored() {
+    if (mounted) {
+      _loadAllData();
+    }
   }
 
   @override
@@ -185,6 +193,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
   @override
   void dispose() {
+    NetworkProvider.instance.removeRestoredListener(_onNetworkRestored);
     _descriptionController.dispose();
     _tenantNewPasswordController.dispose();
     _tenantConfirmPasswordController.dispose();

@@ -16,3 +16,7 @@ For help getting started with Flutter development, view the
 samples, guidance on mobile development, and a full API reference.
 # remaki-flutter
 # remaki-flutter
+
+
+
+flutter run --flavor prod -t lib/main.dart -d emulator-5554

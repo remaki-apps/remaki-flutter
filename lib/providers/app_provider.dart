@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
+import 'network_provider.dart';
 
 class AppProvider with ChangeNotifier {
   List<Room> rooms = [];
@@ -36,6 +37,11 @@ class AppProvider with ChangeNotifier {
   static const String _pgAddressKey = 'sunshine_pg_address';
 
   AppProvider({bool autoLoad = true}) {
+    NetworkProvider.instance.addRestoredListener(() {
+      if (ApiService.isLoggedIn && ApiService.role == 'ADMIN') {
+        loadFromAPI(showLoading: false);
+      }
+    });
     if (autoLoad && ApiService.isLoggedIn) {
       loadFromAPI();
     } else {
@@ -303,6 +309,15 @@ class AppProvider with ChangeNotifier {
         await ApiService.clearAuthToken();
         reset();
         return;
+      }
+
+      final lower = lastSyncError?.toLowerCase() ?? '';
+      if (lower.contains('internet') ||
+          lower.contains('network') ||
+          lower.contains('connect') ||
+          lower.contains('socket') ||
+          lower.contains('unreachable')) {
+        NetworkProvider.instance.setOffline(true);
       }
       if (ApiService.isLoggedIn) {
         await loadFromStorage();

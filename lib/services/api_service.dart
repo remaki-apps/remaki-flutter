@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/env_config.dart';
+import '../providers/network_provider.dart';
 
 class ApiException implements Exception {
   final String message;
@@ -322,6 +323,7 @@ class ApiService {
 
         // 3. Status code routing
         if (response.statusCode == 200) {
+          NetworkProvider.instance.setOffline(false);
           if (responseJson != null) {
             final rootData = responseJson['data'];
             if (rootData is Map<String, dynamic>) {
@@ -344,6 +346,7 @@ class ApiService {
           await Future.delayed(const Duration(seconds: 2));
           continue;
         }
+        NetworkProvider.instance.setOffline(true);
         throw ApiException('Unable to connect to server. Please check your internet connection.');
       } on http.ClientException catch (_) {
         if (attempts <= maxRetries) {
@@ -351,6 +354,7 @@ class ApiService {
           await Future.delayed(const Duration(seconds: 2));
           continue;
         }
+        NetworkProvider.instance.setOffline(true);
         throw ApiException('Unable to connect to server. Please check your internet connection.');
       } on TimeoutException catch (_) {
         if (attempts <= maxRetries) {

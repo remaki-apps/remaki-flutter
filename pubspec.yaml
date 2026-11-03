@@ -46,6 +46,8 @@ dependencies:
   shimmer: ^3.0.0
   image: ^4.10.1
   receive_sharing_intent: ^1.8.1
+  qr_flutter: ^4.1.0
+  connectivity_plus: ^7.3.2
 
 dev_dependencies:
   flutter_test:
