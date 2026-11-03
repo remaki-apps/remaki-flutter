@@ -124,7 +124,7 @@ class PropertyItem {
     this.pincode = '',
     this.description,
     this.totalFloors = 0,
-    this.platformFee = 9.0,
+    this.platformFee = 5.0,
     this.upiId,
     this.upiPayeeName,
   });
@@ -138,7 +138,7 @@ class PropertyItem {
         pincode: json['pincode']?.toString() ?? '',
         description: json['description']?.toString(),
         totalFloors: (json['totalFloors'] as num?)?.toInt() ?? 0,
-        platformFee: (json['platformFee'] as num?)?.toDouble() ?? 9.0,
+        platformFee: (json['platformFee'] as num?)?.toDouble() ?? 5.0,
         upiId: json['upiId']?.toString(),
         upiPayeeName: json['upiPayeeName']?.toString(),
       );
@@ -246,6 +246,8 @@ class Tenant {
   }
 
   String get statusBadgeLabel {
+    final bool isRentPaid = (isPaid || paymentStatus == 'PAID' || (pendingRentAmount == 0 && rentAmount > 0));
+    if (isRentPaid && totalPendingBills > 0) return 'RENT PAID • BILL DUE';
     if (isPaid || paymentStatus == 'PAID') return 'PAID';
     if (isPending) return 'PENDING';
     if (isPartiallyPaid || (isPaid && totalPendingBills > 0)) return 'PARTIAL';
@@ -257,6 +259,8 @@ class Tenant {
 
   Color get statusColor {
     switch (statusBadgeLabel) {
+      case 'RENT PAID • BILL DUE':
+        return const Color(0xFFD97706);
       case 'PAID':
         return const Color(0xFF16A34A);
       case 'PENDING':
@@ -275,6 +279,8 @@ class Tenant {
 
   Color get statusBgColor {
     switch (statusBadgeLabel) {
+      case 'RENT PAID • BILL DUE':
+        return const Color(0xFFFEF3C7);
       case 'PAID':
         return const Color(0xFFDCFCE7);
       case 'PENDING':
@@ -293,6 +299,8 @@ class Tenant {
 
   Color get statusBorderColor {
     switch (statusBadgeLabel) {
+      case 'RENT PAID • BILL DUE':
+        return const Color(0xFFFDE68A);
       case 'PAID':
         return const Color(0xFFBBF7D0);
       case 'PENDING':
@@ -426,7 +434,7 @@ class Tenant {
     required this.securityDeposit,
     this.isPaid = false,
     this.paymentStatus = 'UNPAID',
-    this.platformFee = 9.0,
+    this.platformFee = 5.0,
     this.propertyId = '',
     required this.rentDueDate,
     this.pendingRentAmount = 0,
@@ -491,7 +499,7 @@ class Tenant {
         paymentStatus: (json['hasPendingRequest'] == true || json['paymentStatus'] == 'PENDING')
             ? 'PENDING'
             : (json['paymentStatus']?.toString() ?? (json['isPaid'] == true ? 'PAID' : 'UNPAID')),
-        platformFee: (json['platformFee'] as num?)?.toDouble() ?? 9.0,
+        platformFee: (json['platformFee'] as num?)?.toDouble() ?? 5.0,
         propertyId: json['propertyId'] as String? ?? (json['room'] != null && json['room']['propertyId'] != null ? json['room']['propertyId'].toString() : ''),
         rentDueDate: (DateTime.tryParse(json['rentDueDate']?.toString() ?? '') ?? DateTime.now()).toLocal(),
         pendingRentAmount: (json['pendingRentAmount'] as num?)?.toDouble() ?? 0,

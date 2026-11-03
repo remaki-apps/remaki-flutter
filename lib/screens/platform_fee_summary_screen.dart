@@ -578,7 +578,7 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Automatic 1st-of-Month Reset',
+                                      'Platform Fee Ledger',
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w700,
@@ -587,7 +587,7 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
                                     ),
                                     const SizedBox(height: 3),
                                     Text(
-                                      'For tracking and billing reconciliation, this total platform fee automatically resets on the 1st of every month ($resetsOn).',
+                                      'Platform fees collected from tenant rent payments are tracked here. Remittance and balances are reconciled directly with the Remaki organization.',
                                       style: GoogleFonts.lato(
                                         fontSize: 12,
                                         color: const Color(0xFF15803D),
@@ -695,7 +695,6 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
                     ),
                   ),
                 ),
-      bottomNavigationBar: totalCollected > 0 ? _buildBottomPayBar(totalCollected) : null,
     );
   }
 
@@ -820,70 +819,7 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
                 _buildStatColumn('Tenants Paid', '$totalTenants'),
                 Container(height: 24, width: 1, color: Colors.white.withValues(alpha: 0.2)),
                 _buildStatColumn('Fee per Paid Rent', '₹${feePerTenant.toStringAsFixed(0)}'),
-                Container(height: 24, width: 1, color: Colors.white.withValues(alpha: 0.2)),
-                _buildStatColumn('Next Reset', resetsOn),
               ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: _openOrganizationPaymentModal,
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF0FDFA),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.send_rounded,
-                        size: 15,
-                        color: Color(0xFF0F766E),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        totalCollected > 0
-                            ? 'Pay Organization (₹${totalCollected.toStringAsFixed(0)})'
-                            : 'Pay to Organization',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF0F766E),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    const Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 12,
-                      color: Color(0xFF0F766E),
-                    ),
-                  ],
-                ),
-              ),
             ),
           ),
         ],

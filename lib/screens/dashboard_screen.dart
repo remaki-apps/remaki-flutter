@@ -1540,10 +1540,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Row(
             children: [
               _buildRentStatColumn(
-                title: 'Total Collected',
-                value: '₹${_formatCurrency(_monthlyPlatformFeeCollected)}',
+                title: 'Fee Status',
+                value: 'Active',
                 color: const Color(0xFF0D9488),
-                icon: Icons.account_balance_wallet_rounded,
+                icon: Icons.verified_user_rounded,
                 iconBg: const Color(0xFFF0FDFA),
                 iconColor: const Color(0xFF0D9488),
               ),
@@ -1558,10 +1558,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               Container(width: 1, height: 38, color: const Color(0xFFF1F5F9)),
               _buildRentStatColumn(
-                title: 'Rate / Tenant',
-                value: '₹${_platformFeePerTenant.toStringAsFixed(0)} / mo',
+                title: 'Billing Cycle',
+                value: 'Monthly',
                 color: const Color(0xFF0F172A),
-                icon: Icons.sell_outlined,
+                icon: Icons.calendar_today_rounded,
                 iconBg: const Color(0xFFF1F5F9),
                 iconColor: const Color(0xFF475569),
               ),

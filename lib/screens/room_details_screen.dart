@@ -191,6 +191,38 @@ class RoomDetailsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  // Edit Room Button
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _showEditRoomDialog(context, room),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: const Icon(Icons.edit_outlined, color: Color(0xFF334155), size: 18),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  // Delete Room Button
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _showDeleteRoomDialog(context, room),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xFFFECACA)),
+                      ),
+                      child: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444), size: 18),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -417,13 +449,36 @@ class RoomDetailsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  bed.name,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        bed.name,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _showEditBedDialog(context, room, bed),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+                        ),
+                        child: const Icon(Icons.edit_outlined, size: 14, color: Color(0xFF475569)),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 2),
                 Text(

@@ -410,10 +410,35 @@ class AppProvider with ChangeNotifier {
   double get collectedBillsOnly => currentTenants.fold(0.0, (sum, t) => sum + t.totalPaidBills);
   double get pendingBillsOnly => currentTenants.fold(0.0, (sum, t) => sum + t.totalPendingBills);
 
+  bool _isDueDateReached(DateTime? dueDate) {
+    if (dueDate == null) return true;
+    final dueStart = DateTime(dueDate.year, dueDate.month, dueDate.day);
+    final nowStart = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    return !nowStart.isBefore(dueStart); // true if today >= dueDate
+  }
+
   List<Tenant> get newTenantsThisMonth => currentTenants.where((t) => t.moveInDate.month == DateTime.now().month).toList();
-  List<Tenant> get unpaidTenants => currentTenants.where((t) => !t.isPaid && t.paymentStatus != 'PAID' && (t.totalDue > 0 || t.rentAmount > 0)).toList();
-  List<Tenant> get unpaidRentTenants => currentTenants.where((t) => t.pendingRentAmount > 0).toList();
-  List<Tenant> get unpaidBillsTenants => currentTenants.where((t) => t.totalPendingBills > 0).toList();
+  List<Tenant> get unpaidTenants => currentTenants.where((t) {
+    if (t.isPaid || t.paymentStatus == 'PAID') return false;
+    // Only show after the due date is reached
+    final rentDueReached = _isDueDateReached(t.rentDueDate) && (t.pendingRentAmount > 0 || !t.isPaid);
+    final billDueReached = t.additionalCharges.any((c) =>
+      c.billType != 'RENT' &&
+      (c.status == 'PENDING' || c.status == 'UNPAID') &&
+      _isDueDateReached(c.billDueDate ?? t.rentDueDate)
+    );
+    return rentDueReached || billDueReached;
+  }).toList();
+  List<Tenant> get unpaidRentTenants => currentTenants.where((t) =>
+    t.pendingRentAmount > 0 && _isDueDateReached(t.rentDueDate)
+  ).toList();
+  List<Tenant> get unpaidBillsTenants => currentTenants.where((t) =>
+    t.totalPendingBills > 0 && t.additionalCharges.any((c) =>
+      c.billType != 'RENT' &&
+      (c.status == 'PENDING' || c.status == 'UNPAID') &&
+      _isDueDateReached(c.billDueDate ?? t.rentDueDate)
+    )
+  ).toList();
 
   Future<String?> addTenant(Tenant tenant, {int dueDay = 5}) async {
     tenants.add(tenant);

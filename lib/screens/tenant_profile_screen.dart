@@ -722,6 +722,17 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                     color: tenant.statusColor,
                                   ),
                                 ),
+                                if (tenant.statusBadgeLabel == 'RENT PAID • BILL DUE') ...[
+                                  const SizedBox(height: 3),
+                                  const Text(
+                                    'Rent Paid • Bill Pending',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFFD97706),
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
@@ -754,6 +765,54 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                         ),
                       ],
                     ),
+                    if (tenant.statusBadgeLabel == 'RENT PAID • BILL DUE') ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFBEB),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFFDE68A), width: 1),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFFEF3C7),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.info_outline_rounded, color: Color(0xFFD97706), size: 18),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Rent Paid • Split Bill Pending',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 13,
+                                      color: Color(0xFF92400E),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Tenant has paid monthly rent, but split utility bill of ₹${tenant.totalPendingBills.toStringAsFixed(0)} is not paid yet.',
+                                    style: const TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xFFB45309),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
 
                     // Personal Information Card
@@ -867,6 +926,13 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                           const SizedBox(height: 12),
                           _buildModernDetailItem(Icons.calendar_today_outlined, 'Move-in Date', DateFormat('dd/MM/yyyy').format(tenant.moveInDate)),
                           _buildModernDetailItem(Icons.payments_outlined, 'Monthly Rent', '₹${tenant.rentAmount.toStringAsFixed(0)}'),
+                          if (tenant.statusBadgeLabel == 'RENT PAID • BILL DUE')
+                            _buildModernDetailItem(
+                              Icons.check_circle_outline_rounded,
+                              'Monthly Rent Status',
+                              'Paid (Utility Bill Pending)',
+                              isHighlight: true,
+                            ),
                           _buildModernDetailItem(
                             Icons.event_outlined,
                             'Rent Due Date',

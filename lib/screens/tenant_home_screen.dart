@@ -57,16 +57,38 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   DateTime _selectedPaymentMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
   bool _isPaymentHistoryExpanded = false;
 
-  void _prevPaymentMonth() {
-    setState(() {
-      _selectedPaymentMonth = DateTime(_selectedPaymentMonth.year, _selectedPaymentMonth.month - 1, 1);
-    });
+  DateTime _getEarliestPaymentMonth(List<dynamic> payments, DateTime? fallbackDate) {
+    final fallback = fallbackDate ?? DateTime.now();
+    DateTime earliest = DateTime(fallback.year, fallback.month, 1);
+    for (final p in payments) {
+      DateTime? pDate;
+      if (p is Map && p['date'] != null) {
+        pDate = DateTime.tryParse(p['date'].toString())?.toLocal();
+      }
+      if (pDate != null && pDate.isBefore(earliest)) {
+        earliest = DateTime(pDate.year, pDate.month, 1);
+      }
+    }
+    return earliest;
+  }
+
+  void _prevPaymentMonth(DateTime earliestMonth) {
+    final prev = DateTime(_selectedPaymentMonth.year, _selectedPaymentMonth.month - 1, 1);
+    if (!prev.isBefore(earliestMonth)) {
+      setState(() {
+        _selectedPaymentMonth = prev;
+      });
+    }
   }
 
   void _nextPaymentMonth() {
-    setState(() {
-      _selectedPaymentMonth = DateTime(_selectedPaymentMonth.year, _selectedPaymentMonth.month + 1, 1);
-    });
+    final next = DateTime(_selectedPaymentMonth.year, _selectedPaymentMonth.month + 1, 1);
+    final current = DateTime(DateTime.now().year, DateTime.now().month, 1);
+    if (!next.isAfter(current)) {
+      setState(() {
+        _selectedPaymentMonth = next;
+      });
+    }
   }
 
   void _resetToCurrentPaymentMonth() {
@@ -231,7 +253,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     final profile = await ApiService.fetchCurrentTenantProfile();
     if (profile != null) {
       final tenantId = profile['id'] as String?;
-      double dynamicPlatformFee = (profile['platformFee'] as num?)?.toDouble() ?? 9.0;
+      double dynamicPlatformFee = (profile['platformFee'] as num?)?.toDouble() ?? 5.0;
       double pendingRent = (profile['pendingRentAmount'] as num?)?.toDouble() ?? 0;
       double pendingBills = 0;
       final bills = profile['bills'] as List<dynamic>? ?? [];
@@ -3388,8 +3410,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           paymentId: paymentId,
           rawAmount: amount,
           rawDate: rawDate,
-          rentAmount: monthlyRentVal,
-          platformFee: _effectivePlatformFee > 0 ? _effectivePlatformFee : 9.0,
+          rentAmount: (p['rentAmount'] as num?)?.toDouble() ?? monthlyRentVal,
+          platformFee: (p['platformFee'] as num?)?.toDouble() ?? (_profileData?['platformFee'] as num?)?.toDouble() ?? 5.0,
           bills: allBills,
           notes: notes,
         ));
@@ -3501,87 +3523,108 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         const SizedBox(height: 12),
 
         // Month Navigation Bar
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: TenantTheme.glassBorder, width: 1),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x060F172A),
-                blurRadius: 8,
-                offset: Offset(0, 2),
+        Builder(
+          builder: (context) {
+            DateTime? moveInDt;
+            if (_profileData?['moveInDate'] != null) {
+              moveInDt = DateTime.tryParse(_profileData!['moveInDate'].toString())?.toLocal();
+            }
+            final earliestMonth = _getEarliestPaymentMonth(_payments, moveInDt);
+            final currentMonth = DateTime(DateTime.now().year, DateTime.now().month, 1);
+            final bool canGoPrev = _selectedPaymentMonth.isAfter(earliestMonth);
+            final bool canGoNext = _selectedPaymentMonth.isBefore(currentMonth);
+
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: TenantTheme.glassBorder, width: 1),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x060F172A),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left_rounded, size: 22, color: Color(0xFF1E293B)),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                splashRadius: 18,
-                onPressed: _prevPaymentMonth,
-                tooltip: 'Previous Month',
-              ),
-              Expanded(
-                child: Center(
-                  child: GestureDetector(
-                    onTap: isCurrentMonth ? null : _resetToCurrentPaymentMonth,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.calendar_month_rounded, size: 15, color: TenantTheme.primary),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            selectedMonthStr,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.lato(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0F172A),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.chevron_left_rounded,
+                      size: 22,
+                      color: canGoPrev ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1),
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                    splashRadius: 18,
+                    onPressed: canGoPrev ? () => _prevPaymentMonth(earliestMonth) : null,
+                    tooltip: canGoPrev ? 'Previous Month' : 'First Recorded Month',
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: GestureDetector(
+                        onTap: isCurrentMonth ? null : _resetToCurrentPaymentMonth,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.calendar_month_rounded, size: 15, color: TenantTheme.primary),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                selectedMonthStr,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.lato(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF0F172A),
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6.5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: isCurrentMonth ? const Color(0xFFEEF2FF) : const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: isCurrentMonth ? const Color(0xFFC7D2FE) : const Color(0xFFE2E8F0),
+                                  width: 0.6,
+                                ),
+                              ),
+                              child: Text(
+                                isCurrentMonth ? 'Current' : 'Reset',
+                                style: GoogleFonts.lato(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: isCurrentMonth ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6.5, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: isCurrentMonth ? const Color(0xFFEEF2FF) : const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: isCurrentMonth ? const Color(0xFFC7D2FE) : const Color(0xFFE2E8F0),
-                              width: 0.6,
-                            ),
-                          ),
-                          child: Text(
-                            isCurrentMonth ? 'Current' : 'Reset',
-                            style: GoogleFonts.lato(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w700,
-                              color: isCurrentMonth ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                  IconButton(
+                    icon: Icon(
+                      Icons.chevron_right_rounded,
+                      size: 22,
+                      color: canGoNext ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1),
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                    splashRadius: 18,
+                    onPressed: canGoNext ? _nextPaymentMonth : null,
+                    tooltip: canGoNext ? 'Next Month' : 'Current Month',
+                  ),
+                ],
               ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right_rounded, size: 22, color: Color(0xFF1E293B)),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                splashRadius: 18,
-                onPressed: _nextPaymentMonth,
-                tooltip: 'Next Month',
-              ),
-            ],
-          ),
+            );
+          },
         ),
         const SizedBox(height: 10),
 
@@ -3717,8 +3760,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   ...transactionWidgets,
                 ],
 
-                // Show More / Show Summary Expandable Button
-                if (transactionWidgets.length > 2)
+                // Show More / Show Summary Expandable Button (only if more than 2 actual items)
+                if ((monthPayments.length + monthBills.length) > 2)
                   InkWell(
                     onTap: () {
                       setState(() {
@@ -3740,7 +3783,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           Text(
                             _isPaymentHistoryExpanded
                                 ? 'Show Summary'
-                                : 'Show More ($totalCount Transactions)',
+                                : 'Show More (${(monthPayments.length + monthBills.length) - 2} more)',
                             style: GoogleFonts.lato(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,

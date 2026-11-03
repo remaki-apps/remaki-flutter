@@ -31,13 +31,23 @@ class _TenantsScreenState extends State<TenantsScreen> {
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
 
+    bool isDueDateReached(DateTime? dueDate) {
+      if (dueDate == null) return true;
+      final dueStart = DateTime(dueDate.year, dueDate.month, dueDate.day);
+      final nowStart = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+      return !nowStart.isBefore(dueStart);
+    }
+
     final totalCount = appProvider.currentTenants.length;
     final paidCount = appProvider.currentTenants.where((t) => t.isPaid || t.paymentStatus == 'PAID').length;
-    final unpaidCount = appProvider.currentTenants.where((t) => !t.isPaid && t.paymentStatus != 'PAID').length;
+    final unpaidCount = appProvider.currentTenants.where((t) => (!t.isPaid && t.paymentStatus != 'PAID') && isDueDateReached(t.rentDueDate)).length;
 
     var filteredTenants = appProvider.currentTenants.where((t) {
       if (_filter == 'Paid' && !t.isPaid && t.paymentStatus != 'PAID') return false;
-      if (_filter == 'Unpaid' && (t.isPaid || t.paymentStatus == 'PAID')) return false;
+      if (_filter == 'Unpaid') {
+        if (t.isPaid || t.paymentStatus == 'PAID') return false;
+        if (!isDueDateReached(t.rentDueDate)) return false;
+      }
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
         final roomIndex = appProvider.rooms.indexWhere((r) => r.id == t.roomId);

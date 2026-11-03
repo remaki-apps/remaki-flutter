@@ -22,7 +22,7 @@ class PaymentSplitupCard extends StatelessWidget {
     super.key,
     required this.paymentAmount,
     required this.rentAmount,
-    this.platformFee = 9.0,
+    this.platformFee = 5.0,
     this.bills,
     this.method = 'UPI',
     this.notes,
@@ -78,12 +78,12 @@ class PaymentSplitupCard extends StatelessWidget {
           feePortion = effectiveFee;
           billsPortion = diff - feePortion;
         } else {
-          feePortion = effectiveFee;
-          billsPortion = diff;
+          feePortion = diff;
+          billsPortion = 0.0;
         }
       } else if (paymentAmount == rentAmount) {
         rentPortion = rentAmount;
-        feePortion = effectiveFee;
+        feePortion = 0.0;
         billsPortion = 0.0;
       } else if (paymentAmount < rentAmount) {
         // Check if it exactly matches one of the utility bills
@@ -103,18 +103,18 @@ class PaymentSplitupCard extends StatelessWidget {
         } else {
           // Partial rent payment
           rentPortion = paymentAmount;
-          feePortion = effectiveFee;
+          feePortion = 0.0;
           billsPortion = 0.0;
         }
       }
     } else {
       // Default fallback
       rentPortion = paymentAmount;
-      feePortion = effectiveFee;
+      feePortion = 0.0;
     }
 
-    // Itemize bills if billsPortion > 0 and not already itemized
-    if (billsPortion > 0 && itemizedBills.isEmpty) {
+    // Only itemize bills if there are actual registered bills in the property
+    if (billsPortion > 0 && itemizedBills.isEmpty && normalizedBills.isNotEmpty) {
       double remainingBillAmount = billsPortion;
 
       // Try matching against known bills
@@ -129,12 +129,16 @@ class PaymentSplitupCard extends StatelessWidget {
         }
       }
 
-      if (remainingBillAmount > 0.01 || itemizedBills.isEmpty) {
+      if (remainingBillAmount > 0.01 && itemizedBills.isNotEmpty) {
         itemizedBills.add({
-          'name': 'Electricity / Utility Bill',
-          'amount': remainingBillAmount > 0.01 ? remainingBillAmount : billsPortion,
+          'name': 'Utility Charge',
+          'amount': remainingBillAmount,
         });
       }
+    } else if (normalizedBills.isEmpty && billsPortion > 0) {
+      // No utility bills exist; adjust rent portion
+      rentPortion += billsPortion;
+      billsPortion = 0.0;
     }
 
     final cardBg = isDark ? const Color(0xFF1E1B4B).withValues(alpha: 0.6) : const Color(0xFFF8FAFC);
