@@ -598,16 +598,16 @@ class MoreScreen extends StatelessWidget {
                   const SizedBox(height: 10),
 
                   // 2. Individual Separate Containers using App Brand Theme Colors
-                  _buildActionCard(
-                    icon: Icons.qr_code_rounded,
-                    iconColor: const Color(0xFF2563EB),
-                    iconBg: const Color(0xFFEFF6FF),
-                    title: 'UPI Payment Settings',
-                    subtitle: 'Set UPI ID & Payee Name for rent collection',
-                    badge: '0% Fee',
-                    onTap: () => _showUpiSettingsDialog(context),
-                  ),
-                  const SizedBox(height: 8),
+                  // _buildActionCard(
+                  //   icon: Icons.qr_code_rounded,
+                  //   iconColor: const Color(0xFF2563EB),
+                  //   iconBg: const Color(0xFFEFF6FF),
+                  //   title: 'UPI Payment Settings',
+                  //   subtitle: 'Set UPI ID & Payee Name for rent collection',
+                  //   badge: '0% Fee',
+                  //   onTap: () => _showUpiSettingsDialog(context),
+                  // ),
+                  // const SizedBox(height: 8),
 
                   _buildActionCard(
                     icon: Icons.cloud_download_outlined,

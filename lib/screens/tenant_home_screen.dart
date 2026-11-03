@@ -3425,8 +3425,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           paymentId: paymentId,
           rawAmount: amount,
           rawDate: rawDate,
-          rentAmount: (p['rentAmount'] as num?)?.toDouble() ?? monthlyRentVal,
-          platformFee: (p['platformFee'] as num?)?.toDouble() ?? (_profileData?['platformFee'] as num?)?.toDouble() ?? 5.0,
+          rentAmount: (p['rentAmount'] as num?)?.toDouble() ??
+              ((notes != null && (notes.toLowerCase().contains('bill') || notes.toLowerCase().contains('utility'))) ? 0.0 : (amount >= monthlyRentVal ? monthlyRentVal : 0.0)),
+          platformFee: (p['platformFee'] as num?)?.toDouble() ?? 0.0,
           bills: allBills,
           notes: notes,
         ));

@@ -66,7 +66,18 @@ class PaymentSplitupCard extends StatelessWidget {
 
     final double effectiveFee = platformFee > 0 ? platformFee : 0.0;
 
-    if (rentAmount > 0) {
+    final bool isExplicitBill = (notes != null && (
+        notes!.toLowerCase().contains('bill') ||
+        notes!.toLowerCase().contains('utility') ||
+        notes!.toLowerCase().contains('electricity') ||
+        notes!.toLowerCase().contains('eb')
+    )) || (rentAmount <= 0);
+
+    if (isExplicitBill) {
+      rentPortion = 0.0;
+      feePortion = 0.0;
+      billsPortion = paymentAmount;
+    } else if (rentAmount > 0) {
       if (paymentAmount >= rentAmount + effectiveFee - 0.01 && effectiveFee > 0) {
         rentPortion = rentAmount;
         feePortion = effectiveFee;
@@ -109,36 +120,40 @@ class PaymentSplitupCard extends StatelessWidget {
       }
     } else {
       // Default fallback
-      rentPortion = paymentAmount;
+      billsPortion = paymentAmount;
+      rentPortion = 0.0;
       feePortion = 0.0;
     }
 
-    // Only itemize bills if there are actual registered bills in the property
-    if (billsPortion > 0 && itemizedBills.isEmpty && normalizedBills.isNotEmpty) {
-      double remainingBillAmount = billsPortion;
+    // Itemize bills if billsPortion > 0
+    if (billsPortion > 0 && itemizedBills.isEmpty) {
+      if (normalizedBills.isNotEmpty) {
+        double remainingBillAmount = billsPortion;
 
-      // Try matching against known bills
-      for (var b in normalizedBills) {
-        final bAmt = (b['amount'] as num?)?.toDouble() ?? 0.0;
-        if (bAmt > 0 && bAmt <= remainingBillAmount + 0.01) {
-          itemizedBills.add({
-            'name': b['name'],
-            'amount': bAmt,
-          });
-          remainingBillAmount -= bAmt;
+        // Try matching against known bills
+        for (var b in normalizedBills) {
+          final bAmt = (b['amount'] as num?)?.toDouble() ?? 0.0;
+          if (bAmt > 0 && bAmt <= remainingBillAmount + 0.01) {
+            itemizedBills.add({
+              'name': b['name'],
+              'amount': bAmt,
+            });
+            remainingBillAmount -= bAmt;
+          }
         }
-      }
 
-      if (remainingBillAmount > 0.01 && itemizedBills.isNotEmpty) {
+        if (remainingBillAmount > 0.01) {
+          itemizedBills.add({
+            'name': (notes != null && notes!.isNotEmpty) ? notes! : 'Utility Charge',
+            'amount': remainingBillAmount,
+          });
+        }
+      } else {
         itemizedBills.add({
-          'name': 'Utility Charge',
-          'amount': remainingBillAmount,
+          'name': (notes != null && notes!.isNotEmpty) ? notes! : 'Utility / Split Bill',
+          'amount': billsPortion,
         });
       }
-    } else if (normalizedBills.isEmpty && billsPortion > 0) {
-      // No utility bills exist; adjust rent portion
-      rentPortion += billsPortion;
-      billsPortion = 0.0;
     }
 
     final cardBg = isDark ? const Color(0xFF1E1B4B).withValues(alpha: 0.6) : const Color(0xFFF8FAFC);

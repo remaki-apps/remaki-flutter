@@ -618,9 +618,9 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                               ),
                               if (isExpanded)
                                 PaymentSplitupCard(
-                                  paymentAmount: payment.calculateTotalPaid(tenant),
-                                  rentAmount: payment.rentAmount > 0 ? payment.rentAmount : (tenant?.rentAmount ?? payment.amount),
-                                  platformFee: payment.platformFee > 0 ? payment.platformFee : (tenant?.platformFee ?? 0.0),
+                                  paymentAmount: payment.amount,
+                                  rentAmount: payment.rentAmount,
+                                  platformFee: payment.platformFee > 0 ? payment.platformFee : (payment.rentAmount > 0 ? (tenant?.platformFee ?? 0.0) : 0.0),
                                   bills: tenant?.additionalCharges,
                                   method: payment.method,
                                   notes: payment.notes,

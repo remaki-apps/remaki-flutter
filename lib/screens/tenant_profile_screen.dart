@@ -483,7 +483,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                               const SizedBox(width: 6),
                               Expanded(
                                 child: GestureDetector(
-                                  onTap: () => context.push('/record_payment/${tenant.id}'),
+                                  onTap: () => _showMarkPaidDialog(context, tenant),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                                     decoration: BoxDecoration(
@@ -500,7 +500,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                           child: FittedBox(
                                             fit: BoxFit.scaleDown,
                                             child: Text(
-                                              'Collect Rent',
+                                              'Mark as Paid',
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.bold,
@@ -748,7 +748,17 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                       color: Color(0xFFEA580C),
                                     ),
                                   ),
-                                ],
+                                ], else if (!tenant.isPaid && tenant.totalDue > 0) ...[
+                                   const SizedBox(height: 3),
+                                   const Text(
+                                     'Rent Pending',
+                                     style: TextStyle(
+                                       fontSize: 10,
+                                       fontWeight: FontWeight.w700,
+                                       color: Color(0xFFEA580C),
+                                     ),
+                                   ),
+                                 ],
                               ],
                             ),
                           ),
@@ -1348,7 +1358,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                                   mainAxisSize: MainAxisSize.min,
                                                   children: [
                                                     Text(
-                                                      '₹${payment.calculateTotalPaid(tenant).toStringAsFixed(0)}',
+                                                      '₹${payment.amount.toStringAsFixed(0)}',
                                                       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
                                                     ),
                                                     const SizedBox(width: 8),
@@ -1376,9 +1386,9 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                             ),
                                             if (isExpanded)
                                               PaymentSplitupCard(
-                                                paymentAmount: payment.calculateTotalPaid(tenant),
-                                                rentAmount: tenant.rentAmount,
-                                                platformFee: tenant.platformFee,
+                                                paymentAmount: payment.amount,
+                                                rentAmount: payment.rentAmount,
+                                                platformFee: payment.platformFee > 0 ? payment.platformFee : (payment.rentAmount > 0 ? tenant.platformFee : 0.0),
                                                 bills: tenant.additionalCharges,
                                                 method: payment.method,
                                                 notes: payment.notes,
@@ -1506,6 +1516,219 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+
+  void _showMarkPaidDialog(BuildContext context, Tenant tenant) {
+    final double rentAmt = tenant.pendingRentAmount > 0 ? tenant.pendingRentAmount : tenant.rentAmount;
+    final double billsAmt = tenant.totalPendingBills;
+    final bool hasRent = rentAmt > 0 && !tenant.isPaid;
+    final bool hasBills = billsAmt > 0;
+
+    String selectedType = hasRent && hasBills ? 'BOTH' : (hasBills ? 'BILLS' : 'RENT');
+    String selectedMethod = 'Cash';
+    bool isSubmitting = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          double activeAmount = 0.0;
+          if (selectedType == 'BOTH') {
+            activeAmount = rentAmt + billsAmt;
+          } else if (selectedType == 'RENT') {
+            activeAmount = rentAmt;
+          } else {
+            activeAmount = billsAmt;
+          }
+
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            padding: EdgeInsets.fromLTRB(20, 16, 20, 24 + MediaQuery.of(ctx).viewInsets.bottom),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Mark as Paid',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Record payment for ${tenant.name}',
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 20, color: Color(0xFF64748B)),
+                      onPressed: () => Navigator.pop(sheetCtx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'SELECT PAYMENT FOR',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF64748B),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    if (hasRent && hasBills)
+                      ChoiceChip(
+                        label: Text('Both (₹${(rentAmt + billsAmt).toStringAsFixed(0)})'),
+                        selected: selectedType == 'BOTH',
+                        onSelected: (val) {
+                          if (val) setSheetState(() => selectedType = 'BOTH');
+                        },
+                      ),
+                    ChoiceChip(
+                      label: Text('Rent Only (₹${rentAmt.toStringAsFixed(0)})'),
+                      selected: selectedType == 'RENT',
+                      onSelected: (val) {
+                        if (val) setSheetState(() => selectedType = 'RENT');
+                      },
+                    ),
+                    if (hasBills)
+                      ChoiceChip(
+                        label: Text('Bill Only (₹${billsAmt.toStringAsFixed(0)})'),
+                        selected: selectedType == 'BILLS',
+                        onSelected: (val) {
+                          if (val) setSheetState(() => selectedType = 'BILLS');
+                        },
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'PAYMENT METHOD',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF64748B),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  children: ['Cash', 'UPI', 'Bank Transfer'].map((m) {
+                    final isSel = selectedMethod == m;
+                    return ChoiceChip(
+                      label: Text(m),
+                      selected: isSel,
+                      onSelected: (val) {
+                        if (val) setSheetState(() => selectedMethod = m);
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 22),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    onPressed: isSubmitting
+                        ? null
+                        : () async {
+                            setSheetState(() => isSubmitting = true);
+                            try {
+                              await Provider.of<AppProvider>(context, listen: false).recordPayment(
+                                tenant.id,
+                                activeAmount,
+                                selectedMethod,
+                                paymentType: selectedType,
+                                paymentDate: DateTime.now(),
+                              );
+                              if (context.mounted) {
+                                Navigator.pop(sheetCtx);
+                                FancyToast.showSuccess(
+                                  context,
+                                  'Payment Recorded',
+                                  message: 'Successfully marked ₹${activeAmount.toStringAsFixed(0)} as paid.',
+                                );
+                              }
+                            } catch (e) {
+                              if (ctx.mounted) {
+                                setSheetState(() => isSubmitting = false);
+                                FancyToast.showError(
+                                  context,
+                                  'Failed to Record',
+                                  message: e.toString().replaceAll('Exception: ', ''),
+                                );
+                              }
+                            }
+                          },
+                    child: isSubmitting
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
+                        : Text(
+                            'Confirm Payment • ₹${activeAmount.toStringAsFixed(0)}',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.pop(sheetCtx);
+                      context.push('/record_payment/${tenant.id}');
+                    },
+                    child: const Text(
+                      'Custom Amount or Date',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

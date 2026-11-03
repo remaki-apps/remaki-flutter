@@ -248,6 +248,7 @@ class Tenant {
   String get statusBadgeLabel {
     final bool isRentPaid = (isPaid || paymentStatus == 'PAID' || (pendingRentAmount == 0 && rentAmount > 0));
     final bool hasBillDue = totalPendingBills > 0;
+    final bool hasPaidBill = additionalCharges.any((c) => c.billType != 'RENT' && c.status == 'PAID');
     final bool hasRentDue = !isRentPaid && (pendingRentAmount > 0 || !isPaid);
 
     if (isPending) return 'PENDING';
@@ -263,10 +264,18 @@ class Tenant {
       return 'UNPAID';
     }
 
-    // 3. If bill is paid / not due and only rent is due -> 'RENT DUE'
-    if (hasRentDue && !hasBillDue) {
+    // 3. If bill was actually paid and only rent is due -> 'RENT DUE'
+    if (hasRentDue && !hasBillDue && hasPaidBill) {
       if (isPartiallyPaid) return 'PARTIAL';
       return 'RENT DUE';
+    }
+
+    // 4. If no bill was billed / no bill exists, and rent is due -> just PENDING
+    if (hasRentDue && !hasBillDue && !hasPaidBill) {
+      if (isPartiallyPaid) return 'PARTIAL';
+      if (isUpcoming) return 'UPCOMING';
+      if (isOverdue) return 'OVERDUE';
+      return 'PENDING';
     }
 
     if (isPaid || paymentStatus == 'PAID') return 'PAID';
@@ -618,16 +627,9 @@ class Payment {
     );
   }
 
-  /// Returns total amount paid including rent, utility bills, and platform fee
+  /// Returns total amount paid for this transaction
   double calculateTotalPaid(Tenant? tenant) {
-    if (tenant == null) return amount;
-    final fee = platformFee > 0 ? platformFee : tenant.platformFee;
-    final rent = rentAmount > 0 ? rentAmount : tenant.rentAmount;
-    final paidBills = tenant.additionalCharges
-        .where((c) => c.billType != 'RENT' && c.status == 'PAID')
-        .fold(0.0, (sum, c) => sum + c.amount);
-    final combined = rent + paidBills + fee;
-    return max(amount, combined);
+    return amount;
   }
 }
 

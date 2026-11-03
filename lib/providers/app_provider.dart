@@ -437,25 +437,34 @@ class AppProvider with ChangeNotifier {
 
   List<Tenant> get newTenantsThisMonth => currentTenants.where((t) => t.moveInDate.month == DateTime.now().month).toList();
   List<Tenant> get unpaidTenants => currentTenants.where((t) {
-    // Utility bills have no due date: any pending utility bill makes the tenant unpaid
-    final bool hasUnpaidBills = t.additionalCharges.any((c) =>
+    final bool hasPendingRent = (t.pendingRentAmount > 0 || !t.isPaid);
+    final bool hasPendingBills = t.additionalCharges.any((c) =>
       c.billType != 'RENT' && (c.status == 'PENDING' || c.status == 'UNPAID')
     );
-    if (t.isPaid || t.paymentStatus == 'PAID') {
-      return hasUnpaidBills;
+
+    if (hasPendingRent) {
+      // Both (rent & bills) OR Rent only: wait for due date
+      return _isDueDateReached(t.rentDueDate);
+    } else if (hasPendingBills) {
+      // Only bills: show immediately as no due date for those
+      return true;
     }
-    // For rent, only consider unpaid once the rent due date is reached
-    final rentDueReached = _isDueDateReached(t.rentDueDate) && (t.pendingRentAmount > 0 || !t.isPaid);
-    return rentDueReached || hasUnpaidBills;
+    return false;
   }).toList();
   List<Tenant> get unpaidRentTenants => currentTenants.where((t) =>
     (t.pendingRentAmount > 0 || !t.isPaid) && _isDueDateReached(t.rentDueDate)
   ).toList();
-  List<Tenant> get unpaidBillsTenants => currentTenants.where((t) =>
-    t.additionalCharges.any((c) =>
+  List<Tenant> get unpaidBillsTenants => currentTenants.where((t) {
+    final bool hasPendingRent = (t.pendingRentAmount > 0 || !t.isPaid);
+    final bool hasPendingBills = t.additionalCharges.any((c) =>
       c.billType != 'RENT' && (c.status == 'PENDING' || c.status == 'UNPAID')
-    )
-  ).toList();
+    );
+    if (!hasPendingBills) return false;
+    if (hasPendingRent) {
+      return _isDueDateReached(t.rentDueDate);
+    }
+    return true;
+  }).toList();
 
   Future<String?> addTenant(Tenant tenant, {int dueDay = 5}) async {
     tenants.add(tenant);
