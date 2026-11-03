@@ -381,11 +381,6 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         //   context: context,
         // );
       }
-    } else {
-      if (mounted) {
-        FancyToast.showError(context, 'Failed to Load', message: 'Failed to load profile details.');
-      }
-    }
   }
 
   Future<void> _pickImage() async {
