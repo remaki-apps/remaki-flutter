@@ -214,13 +214,26 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   }
 
   Future<void> _loadAllData() async {
+    if (!ApiService.isLoggedIn) {
+      if (mounted) context.go('/login');
+      return;
+    }
     setState(() => _isFetching = true);
-    await Future.wait([
-      _fetchProfile(),
-      _fetchAnnouncements(),
-      _fetchPayments(),
-    ]);
-    if (mounted) setState(() => _isFetching = false);
+    try {
+      await Future.wait([
+        _fetchProfile(),
+        _fetchAnnouncements(),
+        _fetchPayments(),
+      ]);
+    } catch (e) {
+      debugPrint('[TenantHome] Error loading all data: $e');
+    } finally {
+      if (!ApiService.isLoggedIn && mounted) {
+        context.go('/login');
+      } else if (mounted) {
+        setState(() => _isFetching = false);
+      }
+    }
   }
 
   Future<void> _fetchPayments() async {
@@ -251,8 +264,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
   Future<void> _fetchProfile() async {
     final profile = await ApiService.fetchCurrentTenantProfile();
-    if (profile != null) {
-      final tenantId = profile['id'] as String?;
+    if (profile == null || !ApiService.isLoggedIn) {
+      debugPrint('[TenantHome] Profile not found or tenant deleted from DB. Logging out immediately.');
+      await ApiService.clearAuthToken();
+      if (mounted) {
+        context.go('/login');
+      }
+      return;
+    }
+    final tenantId = profile['id'] as String?;
       double dynamicPlatformFee = (profile['platformFee'] as num?)?.toDouble() ?? 5.0;
       double pendingRent = (profile['pendingRentAmount'] as num?)?.toDouble() ?? 0;
       double pendingBills = 0;

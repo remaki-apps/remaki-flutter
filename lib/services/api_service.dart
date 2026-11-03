@@ -260,7 +260,30 @@ class ApiService {
             }
 
             final lower = msg.toLowerCase();
-            if (lower.contains('unauthorized') || lower.contains('unauthenticated') || lower.contains('jwt expired')) {
+            final code = (firstErr is Map && firstErr['extensions'] is Map)
+                ? (firstErr['extensions']['code']?.toString().toUpperCase() ?? '')
+                : '';
+            final httpStatus = (firstErr is Map && firstErr['extensions'] is Map && firstErr['extensions']['http'] is Map)
+                ? (firstErr['extensions']['http']['status']?.toString() ?? '')
+                : '';
+
+            final bool isAuthFailure = code == 'UNAUTHORIZED' ||
+                code == 'FORBIDDEN' ||
+                code == 'USER_NOT_FOUND' ||
+                httpStatus == '401' ||
+                httpStatus == '403' ||
+                lower.contains('unauthorized') ||
+                lower.contains('unauthenticated') ||
+                lower.contains('jwt expired') ||
+                lower.contains('invalid token') ||
+                lower.contains('user not found') ||
+                lower.contains('tenant profile not found') ||
+                lower.contains('profile not found') ||
+                lower.contains('tenant not found') ||
+                lower.contains('invalid credentials') ||
+                lower.contains('not authorized');
+
+            if (isAuthFailure) {
               await clearAuthToken();
             }
             throw ApiException(cleanErrorMessage(msg));
@@ -282,7 +305,15 @@ class ApiService {
 
           if (extractedMsg != null && extractedMsg.trim().isNotEmpty) {
             final lower = extractedMsg.toLowerCase();
-            if (lower.contains('unauthorized') || lower.contains('unauthenticated') || lower.contains('jwt expired')) {
+            if (lower.contains('unauthorized') ||
+                lower.contains('unauthenticated') ||
+                lower.contains('jwt expired') ||
+                lower.contains('invalid token') ||
+                lower.contains('user not found') ||
+                lower.contains('tenant profile not found') ||
+                lower.contains('profile not found') ||
+                lower.contains('tenant not found') ||
+                lower.contains('not authorized')) {
               await clearAuthToken();
             }
             throw ApiException(cleanErrorMessage(extractedMsg));
@@ -299,13 +330,9 @@ class ApiService {
             return responseJson;
           }
           return <String, dynamic>{};
-        } else if (response.statusCode == 401) {
+        } else if (response.statusCode == 401 || response.statusCode == 403 || response.statusCode == 404) {
           await clearAuthToken();
-          throw ApiException('Your session has expired. Please log in again.');
-        } else if (response.statusCode == 403) {
-          throw ApiException('You do not have permission to perform this action.');
-        } else if (response.statusCode == 404) {
-          throw ApiException('The requested resource was not found.');
+          throw ApiException('Your session has expired or user was not found. Please log in again.');
         } else if (response.statusCode >= 500) {
           throw ApiException('Server error (${response.statusCode}). Please try again shortly.');
         } else {
@@ -464,8 +491,23 @@ class ApiService {
     ''';
     try {
       final data = await performQuery(query);
-      return data['currentTenantProfile'];
+      final profile = data['currentTenantProfile'] as Map<String, dynamic>?;
+      if (profile == null) {
+        debugPrint('[ApiService] currentTenantProfile is null. Clearing auth and logging out.');
+        await clearAuthToken();
+        return null;
+      }
+      return profile;
     } catch (e) {
+      final errLower = e.toString().toLowerCase();
+      if (errLower.contains('unauthorized') ||
+          errLower.contains('unauthenticated') ||
+          errLower.contains('not found') ||
+          errLower.contains('invalid token') ||
+          errLower.contains('jwt expired')) {
+        await clearAuthToken();
+        return null;
+      }
       if (e.toString().contains('latestPaymentRequestStatus')) {
         debugPrint('Falling back to query without latestPaymentRequestStatus');
         try {
@@ -528,8 +570,22 @@ class ApiService {
             }
           ''';
           final fallbackData = await performQuery(fallbackQuery);
-          return fallbackData['currentTenantProfile'];
+          final fallbackProfile = fallbackData['currentTenantProfile'] as Map<String, dynamic>?;
+          if (fallbackProfile == null) {
+            debugPrint('[ApiService] Fallback currentTenantProfile is null. Clearing auth and logging out.');
+            await clearAuthToken();
+            return null;
+          }
+          return fallbackProfile;
         } catch (fallbackError) {
+          final fbLower = fallbackError.toString().toLowerCase();
+          if (fbLower.contains('unauthorized') ||
+              fbLower.contains('unauthenticated') ||
+              fbLower.contains('not found') ||
+              fbLower.contains('invalid token') ||
+              fbLower.contains('jwt expired')) {
+            await clearAuthToken();
+          }
           debugPrint('Error fetching current tenant profile on fallback: $fallbackError');
           return null;
         }

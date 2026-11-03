@@ -288,7 +288,25 @@ class AppProvider with ChangeNotifier {
     } catch (e) {
       debugPrint('Error loading from API: $e');
       lastSyncError = ApiService.cleanErrorMessage(e);
-      await loadFromStorage();
+      final errLower = e.toString().toLowerCase();
+      final bool isAuthOrUserFailure = errLower.contains('unauthorized') ||
+          errLower.contains('unauthenticated') ||
+          errLower.contains('user not found') ||
+          errLower.contains('not found') ||
+          errLower.contains('invalid token') ||
+          errLower.contains('jwt expired') ||
+          errLower.contains('forbidden') ||
+          !ApiService.isLoggedIn;
+
+      if (isAuthOrUserFailure) {
+        debugPrint('[AppProvider] User or auth session invalid/deleted. Logging out and clearing data.');
+        await ApiService.clearAuthToken();
+        reset();
+        return;
+      }
+      if (ApiService.isLoggedIn) {
+        await loadFromStorage();
+      }
     } finally {
       isLoading = false;
       notifyListeners();

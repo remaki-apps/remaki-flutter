@@ -35,11 +35,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
+      if (!ApiService.isLoggedIn) {
+        context.go('/login');
+        return;
+      }
       final appProvider = Provider.of<AppProvider>(context, listen: false);
-      if (appProvider.pgName.isEmpty || appProvider.rooms.isEmpty || appProvider.isLoading) {
-        appProvider.loadFromAPI(showLoading: true);
+      await appProvider.loadFromAPI(showLoading: true);
+      if (!ApiService.isLoggedIn && mounted) {
+        context.go('/login');
+        return;
       }
       _loadPendingApprovals();
       _loadPendingComplaints();
