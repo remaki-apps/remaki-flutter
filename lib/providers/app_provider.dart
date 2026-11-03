@@ -198,6 +198,7 @@ class AppProvider with ChangeNotifier {
           propertyId: e['propertyId']?.toString() ?? (roomMap?['propertyId']?.toString() ?? ''),
           rentDueDate: e['rentDueDate'] != null ? DateTime.tryParse(e['rentDueDate'].toString()) ?? DateTime.now() : DateTime.now(),
           pendingRentAmount: pendingRent,
+          password: e['tempPassword'] as String? ?? '',
           defaultPaymentMode: e['defaultPaymentMode']?.toString(),
           occupation: e['occupation']?.toString(),
           dateOfBirth: e['dateOfBirth']?.toString(),
