@@ -466,6 +466,74 @@ class ApiService {
       final data = await performQuery(query);
       return data['currentTenantProfile'];
     } catch (e) {
+      if (e.toString().contains('latestPaymentRequestStatus')) {
+        debugPrint('Falling back to query without latestPaymentRequestStatus');
+        try {
+          const fallbackQuery = '''
+            query {
+              currentTenantProfile {
+                id
+                name
+                phone
+                email
+                imageUrl
+                emergencyContact
+                status
+                paymentStatus
+                hasPendingRequest
+                pendingRentAmount
+                monthlyRent
+                securityDeposit
+                moveInDate
+                rentDueDate
+                latestRejectionReason
+                latestRejectionDate
+                occupation
+                dateOfBirth
+                maritalStatus
+                fatherName
+                permanentAddress
+                villageOrTown
+                houseNo
+                wardNo
+                district
+                state
+                nationality
+                pinCode
+                room {
+                  id
+                  roomNumber
+                }
+                bed {
+                  id
+                  bedLabel
+                }
+                defaultPaymentMode
+                bills {
+                  id
+                  amount
+                  status
+                  type
+                  dueDate
+                  description
+                  createdAt
+                }
+                pendingConvenienceFee
+                platformFee
+                propertyId
+                propertyName
+                propertyUpiId
+                propertyUpiPayeeName
+              }
+            }
+          ''';
+          final fallbackData = await performQuery(fallbackQuery);
+          return fallbackData['currentTenantProfile'];
+        } catch (fallbackError) {
+          debugPrint('Error fetching current tenant profile on fallback: $fallbackError');
+          return null;
+        }
+      }
       debugPrint('Error fetching current tenant profile: $e');
       return null;
     }
