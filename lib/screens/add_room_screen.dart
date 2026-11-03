@@ -27,13 +27,41 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
   final List<TextEditingController> _bedNameControllers = [];
   final List<bool> _isPrefilled = [];
 
-  final List<String> _floorOptions = [
-    'Ground Floor',
-    '1st Floor',
-    '2nd Floor',
-    '3rd Floor',
-    '4th Floor',
-  ];
+  List<String> get _floorOptions {
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    PropertyItem? prop;
+    if (appProvider.selectedPropertyId != null && appProvider.selectedPropertyId != 'ALL') {
+      try {
+        prop = appProvider.properties.firstWhere((p) => p.id == appProvider.selectedPropertyId);
+      } catch (_) {}
+    }
+    prop ??= appProvider.properties.isNotEmpty ? appProvider.properties.first : null;
+    final totalFloors = prop?.totalFloors ?? 0;
+    if (totalFloors <= 0) {
+      return [
+        'Ground Floor',
+        '1st Floor',
+        '2nd Floor',
+        '3rd Floor',
+        '4th Floor',
+      ];
+    }
+    final List<String> floors = [];
+    for (int i = 0; i < totalFloors; i++) {
+      if (i == 0) {
+        floors.add('Ground Floor');
+      } else if (i == 1) {
+        floors.add('1st Floor');
+      } else if (i == 2) {
+        floors.add('2nd Floor');
+      } else if (i == 3) {
+        floors.add('3rd Floor');
+      } else {
+        floors.add(f'{i}th Floor');
+      }
+    }
+    return floors;
+  }
 
   @override
   void initState() {

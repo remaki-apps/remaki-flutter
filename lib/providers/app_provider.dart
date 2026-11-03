@@ -437,24 +437,23 @@ class AppProvider with ChangeNotifier {
 
   List<Tenant> get newTenantsThisMonth => currentTenants.where((t) => t.moveInDate.month == DateTime.now().month).toList();
   List<Tenant> get unpaidTenants => currentTenants.where((t) {
-    if (t.isPaid || t.paymentStatus == 'PAID') return false;
-    // Only show after the due date is reached
-    final rentDueReached = _isDueDateReached(t.rentDueDate) && (t.pendingRentAmount > 0 || !t.isPaid);
-    final billDueReached = t.additionalCharges.any((c) =>
-      c.billType != 'RENT' &&
-      (c.status == 'PENDING' || c.status == 'UNPAID') &&
-      _isDueDateReached(c.billDueDate ?? t.rentDueDate)
+    // Utility bills have no due date: any pending utility bill makes the tenant unpaid
+    final bool hasUnpaidBills = t.additionalCharges.any((c) =>
+      c.billType != 'RENT' && (c.status == 'PENDING' || c.status == 'UNPAID')
     );
-    return rentDueReached || billDueReached;
+    if (t.isPaid || t.paymentStatus == 'PAID') {
+      return hasUnpaidBills;
+    }
+    // For rent, only consider unpaid once the rent due date is reached
+    final rentDueReached = _isDueDateReached(t.rentDueDate) && (t.pendingRentAmount > 0 || !t.isPaid);
+    return rentDueReached || hasUnpaidBills;
   }).toList();
   List<Tenant> get unpaidRentTenants => currentTenants.where((t) =>
-    t.pendingRentAmount > 0 && _isDueDateReached(t.rentDueDate)
+    (t.pendingRentAmount > 0 || !t.isPaid) && _isDueDateReached(t.rentDueDate)
   ).toList();
   List<Tenant> get unpaidBillsTenants => currentTenants.where((t) =>
-    t.totalPendingBills > 0 && t.additionalCharges.any((c) =>
-      c.billType != 'RENT' &&
-      (c.status == 'PENDING' || c.status == 'UNPAID') &&
-      _isDueDateReached(c.billDueDate ?? t.rentDueDate)
+    t.additionalCharges.any((c) =>
+      c.billType != 'RENT' && (c.status == 'PENDING' || c.status == 'UNPAID')
     )
   ).toList();
 

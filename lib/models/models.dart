@@ -247,10 +247,30 @@ class Tenant {
 
   String get statusBadgeLabel {
     final bool isRentPaid = (isPaid || paymentStatus == 'PAID' || (pendingRentAmount == 0 && rentAmount > 0));
-    if (isRentPaid && totalPendingBills > 0) return 'RENT PAID • BILL DUE';
-    if (isPaid || paymentStatus == 'PAID') return 'PAID';
+    final bool hasBillDue = totalPendingBills > 0;
+    final bool hasRentDue = !isRentPaid && (pendingRentAmount > 0 || !isPaid);
+
     if (isPending) return 'PENDING';
-    if (isPartiallyPaid || (isPaid && totalPendingBills > 0)) return 'PARTIAL';
+
+    // 1. If only bill need to be paid not rent -> 'BILL DUE'
+    if (isRentPaid && hasBillDue) return 'BILL DUE';
+
+    // 2. If both are due -> as usual
+    if (hasRentDue && hasBillDue) {
+      if (isPartiallyPaid) return 'PARTIAL';
+      if (isUpcoming) return 'UPCOMING';
+      if (isOverdue) return 'OVERDUE';
+      return 'UNPAID';
+    }
+
+    // 3. If bill is paid / not due and only rent is due -> 'RENT DUE'
+    if (hasRentDue && !hasBillDue) {
+      if (isPartiallyPaid) return 'PARTIAL';
+      return 'RENT DUE';
+    }
+
+    if (isPaid || paymentStatus == 'PAID') return 'PAID';
+    if (isPartiallyPaid) return 'PARTIAL';
     if (isUpcoming) return 'UPCOMING';
     if (isOverdue) return 'OVERDUE';
     if (totalDue == 0 && rentAmount == 0) return 'NO DUES';
@@ -259,8 +279,10 @@ class Tenant {
 
   Color get statusColor {
     switch (statusBadgeLabel) {
-      case 'RENT PAID • BILL DUE':
+      case 'BILL DUE':
         return const Color(0xFFD97706);
+      case 'RENT DUE':
+        return const Color(0xFFEA580C);
       case 'PAID':
         return const Color(0xFF16A34A);
       case 'PENDING':
@@ -279,8 +301,10 @@ class Tenant {
 
   Color get statusBgColor {
     switch (statusBadgeLabel) {
-      case 'RENT PAID • BILL DUE':
+      case 'BILL DUE':
         return const Color(0xFFFEF3C7);
+      case 'RENT DUE':
+        return const Color(0xFFFFEDD5);
       case 'PAID':
         return const Color(0xFFDCFCE7);
       case 'PENDING':
@@ -299,8 +323,10 @@ class Tenant {
 
   Color get statusBorderColor {
     switch (statusBadgeLabel) {
-      case 'RENT PAID • BILL DUE':
+      case 'BILL DUE':
         return const Color(0xFFFDE68A);
+      case 'RENT DUE':
+        return const Color(0xFFFED7AA);
       case 'PAID':
         return const Color(0xFFBBF7D0);
       case 'PENDING':

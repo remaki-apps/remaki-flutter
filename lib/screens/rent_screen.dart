@@ -108,6 +108,7 @@ class _RentScreenState extends State<RentScreen> {
     final int paidCount;
     final int unpaidCount;
 
+    int upcomingCount = 0;
     if (!_showBills) {
       if (isCurrentMonth) {
         expectedAmount = appProvider.expectedRentOnly;
@@ -115,6 +116,7 @@ class _RentScreenState extends State<RentScreen> {
         pendingAmount = appProvider.pendingRentOnly;
         paidCount = appProvider.currentTenants.where((t) => (t.isPaid || t.paymentStatus == 'PAID') && t.rentAmount > 0).length;
         unpaidCount = appProvider.currentTenants.where((t) => !t.isPaid && t.paymentStatus != 'PAID' && t.rentAmount > 0).length;
+        upcomingCount = appProvider.currentTenants.where((t) => (!t.isPaid && t.paymentStatus != 'PAID' && t.rentAmount > 0) && t.isUpcoming).length;
       } else {
         final rentExpectedRaw = appProvider.currentTenants.fold(0.0, (sum, t) {
           if (t.moveInDate.isAfter(DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1))) return sum;
@@ -594,7 +596,9 @@ class _RentScreenState extends State<RentScreen> {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  '$unpaidCount tenant(s) pending payment',
+                                  upcomingCount > 0
+                                      ? '$unpaidCount tenant(s) pending ($upcomingCount upcoming)'
+                                      : '$unpaidCount tenant(s) pending payment',
                                   style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                                 ),
                               ],

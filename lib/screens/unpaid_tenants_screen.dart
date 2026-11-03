@@ -60,7 +60,7 @@ class UnpaidTenantsScreen extends StatelessWidget {
     final List<Tenant> unpaidTenants = filter == 'bills'
         ? appProvider.unpaidBillsTenants
         : filter == 'rent'
-            ? appProvider.unpaidRentTenants
+            ? appProvider.currentTenants.where((t) => (!t.isPaid && t.paymentStatus != 'PAID' && t.rentAmount > 0) || t.pendingRentAmount > 0).toList()
             : filter == 'overdue'
                 ? appProvider.currentTenants.where((t) => t.isOverdue || (t.pendingRentAmount > 0 && DateTime.now().difference(t.rentDueDate).inDays >= 3)).toList()
                 : appProvider.unpaidTenants;
@@ -70,7 +70,7 @@ class UnpaidTenantsScreen extends StatelessWidget {
         : filter == 'bills'
             ? 'Unpaid Bills'
             : filter == 'rent'
-                ? 'Unpaid Rent'
+                ? 'Pending & Upcoming Rent'
                 : 'Unpaid Tenants';
 
     return Scaffold(

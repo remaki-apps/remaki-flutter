@@ -911,8 +911,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               icon: Icons.receipt_long_rounded,
               bgColor: const Color(0xFFF0FDFA),
               iconColor: const Color(0xFF0D9488),
-              subLabel: '₹${_monthlyPlatformFeeCollected.toStringAsFixed(0)}',
-              subLabelColor: const Color(0xFF0D9488),
               onTap: () async {
                 await context.push('/platform_fee_summary');
                 _loadPlatformFeeSummary();

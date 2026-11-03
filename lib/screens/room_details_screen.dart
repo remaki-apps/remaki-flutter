@@ -936,8 +936,49 @@ class RoomDetailsScreen extends StatelessWidget {
 
   void _showEditRoomDialog(BuildContext context, Room room) {
     final numberController = TextEditingController(text: room.number);
-    final floorController = TextEditingController(text: room.floor);
     bool isAc = room.isAc;
+
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    PropertyItem? property;
+    if (room.propertyId.isNotEmpty) {
+      try {
+        property = appProvider.properties.firstWhere((p) => p.id == room.propertyId);
+      } catch (_) {}
+    }
+    if (property == null && appProvider.selectedPropertyId != null && appProvider.selectedPropertyId != 'ALL') {
+      try {
+        property = appProvider.properties.firstWhere((p) => p.id == appProvider.selectedPropertyId);
+      } catch (_) {}
+    }
+    property ??= appProvider.properties.isNotEmpty ? appProvider.properties.first : null;
+    final int totalFloors = property?.totalFloors ?? 0;
+
+    final List<String> floorOptions = [];
+    if (totalFloors > 0) {
+      for (int i = 0; i < totalFloors; i++) {
+        if (i == 0) {
+          floorOptions.add('Ground Floor');
+        } else if (i == 1) {
+          floorOptions.add('1st Floor');
+        } else if (i == 2) {
+          floorOptions.add('2nd Floor');
+        } else if (i == 3) {
+          floorOptions.add('3rd Floor');
+        } else {
+          floorOptions.add('${i}th Floor');
+        }
+      }
+    } else {
+      floorOptions.addAll(['Ground Floor', '1st Floor', '2nd Floor', '3rd Floor', '4th Floor']);
+    }
+
+    final initialFloor = room.floor.trim();
+    if (initialFloor.isNotEmpty && !floorOptions.contains(initialFloor)) {
+      floorOptions.insert(0, initialFloor);
+    }
+    String selectedFloor = floorOptions.contains(initialFloor)
+        ? initialFloor
+        : (floorOptions.isNotEmpty ? floorOptions.first : 'Ground Floor');
 
     showDialog(
       context: context,
@@ -995,26 +1036,37 @@ class RoomDetailsScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                TextField(
-                  controller: floorController,
+                DropdownButtonFormField<String>(
+                  value: selectedFloor,
                   decoration: InputDecoration(
-                    labelText: 'Floor Number / Name *',
-                    hintText: 'e.g. 1st Floor',
+                    labelText: 'Floor *',
+                    hintText: 'Select Floor',
+                    prefixIcon: const Icon(Icons.domain_outlined, size: 20, color: Color(0xFF64748B)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                   ),
+                  items: floorOptions.map((f) => DropdownMenuItem(
+                    value: f,
+                    child: Text(f, style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A))),
+                  )).toList(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      setDialogState(() => selectedFloor = val);
+                    }
+                  },
                 ),
                 const SizedBox(height: 14),
-                Row(
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
                     const Text('Room Type: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF475569))),
-                    const SizedBox(width: 8),
                     ChoiceChip(
                       label: const Text('Non-AC'),
                       selected: !isAc,
                       onSelected: (val) => setDialogState(() => isAc = false),
                     ),
-                    const SizedBox(width: 8),
                     ChoiceChip(
                       label: const Text('AC'),
                       selected: isAc,
@@ -1037,7 +1089,7 @@ class RoomDetailsScreen extends StatelessWidget {
                         style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
                         onPressed: () async {
                           final numStr = numberController.text.trim();
-                          final floorStr = floorController.text.trim();
+                          final floorStr = selectedFloor.trim();
                           if (numStr.isEmpty || floorStr.isEmpty) {
                             FancyToast.showError(context, 'Required Fields', message: 'Room number and floor are required');
                             return;

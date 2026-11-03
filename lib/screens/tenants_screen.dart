@@ -39,14 +39,28 @@ class _TenantsScreenState extends State<TenantsScreen> {
     }
 
     final totalCount = appProvider.currentTenants.length;
-    final paidCount = appProvider.currentTenants.where((t) => t.isPaid || t.paymentStatus == 'PAID').length;
-    final unpaidCount = appProvider.currentTenants.where((t) => (!t.isPaid && t.paymentStatus != 'PAID') && isDueDateReached(t.rentDueDate)).length;
+    final paidCount = appProvider.currentTenants.where((t) => (t.isPaid || t.paymentStatus == 'PAID') && t.totalPendingBills <= 0).length;
+    final unpaidCount = appProvider.currentTenants.where((t) {
+      final bool hasUnpaidBills = t.totalPendingBills > 0;
+      if (t.isPaid || t.paymentStatus == 'PAID') {
+        return hasUnpaidBills;
+      }
+      return isDueDateReached(t.rentDueDate) || hasUnpaidBills;
+    }).length;
 
     var filteredTenants = appProvider.currentTenants.where((t) {
-      if (_filter == 'Paid' && !t.isPaid && t.paymentStatus != 'PAID') return false;
+      final bool hasUnpaidBills = t.totalPendingBills > 0;
+      final bool isRentPaid = t.isPaid || t.paymentStatus == 'PAID';
+      if (_filter == 'Paid') {
+        if (!isRentPaid || hasUnpaidBills) return false;
+      }
       if (_filter == 'Unpaid') {
-        if (t.isPaid || t.paymentStatus == 'PAID') return false;
-        if (!isDueDateReached(t.rentDueDate)) return false;
+        if (isRentPaid) {
+          if (!hasUnpaidBills) return false;
+        } else {
+          final bool rentDueReached = isDueDateReached(t.rentDueDate);
+          if (!rentDueReached && !hasUnpaidBills) return false;
+        }
       }
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
