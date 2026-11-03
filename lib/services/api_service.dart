@@ -824,8 +824,8 @@ class ApiService {
 
   static Future<Map<String, dynamic>?> updateRoom(String id, Map<String, dynamic> input) async {
     const String mutation = '''
-      mutation UpdateRoom($id: ID!, $input: UpdateRoomInput!) {
-        updateRoom(id: $id, input: $input) {
+      mutation UpdateRoom(\$id: ID!, \$input: UpdateRoomInput!) {
+        updateRoom(id: \$id, input: \$input) {
           id
           roomNumber
           floorNumber
@@ -840,8 +840,8 @@ class ApiService {
 
   static Future<bool> deleteRoom(String id) async {
     const String mutation = '''
-      mutation DeleteRoom($id: ID!) {
-        deleteRoom(id: $id)
+      mutation DeleteRoom(\$id: ID!) {
+        deleteRoom(id: \$id)
       }
     ''';
     final result = await performQuery(mutation, variables: {'id': id});
@@ -850,8 +850,8 @@ class ApiService {
 
   static Future<Map<String, dynamic>?> addBed(String roomId, String label) async {
     const String mutation = '''
-      mutation AddBed($roomId: ID!, $label: String!) {
-        addBed(roomId: $roomId, label: $label) {
+      mutation AddBed(\$roomId: ID!, \$label: String!) {
+        addBed(roomId: \$roomId, label: \$label) {
           id
           roomId
           roomNumber
@@ -866,8 +866,8 @@ class ApiService {
 
   static Future<Map<String, dynamic>?> updateBed(String id, Map<String, dynamic> input) async {
     const String mutation = '''
-      mutation UpdateBed($id: ID!, $input: UpdateBedInput!) {
-        updateBed(id: $id, input: $input) {
+      mutation UpdateBed(\$id: ID!, \$input: UpdateBedInput!) {
+        updateBed(id: \$id, input: \$input) {
           id
           roomId
           roomNumber
@@ -882,8 +882,8 @@ class ApiService {
 
   static Future<bool> deleteBed(String id) async {
     const String mutation = '''
-      mutation DeleteBed($id: ID!) {
-        deleteBed(id: $id)
+      mutation DeleteBed(\$id: ID!) {
+        deleteBed(id: \$id)
       }
     ''';
     final result = await performQuery(mutation, variables: {'id': id});
