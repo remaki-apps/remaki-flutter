@@ -14,7 +14,16 @@ import '../widgets/fancy_toast.dart';
 class AddTenantScreen extends StatefulWidget {
   final String? initialRoomId;
   final String? initialBedId;
-  const AddTenantScreen({super.key, this.initialRoomId, this.initialBedId});
+  final bool fromSuccess;
+  final String? returnTo;
+
+  const AddTenantScreen({
+    super.key,
+    this.initialRoomId,
+    this.initialBedId,
+    this.fromSuccess = false,
+    this.returnTo,
+  });
 
   @override
   State<AddTenantScreen> createState() => _AddTenantScreenState();
@@ -104,22 +113,43 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
     }
   }
 
+  void _handleBack(BuildContext context) {
+    if (widget.fromSuccess || widget.returnTo != null) {
+      context.go(widget.returnTo ?? '/tenants');
+    } else if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/tenants');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Custom Header Bar
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => context.pop(),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          if (_currentStep > 0) {
+            setState(() => _currentStep -= 1);
+          } else {
+            _handleBack(context);
+          }
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8F9FD),
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Custom Header Bar
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => _handleBack(context),
                     child: Container(
                       width: 40,
                       height: 40,
@@ -283,7 +313,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildStepProgressItem(int stepIndex, String title, IconData icon) {

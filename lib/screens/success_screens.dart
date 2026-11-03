@@ -366,9 +366,17 @@ class _TenantAddedSuccessScreenState extends State<TenantAddedSuccessScreen> {
         ? '${formatRoomName(currentRoom)}${currentFloor.isNotEmpty ? ' ($currentFloor)' : ''}'
         : widget.roomBed;
 
-    return SuccessScreen(
-      title: 'Tenant Onboarded Successfully!',
-      subtitle: 'Profile created & room allocation active',
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          context.go('/tenants');
+        }
+      },
+      child: SuccessScreen(
+        title: 'Tenant Onboarded Successfully!',
+        subtitle: 'Profile created & room allocation active',
+        onBackPressed: () => context.go('/tenants'),
       details: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -563,10 +571,10 @@ class _TenantAddedSuccessScreenState extends State<TenantAddedSuccessScreen> {
         ),
       ),
       secondaryButtonText: 'Add Another Tenant',
-      onSecondaryPressed: () => context.go('/add_tenant'),
+      onSecondaryPressed: () => context.go('/add_tenant?fromSuccess=true'),
       primaryButtonText: 'Go to Tenants List',
       onPrimaryPressed: () => context.go('/tenants'),
-    );
+    ));
   }
 
   static Widget _buildDetailRow({

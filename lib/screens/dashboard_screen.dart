@@ -25,8 +25,11 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _pendingApprovalsCount = 0;
   int _pendingComplaintsCount = 0;
+  // ignore: unused_field
   double _monthlyPlatformFeeCollected = 0.0;
+  // ignore: unused_field
   int _platformFeeTenantsCount = 0;
+  // ignore: unused_field
   double _platformFeePerTenant = 5.0;
   bool _isLoadingApprovals = false;
   bool _isPaymentHistoryExpanded = false;
@@ -209,11 +212,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            // 5. Dedicated Platform Fee Overview Card
-                            _buildPlatformFeeCard(context),
-                            const SizedBox(height: 16),
-
-                            // 6. Payment History (Month-wise Transactions & Summary)
+                            // 5. Payment History (Month-wise Transactions & Summary)
                             _buildPaymentHistorySection(
                               context: context,
                               appProvider: appProvider,
@@ -849,9 +848,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         const SizedBox(height: 10),
-        // Row 1: Add Tenant, Notice, Unpaid Dues
+        // Row 1: Complaints, Approvals, Unpaid Dues
         Row(
           children: [
+            _buildQuickActionButton(
+              label: 'Complaints',
+              icon: Icons.assignment_late_outlined,
+              bgColor: const Color(0xFFFEF3C7),
+              iconColor: const Color(0xFFD97706),
+              badgeCount: _pendingComplaintsCount,
+              onTap: () async {
+                await context.push('/admin_complaints');
+                _loadPendingComplaints();
+              },
+            ),
+            const SizedBox(width: 8),
+            _buildQuickActionButton(
+              label: 'Approvals',
+              icon: Icons.fact_check_outlined,
+              bgColor: const Color(0xFFF0FDF4),
+              iconColor: const Color(0xFF16A34A),
+              badgeCount: _pendingApprovalsCount,
+              onTap: () async {
+                await context.push('/approvals');
+                _loadPendingApprovals();
+              },
+            ),
+            const SizedBox(width: 8),
+            _buildQuickActionButton(
+              label: 'Unpaid Dues',
+              icon: Icons.pending_actions_rounded,
+              bgColor: const Color(0xFFFFF1F2),
+              iconColor: const Color(0xFFE11D48),
+              badgeCount: appProvider.unpaidTenants.length,
+              onTap: () => context.push('/unpaid_tenants'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // Row 2: Platform Fee, Add Tenant, Notice
+        Row(
+          children: [
+            _buildQuickActionButton(
+              label: 'Platform Fee',
+              icon: Icons.receipt_long_rounded,
+              bgColor: const Color(0xFFF0FDFA),
+              iconColor: const Color(0xFF0D9488),
+              onTap: () async {
+                await context.push('/platform_fee_summary');
+                _loadPlatformFeeSummary();
+              },
+            ),
+            const SizedBox(width: 8),
             _buildQuickActionButton(
               label: 'Add Tenant',
               icon: Icons.person_add_alt_1_rounded,
@@ -866,55 +914,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               bgColor: const Color(0xFFFEF3C7),
               iconColor: const Color(0xFFD97706),
               onTap: () => context.push('/announcements'),
-            ),
-            const SizedBox(width: 8),
-            _buildQuickActionButton(
-              label: 'Unpaid Dues',
-              icon: Icons.pending_actions_rounded,
-              bgColor: const Color(0xFFFFF1F2),
-              iconColor: const Color(0xFFE11D48),
-              badgeCount: appProvider.unpaidTenants.length,
-              onTap: () => context.push('/unpaid_tenants'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        // Row 2: Approvals, Complaints, Platform Fee
-        Row(
-          children: [
-            _buildQuickActionButton(
-              label: 'Approvals',
-              icon: Icons.fact_check_outlined,
-              bgColor: const Color(0xFFF0FDF4),
-              iconColor: const Color(0xFF16A34A),
-              badgeCount: _pendingApprovalsCount,
-              onTap: () async {
-                await context.push('/approvals');
-                _loadPendingApprovals();
-              },
-            ),
-            const SizedBox(width: 8),
-            _buildQuickActionButton(
-              label: 'Complaints',
-              icon: Icons.assignment_late_outlined,
-              bgColor: const Color(0xFFFEF3C7),
-              iconColor: const Color(0xFFD97706),
-              badgeCount: _pendingComplaintsCount,
-              onTap: () async {
-                await context.push('/admin_complaints');
-                _loadPendingComplaints();
-              },
-            ),
-            const SizedBox(width: 8),
-            _buildQuickActionButton(
-              label: 'Platform Fee',
-              icon: Icons.receipt_long_rounded,
-              bgColor: const Color(0xFFF0FDFA),
-              iconColor: const Color(0xFF0D9488),
-              onTap: () async {
-                await context.push('/platform_fee_summary');
-                _loadPlatformFeeSummary();
-              },
             ),
           ],
         ),
@@ -1425,157 +1424,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-
-  Widget _buildPlatformFeeCard(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        await context.push('/platform_fee_summary');
-        _loadPlatformFeeSummary();
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x040F172A),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-          BoxShadow(
-            color: Color(0x020F172A),
-            blurRadius: 2,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0FDFA),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.receipt_long_rounded,
-                        size: 17,
-                        color: Color(0xFF0D9488),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        'Platform Fee',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.lato(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.2,
-                          color: const Color(0xFF0F172A),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0FDFA),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFCCFBF1), width: 0.8),
-                      ),
-                      child: Text(
-                        'Monthly',
-                        style: GoogleFonts.lato(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF0D9488),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () async {
-                  await context.push('/platform_fee_summary');
-                  _loadPlatformFeeSummary();
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0FDFA),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFCCFBF1), width: 1),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'View Details',
-                        style: GoogleFonts.lato(
-                          color: const Color(0xFF0D9488),
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(width: 3),
-                      const Icon(Icons.chevron_right_rounded, size: 14, color: Color(0xFF0D9488)),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              _buildRentStatColumn(
-                title: 'Fee Status',
-                value: 'Active',
-                color: const Color(0xFF0D9488),
-                icon: Icons.verified_user_rounded,
-                iconBg: const Color(0xFFF0FDFA),
-                iconColor: const Color(0xFF0D9488),
-              ),
-              Container(width: 1, height: 38, color: const Color(0xFFF1F5F9)),
-              _buildRentStatColumn(
-                title: 'Paid Tenants',
-                value: '$_platformFeeTenantsCount Paid',
-                color: const Color(0xFF4F46E5),
-                icon: Icons.people_alt_rounded,
-                iconBg: const Color(0xFFEEF2FF),
-                iconColor: const Color(0xFF4F46E5),
-              ),
-              Container(width: 1, height: 38, color: const Color(0xFFF1F5F9)),
-              _buildRentStatColumn(
-                title: 'Billing Cycle',
-                value: 'Monthly',
-                color: const Color(0xFF0F172A),
-                icon: Icons.calendar_today_rounded,
-                iconBg: const Color(0xFFF1F5F9),
-                iconColor: const Color(0xFF475569),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ),
-  );
-}
 
   Widget _buildPaymentHistorySection({
     required BuildContext context,

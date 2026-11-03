@@ -292,7 +292,18 @@ final router = GoRouter(
       builder: (context, state) {
         final roomId = state.uri.queryParameters['roomId'];
         final bedId = state.uri.queryParameters['bedId'];
-        return AddTenantScreen(initialRoomId: roomId, initialBedId: bedId);
+        final extraMap = state.extra is Map ? (state.extra as Map) : null;
+        final fromSuccess = state.uri.queryParameters['fromSuccess'] == 'true' ||
+            state.uri.queryParameters['from'] == 'success' ||
+            extraMap?['fromSuccess'] == true;
+        final returnTo = state.uri.queryParameters['returnTo'] ??
+            (extraMap?['returnTo'] as String?);
+        return AddTenantScreen(
+          initialRoomId: roomId,
+          initialBedId: bedId,
+          fromSuccess: fromSuccess,
+          returnTo: returnTo,
+        );
       },
     ),
     GoRoute(
