@@ -748,7 +748,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                       color: Color(0xFFEA580C),
                                     ),
                                   ),
-                                ], else if (!tenant.isPaid && tenant.totalDue > 0) ...[
+                                ] else if (!tenant.isPaid && tenant.totalDue > 0) ...[
                                    const SizedBox(height: 3),
                                    const Text(
                                      'Rent Pending',
