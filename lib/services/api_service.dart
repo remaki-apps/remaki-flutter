@@ -422,6 +422,7 @@ class ApiService {
           rentDueDate
           latestRejectionReason
           latestRejectionDate
+          latestPaymentRequestStatus
           occupation
           dateOfBirth
           maritalStatus
@@ -820,6 +821,75 @@ class ApiService {
     final result = await performQuery(mutation, variables: {'input': input});
     return result['createRoom'] as Map<String, dynamic>?;
   }
+
+  static Future<Map<String, dynamic>?> updateRoom(String id, Map<String, dynamic> input) async {
+    const String mutation = '''
+      mutation UpdateRoom($id: ID!, $input: UpdateRoomInput!) {
+        updateRoom(id: $id, input: $input) {
+          id
+          roomNumber
+          floorNumber
+          capacity
+          roomType
+        }
+      }
+    ''';
+    final result = await performQuery(mutation, variables: {'id': id, 'input': input});
+    return result['updateRoom'] as Map<String, dynamic>?;
+  }
+
+  static Future<bool> deleteRoom(String id) async {
+    const String mutation = '''
+      mutation DeleteRoom($id: ID!) {
+        deleteRoom(id: $id)
+      }
+    ''';
+    final result = await performQuery(mutation, variables: {'id': id});
+    return result['deleteRoom'] == true;
+  }
+
+  static Future<Map<String, dynamic>?> addBed(String roomId, String label) async {
+    const String mutation = '''
+      mutation AddBed($roomId: ID!, $label: String!) {
+        addBed(roomId: $roomId, label: $label) {
+          id
+          roomId
+          roomNumber
+          bedLabel
+          status
+        }
+      }
+    ''';
+    final result = await performQuery(mutation, variables: {'roomId': roomId, 'label': label});
+    return result['addBed'] as Map<String, dynamic>?;
+  }
+
+  static Future<Map<String, dynamic>?> updateBed(String id, Map<String, dynamic> input) async {
+    const String mutation = '''
+      mutation UpdateBed($id: ID!, $input: UpdateBedInput!) {
+        updateBed(id: $id, input: $input) {
+          id
+          roomId
+          roomNumber
+          bedLabel
+          status
+        }
+      }
+    ''';
+    final result = await performQuery(mutation, variables: {'id': id, 'input': input});
+    return result['updateBed'] as Map<String, dynamic>?;
+  }
+
+  static Future<bool> deleteBed(String id) async {
+    const String mutation = '''
+      mutation DeleteBed($id: ID!) {
+        deleteBed(id: $id)
+      }
+    ''';
+    final result = await performQuery(mutation, variables: {'id': id});
+    return result['deleteBed'] == true;
+  }
+
 
   static Future<void> recordRentPayment(Map<String, dynamic> input) async {
     const String mutation = '''

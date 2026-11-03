@@ -877,5 +877,310 @@ class RoomDetailsScreen extends StatelessWidget {
       ),
     );
   }
-}
 
+
+  void _showEditRoomDialog(BuildContext context, Room room) {
+    final numberController = TextEditingController(text: room.number);
+    final floorController = TextEditingController(text: room.floor);
+    bool isAc = room.isAc;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setDialogState) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          elevation: 8,
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEEF2FF),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xFFC7D2FE)),
+                          ),
+                          child: const Icon(Icons.meeting_room_outlined, color: AppTheme.primaryColor, size: 20),
+                        ),
+                        const SizedBox(width: 10),
+                        const Text(
+                          'Edit Room',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                        ),
+                      ],
+                    ),
+                    GestureDetector(
+                      onTap: () => ctx.pop(),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(color: Color(0xFFF1F5F9), shape: BoxShape.circle),
+                        child: const Icon(Icons.close_rounded, size: 18, color: Color(0xFF64748B)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                TextField(
+                  controller: numberController,
+                  decoration: InputDecoration(
+                    labelText: 'Room Number / Name *',
+                    hintText: 'e.g. 101 or Room A',
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: floorController,
+                  decoration: InputDecoration(
+                    labelText: 'Floor Number / Name *',
+                    hintText: 'e.g. 1st Floor',
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    const Text('Room Type: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF475569))),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: const Text('Non-AC'),
+                      selected: !isAc,
+                      onSelected: (val) => setDialogState(() => isAc = false),
+                    ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: const Text('AC'),
+                      selected: isAc,
+                      onSelected: (val) => setDialogState(() => isAc = true),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => ctx.pop(),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
+                        onPressed: () async {
+                          final numStr = numberController.text.trim();
+                          final floorStr = floorController.text.trim();
+                          if (numStr.isEmpty || floorStr.isEmpty) {
+                            FancyToast.showError(context, 'Required Fields', message: 'Room number and floor are required');
+                            return;
+                          }
+                          ctx.pop();
+                          try {
+                            await Provider.of<AppProvider>(context, listen: false).updateRoom(
+                              room.id,
+                              roomNumber: numStr,
+                              floorNumber: floorStr,
+                              roomType: isAc ? 'AC' : 'NON_AC',
+                            );
+                            if (context.mounted) {
+                              FancyToast.showSuccess(context, 'Room Updated', message: 'Room details saved successfully.');
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              FancyToast.showError(context, 'Update Failed', message: e.toString().replaceAll('Exception: ', ''));
+                            }
+                          }
+                        },
+                        child: const Text('Save', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteRoomDialog(BuildContext context, Room room) {
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    final hasOccupiedBeds = room.beds.any((b) => !b.isAvailable) || appProvider.tenants.any((t) => t.roomId == room.id);
+
+    if (hasOccupiedBeds) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Cannot Delete Room', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: Text('Room ${room.number} currently has active tenants assigned to beds. Please vacate or move all tenants before deleting this room.'),
+          actions: [
+            TextButton(
+              onPressed: () => ctx.pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Delete Room?', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFEF4444))),
+        content: Text('Are you sure you want to permanently delete Room ${room.number} and all its beds? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => ctx.pop(),
+            child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+            onPressed: () async {
+              ctx.pop();
+              try {
+                await appProvider.deleteRoom(room.id);
+                if (context.mounted) {
+                  FancyToast.showSuccess(context, 'Room Deleted', message: 'Room ${room.number} has been deleted.');
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/rooms');
+                  }
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  FancyToast.showError(context, 'Delete Failed', message: e.toString().replaceAll('Exception: ', ''));
+                }
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditBedDialog(BuildContext context, Room room, Bed bed) {
+    final controller = TextEditingController(text: bed.name);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Edit Bed Name',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: 'Bed Label / Name *',
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => ctx.pop(),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
+                      onPressed: () async {
+                        final newLabel = controller.text.trim();
+                        if (newLabel.isEmpty) return;
+                        ctx.pop();
+                        try {
+                          await Provider.of<AppProvider>(context, listen: false).updateBed(bed.id, newLabel);
+                          if (context.mounted) {
+                            FancyToast.showSuccess(context, 'Bed Updated', message: 'Bed renamed to $newLabel');
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            FancyToast.showError(context, 'Update Failed', message: e.toString().replaceAll('Exception: ', ''));
+                          }
+                        }
+                      },
+                      child: const Text('Save', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteBedDialog(BuildContext context, Room room, Bed bed) {
+    if (!bed.isAvailable) {
+      FancyToast.showError(context, 'Cannot Delete', message: 'This bed is occupied by a tenant. Vacate or reallocate first.');
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Delete Bed?', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFEF4444))),
+        content: Text('Are you sure you want to delete ${bed.name} from Room ${room.number}?'),
+        actions: [
+          TextButton(
+            onPressed: () => ctx.pop(),
+            child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+            onPressed: () async {
+              ctx.pop();
+              try {
+                await Provider.of<AppProvider>(context, listen: false).removeBed(room.id, bed.id);
+                if (context.mounted) {
+                  FancyToast.showSuccess(context, 'Bed Deleted', message: '${bed.name} has been deleted.');
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  FancyToast.showError(context, 'Delete Failed', message: e.toString().replaceAll('Exception: ', ''));
+                }
+              }
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+}

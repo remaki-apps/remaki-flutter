@@ -183,7 +183,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           _selectedImageBytes = compressed;
         });
         if (mounted) {
-          _showProofConfirmationDialog(compressed);
+          FancyToast.showSuccess(context, 'Screenshot Attached', message: 'Payment screenshot attached. Ready to submit below.');
         }
       } catch (e) {
         debugPrint('[TenantHome] Handle shared screenshot error: $e');
@@ -265,20 +265,39 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       }
 
       // 1. Check if explicitly PAID on backend
-      bool isPaid = profile['paymentStatus'] == 'PAID';
+      final bool isPaid = profile['paymentStatus'] == 'PAID';
 
-      // 2. Pending if local submission flag is true OR storedPending is true OR backend status says PENDING/submitted
-      bool isPendingApproval = !isPaid &&
-          (_hasSubmittedForApproval ||
-           storedPending ||
-           profile['paymentStatus'] == 'PENDING' ||
-           profile['hasPendingRequest'] == true ||
-           profile['hasSubmittedRequest'] == true);
+      // 2. Check if server indicates active pending request
+      final bool serverHasPending = profile['hasPendingRequest'] == true ||
+          profile['paymentStatus'] == 'PENDING' ||
+          profile['hasSubmittedRequest'] == true;
 
-      // 3. Check if REJECTED on backend (only if NOT currently pending new submission)
-      bool isBackendRejected = !isPaid && !isPendingApproval &&
-          (profile['paymentStatus'] == 'REJECTED' ||
+      // 3. Check if REJECTED by admin on backend
+      final String? reqStatus = profile['latestPaymentRequestStatus'] as String?;
+      final bool isBackendRejected = !isPaid && !serverHasPending &&
+          (reqStatus == 'REJECTED' ||
+           profile['paymentStatus'] == 'REJECTED' ||
            (rawRejection != null && rawRejection.isNotEmpty));
+
+      // 4. Pending if server confirms pending OR fresh local submission that has not finished round-trip
+      bool isPendingApproval = false;
+      if (!isPaid) {
+        if (isBackendRejected) {
+          isPendingApproval = false;
+          _hasSubmittedForApproval = false;
+          storedPending = false;
+          _setLocalPendingStatus(false, tenantId);
+        } else if (serverHasPending) {
+          isPendingApproval = true;
+        } else if (_hasSubmittedForApproval && storedPending) {
+          isPendingApproval = true;
+        } else {
+          isPendingApproval = false;
+          _hasSubmittedForApproval = false;
+          storedPending = false;
+          _setLocalPendingStatus(false, tenantId);
+        }
+      }
 
       // 4. isPaid is purely driven by backend status == 'PAID'
 
@@ -345,7 +364,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       });
 
       if (mounted) {
-        _showProofConfirmationDialog(compressed);
+        FancyToast.showSuccess(context, 'Screenshot Attached', message: 'Payment screenshot attached. Ready to submit below.');
       }
     } catch (e) {
       debugPrint('[TenantHome] Pick image error: $e');

@@ -520,27 +520,63 @@ class AppProvider with ChangeNotifier {
     }
   }
 
-  void addBed(String roomId, String bedName) {
-    final roomIdx = rooms.indexWhere((r) => r.id == roomId);
-    if (roomIdx != -1) {
-      var newBed = Bed(
-        id: 'b_${DateTime.now().millisecondsSinceEpoch}',
-        name: bedName,
-      );
-      rooms[roomIdx].beds.add(newBed);
-      rooms[roomIdx].capacity = rooms[roomIdx].beds.length;
-      saveToStorage();
-      notifyListeners();
+  Future<void> updateRoom(String roomId, {String? roomNumber, String? floorNumber, int? capacity, String? roomType}) async {
+    try {
+      await ApiService.updateRoom(roomId, {
+        if (roomNumber != null) 'roomNumber': roomNumber,
+        if (floorNumber != null) 'floorNumber': floorNumber,
+        if (capacity != null) 'capacity': capacity,
+        if (roomType != null) 'roomType': roomType,
+      });
+      await loadFromAPI();
+      await saveToStorage();
+    } catch (e) {
+      debugPrint('Error updating room: $e');
+      rethrow;
     }
   }
 
-  void removeBed(String roomId, String bedId) {
-    final roomIdx = rooms.indexWhere((r) => r.id == roomId);
-    if (roomIdx != -1) {
-      rooms[roomIdx].beds.removeWhere((b) => b.id == bedId);
-      rooms[roomIdx].capacity = rooms[roomIdx].beds.length;
-      saveToStorage();
-      notifyListeners();
+  Future<void> deleteRoom(String roomId) async {
+    try {
+      await ApiService.deleteRoom(roomId);
+      await loadFromAPI();
+      await saveToStorage();
+    } catch (e) {
+      debugPrint('Error deleting room: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> addBed(String roomId, String bedName) async {
+    try {
+      await ApiService.addBed(roomId, bedName);
+      await loadFromAPI();
+      await saveToStorage();
+    } catch (e) {
+      debugPrint('Error adding bed: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateBed(String bedId, String newLabel) async {
+    try {
+      await ApiService.updateBed(bedId, {'label': newLabel});
+      await loadFromAPI();
+      await saveToStorage();
+    } catch (e) {
+      debugPrint('Error updating bed: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> removeBed(String roomId, String bedId) async {
+    try {
+      await ApiService.deleteBed(bedId);
+      await loadFromAPI();
+      await saveToStorage();
+    } catch (e) {
+      debugPrint('Error removing bed: $e');
+      rethrow;
     }
   }
 
