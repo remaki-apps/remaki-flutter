@@ -11,7 +11,6 @@ import '../services/api_service.dart';
 import '../utils/image_compress_util.dart';
 import '../services/shared_media_service.dart';
 import '../widgets/fancy_toast.dart';
-import '../widgets/universal_upi_checkout_modal.dart';
 
 class PlatformFeeSummaryScreen extends StatefulWidget {
   final String? propertyId;
@@ -47,6 +46,8 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
     final sharedBytes = SharedMediaService.instance.consumePendingImage();
     if (sharedBytes != null && mounted) {
       try {
+        // If a bottom sheet or dialog is currently open, pop until the screen root
+        Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
         final compressed = await ImageCompressUtil.compressDocumentOrBill(sharedBytes);
         final totalCollected = (_summaryData?['monthlyPlatformFeeCollected'] as num?)?.toDouble() ?? 0.0;
         final appProvider = Provider.of<AppProvider>(context, listen: false);
@@ -118,17 +119,7 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
       return;
     }
 
-    UniversalUpiCheckoutModal.show(
-      context,
-      amount: totalCollected,
-      upiId: _resolvedOrganizationUpiId,
-      payeeName: _resolvedOrganizationPayeeName,
-      propertyName: pgName,
-      note: 'Platform fee - $pgName ($billingMonth)',
-      onProceedToUpload: () {
-        _pickAndConfirmProof(totalCollected, pgName, billingMonth);
-      },
-    );
+    _pickAndConfirmProof(totalCollected, pgName, billingMonth);
   }
 
   Future<void> _pickAndConfirmProof(

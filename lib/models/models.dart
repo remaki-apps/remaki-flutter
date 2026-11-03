@@ -437,7 +437,7 @@ class Tenant {
     this.defaultPaymentMode,
     this.pendingConvenienceFee = 0.0,
   })  : additionalCharges = additionalCharges ?? [],
-        password = password ?? generateEasyPassword();
+        password = password ?? '';
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -500,7 +500,7 @@ class Tenant {
             [],
         imageUrl: json['imageUrl'] as String?,
         credentialsSent: json['credentialsSent'] as bool? ?? false,
-        password: (json['tempPassword'] ?? json['password']) as String? ?? generateEasyPassword(),
+        password: (json['tempPassword'] ?? json['password']) as String? ?? '',
         defaultPaymentMode: json['defaultPaymentMode'] as String?,
         occupation: json['occupation'] as String?,
         dateOfBirth: json['dateOfBirth'] as String?,

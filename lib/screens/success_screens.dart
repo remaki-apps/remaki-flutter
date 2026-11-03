@@ -354,14 +354,13 @@ class _TenantAddedSuccessScreenState extends State<TenantAddedSuccessScreen> {
 
     if (tIndex != -1) {
       final t = provider.tenants[tIndex];
-      if (displayPassword.isEmpty) displayPassword = t.password;
+      if (displayPassword.isEmpty && t.password.isNotEmpty) displayPassword = t.password;
       final rIndex = provider.rooms.indexWhere((r) => r.id == t.roomId);
       if (rIndex != -1) {
         if (currentRoom.isEmpty) currentRoom = provider.rooms[rIndex].number;
         if (currentFloor.isEmpty) currentFloor = provider.rooms[rIndex].floor;
       }
     }
-    if (displayPassword.isEmpty) displayPassword = 'hi123';
 
     final String roomDisplay = currentRoom.isNotEmpty
         ? '${formatRoomName(currentRoom)}${currentFloor.isNotEmpty ? ' ($currentFloor)' : ''}'

@@ -18,7 +18,6 @@ import 'complete_profile_dialog.dart';
 import '../widgets/app_shimmer.dart';
 import '../utils/image_compress_util.dart';
 import '../widgets/payment_splitup_card.dart';
-import '../widgets/universal_upi_checkout_modal.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 // import '../providers/notification_provider.dart';
@@ -177,6 +176,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     final sharedBytes = SharedMediaService.instance.consumePendingImage();
     if (sharedBytes != null && mounted) {
       try {
+        // If a bottom sheet or dialog is currently open, pop until the screen root
+        Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
         final compressed = await ImageCompressUtil.compressDocumentOrBill(sharedBytes);
         setState(() {
           _selectedImageBytes = compressed;
@@ -768,55 +769,6 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  void _openUpiPaymentModal() {
-    final effectiveDue = _totalDue > 0 ? _totalDue : _pendingBills;
-    if (effectiveDue <= 0) {
-      FancyToast.showError(context, 'No Dues', message: 'No outstanding dues to pay.');
-      return;
-    }
-
-    final rawUpi = _profileData?['propertyUpiId'] as String?;
-    final upiId = (rawUpi != null && rawUpi.trim().isNotEmpty)
-        ? rawUpi.trim()
-        : 'remakiapps@okhdfcbank';
-
-    // Validate VPA upfront with a clear user-facing check
-    if (!UniversalUpiCheckoutModal.isValidVpa(upiId)) {
-      FancyToast.showError(
-        context,
-        'Invalid UPI ID',
-        message: 'The property UPI ID "$upiId" is invalid. Please contact property manager.',
-      );
-      return;
-    }
-
-    final rawPayee = _profileData?['propertyUpiPayeeName'] as String?;
-    final propName = _profileData?['propertyName'] as String?;
-    final payeeName = (rawPayee != null && rawPayee.trim().isNotEmpty)
-        ? rawPayee.trim()
-        : (propName ?? 'PG Property');
-
-    final note = (_pendingRent <= 0 && _pendingBills > 0)
-        ? 'Utility bill - ${_profileData?['name'] ?? "Tenant"}'
-        : 'Rent payment - ${_profileData?['name'] ?? "Tenant"}';
-
-    // Generate and track transactionRef for bank reconciliation
-    final txnRef = 'RMK${DateTime.now().millisecondsSinceEpoch}';
-    _currentTransactionRef = txnRef;
-
-    UniversalUpiCheckoutModal.show(
-      context,
-      amount: effectiveDue,
-      upiId: upiId,
-      payeeName: payeeName,
-      propertyName: propName,
-      tenantName: _profileData?['name'],
-      note: note,
-      transactionRef: txnRef,
-      onProceedToUpload: _pickImage,
-    );
   }
 
   String _getGreeting() {
@@ -1679,11 +1631,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           // 4. Rent Status Card (Frosted Glass) - Handles Paid Rent + Pending Utility Bill
           GestureDetector(
             onTap: () {
-              if (isRentPaidBillsDue) {
-                _openUpiPaymentModal();
-              } else {
-                setState(() => _currentNavIndex = 1); // Navigate to Payments
-              }
+              setState(() => _currentNavIndex = 1); // Navigate to Payments
             },
             child: _buildGlassContainer(
               padding: const EdgeInsets.all(18),
@@ -1816,11 +1764,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       const SizedBox(width: 8),
                       GestureDetector(
                         onTap: () {
-                          if (isRentPaidBillsDue) {
-                            _openUpiPaymentModal();
-                          } else {
-                            setState(() => _currentNavIndex = 1);
-                          }
+                          setState(() => _currentNavIndex = 1);
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -2700,7 +2644,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                     Material(
                                       color: Colors.transparent,
                                       child: InkWell(
-                                        onTap: _openUpiPaymentModal,
+                                        onTap: () {
+                                          setState(() => _currentNavIndex = 1);
+                                        },
                                         borderRadius: BorderRadius.circular(14),
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
@@ -3109,67 +3055,6 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // 1-Click Direct Multi-UPI Pay Button
-                  GestureDetector(
-                    onTap: _openUpiPaymentModal,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF2563EB).withValues(alpha: 0.35),
-                            blurRadius: 12,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.bolt_rounded, color: Colors.white, size: 22),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Pay ₹${_totalDue.toStringAsFixed(0)} via UPI / GPay / QR',
-                            style: GoogleFonts.lato(
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  Row(
-                    children: [
-                      const Expanded(child: Divider(color: Color(0xFFE2E8F0))),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Text(
-                          'THEN ATTACH SCREENSHOT',
-                          style: GoogleFonts.lato(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.8,
-                            color: const Color(0xFF94A3B8),
-                          ),
-                        ),
-                      ),
-                      const Expanded(child: Divider(color: Color(0xFFE2E8F0))),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
 
                   // Compact / Clean Image Upload Button
                   GestureDetector(

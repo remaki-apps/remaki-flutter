@@ -790,6 +790,16 @@ class ApiService {
     return result['createTenant']['tempPassword'];
   }
 
+  static Future<String?> resetTenantPassword(String tenantId) async {
+    const String query = '''
+      mutation ResetTenantPassword(\$tenantId: ID!) {
+        resetTenantPassword(tenantId: \$tenantId)
+      }
+    ''';
+    final result = await performQuery(query, variables: {'tenantId': tenantId});
+    return result['resetTenantPassword'] as String?;
+  }
+
   static Future<Map<String, dynamic>?> createRoom(Map<String, dynamic> input) async {
     const String mutation = '''
       mutation CreateRoom(\$input: CreateRoomInput!) {

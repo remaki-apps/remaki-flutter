@@ -65,6 +65,81 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
     });
   }
 
+  Future<void> _resetAndSharePassword(Tenant tenant, String roomNumber, String floorName) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text('Reset Tenant Password?', style: GoogleFonts.lato(fontWeight: FontWeight.w800)),
+        content: Text(
+          'This will generate a new temporary password for ${tenant.name} and allow you to share it via WhatsApp. The tenant can immediately log in with this new password.',
+          style: GoogleFonts.lato(fontSize: 13, color: const Color(0xFF475569)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel', style: GoogleFonts.lato(color: const Color(0xFF64748B))),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF4F46E5),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Reset Password', style: GoogleFonts.lato(fontWeight: FontWeight.bold, color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    try {
+      final newPass = await ApiService.resetTenantPassword(tenant.id);
+      if (newPass != null && mounted) {
+        setState(() {
+          tenant.password = newPass;
+        });
+        FancyToast.showSuccess(context, 'Password Reset', message: 'New temporary password: $newPass');
+        _shareCredentials(tenant, newPass, roomNumber, floorName);
+      }
+    } catch (e) {
+      if (mounted) {
+        FancyToast.showError(context, 'Reset Failed', message: e.toString().replaceAll('Exception: ', ''));
+      }
+    }
+  }
+
+  Future<void> _shareCredentials(Tenant tenant, String password, String roomNumber, String floorName) async {
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    final sanitizedPhone = tenant.phone.replaceAll(RegExp(r'\D'), '');
+    final phoneNum = sanitizedPhone.startsWith('91') ? sanitizedPhone : '91$sanitizedPhone';
+    final message = Uri.encodeComponent(
+      '🌟 *Welcome to ${appProvider.pgName}!* 🌟\n\n'
+      'Dear ${tenant.name},\n\n'
+      'Your tenant portal account is ready on the *Remaki* app. You can now use the app to track your rent payments, view payment receipts, and manage your stay.\n\n'
+      '🏠 *Stay Details:*\n'
+      '• *Room:* ${formatRoomName(roomNumber)}\n'
+      '• *Floor:* $floorName\n\n'
+      '🔐 *Your Remaki App Login Credentials:*\n'
+      '────────────────────────────\n'
+      '📱 *Mobile Number:* ${tenant.phone}\n'
+      '🔑 *Password:* $password\n'
+      '────────────────────────────\n\n'
+      '📲 *Next Steps:*\n'
+      '1️⃣ Download & open the *Remaki* app.\n'
+      '2️⃣ Log in using your registered mobile number and password above.\n\n'
+      'If you have any questions, please reach out to the management.\n\n'
+      'Best regards,\n'
+      '*${appProvider.pgName} Management*'
+    );
+    final url = Uri.parse('https://wa.me/$phoneNum?text=$message');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+      appProvider.markCredentialsSent(tenant.id);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
@@ -440,63 +515,112 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                               ),
                             ],
                           ),
-                          if (!tenant.credentialsSent) ...[
-                            const SizedBox(height: 10),
-                            GestureDetector(
-                              onTap: () async {
-                                final sanitizedPhone = tenant.phone.replaceAll(RegExp(r'\D'), '');
-                                final phoneNum = sanitizedPhone.startsWith('91') ? sanitizedPhone : '91$sanitizedPhone';
-                                final message = Uri.encodeComponent(
-                                  '🌟 *Welcome to ${appProvider.pgName}!* 🌟\n\n'
-                                  'Dear ${tenant.name},\n\n'
-                                  'Your tenant portal account is ready on the *Remaki* app. You can now use the app to track your rent payments, view payment receipts, and manage your stay.\n\n'
-                                  '🏠 *Stay Details:*\n'
-                                  '• *Room:* ${formatRoomName(roomNumber)}\n'
-                                  '• *Floor:* $floorName\n\n'
-                                  '🔐 *Your Remaki App Login Credentials:*\n'
-                                  '────────────────────────────\n'
-                                  '📱 *Mobile Number:* ${tenant.phone}\n'
-                                  '🔑 *Password:* ${tenant.password}\n'
-                                  '────────────────────────────\n\n'
-                                  '📲 *Next Steps:*\n'
-                                  '1️⃣ Download & open the *Remaki* app.\n'
-                                  '2️⃣ Log in using your registered mobile number and password above.\n\n'
-                                  'If you have any questions, please reach out to the management.\n\n'
-                                  'Best regards,\n'
-                                  '*${appProvider.pgName} Management*'
-                                );
-                                final url = Uri.parse('https://wa.me/$phoneNum?text=$message');
-                                if (await canLaunchUrl(url)) {
-                                  await launchUrl(url, mode: LaunchMode.externalApplication);
-                                  appProvider.markCredentialsSent(tenant.id);
-                                }
-                              },
-                              child: Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF0FDF4),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: const Color(0xFFBBF7D0)),
+                          // Credentials & Password Reset Row
+                          const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.vpn_key_rounded, size: 16, color: Color(0xFF4F46E5)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Password',
+                                        style: GoogleFonts.lato(fontSize: 10.5, color: const Color(0xFF64748B)),
+                                      ),
+                                      Text(
+                                        tenant.password.isNotEmpty ? tenant.password : 'Password Secured',
+                                        style: GoogleFonts.lato(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: tenant.password.isNotEmpty ? const Color(0xFF0F172A) : const Color(0xFF10B981),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Image.asset(
-                                      'assets/icons/whatsapp.png',
-                                      width: 18,
-                                      height: 18,
+                                if (tenant.password.isNotEmpty)
+                                  IconButton(
+                                    icon: const Icon(Icons.copy_rounded, size: 16, color: Color(0xFF4F46E5)),
+                                    onPressed: () {
+                                      Clipboard.setData(ClipboardData(text: tenant.password));
+                                      FancyToast.showSuccess(context, 'Password Copied');
+                                    },
+                                    tooltip: 'Copy',
+                                    constraints: const BoxConstraints(),
+                                    padding: const EdgeInsets.all(4),
+                                  ),
+                                const SizedBox(width: 6),
+                                InkWell(
+                                  onTap: () => _resetAndSharePassword(tenant, roomNumber, floorName),
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEEF2FF),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: const Color(0xFFC7D2FE)),
                                     ),
-                                    const SizedBox(width: 6),
-                                    const Text(
-                                      'Send Remaki Credentials via WhatsApp',
-                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.lock_reset_rounded, size: 14, color: Color(0xFF4338CA)),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Reset',
+                                          style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF4338CA)),
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          GestureDetector(
+                            onTap: () {
+                              if (tenant.password.isNotEmpty) {
+                                _shareCredentials(tenant, tenant.password, roomNumber, floorName);
+                              } else {
+                                _resetAndSharePassword(tenant, roomNumber, floorName);
+                              }
+                            },
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF0FDF4),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFFBBF7D0)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/icons/whatsapp.png',
+                                    width: 18,
+                                    height: 18,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    tenant.password.isNotEmpty
+                                        ? 'Send Remaki Credentials via WhatsApp'
+                                        : 'Reset & Send Credentials via WhatsApp',
+                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
+                          ),
                         ],
                       ),
                     ),
