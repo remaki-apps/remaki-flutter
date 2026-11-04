@@ -15,6 +15,7 @@ import 'edit_personal_info_dialog.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/app_shimmer.dart';
 import '../widgets/payment_splitup_card.dart';
+import '../widgets/custom_expandable_dropdown.dart';
 
 class TenantProfileScreen extends StatefulWidget {
   final String tenantId;
@@ -196,13 +197,10 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () => appProvider.loadFromAPI(),
-          color: AppTheme.primaryColor,
-          child: appProvider.isLoading
-              ? const ProfileSkeleton()
-              : Column(
-                  children: [
+        child: appProvider.isLoading
+            ? const ProfileSkeleton()
+            : Column(
+                children: [
             // Top Header Bar
             Center(
               child: ConstrainedBox(
@@ -572,43 +570,39 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                     ),
                                   ),
                                 ),
+                                const SizedBox(width: 6),
+                                InkWell(
+                                  onTap: () {
+                                    if (tenant.password.isNotEmpty) {
+                                      _shareCredentials(tenant, tenant.password, roomNumber, floorName);
+                                    } else {
+                                      _resetAndSharePassword(tenant, roomNumber, floorName);
+                                    }
+                                  },
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Tooltip(
+                                    message: 'Send Credentials via WhatsApp',
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF0FDF4),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: const Color(0xFFBBF7D0)),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Image.asset(
+                                            'assets/icons/whatsapp.png',
+                                            width: 14,
+                                            height: 14,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ],
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          GestureDetector(
-                            onTap: () {
-                              if (tenant.password.isNotEmpty) {
-                                _shareCredentials(tenant, tenant.password, roomNumber, floorName);
-                              } else {
-                                _resetAndSharePassword(tenant, roomNumber, floorName);
-                              }
-                            },
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF0FDF4),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFFBBF7D0)),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Image.asset(
-                                    'assets/icons/whatsapp.png',
-                                    width: 18,
-                                    height: 18,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    tenant.password.isNotEmpty
-                                        ? 'Send Remaki Credentials via WhatsApp'
-                                        : 'Reset & Send Credentials via WhatsApp',
-                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
-                                  ),
-                                ],
-                              ),
                             ),
                           ),
                         ],
@@ -1449,7 +1443,6 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
         ],
       ),
     ),
-    ),
     );
   }
 
@@ -2006,37 +1999,16 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                       const SizedBox(height: 20),
                     ] else ...[
                       // Select Target Room
-                      const Text(
-                        'Select Target Room',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
-                      ),
-                      const SizedBox(height: 6),
-                      DropdownButtonFormField<String>(
+                      CustomExpandableDropdown<String>(
+                        label: 'Select Target Room *',
                         value: selectedRoomId,
-                        isExpanded: true,
-                        decoration: InputDecoration(
-                          hintText: 'Choose Room',
-                          hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
-                          filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                          ),
-                        ),
+                        hintText: 'Choose Available Room',
+                        icon: Icons.meeting_room_outlined,
                         items: availableRooms.map((r) {
                           final avail = r.beds.where((b) => b.isAvailable).length;
-                          return DropdownMenuItem<String>(
+                          return DropdownOption<String>(
                             value: r.id,
-                            child: Text(
-                              'Room ${r.number} (${r.floor}) — $avail free',
-                              style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-                            ),
+                            label: '${formatRoomName(r.number)} (${r.floor}) — $avail free',
                           );
                         }).toList(),
                         onChanged: (val) {
@@ -2046,50 +2018,59 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                           });
                         },
                       ),
-                      const SizedBox(height: 14),
 
                       // Select Target Bed
-                      const Text(
-                        'Select Target Bed',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
-                      ),
-                      const SizedBox(height: 6),
-                      DropdownButtonFormField<String>(
-                        value: selectedBedId,
-                        isExpanded: true,
-                        decoration: InputDecoration(
-                          hintText: selectedRoomId == null ? 'Select room first' : 'Choose Bed',
-                          hintStyle: const TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
-                          filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      if (selectedRoomId != null) ...[
+                        CustomExpandableDropdown<String>(
+                          label: 'Select Target Bed *',
+                          value: selectedBedId,
+                          hintText: 'Choose Available Bed',
+                          icon: Icons.single_bed_outlined,
+                          items: availableBeds.map((b) {
+                            return DropdownOption<String>(
+                              value: b.id,
+                              label: b.name,
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            setDialogState(() {
+                              selectedBedId = val;
+                            });
+                          },
+                        ),
+                      ] else ...[
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 14),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(Icons.single_bed_outlined, color: Color(0xFF94A3B8), size: 20),
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Select a room first to choose a bed',
+                                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13, fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        items: availableBeds.map((b) {
-                          return DropdownMenuItem<String>(
-                            value: b.id,
-                            child: Text(
-                              b.name,
-                              style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: selectedRoomId == null
-                            ? null
-                            : (val) {
-                                setDialogState(() {
-                                  selectedBedId = val;
-                                });
-                              },
-                      ),
-                      const SizedBox(height: 22),
+                      ],
+                      const SizedBox(height: 8),
                     ],
 
                     // Action Buttons

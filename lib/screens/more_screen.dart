@@ -601,16 +601,6 @@ class MoreScreen extends StatelessWidget {
                   const SizedBox(height: 8),
 
                   _buildActionCard(
-                    icon: Icons.assignment_late_outlined,
-                    iconColor: const Color(0xFFD97706),
-                    iconBg: const Color(0xFFFEF3C7),
-                    title: 'Tenant Complaints',
-                    subtitle: 'Individual complaints, media proof & replies',
-                    onTap: () => context.push('/admin_complaints'),
-                  ),
-                  const SizedBox(height: 8),
-
-                  _buildActionCard(
                     icon: Icons.description_outlined,
                     iconColor: const Color(0xFF4338CA),
                     iconBg: const Color(0xFFEEF2FF),
