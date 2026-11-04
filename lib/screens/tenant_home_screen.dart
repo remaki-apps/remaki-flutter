@@ -3429,19 +3429,27 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         final p = displayPayments[i];
         final double amount = (p['amount'] as num?)?.toDouble() ?? 0.0;
         final dateStr = _formatPaymentDateTime(p['date']);
-        final method = p['method']?.toString() ?? 'UPI';
+        final method = (p['method'] != null && p['method'].toString().isNotEmpty)
+            ? p['method'].toString()
+            : 'UPI';
         final notes = p['notes']?.toString();
         final paymentId = p['_id']?.toString() ?? p['id']?.toString() ?? 'tenant_payment_$i';
         final rawDate = p['date'] != null ? (DateTime.tryParse(p['date'].toString())?.toLocal() ?? DateTime.now()) : DateTime.now();
-
-        final displayTitle = (notes != null && notes.isNotEmpty && !notes.toLowerCase().contains('approved via payment request'))
-            ? notes
-            : 'Rent Payment';
 
         final double rAmt = (p['rentAmount'] as num?)?.toDouble() ??
             ((notes != null && (notes.toLowerCase().contains('bill') || notes.toLowerCase().contains('utility'))) ? 0.0 : (amount >= monthlyRentVal ? monthlyRentVal : amount));
         final double pFee = (p['platformFee'] as num?)?.toDouble() ?? 0.0;
         final double cardAmount = rAmt > 0 ? (rAmt + pFee) : amount;
+
+        final String notesStr = (notes != null && notes.trim().isNotEmpty) ? notes.trim() : '';
+        String displayTitle = 'Payment';
+        if (notesStr.isNotEmpty && !notesStr.toLowerCase().contains('approved via payment request')) {
+          displayTitle = notesStr;
+        } else if (rAmt > 0) {
+          displayTitle = 'Rent Payment';
+        } else {
+          displayTitle = 'Bill / Due Payment';
+        }
 
         transactionWidgets.add(_buildPaymentRecordTile(
           title: displayTitle,
@@ -3864,8 +3872,11 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     double? platformFee,
     List<dynamic>? bills,
   }) {
-    final isUPI = method.toUpperCase().contains('UPI');
-    final isCash = method.toUpperCase().contains('CASH');
+    final cleanMethod = method.toUpperCase();
+    final isUPI = cleanMethod.contains('UPI');
+    final isCash = cleanMethod.contains('CASH');
+    final isBank = cleanMethod.contains('BANK') || cleanMethod.contains('TRANSFER');
+    final String methodTag = isBank ? 'BANK' : (isCash ? 'CASH' : 'UPI');
     final isExpandable = paymentId != null;
     final isExpanded = isExpandable && _expandedPaymentIds.contains(paymentId);
 
@@ -3968,30 +3979,36 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              if (method.isNotEmpty && method != 'PAID' && method != 'PENDING') ...[
+                              if (isSuccess || (method.isNotEmpty && method != 'PAID' && method != 'PENDING')) ...[
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6.5, vertical: 2),
                                   decoration: BoxDecoration(
                                     color: isUPI
                                         ? TenantTheme.primarySoft
-                                        : (isCash ? const Color(0xFFFEF3C7) : const Color(0xFFF1F5F9)),
+                                        : (isCash
+                                            ? const Color(0xFFFEF3C7)
+                                            : (isBank ? const Color(0xFFE0F2FE) : const Color(0xFFF1F5F9))),
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(
                                       color: isUPI
                                           ? TenantTheme.primaryBorder.withValues(alpha: 0.6)
-                                          : (isCash ? const Color(0xFFFDE68A) : const Color(0xFFE2E8F0)),
+                                          : (isCash
+                                              ? const Color(0xFFFDE68A)
+                                              : (isBank ? const Color(0xFFBAE6FD) : const Color(0xFFE2E8F0))),
                                       width: 0.8,
                                     ),
                                   ),
                                   child: Text(
-                                    method.toUpperCase(),
+                                    methodTag,
                                     style: TextStyle(
                                       fontSize: 9,
                                       fontWeight: FontWeight.w800,
                                       letterSpacing: 0.3,
                                       color: isUPI
                                           ? TenantTheme.primary
-                                          : (isCash ? const Color(0xFFB45309) : const Color(0xFF64748B)),
+                                          : (isCash
+                                              ? const Color(0xFFB45309)
+                                              : (isBank ? const Color(0xFF0284C7) : const Color(0xFF64748B))),
                                     ),
                                   ),
                                 ),

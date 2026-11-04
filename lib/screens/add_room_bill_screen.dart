@@ -181,6 +181,16 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
       return;
     }
 
+    final billDesc = _descController.text.trim();
+    if (billDesc.isEmpty) {
+      FancyToast.showError(
+        context,
+        'Description Required',
+        message: 'Please enter a bill description or note before splitting.',
+      );
+      return;
+    }
+
     if (_splitMode == SplitMode.byAmount) {
       final diff = _totalAmount - _customTotalSum;
       if (diff.abs() >= 0.01) {
@@ -203,7 +213,7 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
 
     setState(() => _isSubmitting = true);
     final appProvider = Provider.of<AppProvider>(context, listen: false);
-    final desc = _descController.text.trim().isEmpty ? 'Room Bill' : _descController.text.trim();
+    final desc = billDesc;
     final splitAmount = _selectedTenantIds.isNotEmpty ? _totalAmount / _selectedTenantIds.length : 0.0;
 
     try {
@@ -581,7 +591,7 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
                       ),
                       decoration: InputDecoration(
                         isDense: true,
-                        hintText: 'Bill description / note (e.g. Electricity)',
+                        hintText: 'Bill description / note (Required, e.g. Electricity)',
                         prefixIcon: const Icon(Icons.notes_rounded, color: Color(0xFF64748B), size: 20),
                         prefixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 42),
                         filled: true,

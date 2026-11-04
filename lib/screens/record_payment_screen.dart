@@ -583,6 +583,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                         _paymentMethod,
                                         paymentType: _paymentType,
                                         paymentDate: _paymentDate,
+                                        notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
                                       );
 
                                       final dateStr = DateFormat('dd-MM-yyyy').format(_paymentDate);
