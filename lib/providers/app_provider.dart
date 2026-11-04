@@ -159,12 +159,14 @@ class AppProvider with ChangeNotifier {
       
       rooms = roomsData.whereType<Map<String, dynamic>>().map((e) {
         final rawBeds = (e['beds'] as List<dynamic>?) ?? [];
+        final rawRoomType = (e['roomType']?.toString() ?? 'NON_AC').toUpperCase();
         return Room(
           id: e['id']?.toString() ?? '',
           propertyId: e['propertyId']?.toString() ?? '',
           number: e['roomNumber']?.toString() ?? '',
           floor: e['floorNumber']?.toString() ?? 'Ground Floor',
           capacity: (e['capacity'] as num?)?.toInt() ?? rawBeds.length,
+          roomType: rawRoomType == 'AC' ? 'AC' : 'NON_AC',
           beds: rawBeds.whereType<Map<String, dynamic>>().map((b) => Bed(
             id: b['id']?.toString() ?? '',
             name: b['bedLabel']?.toString() ?? 'Bed',
@@ -582,6 +584,16 @@ class AppProvider with ChangeNotifier {
 
   Future<void> updateRoom(String roomId, {String? roomNumber, String? floorNumber, int? capacity, String? roomType}) async {
     try {
+      final index = rooms.indexWhere((r) => r.id == roomId);
+      if (index != -1) {
+        final current = rooms[index];
+        if (roomNumber != null) current.number = roomNumber;
+        if (floorNumber != null) current.floor = floorNumber;
+        if (capacity != null) current.capacity = capacity;
+        if (roomType != null) current.roomType = roomType.toUpperCase() == 'AC' ? 'AC' : 'NON_AC';
+        notifyListeners();
+      }
+
       await ApiService.updateRoom(roomId, {
         if (roomNumber != null) 'roomNumber': roomNumber,
         if (floorNumber != null) 'floorNumber': floorNumber,

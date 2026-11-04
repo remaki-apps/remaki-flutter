@@ -238,10 +238,10 @@ class Room {
 
   factory Room.fromJson(Map<String, dynamic> json) => Room(
         id: json['id']?.toString() ?? '',
-        number: json['number']?.toString() ?? '',
-        floor: json['floor']?.toString() ?? 'Ground Floor',
+        number: (json['number'] ?? json['roomNumber'])?.toString() ?? '',
+        floor: (json['floor'] ?? json['floorNumber'])?.toString() ?? 'Ground Floor',
         capacity: (json['capacity'] as num?)?.toInt() ?? 0,
-        roomType: json['roomType']?.toString() ?? 'NON_AC',
+        roomType: (json['roomType']?.toString() ?? 'NON_AC').toUpperCase() == 'AC' ? 'AC' : 'NON_AC',
         propertyId: json['propertyId']?.toString() ?? '',
         beds: (json['beds'] as List<dynamic>?)
             ?.whereType<Map<String, dynamic>>()
