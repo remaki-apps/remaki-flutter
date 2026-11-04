@@ -1450,11 +1450,13 @@ class ApiService {
           propertyName
           billingMonth
           monthlyPlatformFeeCollected
+          platformFeePaid
           feePerTenant
           totalTenantsContributed
           resetsOn
           organizationUpiId
           organizationPayeeName
+          availableMonths
           items {
             id
             tenantName

@@ -704,6 +704,242 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
     );
   }
 
+  Widget _buildPlatformFeePaidCard({required double platformFeePaid}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x060F172A),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: const Color(0xFFECFDF5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFA7F3D0)),
+            ),
+            child: const Icon(
+              Icons.verified_rounded,
+              color: Color(0xFF059669),
+              size: 26,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Platform Fee Paid to Organization',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      '₹${platformFeePaid.toStringAsFixed(0)}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF059669),
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'settled',
+                      style: GoogleFonts.lato(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF10B981),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonthChooser({
+    required String selectedMonthStr,
+    required bool isCurrentMonth,
+    required bool canGoPrev,
+    required bool canGoNext,
+    required VoidCallback? onPrev,
+    required VoidCallback? onNext,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x060F172A),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: Icon(
+              Icons.chevron_left_rounded,
+              size: 22,
+              color: canGoPrev ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1),
+            ),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            splashRadius: 18,
+            onPressed: canGoPrev ? onPrev : null,
+            tooltip: canGoPrev ? 'Previous Month' : 'First Recorded Month',
+          ),
+          GestureDetector(
+            onTap: isCurrentMonth ? null : _resetToCurrentMonth,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.calendar_month_rounded, size: 16, color: Color(0xFF0D9488)),
+                const SizedBox(width: 6),
+                Text(
+                  selectedMonthStr,
+                  style: GoogleFonts.lato(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                  decoration: BoxDecoration(
+                    color: isCurrentMonth ? const Color(0xFFCCFBF1) : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: isCurrentMonth ? const Color(0xFF99F6E4) : const Color(0xFFE2E8F0),
+                      width: 0.6,
+                    ),
+                  ),
+                  child: Text(
+                    isCurrentMonth ? 'Current' : 'Reset',
+                    style: GoogleFonts.lato(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: isCurrentMonth ? const Color(0xFF0F766E) : const Color(0xFF64748B),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.chevron_right_rounded,
+              size: 22,
+              color: canGoNext ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1),
+            ),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            splashRadius: 18,
+            onPressed: canGoNext ? onNext : null,
+            tooltip: canGoNext ? 'Next Month' : 'Current Month',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonthCollectedCard({
+    required String monthStr,
+    required double total,
+    required int count,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x040F172A),
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Total Platform Fee Collected',
+                style: GoogleFonts.lato(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF64748B),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '₹${total.toStringAsFixed(0)}',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF0F766E),
+                ),
+              ),
+            ],
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0FDFA),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF99F6E4)),
+            ),
+            child: Text(
+              '$count record${count == 1 ? '' : 's'}',
+              style: GoogleFonts.lato(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF0F766E),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHeroTotalCard({
     required double totalCollected,
     required String formattedMonth,
