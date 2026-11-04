@@ -1776,7 +1776,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 paymentAmount: payment.amount,
                 rentAmount: payment.rentAmount,
                 platformFee: payment.platformFee > 0 ? payment.platformFee : (payment.rentAmount > 0 ? (tenant?.platformFee ?? 9.0) : 0.0),
-                bills: tenant?.additionalCharges,
+                bills: null,
                 method: payment.method,
                 notes: payment.notes,
                 paymentDate: payment.date,

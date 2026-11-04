@@ -66,23 +66,25 @@ class PaymentSplitupCard extends StatelessWidget {
 
     final double effectiveFee = platformFee > 0 ? platformFee : 0.0;
 
+    final bool isRent = (notes != null && notes!.toLowerCase().contains('rent')) || (rentAmount > 0);
     final bool isExplicitBill = (notes != null && (
         notes!.toLowerCase().contains('bill') ||
         notes!.toLowerCase().contains('utility') ||
         notes!.toLowerCase().contains('electricity') ||
         notes!.toLowerCase().contains('eb')
-    )) || (rentAmount <= 0);
+    )) || (!isRent && rentAmount <= 0);
 
-    if (isExplicitBill) {
+    if (isRent) {
+      final double effectiveRent = rentAmount > 0
+          ? rentAmount
+          : (effectiveFee > 0 && paymentAmount > effectiveFee ? paymentAmount - effectiveFee : paymentAmount);
+      rentPortion = effectiveRent;
+      feePortion = (paymentAmount > effectiveRent) ? (paymentAmount - effectiveRent) : 0.0;
+      billsPortion = 0.0;
+    } else if (isExplicitBill) {
       rentPortion = 0.0;
       feePortion = 0.0;
       billsPortion = paymentAmount;
-    } else if (rentAmount > 0) {
-      // Rent payment: Monthly rent + platform convenience fee only.
-      // Separate utility bills are displayed on their own cards and should not be added here.
-      rentPortion = rentAmount;
-      feePortion = effectiveFee;
-      billsPortion = 0.0;
     } else {
       // Default fallback
       billsPortion = paymentAmount;
@@ -210,7 +212,7 @@ class PaymentSplitupCard extends StatelessWidget {
             _buildSplitRow(
               icon: Icons.home_outlined,
               iconColor: const Color(0xFF6366F1),
-              label: 'Monthly Rent',
+              label: (notes != null && notes!.isNotEmpty) ? notes! : 'Monthly Rent',
               amount: rentPortion,
               labelColor: labelColor,
               valueColor: valueColor,

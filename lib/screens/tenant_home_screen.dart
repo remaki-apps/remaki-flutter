@@ -3420,16 +3420,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
     final List<Widget> transactionWidgets = [];
 
-    // Filter out generic bill payments if monthBills already shows the individual paid bill(s)
-    final displayPayments = monthPayments.where((p) {
-      final notes = (p['notes'] ?? '').toString().toLowerCase();
-      final rAmt = (p['rentAmount'] as num?)?.toDouble() ?? 0.0;
-      final isGenericBillPayment = (notes.contains('bill') || notes.contains('utility')) || rAmt <= 0;
-      if (isGenericBillPayment && paidMonthBills.isNotEmpty) {
-        return false;
-      }
-      return true;
-    }).toList();
+    // All payments recorded for this month
+    final displayPayments = monthPayments;
+    final pendingMonthBills = monthBills.where((b) => b['status'] != 'PAID').toList();
 
     if (displayPayments.isNotEmpty) {
       for (int i = 0; i < displayPayments.length; i++) {
@@ -3465,37 +3458,34 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           bills: null,
           notes: notes,
         ));
-        if (i < displayPayments.length - 1 || monthBills.isNotEmpty) {
+        if (i < displayPayments.length - 1 || pendingMonthBills.isNotEmpty) {
           transactionWidgets.add(const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16));
         }
       }
     }
 
-    for (int i = 0; i < monthBills.length; i++) {
-      final b = monthBills[i];
-      final isBillPaid = b['status'] == 'PAID';
+    for (int i = 0; i < pendingMonthBills.length; i++) {
+      final b = pendingMonthBills[i];
       final amount = (b['amount'] as num?)?.toDouble() ?? 0;
       final title = b['description'] != null && b['description'].toString().isNotEmpty
           ? b['description'].toString()
           : (b['type'] != null ? '${b['type']} Bill' : 'Utility Bill');
-      final billDate = isBillPaid
-          ? _formatPaymentDateTime(b['createdAt'] ?? b['dueDate'])
-          : _formatDate(b['dueDate'] ?? b['createdAt']);
+      final billDate = _formatDate(b['dueDate'] ?? b['createdAt']);
 
       transactionWidgets.add(_buildPaymentRecordTile(
         title: title,
         amount: '₹${NumberFormat('#,##,###').format(amount)}',
         dateStr: billDate,
-        method: isBillPaid ? 'PAID' : 'PENDING',
-        status: isBillPaid ? 'Paid' : 'Pending',
-        isSuccess: isBillPaid,
+        method: 'PENDING',
+        status: 'Pending',
+        isSuccess: false,
       ));
-      if (i < monthBills.length - 1) {
+      if (i < pendingMonthBills.length - 1) {
         transactionWidgets.add(const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16));
       }
     }
 
-    final totalCount = displayPayments.length + monthBills.length + (displayPayments.isEmpty && isCurrentPaid ? 1 : 0);
+    final totalCount = displayPayments.length + pendingMonthBills.length + (displayPayments.isEmpty && isCurrentPaid ? 1 : 0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3811,7 +3801,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 ],
 
                 // Show More / Show Summary Expandable Button (only if more than 2 actual items)
-                if ((monthPayments.length + monthBills.length) > 2)
+                if ((displayPayments.length + pendingMonthBills.length) > 2)
                   InkWell(
                     onTap: () {
                       setState(() {
@@ -3833,7 +3823,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           Text(
                             _isPaymentHistoryExpanded
                                 ? 'Show Summary'
-                                : 'Show More (${(monthPayments.length + monthBills.length) - 2} more)',
+                                : 'Show More (${(displayPayments.length + pendingMonthBills.length) - 2} more)',
                             style: GoogleFonts.lato(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
