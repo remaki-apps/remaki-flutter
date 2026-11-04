@@ -863,7 +863,9 @@ class _RentScreenState extends State<RentScreen> {
                 final p = payments[index];
                 final tenant = tenantMap[p.tenantId];
                 final tenantDisplayName = p.tenantName ?? tenant?.name ?? 'Tenant';
-                final room = roomIdx != -1 ? appProvider.rooms[roomIdx] : null;
+                final room = tenant != null
+                    ? appProvider.rooms.where((r) => r.id == tenant.roomId).firstOrNull
+                    : null;
                 final tenantRoomNum = room != null ? room.number : '';
                 final roomInfo = (p.roomNumber != null && p.roomNumber!.isNotEmpty)
                     ? formatRoomName(p.roomNumber)
