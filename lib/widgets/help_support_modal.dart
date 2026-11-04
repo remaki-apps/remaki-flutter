@@ -5,9 +5,15 @@ import 'package:url_launcher/url_launcher.dart';
 import 'fancy_toast.dart';
 
 class HelpSupportModal {
-  static const String supportName = 'Kishore';
-  static const String supportPhone = '9940328087';
+  static const String supportName = 'Karthik';
+  static const String supportPhone = '7539998654';
   static const String supportEmail = 'remakiapps@gmail.com';
+
+  static const String karthikName = 'Karthik';
+  static const String karthikPhone = '7539998654';
+
+  static const String kishoreName = 'Kishore';
+  static const String kishorePhone = '9940328087';
 
   static void show(BuildContext context) {
     showModalBottomSheet(
@@ -148,45 +154,90 @@ class HelpSupportModal {
             ),
             const SizedBox(height: 10),
 
-            // Call Action
+            // Call Action - Karthik
             _buildContactTile(
               icon: Icons.phone_rounded,
               iconColor: const Color(0xFF00B074),
               iconBg: const Color(0xFFE8F8F0),
-              title: 'Direct Phone Call',
-              subtitle: '+91 $supportPhone',
+              title: 'Direct Phone Call (Karthik)',
+              subtitle: '+91 $karthikPhone',
               actionLabel: 'Call Now',
               onTap: () async {
-                final uri = Uri.parse('tel:+91$supportPhone');
+                final uri = Uri.parse('tel:+91$karthikPhone');
                 if (await canLaunchUrl(uri)) {
                   await launchUrl(uri);
                 } else {
-                  await Clipboard.setData(const ClipboardData(text: supportPhone));
+                  await Clipboard.setData(const ClipboardData(text: karthikPhone));
                   if (ctx.mounted) {
-                    FancyToast.showSuccess(ctx, 'Phone Copied', message: supportPhone);
+                    FancyToast.showSuccess(ctx, 'Phone Copied', message: karthikPhone);
                   }
                 }
               },
             ),
             const SizedBox(height: 10),
 
-            // WhatsApp Action
+            // WhatsApp Action - Karthik
             _buildContactTile(
               icon: Icons.chat_rounded,
               iconColor: const Color(0xFF25D366),
               iconBg: const Color(0xFFE8F8EE),
-              title: 'WhatsApp Chat',
-              subtitle: 'Quick response & live assistance',
+              title: 'WhatsApp Chat (Karthik)',
+              subtitle: 'Direct messaging with Karthik',
               actionLabel: 'Message',
               onTap: () async {
-                final msg = Uri.encodeComponent('Hi Kishore, I need help with the Remaki App.');
-                final uri = Uri.parse('https://wa.me/91$supportPhone?text=$msg');
+                final msg = Uri.encodeComponent('Hi Karthik, I need help with the Remaki App.');
+                final uri = Uri.parse('https://wa.me/91$karthikPhone?text=$msg');
                 if (await canLaunchUrl(uri)) {
                   await launchUrl(uri, mode: LaunchMode.externalApplication);
                 } else {
-                  await Clipboard.setData(const ClipboardData(text: supportPhone));
+                  await Clipboard.setData(const ClipboardData(text: karthikPhone));
                   if (ctx.mounted) {
-                    FancyToast.showSuccess(ctx, 'Phone Copied', message: supportPhone);
+                    FancyToast.showSuccess(ctx, 'Phone Copied', message: karthikPhone);
+                  }
+                }
+              },
+            ),
+            const SizedBox(height: 10),
+
+            // Call Action - Kishore
+            _buildContactTile(
+              icon: Icons.phone_rounded,
+              iconColor: const Color(0xFF00B074),
+              iconBg: const Color(0xFFE8F8F0),
+              title: 'Direct Phone Call (Kishore)',
+              subtitle: '+91 $kishorePhone',
+              actionLabel: 'Call Now',
+              onTap: () async {
+                final uri = Uri.parse('tel:+91$kishorePhone');
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri);
+                } else {
+                  await Clipboard.setData(const ClipboardData(text: kishorePhone));
+                  if (ctx.mounted) {
+                    FancyToast.showSuccess(ctx, 'Phone Copied', message: kishorePhone);
+                  }
+                }
+              },
+            ),
+            const SizedBox(height: 10),
+
+            // WhatsApp Action - Kishore
+            _buildContactTile(
+              icon: Icons.chat_rounded,
+              iconColor: const Color(0xFF25D366),
+              iconBg: const Color(0xFFE8F8EE),
+              title: 'WhatsApp Chat (Kishore)',
+              subtitle: 'Direct messaging with Kishore',
+              actionLabel: 'Message',
+              onTap: () async {
+                final msg = Uri.encodeComponent('Hi Kishore, I need help with the Remaki App.');
+                final uri = Uri.parse('https://wa.me/91$kishorePhone?text=$msg');
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                } else {
+                  await Clipboard.setData(const ClipboardData(text: kishorePhone));
+                  if (ctx.mounted) {
+                    FancyToast.showSuccess(ctx, 'Phone Copied', message: kishorePhone);
                   }
                 }
               },

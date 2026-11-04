@@ -12,9 +12,15 @@ class HelpSupportScreen extends StatefulWidget {
 }
 
 class _HelpSupportScreenState extends State<HelpSupportScreen> {
-  static const String supportName = 'Kishore';
-  static const String supportPhone = '9940328087';
+  static const String supportName = 'Karthik';
+  static const String supportPhone = '7539998654';
   static const String supportEmail = 'remakiapps@gmail.com';
+
+  static const String karthikName = 'Karthik';
+  static const String karthikPhone = '7539998654';
+
+  static const String kishoreName = 'Kishore';
+  static const String kishorePhone = '9940328087';
 
   final List<Map<String, dynamic>> _faqs = [
     {
@@ -49,27 +55,30 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     },
   ];
 
-  Future<void> _makePhoneCall() async {
-    final uri = Uri.parse('tel:+91$supportPhone');
+  Future<void> _makePhoneCall([String? phone]) async {
+    final targetPhone = phone ?? supportPhone;
+    final uri = Uri.parse('tel:+91$targetPhone');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
-      await Clipboard.setData(const ClipboardData(text: supportPhone));
+      await Clipboard.setData(ClipboardData(text: targetPhone));
       if (mounted) {
-        FancyToast.showSuccess(context, 'Phone Copied', message: '+91 $supportPhone');
+        FancyToast.showSuccess(context, 'Phone Copied', message: '+91 $targetPhone');
       }
     }
   }
 
-  Future<void> _openWhatsApp() async {
-    final msg = Uri.encodeComponent('Hi Kishore, I need help with the Remaki App.');
-    final uri = Uri.parse('https://wa.me/91$supportPhone?text=$msg');
+  Future<void> _openWhatsApp([String? phone, String? name]) async {
+    final targetPhone = phone ?? supportPhone;
+    final targetName = name ?? supportName;
+    final msg = Uri.encodeComponent('Hi $targetName, I need help with the Remaki App.');
+    final uri = Uri.parse('https://wa.me/91$targetPhone?text=$msg');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
-      await Clipboard.setData(const ClipboardData(text: supportPhone));
+      await Clipboard.setData(ClipboardData(text: targetPhone));
       if (mounted) {
-        FancyToast.showSuccess(context, 'Phone Copied', message: '+91 $supportPhone');
+        FancyToast.showSuccess(context, 'Phone Copied', message: '+91 $targetPhone');
       }
     }
   }
@@ -280,24 +289,44 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
             ),
             child: Column(
               children: [
-                // Phone Row
+                // Phone Row - Karthik
                 _buildClassicContactTile(
                   icon: Icons.phone_outlined,
-                  title: 'Phone Call',
-                  subtitle: '+91 $supportPhone',
+                  title: 'Phone Call (Karthik)',
+                  subtitle: '+91 $karthikPhone',
                   actionText: 'Call',
                   isFirst: true,
-                  onTap: _makePhoneCall,
+                  onTap: () => _makePhoneCall(karthikPhone),
                 ),
                 const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9), indent: 56),
 
-                // WhatsApp Row
+                // WhatsApp Row - Karthik
                 _buildClassicContactTile(
                   icon: Icons.chat_bubble_outline_rounded,
-                  title: 'WhatsApp Chat',
+                  title: 'WhatsApp Chat (Karthik)',
+                  subtitle: 'Direct messaging with Karthik',
+                  actionText: 'Message',
+                  onTap: () => _openWhatsApp(karthikPhone, karthikName),
+                ),
+                const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9), indent: 56),
+
+                // Phone Row - Kishore
+                _buildClassicContactTile(
+                  icon: Icons.phone_outlined,
+                  title: 'Phone Call (Kishore)',
+                  subtitle: '+91 $kishorePhone',
+                  actionText: 'Call',
+                  onTap: () => _makePhoneCall(kishorePhone),
+                ),
+                const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9), indent: 56),
+
+                // WhatsApp Row - Kishore
+                _buildClassicContactTile(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  title: 'WhatsApp Chat (Kishore)',
                   subtitle: 'Direct messaging with Kishore',
                   actionText: 'Message',
-                  onTap: _openWhatsApp,
+                  onTap: () => _openWhatsApp(kishorePhone, kishoreName),
                 ),
                 const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9), indent: 56),
 

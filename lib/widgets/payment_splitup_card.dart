@@ -306,31 +306,35 @@ class PaymentSplitupCard extends StatelessWidget {
             ],
           ),
 
-          // Transaction metadata footer
-          const SizedBox(height: 8),
+          // Transaction metadata footer (Date, Time, Payment Mode, Notes)
+          const SizedBox(height: 10),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: BoxDecoration(
               color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+                width: 0.8,
+              ),
             ),
             child: Row(
               children: [
                 Icon(
-                  Icons.info_outline_rounded,
-                  size: 11,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  Icons.event_available_rounded,
+                  size: 13,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
                 ),
-                const SizedBox(width: 5),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    'Mode: $method • $timeStr${(notes != null && notes!.isNotEmpty) ? ' • $notes' : ''}',
+                    'Paid on $timeStr  •  $method${(notes != null && notes!.isNotEmpty) ? '  •  $notes' : ''}',
                     style: GoogleFonts.lato(
-                      fontSize: 10,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                      fontWeight: FontWeight.w500,
+                      fontSize: 11,
+                      color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                      fontWeight: FontWeight.w600,
                     ),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),

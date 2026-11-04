@@ -863,12 +863,21 @@ class _RentScreenState extends State<RentScreen> {
                 final p = payments[index];
                 final tenant = tenantMap[p.tenantId];
                 final tenantDisplayName = p.tenantName ?? tenant?.name ?? 'Tenant';
-                final roomIdx = tenant != null ? appProvider.rooms.indexWhere((r) => r.id == tenant.roomId) : -1;
-                final tenantRoomNum = roomIdx != -1 ? appProvider.rooms[roomIdx].number : '';
+                final room = roomIdx != -1 ? appProvider.rooms[roomIdx] : null;
+                final tenantRoomNum = room != null ? room.number : '';
                 final roomInfo = (p.roomNumber != null && p.roomNumber!.isNotEmpty)
                     ? formatRoomName(p.roomNumber)
                     : (tenantRoomNum.isNotEmpty ? formatRoomName(tenantRoomNum) : 'PG Tenant');
-                final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(p.date);
+                final bed = (room != null && tenant != null)
+                    ? room.beds.where((b) => b.id == tenant.bedId).firstOrNull
+                    : null;
+                final bedStr = bed != null && bed.name.isNotEmpty
+                    ? (bed.name.toLowerCase().startsWith('bed') ? bed.name : 'Bed ${bed.name}')
+                    : '';
+                final roomBedInfo = [
+                  if (roomInfo.isNotEmpty) roomInfo,
+                  if (bedStr.isNotEmpty) bedStr,
+                ].join(' • ');
 
                 return ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -890,8 +899,8 @@ class _RentScreenState extends State<RentScreen> {
                     ),
                   ),
                   subtitle: Text(
-                    '$roomInfo • $dateStr',
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    roomBedInfo.isNotEmpty ? roomBedInfo : 'PG Tenant',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
                   ),
                   trailing: Column(
                     mainAxisAlignment: MainAxisAlignment.center,

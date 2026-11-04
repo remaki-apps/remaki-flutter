@@ -379,6 +379,24 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                         .where((t) => t.id == payment.tenantId)
                         .firstOrNull;
 
+                    // Resolve room and bed details
+                    final room = tenant != null
+                        ? appProvider.rooms.where((r) => r.id == tenant.roomId).firstOrNull
+                        : null;
+                    final bed = (room != null && tenant != null)
+                        ? room.beds.where((b) => b.id == tenant.bedId).firstOrNull
+                        : null;
+                    final roomStr = (payment.roomNumber != null && payment.roomNumber!.isNotEmpty)
+                        ? formatRoomName(payment.roomNumber)
+                        : (room != null ? formatRoomName(room.number) : '');
+                    final bedStr = bed != null && bed.name.isNotEmpty
+                        ? (bed.name.toLowerCase().startsWith('bed') ? bed.name : 'Bed ${bed.name}')
+                        : '';
+                    final roomBedInfo = [
+                      if (roomStr.isNotEmpty) roomStr,
+                      if (bedStr.isNotEmpty) bedStr,
+                    ].join(' • ');
+
                     final isExpanded = _expandedPaymentIds.contains(payment.id);
 
                     return Container(
@@ -427,70 +445,45 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                   ),
                                   const SizedBox(width: 10),
 
-                                  // Tenant Name, Room & Date
+                                  // Tenant Name & Room/Bed Details
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Row(
-                                          children: [
-                                            Flexible(
-                                              child: InkWell(
-                                                onTap: () {
-                                                  final targetId = tenant?.id ?? payment.tenantId;
-                                                  if (targetId.isNotEmpty) {
-                                                    context.push('/tenant_profile/$targetId', extra: tenant);
-                                                  }
-                                                },
-                                                borderRadius: BorderRadius.circular(4),
-                                                child: Text(
-                                                  payment.tenantName ?? tenant?.name ?? 'Tenant',
-                                                  style: GoogleFonts.lato(
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: const Color(0xFF0F172A),
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                              ),
+                                        InkWell(
+                                          onTap: () {
+                                            final targetId = tenant?.id ?? payment.tenantId;
+                                            if (targetId.isNotEmpty) {
+                                              context.push('/tenant_profile/$targetId', extra: tenant);
+                                            }
+                                          },
+                                          borderRadius: BorderRadius.circular(4),
+                                          child: Text(
+                                            payment.tenantName ?? tenant?.name ?? 'Tenant',
+                                            style: GoogleFonts.lato(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w700,
+                                              color: const Color(0xFF0F172A),
                                             ),
-                                            if (payment.roomNumber != null && payment.roomNumber!.isNotEmpty) ...[
-                                              const SizedBox(width: 6),
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                                                decoration: BoxDecoration(
-                                                  color: const Color(0xFFF1F5F9),
-                                                  borderRadius: BorderRadius.circular(4),
-                                                  border: Border.all(color: const Color(0xFFE2E8F0), width: 0.5),
-                                                ),
-                                                child: Text(
-                                                  formatRoomName(payment.roomNumber),
-                                                  style: GoogleFonts.lato(
-                                                    fontSize: 9.5,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: const Color(0xFF475569),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ],
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
                                         const SizedBox(height: 3),
                                         Row(
                                           children: [
                                             const Icon(
-                                              Icons.access_time_rounded,
-                                              size: 11.5,
-                                              color: Color(0xFF94A3B8),
+                                              Icons.meeting_room_outlined,
+                                              size: 12,
+                                              color: Color(0xFF64748B),
                                             ),
                                             const SizedBox(width: 4),
                                             Expanded(
                                               child: Text(
-                                                paidDateStr,
+                                                roomBedInfo.isNotEmpty ? roomBedInfo : 'PG Tenant',
                                                 style: GoogleFonts.lato(
                                                   fontSize: 11.5,
-                                                  fontWeight: FontWeight.w500,
+                                                  fontWeight: FontWeight.w600,
                                                   color: const Color(0xFF64748B),
                                                 ),
                                                 maxLines: 1,
@@ -499,21 +492,12 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                             ),
                                           ],
                                         ),
-                                        if (payment.notes != null && payment.notes!.isNotEmpty) ...[
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            payment.notes!,
-                                            style: const TextStyle(fontSize: 10.5, color: Color(0xFF94A3B8)),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ],
                                       ],
                                     ),
                                   ),
                                   const SizedBox(width: 10),
 
-                                  // Amount & Badges
+                                  // Amount & Badges (Clean, no inline rent/fee breakdown)
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
@@ -526,31 +510,6 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                           color: const Color(0xFF0F172A),
                                         ),
                                       ),
-                                      if (payment.platformFee > 0 || (tenant != null && tenant.platformFee > 0)) ...[
-                                        const SizedBox(height: 1.5),
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              'Rent: ₹${_formatCurrency(payment.rentAmount > 0 ? payment.rentAmount : payment.amount)}',
-                                              style: GoogleFonts.lato(
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.w600,
-                                                color: const Color(0xFF64748B),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              '• Fee: ₹${(payment.platformFee > 0 ? payment.platformFee : tenant?.platformFee ?? 0).toStringAsFixed(0)}',
-                                              style: GoogleFonts.lato(
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.w700,
-                                                color: const Color(0xFF0284C7),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
                                       const SizedBox(height: 4),
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
