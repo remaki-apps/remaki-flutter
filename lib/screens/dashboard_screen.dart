@@ -56,10 +56,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  void _refreshDashboardForSelectedProperty() {
+    _loadPendingApprovals();
+    _loadPendingComplaints();
+    _loadPlatformFeeSummary();
+  }
+
   Future<void> _loadPlatformFeeSummary() async {
     try {
       final appProvider = Provider.of<AppProvider>(context, listen: false);
-      final propId = appProvider.selectedPropertyId != 'ALL' ? appProvider.selectedPropertyId : null;
+      final propId = appProvider.selectedPropertyId;
       final data = await ApiService.fetchPropertyPlatformFeeSummary(propertyId: propId);
       if (mounted) {
         setState(() {
@@ -93,8 +99,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final currentTenantIds = appProvider.currentTenants.map((t) => t.id).toSet();
         final filteredReqs = reqs.where((r) {
           if (appProvider.properties.length <= 1 ||
-              appProvider.selectedPropertyId == null ||
-              appProvider.selectedPropertyId == 'ALL') {
+              appProvider.selectedPropertyId == null) {
             return true;
           }
           final tid = r['tenantProfileId']?.toString() ?? '';
@@ -343,44 +348,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                       const SizedBox(height: 3),
-                      InkWell(
-                        onTap: () => _showPropertySelectorModal(context, appProvider),
-                        borderRadius: BorderRadius.circular(8),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 1),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  appProvider.selectedPropertyId == 'ALL' ? 'All Properties' : pgName,
-                                  style: GoogleFonts.lato(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -0.3,
-                                    color: const Color(0xFF0F172A),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 5),
-                              Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEEF2FF),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: const Color(0xFFC7D2FE), width: 0.8),
-                                ),
-                                child: const Icon(
-                                  Icons.keyboard_arrow_down_rounded,
-                                  size: 16,
-                                  color: Color(0xFF4F46E5),
-                                ),
-                              ),
-                            ],
-                          ),
+                      Text(
+                        pgName,
+                        style: GoogleFonts.lato(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.3,
+                          color: const Color(0xFF0F172A),
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       if (pgAddress.isNotEmpty) ...[
                         const SizedBox(height: 2),
@@ -410,6 +387,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                 ),
+                if (canSwitchProperty) ...[
+                  const SizedBox(width: 8),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _showPropertySelectorModal(context, appProvider),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+                        ),
+                        child: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          size: 22,
+                          color: Color(0xFF475569),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
                 // Notification Bell Button with live unread badge (Commented out notification flow)
                 /*
                 const SizedBox(width: 8),
@@ -573,6 +574,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               onTap: () {
                                 appProvider.selectProperty(prop.id);
                                 Navigator.pop(context);
+                                _refreshDashboardForSelectedProperty();
                               },
                               borderRadius: BorderRadius.circular(14),
                               child: AnimatedContainer(
@@ -662,76 +664,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           );
                         }),
-                        InkWell(
-                          onTap: () {
-                            appProvider.selectProperty('ALL');
-                            Navigator.pop(context);
-                          },
-                          borderRadius: BorderRadius.circular(14),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: appProvider.selectedPropertyId == 'ALL'
-                                  ? const Color(0xFF4F46E5)
-                                  : const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: appProvider.selectedPropertyId == 'ALL'
-                                    ? const Color(0xFF4F46E5)
-                                    : const Color(0xFFE2E8F0),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 42,
-                                  height: 42,
-                                  decoration: BoxDecoration(
-                                    color: appProvider.selectedPropertyId == 'ALL'
-                                        ? Colors.white.withValues(alpha: 0.2)
-                                        : const Color(0xFFEEF2FF),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Icon(
-                                    Icons.all_inclusive_rounded,
-                                    color: appProvider.selectedPropertyId == 'ALL'
-                                        ? Colors.white
-                                        : const Color(0xFF4F46E5),
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'All Properties (Combined Overview)',
-                                    style: GoogleFonts.lato(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: appProvider.selectedPropertyId == 'ALL'
-                                          ? Colors.white
-                                          : const Color(0xFF0F172A),
-                                    ),
-                                  ),
-                                ),
-                                if (appProvider.selectedPropertyId == 'ALL')
-                                  Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.check_rounded,
-                                      size: 14,
-                                      color: Color(0xFF4F46E5),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ),

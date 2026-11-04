@@ -65,24 +65,24 @@ class AppProvider with ChangeNotifier {
   }
 
   void selectProperty(String? propertyId) {
-    selectedPropertyId = propertyId;
     if (properties.isNotEmpty) {
-      if (propertyId == 'ALL' || propertyId == null) {
-        pgName = 'All Properties';
-        pgAddress = '${properties.length} Properties Managed';
-        platformFee = properties.isNotEmpty ? properties.first.platformFee : 9.0;
+      if (propertyId == null || propertyId == 'ALL' || !properties.any((p) => p.id == propertyId)) {
+        selectedPropertyId = properties.first.id;
       } else {
-        final currentProp = properties.firstWhere(
-          (p) => p.id == propertyId,
-          orElse: () => properties.first,
-        );
-        pgName = currentProp.name;
-        platformFee = currentProp.platformFee;
-        final parts = [currentProp.address, currentProp.city, currentProp.state]
-            .where((s) => s.trim().isNotEmpty)
-            .toList();
-        pgAddress = parts.isNotEmpty ? parts.join(', ') : currentProp.address;
+        selectedPropertyId = propertyId;
       }
+      final currentProp = properties.firstWhere(
+        (p) => p.id == selectedPropertyId,
+        orElse: () => properties.first,
+      );
+      pgName = currentProp.name;
+      platformFee = currentProp.platformFee;
+      final parts = [currentProp.address, currentProp.city, currentProp.state]
+          .where((s) => s.trim().isNotEmpty)
+          .toList();
+      pgAddress = parts.isNotEmpty ? parts.join(', ') : currentProp.address;
+    } else {
+      selectedPropertyId = propertyId;
     }
     notifyListeners();
   }
@@ -137,25 +137,19 @@ class AppProvider with ChangeNotifier {
               .toList();
 
           if (properties.isNotEmpty) {
-            if (selectedPropertyId != 'ALL' && (selectedPropertyId == null || !properties.any((p) => p.id == selectedPropertyId))) {
+            if (selectedPropertyId == null || selectedPropertyId == 'ALL' || !properties.any((p) => p.id == selectedPropertyId)) {
               selectedPropertyId = properties.first.id;
             }
-            if (selectedPropertyId == 'ALL') {
-              pgName = 'All Properties';
-              pgAddress = '${properties.length} Properties Managed';
-              platformFee = properties.isNotEmpty ? properties.first.platformFee : 9.0;
-            } else {
-              final currentProp = properties.firstWhere(
-                (p) => p.id == selectedPropertyId,
-                orElse: () => properties.first,
-              );
-              pgName = currentProp.name;
-              platformFee = currentProp.platformFee;
-              final parts = [currentProp.address, currentProp.city, currentProp.state]
-                  .where((s) => s.trim().isNotEmpty)
-                  .toList();
-              pgAddress = parts.isNotEmpty ? parts.join(', ') : currentProp.address;
-            }
+            final currentProp = properties.firstWhere(
+              (p) => p.id == selectedPropertyId,
+              orElse: () => properties.first,
+            );
+            pgName = currentProp.name;
+            platformFee = currentProp.platformFee;
+            final parts = [currentProp.address, currentProp.city, currentProp.state]
+                .where((s) => s.trim().isNotEmpty)
+                .toList();
+            pgAddress = parts.isNotEmpty ? parts.join(', ') : currentProp.address;
           } else {
             pgName = adminData['pgName'] ?? adminData['name'] ?? '';
             pgAddress = adminData['pgAddress'] ?? '';
@@ -391,14 +385,14 @@ class AppProvider with ChangeNotifier {
 
   // Filtered rooms and tenants for currently selected PG
   List<Room> get currentRooms {
-    if (selectedPropertyId == null || selectedPropertyId == 'ALL' || properties.length <= 1) {
+    if (selectedPropertyId == null || properties.length <= 1) {
       return rooms;
     }
     return rooms.where((r) => r.propertyId == selectedPropertyId).toList();
   }
 
   List<Tenant> get currentTenants {
-    if (selectedPropertyId == null || selectedPropertyId == 'ALL' || properties.length <= 1) {
+    if (selectedPropertyId == null || properties.length <= 1) {
       return tenants;
     }
     final roomIds = currentRooms.map((r) => r.id).toSet();
@@ -411,7 +405,7 @@ class AppProvider with ChangeNotifier {
   }
 
   List<Payment> get currentPayments {
-    if (selectedPropertyId == null || selectedPropertyId == 'ALL' || properties.length <= 1) {
+    if (selectedPropertyId == null || properties.length <= 1) {
       return payments;
     }
     final currentTenantIds = currentTenants.map((t) => t.id).toSet();

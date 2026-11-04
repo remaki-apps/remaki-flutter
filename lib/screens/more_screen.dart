@@ -417,7 +417,7 @@ class MoreScreen extends StatelessWidget {
                                         children: [
                                           Flexible(
                                             child: Text(
-                                              provider.selectedPropertyId == 'ALL' ? 'All Properties' : provider.pgName,
+                                              provider.pgName,
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               style: GoogleFonts.lato(
@@ -485,32 +485,6 @@ class MoreScreen extends StatelessWidget {
                                               ),
                                             );
                                           }),
-                                          const PopupMenuDivider(),
-                                          PopupMenuItem<String>(
-                                            value: 'ALL',
-                                            child: Row(
-                                              children: [
-                                                Icon(
-                                                  Icons.all_inclusive_rounded,
-                                                  size: 18,
-                                                  color: provider.selectedPropertyId == 'ALL' ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
-                                                ),
-                                                const SizedBox(width: 10),
-                                                Text(
-                                                  'All Properties',
-                                                  style: TextStyle(
-                                                    fontWeight: provider.selectedPropertyId == 'ALL' ? FontWeight.bold : FontWeight.w600,
-                                                    color: provider.selectedPropertyId == 'ALL' ? const Color(0xFF4F46E5) : const Color(0xFF0F172A),
-                                                    fontSize: 14,
-                                                  ),
-                                                ),
-                                                if (provider.selectedPropertyId == 'ALL') ...[
-                                                  const Spacer(),
-                                                  const Icon(Icons.check_circle_rounded, size: 18, color: Color(0xFF4F46E5)),
-                                                ],
-                                              ],
-                                            ),
-                                          ),
                                         ];
                                       },
                                     ),
