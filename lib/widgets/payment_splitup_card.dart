@@ -94,30 +94,55 @@ class PaymentSplitupCard extends StatelessWidget {
 
     // Itemize bills if billsPortion > 0
     if (billsPortion > 0 && itemizedBills.isEmpty) {
-      if (normalizedBills.isNotEmpty) {
-        double remainingBillAmount = billsPortion;
+      final bool hasSpecificNote = notes != null &&
+          notes!.trim().isNotEmpty &&
+          !notes!.toLowerCase().contains('utility bills payment') &&
+          !notes!.toLowerCase().contains('bill payment') &&
+          !notes!.toLowerCase().contains('approved via payment request') &&
+          !notes!.toLowerCase().contains('rent');
 
-        // Try matching against known bills
-        for (var b in normalizedBills) {
-          final bAmt = (b['amount'] as num?)?.toDouble() ?? 0.0;
-          if (bAmt > 0 && bAmt <= remainingBillAmount + 0.01) {
-            itemizedBills.add({
-              'name': b['name'],
-              'amount': bAmt,
-            });
-            remainingBillAmount -= bAmt;
-          }
-        }
+      if (hasSpecificNote) {
+        itemizedBills.add({
+          'name': notes!.trim(),
+          'amount': billsPortion,
+        });
+      } else if (normalizedBills.isNotEmpty) {
+        // Try exact single bill match by amount
+        final exactMatch = normalizedBills.firstWhere(
+          (b) {
+            final bAmt = (b['amount'] as num?)?.toDouble() ?? 0.0;
+            return (bAmt - billsPortion).abs() < 0.01;
+          },
+          orElse: () => <String, dynamic>{},
+        );
 
-        if (remainingBillAmount > 0.01) {
+        if (exactMatch.isNotEmpty && exactMatch['name'] != null && exactMatch['name'].toString().trim().isNotEmpty) {
           itemizedBills.add({
-            'name': (notes != null && notes!.isNotEmpty) ? notes! : 'Utility Charge',
-            'amount': remainingBillAmount,
+            'name': exactMatch['name'].toString().trim(),
+            'amount': billsPortion,
           });
+        } else {
+          double remaining = billsPortion;
+          for (var b in normalizedBills) {
+            final bAmt = (b['amount'] as num?)?.toDouble() ?? 0.0;
+            if (bAmt > 0 && bAmt <= remaining + 0.01) {
+              itemizedBills.add({
+                'name': (b['name'] != null && b['name'].toString().trim().isNotEmpty) ? b['name'].toString().trim() : 'Utility Bill',
+                'amount': bAmt,
+              });
+              remaining -= bAmt;
+            }
+          }
+          if (remaining > 0.01) {
+            itemizedBills.add({
+              'name': (notes != null && notes!.isNotEmpty) ? notes! : 'Utility Charge',
+              'amount': remaining,
+            });
+          }
         }
       } else {
         itemizedBills.add({
-          'name': (notes != null && notes!.isNotEmpty) ? notes! : 'Utility / Split Bill',
+          'name': (notes != null && notes!.isNotEmpty) ? notes! : 'Utility Bill',
           'amount': billsPortion,
         });
       }

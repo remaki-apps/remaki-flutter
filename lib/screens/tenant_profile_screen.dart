@@ -1381,7 +1381,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                                 paymentAmount: payment.amount,
                                                 rentAmount: payment.rentAmount,
                                                 platformFee: payment.platformFee > 0 ? payment.platformFee : (payment.rentAmount > 0 ? tenant.platformFee : 0.0),
-                                                bills: null,
+                                                bills: tenant.additionalCharges,
                                                 method: payment.method,
                                                 notes: payment.notes,
                                                 paymentDate: payment.date,

@@ -3443,12 +3443,21 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
         final String notesStr = (notes != null && notes.trim().isNotEmpty) ? notes.trim() : '';
         String displayTitle = 'Payment';
-        if (notesStr.isNotEmpty && !notesStr.toLowerCase().contains('approved via payment request')) {
+        if (notesStr.isNotEmpty && !notesStr.toLowerCase().contains('approved via payment request') && !notesStr.toLowerCase().contains('utility bills payment')) {
           displayTitle = notesStr;
         } else if (rAmt > 0) {
           displayTitle = 'Rent Payment';
         } else {
-          displayTitle = 'Bill / Due Payment';
+          final allTenantBills = (_profileData?['bills'] as List<dynamic>? ?? []);
+          final matchingBill = allTenantBills.firstWhere(
+            (b) => (((b['amount'] as num?)?.toDouble() ?? 0.0) - amount).abs() < 0.01,
+            orElse: () => null,
+          );
+          if (matchingBill != null && matchingBill['description'] != null && matchingBill['description'].toString().trim().isNotEmpty) {
+            displayTitle = matchingBill['description'].toString().trim();
+          } else {
+            displayTitle = 'Bill Payment';
+          }
         }
 
         transactionWidgets.add(_buildPaymentRecordTile(
@@ -3463,7 +3472,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           rawDate: rawDate,
           rentAmount: rAmt,
           platformFee: pFee,
-          bills: null,
+          bills: _profileData?['bills'],
           notes: notes,
         ));
         if (i < displayPayments.length - 1 || pendingMonthBills.isNotEmpty) {
