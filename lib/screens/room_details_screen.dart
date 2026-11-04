@@ -8,6 +8,7 @@ import '../widgets/tenant_avatar.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/app_shimmer.dart';
 import '../widgets/keyboard_responsive_layout.dart';
+import '../widgets/custom_expandable_dropdown.dart';
 
 class RoomDetailsScreen extends StatelessWidget {
   final String roomId;
@@ -131,57 +132,20 @@ class RoomDetailsScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                formatRoomName(room.number),
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF0F172A),
-                                  letterSpacing: -0.5,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: room.isAc ? const Color(0xFFEFF6FF) : const Color(0xFFF1F5F9),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: room.isAc ? const Color(0xFF93C5FD) : const Color(0xFFCBD5E1),
-                                  width: 0.8,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    room.isAc ? Icons.ac_unit_rounded : Icons.air_rounded,
-                                    size: 13,
-                                    color: room.isAc ? const Color(0xFF1D4ED8) : const Color(0xFF475569),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    room.isAc ? 'AC' : 'Non-AC',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: room.isAc ? const Color(0xFF1D4ED8) : const Color(0xFF475569),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                        Text(
+                          formatRoomName(room.number),
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                            letterSpacing: -0.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${room.floor} • ${room.capacity} Beds Total',
+                          '${room.floor} • ${room.capacity} Beds Total • ${room.isAc ? 'AC' : 'Non-AC'}',
                           style: const TextStyle(
                             fontSize: 12,
                             color: Color(0xFF64748B),
@@ -193,11 +157,13 @@ class RoomDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // Edit Room Button
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => _showEditRoomDialog(context, room),
-                    child: Container(
+                  // Room Options Three-Dot Button
+                  PopupMenuButton<String>(
+                    tooltip: 'Room Options',
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 6,
+                    color: Colors.white,
+                    icon: Container(
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
@@ -205,24 +171,37 @@ class RoomDetailsScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                         border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
-                      child: const Icon(Icons.edit_outlined, color: Color(0xFF334155), size: 18),
+                      child: const Icon(Icons.more_vert_rounded, color: Color(0xFF334155), size: 20),
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  // Delete Room Button
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => _showDeleteRoomDialog(context, room),
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFEF2F2),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFFECACA)),
+                    onSelected: (val) {
+                      if (val == 'edit') {
+                        _showEditRoomDialog(context, room);
+                      } else if (val == 'delete') {
+                        _showDeleteRoomDialog(context, room);
+                      }
+                    },
+                    itemBuilder: (ctx) => [
+                      PopupMenuItem<String>(
+                        value: 'edit',
+                        child: Row(
+                          children: const [
+                            Icon(Icons.edit_outlined, size: 18, color: Color(0xFF334155)),
+                            SizedBox(width: 10),
+                            Text('Edit Room', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
+                          ],
+                        ),
                       ),
-                      child: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444), size: 18),
-                    ),
+                      PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Row(
+                          children: const [
+                            Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFEF4444)),
+                            SizedBox(width: 10),
+                            Text('Delete Room', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFFEF4444))),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -450,36 +429,15 @@ class RoomDetailsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        bed.name,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => _showEditBedDialog(context, room, bed),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
-                        ),
-                        child: const Icon(Icons.edit_outlined, size: 14, color: Color(0xFF475569)),
-                      ),
-                    ),
-                  ],
+                Text(
+                  bed.name,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -539,45 +497,75 @@ class RoomDetailsScreen extends StatelessWidget {
       ),
     );
 
-    if (tenant != null) {
-      return GestureDetector(
-        onTap: () => context.push('/tenant_profile/${tenant.id}'),
-        child: cardContent,
-      );
-    }
+    final bool canRemove = bed.isAvailable && tenant == null;
+
+    final Widget wrappedCard = tenant != null
+        ? GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => context.push('/tenant_profile/${tenant.id}'),
+            child: cardContent,
+          )
+        : cardContent;
 
     return Dismissible(
-      key: ValueKey(bed.id),
-      direction: DismissDirection.endToStart,
+      key: ValueKey('bed_${bed.id}'),
+      direction: canRemove ? DismissDirection.horizontal : DismissDirection.endToStart,
       background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 16),
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.only(left: 16),
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           color: const Color(0xFFEF4444),
           borderRadius: BorderRadius.circular(16),
         ),
         child: const Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Icon(Icons.remove_circle_outline, color: Colors.white, size: 20),
+            SizedBox(width: 6),
+            Text('Swipe to Remove', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+          ],
+        ),
+      ),
+      secondaryBackground: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 16),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.primaryColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Text('Swipe to Remove', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+            Text('Swipe to Edit', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
             SizedBox(width: 6),
-            Icon(Icons.remove_circle_outline, color: Colors.white, size: 20),
+            Icon(Icons.edit_outlined, color: Colors.white, size: 20),
           ],
         ),
       ),
       confirmDismiss: (direction) async {
-        return await _showRemoveBedDialog(context, room, bed) ?? false;
+        if (direction == DismissDirection.endToStart) {
+          // Swipe left -> Edit Bed
+          _showEditBedDialog(context, room, bed);
+          return false;
+        } else if (direction == DismissDirection.startToEnd) {
+          // Swipe right -> Remove Bed
+          return await _showRemoveBedDialog(context, room, bed) ?? false;
+        }
+        return false;
       },
       onDismissed: (direction) {
-        Provider.of<AppProvider>(context, listen: false).removeBed(room.id, bed.id);
-        FancyToast.showSuccess(
-          context,
-          'Bed Removed!',
-          message: '${formatBedName(bed.name)} has been removed from ${formatRoomName(room.number)}.',
-        );
+        if (direction == DismissDirection.startToEnd) {
+          Provider.of<AppProvider>(context, listen: false).removeBed(room.id, bed.id);
+          FancyToast.showSuccess(
+            context,
+            'Bed Removed!',
+            message: '${formatBedName(bed.name)} has been removed from ${formatRoomName(room.number)}.',
+          );
+        }
       },
-      child: cardContent,
+      child: wrappedCard,
     );
   }
 
@@ -993,138 +981,271 @@ class RoomDetailsScreen extends StatelessWidget {
       builder: (ctx) => StatefulBuilder(
         builder: (dialogCtx, setDialogState) => Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          elevation: 8,
+          elevation: 10,
           backgroundColor: Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEEF2FF),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(22),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top Header
+                  Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(Icons.meeting_room_outlined, color: AppTheme.primaryColor, size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Edit Room',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Update room number, floor & AC type',
+                              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => ctx.pop(),
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF1F5F9),
                             shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFFC7D2FE)),
                           ),
-                          child: const Icon(Icons.meeting_room_outlined, color: AppTheme.primaryColor, size: 20),
+                          child: const Icon(Icons.close_rounded, size: 18, color: Color(0xFF64748B)),
                         ),
-                        const SizedBox(width: 10),
-                        const Text(
-                          'Edit Room',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
-                        ),
-                      ],
-                    ),
-                    GestureDetector(
-                      onTap: () => ctx.pop(),
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(color: Color(0xFFF1F5F9), shape: BoxShape.circle),
-                        child: const Icon(Icons.close_rounded, size: 18, color: Color(0xFF64748B)),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                TextField(
-                  controller: numberController,
-                  decoration: InputDecoration(
-                    labelText: 'Room Number / Name *',
-                    hintText: 'e.g. 101 or Room A',
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: selectedFloor,
-                  decoration: InputDecoration(
-                    labelText: 'Floor *',
+                  const SizedBox(height: 20),
+
+                  // Floor using CustomExpandableDropdown
+                  CustomExpandableDropdown<String>(
+                    label: 'Floor *',
+                    value: selectedFloor,
                     hintText: 'Select Floor',
-                    prefixIcon: const Icon(Icons.domain_outlined, size: 20, color: Color(0xFF64748B)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                    icon: Icons.domain_outlined,
+                    iconColor: AppTheme.primaryColor,
+                    iconBgColor: const Color(0xFFEEF2FF),
+                    items: floorOptions.map((f) => DropdownOption(value: f, label: f)).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setDialogState(() => selectedFloor = val);
+                      }
+                    },
                   ),
-                  items: floorOptions.map((f) => DropdownMenuItem(
-                    value: f,
-                    child: Text(f, style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A))),
-                  )).toList(),
-                  onChanged: (val) {
-                    if (val != null) {
-                      setDialogState(() => selectedFloor = val);
-                    }
-                  },
-                ),
-                const SizedBox(height: 14),
-                Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    const Text('Room Type: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF475569))),
-                    ChoiceChip(
-                      label: const Text('Non-AC'),
-                      selected: !isAc,
-                      onSelected: (val) => setDialogState(() => isAc = false),
-                    ),
-                    ChoiceChip(
-                      label: const Text('AC'),
-                      selected: isAc,
-                      onSelected: (val) => setDialogState(() => isAc = true),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => ctx.pop(),
-                        child: const Text('Cancel'),
+                  const SizedBox(height: 14),
+
+                  // Room Number or Name
+                  Row(
+                    children: const [
+                      Text(
+                        'Room Number or Name',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                      ),
+                      Text(' *', style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: numberController,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+                    decoration: InputDecoration(
+                      hintText: 'e.g. 101 or Room A',
+                      hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                      prefixIcon: const Icon(Icons.door_sliding_outlined, color: Color(0xFF64748B), size: 18),
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
-                        onPressed: () async {
-                          final numStr = numberController.text.trim();
-                          final floorStr = selectedFloor.trim();
-                          if (numStr.isEmpty || floorStr.isEmpty) {
-                            FancyToast.showError(context, 'Required Fields', message: 'Room number and floor are required');
-                            return;
-                          }
-                          ctx.pop();
-                          try {
-                            await Provider.of<AppProvider>(context, listen: false).updateRoom(
-                              room.id,
-                              roomNumber: numStr,
-                              floorNumber: floorStr,
-                              roomType: isAc ? 'AC' : 'NON_AC',
-                            );
-                            if (context.mounted) {
-                              FancyToast.showSuccess(context, 'Room Updated', message: 'Room details saved successfully.');
-                            }
-                          } catch (e) {
-                            if (context.mounted) {
-                              FancyToast.showError(context, 'Update Failed', message: e.toString().replaceAll('Exception: ', ''));
-                            }
-                          }
-                        },
-                        child: const Text('Save', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Room Type (AC vs Non-AC)
+                  Row(
+                    children: const [
+                      Text(
+                        'Room Type',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      Text(' *', style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setDialogState(() => isAc = false),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 10),
+                            decoration: BoxDecoration(
+                              color: !isAc ? const Color(0xFFEEF2FF) : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: !isAc ? AppTheme.primaryColor : const Color(0xFFE2E8F0),
+                                width: !isAc ? 1.6 : 1.0,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.air_rounded,
+                                  size: 17,
+                                  color: !isAc ? AppTheme.primaryColor : const Color(0xFF64748B),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Non-AC',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: !isAc ? FontWeight.w700 : FontWeight.w600,
+                                    color: !isAc ? AppTheme.primaryColor : const Color(0xFF64748B),
+                                  ),
+                                ),
+                                if (!isAc) ...[
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.check_circle_rounded, size: 15, color: AppTheme.primaryColor),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setDialogState(() => isAc = true),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 10),
+                            decoration: BoxDecoration(
+                              color: isAc ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isAc ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
+                                width: isAc ? 1.6 : 1.0,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.ac_unit_rounded,
+                                  size: 17,
+                                  color: isAc ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'AC Room',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: isAc ? FontWeight.w700 : FontWeight.w600,
+                                    color: isAc ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                                  ),
+                                ),
+                                if (isAc) ...[
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.check_circle_rounded, size: 15, color: Color(0xFF2563EB)),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
+
+                  // Actions
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => ctx.pop(),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            side: const BorderSide(color: Color(0xFFE2E8F0)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600, fontSize: 14)),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          onPressed: () async {
+                            final numStr = numberController.text.trim();
+                            final floorStr = selectedFloor.trim();
+                            if (numStr.isEmpty || floorStr.isEmpty) {
+                              FancyToast.showError(context, 'Required Fields', message: 'Room number and floor are required');
+                              return;
+                            }
+                            ctx.pop();
+                            try {
+                              await Provider.of<AppProvider>(context, listen: false).updateRoom(
+                                room.id,
+                                roomNumber: numStr,
+                                floorNumber: floorStr,
+                                roomType: isAc ? 'AC' : 'NON_AC',
+                              );
+                              if (context.mounted) {
+                                FancyToast.showSuccess(context, 'Room Updated', message: 'Room details saved successfully.');
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                FancyToast.showError(context, 'Update Failed', message: e.toString().replaceAll('Exception: ', ''));
+                              }
+                            }
+                          },
+                          child: const Text('Save Changes', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -1198,40 +1319,124 @@ class RoomDetailsScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Colors.white,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(22),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Edit Bed Name',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+              // Header Row
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(Icons.single_bed_outlined, color: AppTheme.primaryColor, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Edit Bed Name',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${formatRoomName(room.number)} • ${room.floor}',
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => ctx.pop(),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF1F5F9),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.close_rounded, size: 18, color: Color(0xFF64748B)),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 20),
+
+              // Field Label
+              Row(
+                children: const [
+                  Text(
+                    'Bed Label or Name',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                  ),
+                  Text(' *', style: TextStyle(color: Color(0xFFEF4444), fontWeight: FontWeight.bold)),
+                ],
+              ),
+              const SizedBox(height: 6),
               TextField(
                 controller: controller,
                 autofocus: true,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
                 decoration: InputDecoration(
-                  labelText: 'Bed Label / Name *',
+                  hintText: 'e.g. Bed 1, Bed A',
+                  hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                  prefixIcon: const Icon(Icons.single_bed_outlined, color: Color(0xFF64748B), size: 18),
+                  filled: true,
+                  fillColor: const Color(0xFFF8FAFC),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+                  ),
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 22),
+
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => ctx.pop(),
-                      child: const Text('Cancel'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600, fontSize: 14)),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
                       onPressed: () async {
                         final newLabel = controller.text.trim();
                         if (newLabel.isEmpty) return;
@@ -1247,7 +1452,7 @@ class RoomDetailsScreen extends StatelessWidget {
                           }
                         }
                       },
-                      child: const Text('Save', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: const Text('Save Changes', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
                     ),
                   ),
                 ],

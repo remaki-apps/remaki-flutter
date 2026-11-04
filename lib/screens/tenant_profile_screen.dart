@@ -570,38 +570,6 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 6),
-                                InkWell(
-                                  onTap: () {
-                                    if (tenant.password.isNotEmpty) {
-                                      _shareCredentials(tenant, tenant.password, roomNumber, floorName);
-                                    } else {
-                                      _resetAndSharePassword(tenant, roomNumber, floorName);
-                                    }
-                                  },
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Tooltip(
-                                    message: 'Send Credentials via WhatsApp',
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF0FDF4),
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: const Color(0xFFBBF7D0)),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Image.asset(
-                                            'assets/icons/whatsapp.png',
-                                            width: 14,
-                                            height: 14,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
                               ],
                             ),
                           ),
@@ -659,120 +627,161 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                     ],
 
                     // Financial Summary Cards
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: tenant.statusBgColor,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: tenant.statusBorderColor,
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: tenant.statusBgColor,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: tenant.statusBorderColor,
+                                ),
                               ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    const Text('Total Due', style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
-                                    const SizedBox(width: 4),
-                                    Flexible(
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: tenant.statusBgColor,
-                                          borderRadius: BorderRadius.circular(6),
-                                          border: Border.all(color: tenant.statusBorderColor, width: 0.5),
-                                        ),
-                                        child: Text(
-                                          tenant.statusBadgeLabel,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 8.5,
-                                            fontWeight: FontWeight.bold,
-                                            color: tenant.statusColor,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      const Text('Total Due', style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: tenant.statusBgColor,
+                                            borderRadius: BorderRadius.circular(6),
+                                            border: Border.all(color: tenant.statusBorderColor, width: 0.5),
+                                          ),
+                                          child: Text(
+                                            tenant.statusBadgeLabel,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 8.5,
+                                              fontWeight: FontWeight.bold,
+                                              color: tenant.statusColor,
+                                            ),
                                           ),
                                         ),
                                       ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    tenant.totalDue == 0 ? '₹0' : '₹${tenant.totalDue.toStringAsFixed(0)}',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: tenant.statusColor,
+                                    ),
+                                  ),
+                                  if (tenant.statusBadgeLabel == 'BILL DUE') ...[
+                                    const SizedBox(height: 3),
+                                    const Text(
+                                      'Rent Paid • Bill Pending',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFFD97706),
+                                      ),
+                                    ),
+                                  ] else if (tenant.statusBadgeLabel == 'RENT DUE') ...[
+                                    const SizedBox(height: 3),
+                                    const Text(
+                                      'Bill Paid • Rent Pending',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFFEA580C),
+                                      ),
+                                    ),
+                                  ] else if (!tenant.isPaid && tenant.totalDue > 0) ...[
+                                     const SizedBox(height: 3),
+                                     const Text(
+                                       'Rent Pending',
+                                       style: TextStyle(
+                                         fontSize: 10,
+                                         fontWeight: FontWeight.w700,
+                                         color: Color(0xFFEA580C),
+                                       ),
+                                     ),
+                                   ],
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      const Text('Deposit', style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF1F5F9),
+                                            borderRadius: BorderRadius.circular(6),
+                                            border: Border.all(color: const Color(0xFFE2E8F0), width: 0.5),
+                                          ),
+                                          child: const Text(
+                                            'Security',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 8.5,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF64748B),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    '₹${tenant.securityDeposit.toStringAsFixed(0)}',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  if (tenant.statusBadgeLabel == 'BILL DUE' || tenant.statusBadgeLabel == 'RENT DUE' || (!tenant.isPaid && tenant.totalDue > 0)) ...[
+                                    const SizedBox(height: 3),
+                                    const Text(
+                                      'Refundable Deposit',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF64748B),
+                                      ),
                                     ),
                                   ],
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  tenant.totalDue == 0 ? '₹0' : '₹${tenant.totalDue.toStringAsFixed(0)}',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: tenant.statusColor,
-                                  ),
-                                ),
-                                if (tenant.statusBadgeLabel == 'BILL DUE') ...[
-                                  const SizedBox(height: 3),
-                                  const Text(
-                                    'Rent Paid • Bill Pending',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFFD97706),
-                                    ),
-                                  ),
-                                ] else if (tenant.statusBadgeLabel == 'RENT DUE') ...[
-                                  const SizedBox(height: 3),
-                                  const Text(
-                                    'Bill Paid • Rent Pending',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFFEA580C),
-                                    ),
-                                  ),
-                                ] else if (!tenant.isPaid && tenant.totalDue > 0) ...[
-                                   const SizedBox(height: 3),
-                                   const Text(
-                                     'Rent Pending',
-                                     style: TextStyle(
-                                       fontSize: 10,
-                                       fontWeight: FontWeight.w700,
-                                       color: Color(0xFFEA580C),
-                                     ),
-                                   ),
-                                 ],
-                              ],
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Deposit', style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
-                                const SizedBox(height: 6),
-                                Text(
-                                  '₹${tenant.securityDeposit.toStringAsFixed(0)}',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0F172A),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     if (tenant.statusBadgeLabel == 'BILL DUE') ...[
                       const SizedBox(height: 12),
