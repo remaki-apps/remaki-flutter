@@ -311,19 +311,22 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                   Expanded(
                                     child: TextField(
                                       controller: _amountController,
+                                      readOnly: _paymentType == 'BILLS',
                                       keyboardType: TextInputType.number,
                                       style: GoogleFonts.lato(
                                         fontSize: 32,
                                         fontWeight: FontWeight.w800,
-                                        color: const Color(0xFF0F172A),
+                                        color: _paymentType == 'BILLS' ? const Color(0xFF64748B) : const Color(0xFF0F172A),
                                         letterSpacing: -0.5,
                                       ),
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                         border: InputBorder.none,
                                         isDense: true,
                                         contentPadding: EdgeInsets.zero,
                                         hintText: '0',
-                                        hintStyle: TextStyle(color: Color(0xFFCBD5E1)),
+                                        hintStyle: const TextStyle(color: Color(0xFFCBD5E1)),
+                                        helperText: _paymentType == 'BILLS' ? 'Bill amount cannot be edited' : null,
+                                        helperStyle: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
                                       ),
                                       onChanged: (_) => setState(() {}),
                                     ),

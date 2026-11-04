@@ -3358,8 +3358,13 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       double amt = (p['amount'] as num?)?.toDouble() ?? 0.0;
       totalPaidThisMonth += amt;
     }
-    for (var b in paidMonthBills) {
-      if (monthPayments.isEmpty) {
+    final hasBillPaymentInPayments = monthPayments.any((p) {
+      final notes = (p['notes'] ?? '').toString().toLowerCase();
+      final rAmt = (p['rentAmount'] as num?)?.toDouble() ?? 0.0;
+      return notes.contains('bill') || notes.contains('utility') || rAmt <= 0;
+    });
+    if (!hasBillPaymentInPayments) {
+      for (var b in paidMonthBills) {
         totalPaidThisMonth += (b['amount'] as num?)?.toDouble() ?? 0.0;
       }
     }
@@ -3415,9 +3420,20 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
     final List<Widget> transactionWidgets = [];
 
-    if (monthPayments.isNotEmpty) {
-      for (int i = 0; i < monthPayments.length; i++) {
-        final p = monthPayments[i];
+    // Filter out generic bill payments if monthBills already shows the individual paid bill(s)
+    final displayPayments = monthPayments.where((p) {
+      final notes = (p['notes'] ?? '').toString().toLowerCase();
+      final rAmt = (p['rentAmount'] as num?)?.toDouble() ?? 0.0;
+      final isGenericBillPayment = (notes.contains('bill') || notes.contains('utility')) || rAmt <= 0;
+      if (isGenericBillPayment && paidMonthBills.isNotEmpty) {
+        return false;
+      }
+      return true;
+    }).toList();
+
+    if (displayPayments.isNotEmpty) {
+      for (int i = 0; i < displayPayments.length; i++) {
+        final p = displayPayments[i];
         final double amount = (p['amount'] as num?)?.toDouble() ?? 0.0;
         final dateStr = _formatPaymentDateTime(p['date']);
         final method = p['method']?.toString() ?? 'UPI';
@@ -3427,25 +3443,29 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
         final displayTitle = (notes != null && notes.isNotEmpty && !notes.toLowerCase().contains('approved via payment request'))
             ? notes
-            : 'Payment Settlement';
+            : 'Rent Payment';
+
+        final double rAmt = (p['rentAmount'] as num?)?.toDouble() ??
+            ((notes != null && (notes.toLowerCase().contains('bill') || notes.toLowerCase().contains('utility'))) ? 0.0 : (amount >= monthlyRentVal ? monthlyRentVal : amount));
+        final double pFee = (p['platformFee'] as num?)?.toDouble() ?? 0.0;
+        final double cardAmount = rAmt > 0 ? (rAmt + pFee) : amount;
 
         transactionWidgets.add(_buildPaymentRecordTile(
           title: displayTitle,
-          amount: '₹${NumberFormat('#,##,###').format(amount)}',
+          amount: '₹${NumberFormat("#,##,###").format(cardAmount)}',
           dateStr: dateStr,
           method: method,
           status: 'Paid',
           isSuccess: true,
           paymentId: paymentId,
-          rawAmount: amount,
+          rawAmount: cardAmount,
           rawDate: rawDate,
-          rentAmount: (p['rentAmount'] as num?)?.toDouble() ??
-              ((notes != null && (notes.toLowerCase().contains('bill') || notes.toLowerCase().contains('utility'))) ? 0.0 : (amount >= monthlyRentVal ? monthlyRentVal : 0.0)),
-          platformFee: (p['platformFee'] as num?)?.toDouble() ?? 0.0,
-          bills: allBills,
+          rentAmount: rAmt,
+          platformFee: pFee,
+          bills: null,
           notes: notes,
         ));
-        if (i < monthPayments.length - 1 || monthBills.isNotEmpty) {
+        if (i < displayPayments.length - 1 || monthBills.isNotEmpty) {
           transactionWidgets.add(const Divider(height: 1, color: Color(0xFFF1F5F9), indent: 16, endIndent: 16));
         }
       }
@@ -3475,7 +3495,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       }
     }
 
-    final totalCount = monthPayments.length + monthBills.length + (monthPayments.isEmpty && isCurrentPaid ? 1 : 0);
+    final totalCount = displayPayments.length + monthBills.length + (displayPayments.isEmpty && isCurrentPaid ? 1 : 0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

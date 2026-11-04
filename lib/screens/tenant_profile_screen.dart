@@ -1381,7 +1381,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                                 paymentAmount: payment.amount,
                                                 rentAmount: payment.rentAmount,
                                                 platformFee: payment.platformFee > 0 ? payment.platformFee : (payment.rentAmount > 0 ? tenant.platformFee : 0.0),
-                                                bills: tenant.additionalCharges,
+                                                bills: null,
                                                 method: payment.method,
                                                 notes: payment.notes,
                                                 paymentDate: payment.date,
@@ -1703,19 +1703,21 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                           ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Center(
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.pop(sheetCtx);
-                      context.push('/record_payment/${tenant.id}');
-                    },
-                    child: const Text(
-                      'Custom Amount or Date',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                if (selectedType != 'BILLS') ...[
+                  const SizedBox(height: 8),
+                  Center(
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.pop(sheetCtx);
+                        context.push('/record_payment/${tenant.id}');
+                      },
+                      child: const Text(
+                        'Custom Amount or Date',
+                        style: TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           );
