@@ -194,6 +194,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         child: appProvider.isLoading
             ? const PaymentHistorySkeleton()
             : SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           padding: EdgeInsets.fromLTRB(14, 10, 14, 24 + MediaQuery.of(context).padding.bottom),
           child: Column(

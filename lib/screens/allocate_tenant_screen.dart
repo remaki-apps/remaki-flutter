@@ -6,6 +6,7 @@ import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/api_service.dart';
 import '../widgets/fancy_toast.dart';
+import '../widgets/keyboard_responsive_layout.dart';
 
 class AllocateTenantScreen extends StatefulWidget {
   final String roomId;
@@ -206,35 +207,37 @@ class _AllocateTenantScreenState extends State<AllocateTenantScreen> {
                 Step(
                   title: const Text('Rent Details'),
                   isActive: _currentStep >= 1,
-                  content: Column(
-                    children: [
-                      TextField(controller: _rentController, decoration: const InputDecoration(labelText: 'Monthly Rent (₹)', hintText: 'e.g. 8500'), keyboardType: TextInputType.number),
-                      TextField(controller: _securityController, decoration: const InputDecoration(labelText: 'Security Deposit (₹)', hintText: 'e.g. 10000'), keyboardType: TextInputType.number),
-                      DropdownButtonFormField<String>(
-                        value: _rentDueDate,
-                        decoration: const InputDecoration(labelText: 'Rent Due Date'),
-                        items: ['1st of every month', '5th of every month', '10th of every month'].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
-                        onChanged: (val) => setState(() => _rentDueDate = val!),
-                      ),
-                      TextField(
-                        controller: _moveInController,
-                        decoration: const InputDecoration(labelText: 'Move-in Date', suffixIcon: Icon(Icons.calendar_today)),
-                        readOnly: true,
-                        onTap: () => _selectMoveInDate(context),
-                      ),
-                      DropdownButtonFormField<String>(
-                        value: _paymentMode,
-                        decoration: const InputDecoration(labelText: 'Rent Payment Mode'),
-                        items: ['Cash', 'UPI', 'Bank Transfer'].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
-                        onChanged: (val) => setState(() => _paymentMode = val!),
-                      ),
-                      DropdownButtonFormField<String>(
-                        value: _agreementDuration,
-                        decoration: const InputDecoration(labelText: 'Agreement Duration'),
-                        items: ['6 Months', '11 Months', '12 Months'].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
-                        onChanged: (val) => setState(() => _agreementDuration = val!),
-                      ),
-                    ],
+                  content: KeyboardAutoScroll(
+                    child: Column(
+                      children: [
+                        TextField(controller: _rentController, decoration: const InputDecoration(labelText: 'Monthly Rent (₹)', hintText: 'e.g. 8500'), keyboardType: TextInputType.number),
+                        TextField(controller: _securityController, decoration: const InputDecoration(labelText: 'Security Deposit (₹)', hintText: 'e.g. 10000'), keyboardType: TextInputType.number),
+                        DropdownButtonFormField<String>(
+                          value: _rentDueDate,
+                          decoration: const InputDecoration(labelText: 'Rent Due Date'),
+                          items: ['1st of every month', '5th of every month', '10th of every month'].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+                          onChanged: (val) => setState(() => _rentDueDate = val!),
+                        ),
+                        TextField(
+                          controller: _moveInController,
+                          decoration: const InputDecoration(labelText: 'Move-in Date', suffixIcon: Icon(Icons.calendar_today)),
+                          readOnly: true,
+                          onTap: () => _selectMoveInDate(context),
+                        ),
+                        DropdownButtonFormField<String>(
+                          value: _paymentMode,
+                          decoration: const InputDecoration(labelText: 'Rent Payment Mode'),
+                          items: ['Cash', 'UPI', 'Bank Transfer'].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+                          onChanged: (val) => setState(() => _paymentMode = val!),
+                        ),
+                        DropdownButtonFormField<String>(
+                          value: _agreementDuration,
+                          decoration: const InputDecoration(labelText: 'Agreement Duration'),
+                          items: ['6 Months', '11 Months', '12 Months'].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+                          onChanged: (val) => setState(() => _agreementDuration = val!),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

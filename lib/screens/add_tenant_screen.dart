@@ -10,6 +10,7 @@ import '../theme/app_theme.dart';
 import '../widgets/custom_expandable_dropdown.dart';
 import '../widgets/custom_date_picker.dart';
 import '../widgets/fancy_toast.dart';
+import '../widgets/keyboard_responsive_layout.dart';
 
 class AddTenantScreen extends StatefulWidget {
   final String? initialRoomId;
@@ -213,24 +214,59 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
 
             // Form Body
             Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.all(16),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: const Color(0xFFF1F5F9)),
-                    boxShadow: const [
-                      BoxShadow(color: Color(0x06000000), blurRadius: 12, offset: Offset(0, 2)),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildCurrentStepContent(appProvider),
-                    ],
+              child: KeyboardAutoScroll(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: const EdgeInsets.all(16),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: const Color(0xFFF1F5F9)),
+                      boxShadow: const [
+                        BoxShadow(color: Color(0x06000000), blurRadius: 12, offset: Offset(0, 2)),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (_inlineError != null && _inlineError!.isNotEmpty) ...[
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEF2F2),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFFCA5A5)),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.error_outline_rounded, color: Color(0xFFEF4444), size: 20),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    _inlineError!,
+                                    style: const TextStyle(
+                                      color: Color(0xFFB91C1C),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () => setState(() => _inlineError = null),
+                                  child: const Icon(Icons.close_rounded, color: Color(0xFF991B1B), size: 18),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        _buildCurrentStepContent(appProvider),
+                      ],
+                    ),
                   ),
                 ),
               ),

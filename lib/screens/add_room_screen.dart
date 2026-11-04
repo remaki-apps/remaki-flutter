@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../services/api_service.dart';
 import '../widgets/custom_expandable_dropdown.dart';
 import '../widgets/fancy_toast.dart';
+import '../widgets/keyboard_responsive_layout.dart';
 
 class AddRoomScreen extends StatefulWidget {
   const AddRoomScreen({super.key});
@@ -99,7 +100,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       body: SafeArea(
-        child: Padding(
+        child: KeyboardAwareScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Form(
             key: _formKey,
@@ -344,11 +345,10 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Bed Names Section (Expanded, only bed list scrolls)
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+                // Bed Names Section
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
@@ -424,109 +424,103 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Expanded(
-                        child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          child: Column(
-                            children: List.generate(_capacity, (index) {
-                              final bedRow = Padding(
-                                padding: const EdgeInsets.only(bottom: 12.0),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Container(
-                                      width: 36,
-                                      height: 36,
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFFEEF2FF),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        '${index + 1}',
-                                        style: const TextStyle(
-                                          color: AppTheme.primaryColor,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                        ),
+                        Column(
+                          children: List.generate(_capacity, (index) {
+                            final bedRow = Padding(
+                              padding: const EdgeInsets.only(bottom: 12.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: 36,
+                                    height: 36,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFEEF2FF),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      '${index + 1}',
+                                      style: const TextStyle(
+                                        color: AppTheme.primaryColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          _buildLabelText('Bed ${index + 1} Name', isRequired: true),
-                                          const SizedBox(height: 6),
-                                          TextFormField(
-                                            controller: _bedNameControllers[index],
-                                            onTap: () {
-                                              if (index < _isPrefilled.length && _isPrefilled[index]) {
-                                                _bedNameControllers[index].clear();
-                                                _isPrefilled[index] = false;
-                                              }
-                                            },
-                                            onChanged: (val) {
-                                              if (index < _isPrefilled.length) {
-                                                _isPrefilled[index] = false;
-                                              }
-                                            },
-                                            decoration: _inputDecoration(
-                                              suffixIcon: const Icon(Icons.bed_outlined, color: Color(0xFF94A3B8), size: 20),
-                                            ),
-                                            validator: (val) => val == null || val.trim().isEmpty ? 'Required' : null,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        _buildLabelText('Bed ${index + 1} Name', isRequired: true),
+                                        const SizedBox(height: 6),
+                                        TextFormField(
+                                          controller: _bedNameControllers[index],
+                                          onTap: () {
+                                            if (index < _isPrefilled.length && _isPrefilled[index]) {
+                                              _bedNameControllers[index].clear();
+                                              _isPrefilled[index] = false;
+                                            }
+                                          },
+                                          onChanged: (val) {
+                                            if (index < _isPrefilled.length) {
+                                              _isPrefilled[index] = false;
+                                            }
+                                          },
+                                          decoration: _inputDecoration(
+                                            suffixIcon: const Icon(Icons.bed_outlined, color: Color(0xFF94A3B8), size: 20),
                                           ),
-                                        ],
-                                      ),
+                                          validator: (val) => val == null || val.trim().isEmpty ? 'Required' : null,
+                                        ),
+                                      ],
                                     ),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (_capacity <= 1) return bedRow;
+
+                            return Dismissible(
+                              key: ObjectKey(_bedNameControllers[index]),
+                              direction: DismissDirection.endToStart,
+                              background: Container(
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(right: 16),
+                                margin: const EdgeInsets.only(bottom: 12),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEF4444),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Text('Delete', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                                    SizedBox(width: 4),
+                                    Icon(Icons.delete_outline, color: Colors.white, size: 20),
                                   ],
                                 ),
-                              );
-
-                              if (_capacity <= 1) return bedRow;
-
-                              return Dismissible(
-                                key: ObjectKey(_bedNameControllers[index]),
-                                direction: DismissDirection.endToStart,
-                                background: Container(
-                                  alignment: Alignment.centerRight,
-                                  padding: const EdgeInsets.only(right: 16),
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFEF4444),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      Text('Delete', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                                      SizedBox(width: 4),
-                                      Icon(Icons.delete_outline, color: Colors.white, size: 20),
-                                    ],
-                                  ),
-                                ),
-                                onDismissed: (direction) {
-                                  setState(() {
-                                    _bedNameControllers.removeAt(index);
-                                    if (index < _isPrefilled.length) {
-                                      _isPrefilled.removeAt(index);
-                                    }
-                                    _capacity--;
-                                  });
-                                },
-                                child: bedRow,
-                              );
-                            }),
-                          ),
+                              ),
+                              onDismissed: (direction) {
+                                setState(() {
+                                  _bedNameControllers.removeAt(index);
+                                  if (index < _isPrefilled.length) {
+                                    _isPrefilled.removeAt(index);
+                                  }
+                                  _capacity--;
+                                });
+                              },
+                              child: bedRow,
+                            );
+                          }),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                ),
                 const SizedBox(height: 16),
 
-                // Submit Button (Static at bottom)
+                // Submit Button
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -561,6 +555,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                           ),
                   ),
                 ),
+                const SizedBox(height: 24),
               ],
             ),
           ),

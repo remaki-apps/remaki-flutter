@@ -12,6 +12,7 @@ import '../theme/app_theme.dart';
 import '../widgets/tenant_avatar.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/app_shimmer.dart';
+import '../widgets/keyboard_responsive_layout.dart';
 
 class PendingApprovalsScreen extends StatefulWidget {
   const PendingApprovalsScreen({super.key});
@@ -95,13 +96,17 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
       context: context,
       builder: (c) => StatefulBuilder(
         builder: (context, setDialogState) {
-          return Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            elevation: 8,
-            backgroundColor: Colors.white,
-            child: Padding(
-              padding: const EdgeInsets.all(22),
-              child: Column(
+          return KeyboardAwareDialog(
+            child: Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              elevation: 8,
+              backgroundColor: Colors.white,
+              child: KeyboardAutoScroll(
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: Padding(
+                    padding: const EdgeInsets.all(22),
+                    child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -255,7 +260,10 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                 ],
               ),
             ),
-          );
+          ),
+        ),
+        ),
+        );
         },
       ),
     );

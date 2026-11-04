@@ -280,7 +280,13 @@ class _TenantsScreenState extends State<TenantsScreen> {
                   : Scrollbar(
                       child: ListView.builder(
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: EdgeInsets.fromLTRB(16, 4, 16, 120 + MediaQuery.paddingOf(context).bottom),
+                        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          4,
+                          16,
+                          (MediaQuery.viewInsetsOf(context).bottom > 0 ? 32 : 120) + MediaQuery.paddingOf(context).bottom,
+                        ),
                       itemCount: filteredTenants.length,
                       itemBuilder: (context, index) {
                         var tenant = filteredTenants[index];
@@ -310,74 +316,61 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                 ),
                                 const SizedBox(width: 14),
 
-                                // Tenant Info (Name, Status & Room/Bed)
+                                // Tenant Info (Name & Room / Payment Status)
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
+                                      Text(
+                                        tenant.name,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                          color: Color(0xFF0F172A),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 5),
                                       Row(
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Flexible(
-                                            child: Text(
-                                              tenant.name,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 15,
-                                                color: Color(0xFF0F172A),
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFEEF2FF),
+                                                borderRadius: BorderRadius.circular(6),
                                               ),
-                                              overflow: TextOverflow.ellipsis,
+                                              child: Text(
+                                                formatRoomName(roomNumber),
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppTheme.primaryColor,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
+                                          const SizedBox(width: 6),
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                             decoration: BoxDecoration(
                                               color: tenant.statusBgColor,
-                                              borderRadius: BorderRadius.circular(20),
-                                              border: Border.all(
-                                                color: tenant.statusBorderColor,
-                                              ),
+                                              borderRadius: BorderRadius.circular(6),
                                             ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Container(
-                                                  width: 5,
-                                                  height: 5,
-                                                  decoration: BoxDecoration(
-                                                    color: tenant.statusColor,
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  tenant.statusBadgeLabel,
-                                                  style: TextStyle(
-                                                    color: tenant.statusColor,
-                                                    fontSize: 10,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ],
+                                            child: Text(
+                                              tenant.paymentStatusTitle,
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: tenant.statusColor,
+                                              ),
                                             ),
                                           ),
                                         ],
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFEEF2FF),
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: Text(
-                                          formatRoomName(roomNumber),
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppTheme.primaryColor,
-                                          ),
-                                        ),
                                       ),
                                     ],
                                   ),

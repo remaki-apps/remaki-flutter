@@ -45,6 +45,7 @@ import 'screens/admin_complaints_screen.dart';
 import 'screens/platform_fee_summary_screen.dart';
 import 'services/shared_media_service.dart';
 import 'widgets/offline_wrapper.dart';
+import 'widgets/keyboard_responsive_layout.dart';
 
 Future<void> bootstrapApp() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -475,7 +476,11 @@ class RemakiApp extends StatelessWidget {
       scrollBehavior: const AppScrollBehavior(),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
-      builder: (context, child) => OfflineWrapper(child: child ?? const SizedBox.shrink()),
+      builder: (context, child) => OfflineWrapper(
+        child: KeyboardDismissOnTap(
+          child: child ?? const SizedBox.shrink(),
+        ),
+      ),
     );
 
     if (EnvConfig.isQa) {

@@ -10,6 +10,7 @@ import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/export_data_modal.dart';
 import '../widgets/fancy_toast.dart';
+import '../widgets/keyboard_responsive_layout.dart';
 import '../utils/web_update_util.dart';
 
 class MoreScreen extends StatelessWidget {
@@ -114,7 +115,8 @@ class MoreScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) {
-          return AlertDialog(
+          return KeyboardAwareDialog(
+            child: AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
             titlePadding: const EdgeInsets.fromLTRB(22, 22, 22, 0),
             contentPadding: const EdgeInsets.fromLTRB(22, 16, 22, 20),
@@ -154,8 +156,10 @@ class MoreScreen extends StatelessWidget {
                 ),
               ],
             ),
-            content: SingleChildScrollView(
-              child: Column(
+            content: KeyboardAutoScroll(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -260,6 +264,7 @@ class MoreScreen extends StatelessWidget {
                 ],
               ),
             ),
+            ),
             actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
             actions: [
               TextButton(
@@ -312,6 +317,7 @@ class MoreScreen extends StatelessWidget {
                     : Text('Save UPI Settings', style: GoogleFonts.lato(fontWeight: FontWeight.w800)),
               ),
             ],
+          ),
           );
         },
       ),

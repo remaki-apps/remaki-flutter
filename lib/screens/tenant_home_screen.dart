@@ -976,7 +976,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: TenantTheme.background,
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
           Positioned.fill(
@@ -1013,14 +1013,19 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             child: Consumer<AppProvider>(
               builder: (context, appProvider, child) {
                 final bool isNavBarHidden = appProvider.isNavBarHidden;
-                return AnimatedSlide(
-                  offset: isNavBarHidden ? const Offset(0, 2) : Offset.zero,
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOut,
-                  child: AnimatedOpacity(
-                    opacity: isNavBarHidden ? 0.0 : 1.0,
-                    duration: const Duration(milliseconds: 200),
-                    child: _buildBottomNavigationBar(),
+                final bool isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+                final bool hideDock = isNavBarHidden || isKeyboardOpen;
+                return IgnorePointer(
+                  ignoring: hideDock,
+                  child: AnimatedSlide(
+                    offset: hideDock ? const Offset(0, 2) : Offset.zero,
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    child: AnimatedOpacity(
+                      opacity: hideDock ? 0.0 : 1.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: _buildBottomNavigationBar(),
+                    ),
                   ),
                 );
               },

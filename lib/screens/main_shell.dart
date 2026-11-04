@@ -15,9 +15,11 @@ class MainShell extends StatelessWidget {
     final int selectedIndex = _calculateSelectedIndex(context);
     final appProvider = Provider.of<AppProvider>(context);
     final bool isNavBarHidden = appProvider.isNavBarHidden;
+    final bool isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final bool hideDock = isNavBarHidden || isKeyboardOpen;
 
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
           // 1. Full height page content extending behind floating nav bar
@@ -25,19 +27,21 @@ class MainShell extends StatelessWidget {
             child: child,
           ),
 
-          // 2. Translucent Frosted Glass Floating Navigation Bar Dock (Hides smoothly when dropdown opens)
+          // 2. Translucent Frosted Glass Floating Navigation Bar Dock (Hides smoothly when keyboard or dropdown opens)
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: AnimatedSlide(
-              offset: isNavBarHidden ? const Offset(0, 2) : Offset.zero,
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOut,
-              child: AnimatedOpacity(
-                opacity: isNavBarHidden ? 0.0 : 1.0,
-                duration: const Duration(milliseconds: 200),
-                child: SafeArea(
+            child: IgnorePointer(
+              ignoring: hideDock,
+              child: AnimatedSlide(
+                offset: hideDock ? const Offset(0, 2) : Offset.zero,
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                child: AnimatedOpacity(
+                  opacity: hideDock ? 0.0 : 1.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: SafeArea(
                   maintainBottomViewPadding: true,
                   child: Center(
                     child: ConstrainedBox(
@@ -88,6 +92,7 @@ class MainShell extends StatelessWidget {
                   ),
                 ),
               ),
+            ),
             ),
           ),
         ],

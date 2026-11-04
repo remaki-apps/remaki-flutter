@@ -10,6 +10,7 @@ import '../services/api_service.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/tenant_avatar.dart';
 import '../widgets/custom_date_picker.dart';
+import '../widgets/keyboard_responsive_layout.dart';
 
 class RecordPaymentScreen extends StatefulWidget {
   final String tenantId;
@@ -181,9 +182,11 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            return SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              child: ConstrainedBox(
+            return KeyboardAutoScroll(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                physics: const ClampingScrollPhysics(),
+                child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: IntrinsicHeight(
                   child: Padding(
@@ -619,6 +622,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                   ),
                 ),
               ),
+            ),
             );
           },
         ),

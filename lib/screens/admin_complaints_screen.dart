@@ -8,6 +8,7 @@ import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/app_shimmer.dart';
+import '../widgets/keyboard_responsive_layout.dart';
 
 class AdminComplaintsScreen extends StatefulWidget {
   const AdminComplaintsScreen({super.key});
@@ -103,8 +104,10 @@ class _AdminComplaintsScreenState extends State<AdminComplaintsScreen> {
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
-          child: SingleChildScrollView(
-            child: Column(
+          child: KeyboardAutoScroll(
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -284,6 +287,7 @@ class _AdminComplaintsScreenState extends State<AdminComplaintsScreen> {
               ],
             ),
           ),
+        ),
         ),
       ),
     );

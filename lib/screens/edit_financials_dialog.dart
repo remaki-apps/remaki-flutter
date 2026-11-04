@@ -4,6 +4,7 @@ import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/api_service.dart';
 import '../widgets/fancy_toast.dart';
+import '../widgets/keyboard_responsive_layout.dart';
 
 class EditFinancialsDialog extends StatefulWidget {
   final AppProvider provider;
@@ -120,9 +121,10 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
         ),
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            child: Column(
+          child: KeyboardAutoScroll(
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -224,6 +226,7 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
               ),
             ],
           ),
+        ),
         ),
       ),
     ),

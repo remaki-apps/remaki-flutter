@@ -10,6 +10,7 @@ import '../widgets/fancy_toast.dart';
 import '../widgets/app_shimmer.dart';
 import '../utils/image_compress_util.dart';
 import '../widgets/image_adjust_dialog.dart';
+import '../widgets/keyboard_responsive_layout.dart';
 
 class AnnouncementsScreen extends StatefulWidget {
   const AnnouncementsScreen({super.key});
@@ -233,8 +234,10 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                   ),
                 ],
               ),
-              child: SingleChildScrollView(
-                child: Column(
+              child: KeyboardAutoScroll(
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -494,6 +497,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                   ],
                 ),
               ),
+            ),
             );
           },
         );

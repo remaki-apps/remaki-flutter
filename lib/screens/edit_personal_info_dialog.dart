@@ -9,6 +9,7 @@ import '../widgets/fancy_toast.dart';
 import '../widgets/tenant_avatar.dart';
 import '../utils/image_compress_util.dart';
 import '../widgets/image_adjust_dialog.dart';
+import '../widgets/keyboard_responsive_layout.dart';
 
 class EditPersonalInfoDialog extends StatefulWidget {
   final dynamic tenant;
@@ -209,9 +210,10 @@ class _EditPersonalInfoDialogState extends State<EditPersonalInfoDialog> {
         ),
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            child: Column(
+          child: KeyboardAutoScroll(
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -334,6 +336,7 @@ class _EditPersonalInfoDialogState extends State<EditPersonalInfoDialog> {
               ],
             ),
           ),
+        ),
         ),
       ),
     );

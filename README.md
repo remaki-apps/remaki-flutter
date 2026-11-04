@@ -20,3 +20,7 @@ samples, guidance on mobile development, and a full API reference.
 
 
 flutter run --flavor prod -t lib/main.dart -d emulator-5554
+
+flutter build apk --release --flavor prod -t lib/main.dart
+
+flutter build appbundle --release --flavor prod -t lib/main.dart

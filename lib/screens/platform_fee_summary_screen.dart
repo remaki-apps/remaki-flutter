@@ -11,6 +11,8 @@ import '../services/api_service.dart';
 import '../utils/image_compress_util.dart';
 import '../services/shared_media_service.dart';
 import '../widgets/fancy_toast.dart';
+import '../widgets/universal_upi_checkout_modal.dart';
+import '../widgets/keyboard_responsive_layout.dart';
 
 class PlatformFeeSummaryScreen extends StatefulWidget {
   final String? propertyId;
@@ -163,7 +165,8 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => KeyboardAwareDialog(
+        child: AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20),
@@ -191,8 +194,10 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
             ),
           ],
         ),
-        content: SingleChildScrollView(
-          child: Column(
+        content: KeyboardAutoScroll(
+          child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -284,6 +289,7 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
             ],
           ),
         ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
@@ -314,6 +320,7 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

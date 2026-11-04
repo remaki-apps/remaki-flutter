@@ -4,6 +4,7 @@ import '../models/models.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/fancy_toast.dart';
+import '../widgets/keyboard_responsive_layout.dart';
 
 class CompleteProfileDialog extends StatefulWidget {
   final Tenant tenant;
@@ -190,8 +191,10 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
             Expanded(
               child: Form(
                 key: _formKey,
-                child: ListView(
-                  padding: const EdgeInsets.all(24),
+                child: KeyboardAutoScroll(
+                  child: ListView(
+                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: const EdgeInsets.all(24),
                   children: [
                     _buildTextField(
                       'Date of Birth',
@@ -238,6 +241,7 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                     _buildTextField('PIN Code', _pinCodeCtrl, 'PIN Code', keyboardType: TextInputType.number),
                   ],
                 ),
+              ),
               ),
             ),
             Padding(

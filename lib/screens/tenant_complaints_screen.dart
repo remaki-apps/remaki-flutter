@@ -11,6 +11,7 @@ import '../theme/app_theme.dart';
 import '../utils/image_compress_util.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/app_shimmer.dart';
+import '../widgets/keyboard_responsive_layout.dart';
 
 class TenantComplaintsScreen extends StatefulWidget {
   const TenantComplaintsScreen({super.key});
@@ -95,8 +96,10 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
-          child: SingleChildScrollView(
-            child: Column(
+          child: KeyboardAutoScroll(
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -400,6 +403,7 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
               ],
             ),
           ),
+        ),
         ),
       ),
     );

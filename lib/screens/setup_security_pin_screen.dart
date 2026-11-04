@@ -8,6 +8,7 @@ import '../providers/notification_provider.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/fancy_toast.dart';
+import '../widgets/keyboard_responsive_layout.dart';
 
 class SetupSecurityPinScreen extends StatefulWidget {
   const SetupSecurityPinScreen({super.key});
@@ -192,9 +193,11 @@ class _SetupSecurityPinScreenState extends State<SetupSecurityPinScreen> {
         backgroundColor: const Color(0xFFF8F9FD),
         body: SafeArea(
           child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-              child: ConstrainedBox(
+            child: KeyboardAutoScroll(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 440),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -519,6 +522,7 @@ class _SetupSecurityPinScreenState extends State<SetupSecurityPinScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

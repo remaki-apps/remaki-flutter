@@ -6,6 +6,7 @@ import '../theme/app_theme.dart';
 import '../models/models.dart';
 import '../widgets/tenant_avatar.dart';
 import '../widgets/fancy_toast.dart';
+import '../widgets/keyboard_responsive_layout.dart';
 
 enum SplitMode { even, byAmount }
 
@@ -333,9 +334,11 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
         ),
         body: SafeArea(
           top: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
-            child: Column(
+          child: KeyboardAutoScroll(
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                     // Compact Classic Bill Input Card with original subtle gradient
@@ -1039,6 +1042,7 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
                 ),
               ),
             ),
+          ),
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
             color: Colors.white,

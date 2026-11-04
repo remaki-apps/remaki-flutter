@@ -115,24 +115,13 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
     final appProvider = Provider.of<AppProvider>(context, listen: false);
     final sanitizedPhone = tenant.phone.replaceAll(RegExp(r'\D'), '');
     final phoneNum = sanitizedPhone.startsWith('91') ? sanitizedPhone : '91$sanitizedPhone';
-    final message = Uri.encodeComponent(
-      '🌟 *Welcome to ${appProvider.pgName}!* 🌟\n\n'
-      'Dear ${tenant.name},\n\n'
-      'Your tenant portal account is ready on the *Remaki* app. You can now use the app to track your rent payments, view payment receipts, and manage your stay.\n\n'
-      '🏠 *Stay Details:*\n'
-      '• *Room:* ${formatRoomName(roomNumber)}\n'
-      '• *Floor:* $floorName\n\n'
-      '🔐 *Your Remaki App Login Credentials:*\n'
-      '────────────────────────────\n'
-      '📱 *Mobile Number:* ${tenant.phone}\n'
-      '🔑 *Password:* $password\n'
-      '────────────────────────────\n\n'
-      '📲 *Next Steps:*\n'
-      '1️⃣ Download & open the *Remaki* app.\n'
-      '2️⃣ Log in using your registered mobile number and password above.\n\n'
-      'If you have any questions, please reach out to the management.\n\n'
-      'Best regards,\n'
-      '*${appProvider.pgName} Management*'
+    final message = buildTenantCredentialsMessage(
+      pgName: appProvider.pgName,
+      tenantName: tenant.name,
+      phone: tenant.phone,
+      password: password,
+      roomNumber: roomNumber,
+      floorName: floorName,
     );
     final url = Uri.parse('https://wa.me/$phoneNum?text=$message');
     if (await canLaunchUrl(url)) {

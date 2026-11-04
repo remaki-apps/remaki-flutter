@@ -7,6 +7,7 @@ import '../models/models.dart';
 import '../widgets/tenant_avatar.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/app_shimmer.dart';
+import '../widgets/keyboard_responsive_layout.dart';
 
 class RoomDetailsScreen extends StatelessWidget {
   final String roomId;
@@ -758,13 +759,17 @@ class RoomDetailsScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
-          return Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            elevation: 8,
-            backgroundColor: Colors.white,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
+          return KeyboardAwareDialog(
+            child: Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              elevation: 8,
+              backgroundColor: Colors.white,
+              child: KeyboardAutoScroll(
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -927,7 +932,10 @@ class RoomDetailsScreen extends StatelessWidget {
                 ],
               ),
             ),
-          );
+          ),
+        ),
+        ),
+        );
         },
       ),
     );

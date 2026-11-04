@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../models/models.dart';
+import '../widgets/keyboard_responsive_layout.dart';
 
 class EnterSplitAmountScreen extends StatefulWidget {
   final String roomId;
@@ -120,9 +121,11 @@ class _EnterSplitAmountScreenState extends State<EnterSplitAmountScreen> {
             // Focused Center Content
             Expanded(
               child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
+                child: KeyboardAutoScroll(
+                  child: SingleChildScrollView(
+                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -239,6 +242,7 @@ class _EnterSplitAmountScreenState extends State<EnterSplitAmountScreen> {
                     ],
                   ),
                 ),
+              ),
               ),
             ),
 

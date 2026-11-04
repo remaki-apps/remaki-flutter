@@ -39,6 +39,50 @@ String formatRoomAndBed(String? room, String? bed, {String separator = ' • '})
   return b;
 }
 
+/// Builds the onboarding / login credentials WhatsApp message for a tenant in plain text.
+String buildTenantCredentialsMessage({
+  required String pgName,
+  required String tenantName,
+  required String phone,
+  required String password,
+  String roomNumber = '',
+  String floorName = '',
+}) {
+  final stayLines = <String>[];
+  if (roomNumber.isNotEmpty) {
+    stayLines.add('• Room: ${formatRoomName(roomNumber)}');
+  }
+  if (floorName.isNotEmpty) {
+    stayLines.add('• Floor: $floorName');
+  }
+
+  final stayDetailsText = stayLines.isNotEmpty
+      ? 'Stay Details\n${stayLines.join('\n')}\n\n'
+      : '';
+
+  final pgDisplay = pgName.trim().isNotEmpty ? pgName.trim() : 'PG';
+
+  return Uri.encodeComponent(
+    'Welcome to $pgDisplay!\n\n'
+    'Dear $tenantName,\n\n'
+    'Your tenant account has been successfully created on Remaki. You can now access your tenant portal to view rent details, track payments and download payment receipts.\n\n'
+    '$stayDetailsText'
+    'Login Credentials\n'
+    '• Mobile Number: $phone\n'
+    '• Password: $password\n\n'
+    'Download the Remaki App\n'
+    'Android: https://play.google.com/store/apps/details?id=com.remaki.app\n'
+    'iOS: https://remaki-flutter.vercel.app\n\n'
+    'How to Get Started\n'
+    'Download and open the Remaki app.\n'
+    'Log in using your registered mobile number and password.\n\n'
+    'Please keep your login credentials secure.\n\n'
+    'For any assistance, feel free to contact the PG management.\n\n'
+    'Regards,\n'
+    '$pgDisplay Management'
+  );
+}
+
 class Bed {
   String id;
   String name;
@@ -286,6 +330,26 @@ class Tenant {
     return 'UNPAID';
   }
 
+  String get paymentStatusTitle {
+    switch (statusBadgeLabel) {
+      case 'PAID':
+        return 'Paid';
+      case 'UPCOMING':
+        return 'Upcoming';
+      case 'PENDING':
+        return 'Pending';
+      case 'PARTIAL':
+        return 'Partial';
+      case 'OVERDUE':
+        return 'Overdue';
+      case 'NO DUES':
+        return 'Paid';
+      case 'UNPAID':
+      default:
+        return 'Unpaid';
+    }
+  }
+
   Color get statusColor {
     switch (statusBadgeLabel) {
       case 'BILL DUE':
@@ -440,6 +504,22 @@ class Tenant {
       'Kindly clear your pending bill balance on or before the due date.\n\n'
       'Best regards,\n'
       '*${pgName.isNotEmpty ? '$pgName Management' : 'Property Management'}*'
+    );
+  }
+
+  /// Builds the onboarding / login credentials WhatsApp message for this tenant in plain text.
+  String buildCredentialsMessage({
+    String roomNumber = '',
+    String floorName = '',
+    String pgName = '',
+  }) {
+    return buildTenantCredentialsMessage(
+      pgName: pgName,
+      tenantName: name,
+      phone: phone,
+      password: password,
+      roomNumber: roomNumber,
+      floorName: floorName,
     );
   }
 

@@ -268,28 +268,13 @@ class _TenantAddedSuccessScreenState extends State<TenantAddedSuccessScreen> {
     }
     if (currentPassword.isEmpty) currentPassword = 'hi123';
 
-    final stayDetailsText = (currentRoom.isNotEmpty || currentFloor.isNotEmpty)
-      ? '🏠 *Stay Details:*\n'
-        '${currentRoom.isNotEmpty ? '• *Room:* ${formatRoomName(currentRoom)}\n' : ''}'
-        '${currentFloor.isNotEmpty ? '• *Floor:* $currentFloor\n' : ''}\n'
-      : '';
-
-    final message = Uri.encodeComponent(
-      '🌟 *Welcome to ${provider.pgName}!* 🌟\n\n'
-      'Dear ${widget.name},\n\n'
-      'Your tenant portal account is ready on the *Remaki* app. You can now use the app to track your rent payments, view payment receipts, and manage your stay.\n\n'
-      '$stayDetailsText'
-      '🔐 *Your Remaki App Login Credentials:*\n'
-      '────────────────────────────\n'
-      '📱 *Mobile Number:* ${widget.phone}\n'
-      '🔑 *Password:* $currentPassword\n'
-      '────────────────────────────\n\n'
-      '📲 *Next Steps:*\n'
-      '1️⃣ Download & open the *Remaki* app.\n'
-      '2️⃣ Log in using your registered mobile number and password above.\n\n'
-      'If you have any questions, please reach out to the management.\n\n'
-      'Best regards,\n'
-      '*${provider.pgName} Management*'
+    final message = buildTenantCredentialsMessage(
+      pgName: provider.pgName,
+      tenantName: widget.name,
+      phone: widget.phone,
+      password: currentPassword,
+      roomNumber: currentRoom,
+      floorName: currentFloor,
     );
     final url = Uri.parse('https://wa.me/$formattedPhone?text=$message');
     if (await canLaunchUrl(url)) {
