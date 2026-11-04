@@ -470,7 +470,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                               const SizedBox(width: 6),
                               Expanded(
                                 child: GestureDetector(
-                                  onTap: () => _showMarkPaidDialog(context, tenant),
+                                  onTap: () => context.push('/record_payment/${tenant.id}'),
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                                     decoration: BoxDecoration(
@@ -1512,6 +1512,8 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
   }
 
 
+  /*
+  // Custom amount / popup dialog commented out as requested
   void _showMarkPaidDialog(BuildContext context, Tenant tenant) {
     final double rentAmt = tenant.pendingRentAmount > 0 ? tenant.pendingRentAmount : tenant.rentAmount;
     final double billsAmt = tenant.totalPendingBills;
@@ -1725,8 +1727,9 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
       ),
     );
   }
+  */
 
-  void _showVacateDialog(BuildContext context, AppProvider appProvider, dynamic tenant, String roomNumber, String bedName) {
+    void _showVacateDialog(BuildContext context, AppProvider appProvider, dynamic tenant, String roomNumber, String bedName) {
     showDialog(
       context: context,
       builder: (ctx) => Dialog(

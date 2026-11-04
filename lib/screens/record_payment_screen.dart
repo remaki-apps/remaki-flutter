@@ -21,7 +21,8 @@ class RecordPaymentScreen extends StatefulWidget {
 }
 
 class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
-  final _amountController = TextEditingController();
+  // Custom amount editing commented out as requested
+  // final _amountController = TextEditingController();
   final _notesController = TextEditingController();
 
   // Payment method state defaulted to Cash
@@ -39,19 +40,18 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
       final tenantIndex = appProvider.tenants.indexWhere((t) => t.id == widget.tenantId);
       if (tenantIndex != -1) {
         final tenant = appProvider.tenants[tenantIndex];
-        if (tenant.totalDue > 0) {
-          _amountController.text = tenant.totalDue.toStringAsFixed(0);
-        } else if (tenant.rentAmount > 0) {
-          _amountController.text = tenant.rentAmount.toStringAsFixed(0);
-        }
+        final double rentAmt = tenant.pendingRentAmount > 0 ? tenant.pendingRentAmount : tenant.rentAmount;
+        final double billsAmt = tenant.totalPendingBills;
+        final bool hasRent = rentAmt > 0 && !tenant.isPaid;
+        final bool hasBills = billsAmt > 0;
 
         setState(() {
-          if (tenant.pendingRentAmount > 0 && tenant.totalPendingBills == 0) {
-            _paymentType = 'RENT';
-          } else if (tenant.totalPendingBills > 0 && tenant.pendingRentAmount == 0) {
+          if (hasRent && hasBills) {
+            _paymentType = 'BOTH';
+          } else if (hasBills) {
             _paymentType = 'BILLS';
           } else {
-            _paymentType = 'BOTH';
+            _paymentType = 'RENT';
           }
         });
       }
@@ -60,7 +60,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
 
   @override
   void dispose() {
-    _amountController.dispose();
+    // _amountController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -78,12 +78,14 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
     }
   }
 
+  /*
+  // Custom amount setting commented out as requested
   void _setAmountAndType(double amount, String type) {
     setState(() {
-      _amountController.text = amount.toStringAsFixed(0);
       _paymentType = type;
     });
   }
+  */
 
   @override
   Widget build(BuildContext context) {
@@ -126,23 +128,22 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
     }
 
     final tenant = appProvider.tenants[tenantIndex];
+    final double rentAmt = tenant.pendingRentAmount > 0 ? tenant.pendingRentAmount : tenant.rentAmount;
+    final double billsAmt = tenant.totalPendingBills;
+    final bool hasRent = rentAmt > 0 && !tenant.isPaid;
+    final bool hasBills = billsAmt > 0;
+
     if (!_initializedTenant) {
       _initializedTenant = true;
-      if (_amountController.text.isEmpty) {
-        if (tenant.totalDue > 0) {
-          _amountController.text = tenant.totalDue.toStringAsFixed(0);
-        } else if (tenant.rentAmount > 0) {
-          _amountController.text = tenant.rentAmount.toStringAsFixed(0);
-        }
-      }
-      if (tenant.pendingRentAmount > 0 && tenant.totalPendingBills == 0) {
-        _paymentType = 'RENT';
-      } else if (tenant.totalPendingBills > 0 && tenant.pendingRentAmount == 0) {
+      if (hasRent && hasBills) {
+        _paymentType = 'BOTH';
+      } else if (hasBills) {
         _paymentType = 'BILLS';
       } else {
-        _paymentType = 'BOTH';
+        _paymentType = 'RENT';
       }
     }
+
     final roomIndex = appProvider.rooms.indexWhere((r) => r.id == tenant.roomId);
     final roomNumber = roomIndex != -1 ? appProvider.rooms[roomIndex].number : 'N/A';
     final bedName = (roomIndex != -1)
@@ -150,10 +151,21 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
         : '';
     final roomBedString = formatRoomAndBed(roomNumber, bedName);
 
-    final currentAmount = double.tryParse(_amountController.text) ?? 0.0;
+    double currentAmount = 0.0;
+    if (_paymentType == 'BOTH') {
+      currentAmount = (hasRent ? rentAmt : 0.0) + (hasBills ? billsAmt : 0.0);
+    } else if (_paymentType == 'RENT') {
+      currentAmount = rentAmt;
+    } else if (_paymentType == 'BILLS') {
+      currentAmount = billsAmt;
+    }
+    if (currentAmount == 0.0 && tenant.rentAmount > 0) {
+      currentAmount = tenant.rentAmount;
+    }
+
     final totalDue = tenant.totalDue;
     final isValid = currentAmount > 0;
-    final balanceAfter = totalDue - currentAmount;
+    final balanceAfter = (totalDue - currentAmount).clamp(0.0, double.infinity);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
@@ -268,7 +280,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // 2. Amount Input Hero Card
+                        // 2. Fixed Amount Display & Payment For Selection Card
                         Container(
                           padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
@@ -287,7 +299,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'AMOUNT RECEIVED',
+                                'SELECT PAYMENT FOR',
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
@@ -308,60 +320,57 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                     ),
                                   ),
                                   const SizedBox(width: 8),
+                                  Text(
+                                    NumberFormat('#,##,###').format(currentAmount),
+                                    style: GoogleFonts.lato(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.w800,
+                                      color: const Color(0xFF0F172A),
+                                      letterSpacing: -0.5,
+                                    ),
+                                  ),
+                                  /*
+                                  // Custom amount input commented out as requested
                                   Expanded(
                                     child: TextField(
                                       controller: _amountController,
-                                      readOnly: _paymentType == 'BILLS',
                                       keyboardType: TextInputType.number,
-                                      style: GoogleFonts.lato(
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.w800,
-                                        color: _paymentType == 'BILLS' ? const Color(0xFF64748B) : const Color(0xFF0F172A),
-                                        letterSpacing: -0.5,
-                                      ),
-                                      decoration: InputDecoration(
-                                        border: InputBorder.none,
-                                        isDense: true,
-                                        contentPadding: EdgeInsets.zero,
-                                        hintText: '0',
-                                        hintStyle: const TextStyle(color: Color(0xFFCBD5E1)),
-                                        helperText: _paymentType == 'BILLS' ? 'Bill amount cannot be edited' : null,
-                                        helperStyle: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
-                                      ),
-                                      onChanged: (_) => setState(() {}),
                                     ),
                                   ),
+                                  */
                                 ],
                               ),
                               const SizedBox(height: 14),
-                              // Preset Quick Chips
+                              // Choice Chips: Both / Rent Only / Bill Only
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
                                 children: [
-                                  if (totalDue > 0)
+                                  if (hasRent && hasBills)
                                     _buildPresetChip(
-                                      'Full Due (₹${totalDue.toStringAsFixed(0)})',
-                                      currentAmount == totalDue,
-                                      () => _setAmountAndType(totalDue, 'BOTH'),
+                                      'Both (₹${(rentAmt + billsAmt).toStringAsFixed(0)})',
+                                      _paymentType == 'BOTH',
+                                      () => setState(() => _paymentType = 'BOTH'),
                                     ),
-                                  if (tenant.pendingRentAmount > 0 && tenant.pendingRentAmount != totalDue)
+                                  if (hasRent)
                                     _buildPresetChip(
-                                      'Rent (₹${tenant.pendingRentAmount.toStringAsFixed(0)})',
-                                      currentAmount == tenant.pendingRentAmount,
-                                      () => _setAmountAndType(tenant.pendingRentAmount, 'RENT'),
+                                      'Rent Only (₹${rentAmt.toStringAsFixed(0)})',
+                                      _paymentType == 'RENT',
+                                      () => setState(() => _paymentType = 'RENT'),
                                     ),
-                                  if (tenant.totalPendingBills > 0 && tenant.totalPendingBills != totalDue)
+                                  if (hasBills)
                                     _buildPresetChip(
-                                      'Bills (₹${tenant.totalPendingBills.toStringAsFixed(0)})',
-                                      currentAmount == tenant.totalPendingBills,
-                                      () => _setAmountAndType(tenant.totalPendingBills, 'BILLS'),
+                                      'Bill Only (₹${billsAmt.toStringAsFixed(0)})',
+                                      _paymentType == 'BILLS',
+                                      () => setState(() => _paymentType = 'BILLS'),
                                     ),
                                 ],
                               ),
                             ],
                           ),
                         ),
+                        const SizedBox(height: 16),
+
                         // 3. Payment Method Selection Card
                         Container(
                           padding: const EdgeInsets.all(16),
@@ -514,15 +523,17 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                               const SizedBox(height: 6),
                               _buildSummaryRow('Space', roomBedString),
                               const SizedBox(height: 6),
+                              _buildSummaryRow(
+                                'Payment For',
+                                _paymentType == 'BOTH'
+                                    ? 'Rent + Bills'
+                                    : (_paymentType == 'RENT' ? 'Rent Only' : 'Bill Only'),
+                              ),
+                              const SizedBox(height: 6),
                               _buildSummaryRow('Payment Method', _paymentMethod),
                               const SizedBox(height: 6),
                               _buildSummaryRow('Current Balance', '₹${totalDue.toStringAsFixed(0)}'),
-                              const SizedBox(height: 6),
-                              _buildSummaryRow(
-                                'Recording Amount',
-                                '₹${currentAmount.toStringAsFixed(0)}',
-                                isHighlight: true,
-                              ),
+                              // Recording Amount row removed as requested
                               const Divider(height: 16, color: Color(0xFFE2E8F0)),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -538,15 +549,13 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                   Text(
                                     balanceAfter == 0
                                         ? '₹0 (Cleared)'
-                                        : (balanceAfter > 0
-                                            ? '₹${balanceAfter.toStringAsFixed(0)}'
-                                            : '₹${(-balanceAfter).toStringAsFixed(0)} (Advance)'),
+                                        : '₹${balanceAfter.toStringAsFixed(0)}',
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
                                       color: balanceAfter == 0
                                           ? const Color(0xFF16A34A)
-                                          : (balanceAfter > 0 ? AppTheme.danger : const Color(0xFF2563EB)),
+                                          : AppTheme.danger,
                                     ),
                                   ),
                                 ],
@@ -558,7 +567,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                         const Spacer(),
                         const SizedBox(height: 16),
 
-                        // 5. Classic Action Button
+                        // 6. Confirm Payment Button
                         SizedBox(
                           width: double.infinity,
                           height: 52,
@@ -579,16 +588,16 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                       final dateStr = DateFormat('dd-MM-yyyy').format(_paymentDate);
                                       final fullRoomBed = formatRoomAndBed(roomNumber, bedName, separator: ' - ');
 
-                                       if (context.mounted) {
-                                         context.pushReplacement(
-                                           '/payment_success'
-                                           '?amount=${currentAmount.toStringAsFixed(0)}'
-                                           '&name=${Uri.encodeComponent(tenant.name)}'
-                                           '&roomBed=${Uri.encodeComponent(fullRoomBed)}'
-                                           '&dateMethod=${Uri.encodeComponent('$dateStr • $_paymentMethod')}'
-                                           '&tenantId=${widget.tenantId}',
-                                         );
-                                       }
+                                      if (context.mounted) {
+                                        context.pushReplacement(
+                                          '/payment_success'
+                                          '?amount=${currentAmount.toStringAsFixed(0)}'
+                                          '&name=${Uri.encodeComponent(tenant.name)}'
+                                          '&roomBed=${Uri.encodeComponent(fullRoomBed)}'
+                                          '&dateMethod=${Uri.encodeComponent("$dateStr • $_paymentMethod")}'
+                                          '&tenantId=${widget.tenantId}',
+                                        );
+                                      }
                                     } catch (e) {
                                       if (mounted) setState(() => _isLoading = false);
                                       if (context.mounted) {
@@ -611,7 +620,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                 : Text(
                                     isValid
                                         ? 'Confirm Payment • ₹${currentAmount.toStringAsFixed(0)}'
-                                        : 'Enter Amount',
+                                        : 'Select Payment',
                                     style: GoogleFonts.lato(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w700,
