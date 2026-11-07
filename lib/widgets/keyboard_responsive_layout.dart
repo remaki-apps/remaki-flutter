@@ -156,8 +156,9 @@ class KeyboardAwareScrollView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
     final effectivePadding = (padding ?? EdgeInsets.zero).add(
-      EdgeInsets.only(bottom: bottomInset > 0 ? extraBottomPadding : 0),
+      EdgeInsets.only(bottom: bottomInset > 0 ? extraBottomPadding : bottomPadding),
     );
 
     Widget scrollView = SingleChildScrollView(
@@ -204,7 +205,9 @@ class KeyboardAwareDialog extends StatelessWidget {
     final mediaQuery = MediaQuery.of(context);
     final totalHeight = mediaQuery.size.height;
     final keyboardHeight = mediaQuery.viewInsets.bottom;
-    final availableHeight = totalHeight - keyboardHeight - (keyboardHeight > 0 ? 32 : 64);
+    final bottomPadding = mediaQuery.padding.bottom;
+    final topPadding = mediaQuery.padding.top;
+    final availableHeight = totalHeight - keyboardHeight - bottomPadding - topPadding - (keyboardHeight > 0 ? 32 : 64);
 
     return Dialog(
       shape: shape ?? RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
@@ -257,7 +260,13 @@ class KeyboardAwareBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
     final bottomInset = mediaQuery.viewInsets.bottom;
+    final bottomPadding = mediaQuery.padding.bottom;
     final maxHeight = mediaQuery.size.height * maxScreenRatio;
+
+    final basePadding = padding ?? const EdgeInsets.fromLTRB(20, 16, 20, 24);
+    final effectivePadding = basePadding.add(
+      EdgeInsets.only(bottom: bottomInset > 0 ? 0 : bottomPadding),
+    );
 
     return AnimatedPadding(
       padding: EdgeInsets.only(bottom: bottomInset),
@@ -265,7 +274,7 @@ class KeyboardAwareBottomSheet extends StatelessWidget {
       curve: Curves.easeOutCubic,
       child: Container(
         constraints: BoxConstraints(maxHeight: maxHeight),
-        padding: padding ?? const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        padding: effectivePadding,
         decoration: decoration ??
             const BoxDecoration(
               color: Colors.white,

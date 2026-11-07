@@ -489,7 +489,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                 ? Center(
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                      padding: EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 24.0 + MediaQuery.paddingOf(context).bottom),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -534,6 +534,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                   )
                 : ListView(
                     physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    padding: EdgeInsets.fromLTRB(16, 12, 16, 24 + MediaQuery.paddingOf(context).bottom),
                     children: [
                       // Request Items List
                       ..._requests.map((req) {
@@ -678,12 +679,16 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                                             color: const Color(0xFF64748B),
                                           ),
                                         ),
-                                        Text(
-                                          formattedDateTime,
-                                          style: GoogleFonts.lato(
-                                            fontSize: 11.5,
-                                            fontWeight: FontWeight.w700,
-                                            color: const Color(0xFF0F172A),
+                                        Flexible(
+                                          child: Text(
+                                            formattedDateTime,
+                                            style: GoogleFonts.lato(
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: const Color(0xFF0F172A),
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
                                       ],

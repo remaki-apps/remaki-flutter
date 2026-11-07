@@ -88,7 +88,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+        padding: EdgeInsets.fromLTRB(24, 20, 24, 24 + MediaQuery.paddingOf(ctx).bottom),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.only(

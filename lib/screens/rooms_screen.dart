@@ -469,7 +469,7 @@ class _RoomsScreenState extends State<RoomsScreen> {
       ),
     ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 78),
+        padding: EdgeInsets.only(bottom: 78 + MediaQuery.paddingOf(context).bottom),
         child: FloatingActionButton(
           onPressed: () => context.push('/add_room'),
           backgroundColor: AppTheme.primaryColor,

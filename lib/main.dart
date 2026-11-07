@@ -463,6 +463,13 @@ class AppScrollBehavior extends MaterialScrollBehavior {
     PointerDeviceKind.trackpad,
     PointerDeviceKind.stylus,
   };
+
+  @override
+  Widget buildOverscrollIndicator(BuildContext context, Widget child, ScrollableDetails details) {
+    // Return child directly to prevent Android's StretchingOverscrollIndicator (_StretchController)
+    // from triggering a synchronous setState() during performLayout when keyboards or bottom sheets resize.
+    return child;
+  }
 }
 
 class RemakiApp extends StatelessWidget {

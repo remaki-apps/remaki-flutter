@@ -1539,12 +1539,15 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
             activeAmount = billsAmt;
           }
 
+          final viewInsets = MediaQuery.of(ctx).viewInsets.bottom;
+          final navPadding = MediaQuery.of(ctx).padding.bottom;
+
           return Container(
             decoration: const BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            padding: EdgeInsets.fromLTRB(20, 16, 20, 24 + MediaQuery.of(ctx).viewInsets.bottom),
+            padding: EdgeInsets.fromLTRB(20, 16, 20, viewInsets > 0 ? (viewInsets + 16) : (24 + navPadding)),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,

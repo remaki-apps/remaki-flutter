@@ -11,6 +11,7 @@ import '../widgets/app_shimmer.dart';
 import '../utils/image_compress_util.dart';
 import '../widgets/image_adjust_dialog.dart';
 import '../widgets/keyboard_responsive_layout.dart';
+import '../widgets/animated_image_upload_progress_bar.dart';
 
 class AnnouncementsScreen extends StatefulWidget {
   const AnnouncementsScreen({super.key});
@@ -26,6 +27,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   final TextEditingController _descCtrl = TextEditingController();
   Uint8List? _selectedImageBytes;
   bool _isSending = false;
+  bool _isImageLoading = false;
 
   @override
   void initState() {
@@ -70,6 +72,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       
       if (image == null) return;
 
+      setState(() => _isImageLoading = true);
+      modalSetState(() => _isImageLoading = true);
+
       final bytes = await image.readAsBytes();
       if (!mounted) return;
 
@@ -80,14 +85,26 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         isCircle: false,
         aspectRatio: 16 / 10,
       );
-      if (adjusted == null) return;
+      if (adjusted == null) {
+        setState(() => _isImageLoading = false);
+        modalSetState(() => _isImageLoading = false);
+        return;
+      }
 
       final compressed = await ImageCompressUtil.compressDocumentOrBill(adjusted);
-      setState(() => _selectedImageBytes = compressed);
-      modalSetState(() => _selectedImageBytes = compressed);
+      setState(() {
+        _selectedImageBytes = compressed;
+        _isImageLoading = false;
+      });
+      modalSetState(() {
+        _selectedImageBytes = compressed;
+        _isImageLoading = false;
+      });
     } catch (e) {
       debugPrint('[Announcements] Pick image error: $e');
       if (mounted) {
+        setState(() => _isImageLoading = false);
+        modalSetState(() => _isImageLoading = false);
         FancyToast.showError(context, 'Image Error', message: 'Could not process selected image.');
       }
     }
@@ -216,9 +233,13 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            final viewInsets = MediaQuery.of(context).viewInsets.bottom;
+            final navPadding = MediaQuery.of(context).padding.bottom;
+            final bottomPad = viewInsets > 0 ? (viewInsets + 20) : (20 + navPadding);
+
             return Container(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                bottom: bottomPad,
                 top: 12,
                 left: 20,
                 right: 20,
@@ -384,6 +405,16 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
+                    AnimatedImageUploadProgressBar(
+                      isUploading: _isImageLoading,
+                      title: 'Uploading Announcement Banner...',
+                      subtitle: 'Optimizing and attaching image proof...',
+                      gradientColors: const [
+                        Color(0xFF5B32E4),
+                        Color(0xFF7C3AED),
+                        Color(0xFF4F46E5),
+                      ],
+                    ),
                     if (_selectedImageBytes != null) ...[
                       Stack(
                         children: [
@@ -424,14 +455,21 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     Row(
                       children: [
                         OutlinedButton.icon(
-                          onPressed: _isSending ? null : () => _pickImage(setModalState),
-                          icon: Icon(
-                            _selectedImageBytes != null ? Icons.change_circle_outlined : Icons.add_photo_alternate_outlined,
-                            size: 18,
-                            color: const Color(0xFF475569),
-                          ),
+                          onPressed: (_isSending || _isImageLoading) ? null : () => _pickImage(setModalState),
+                          icon: _isImageLoading
+                              ? const AnimatedUploadButtonLoader(
+                                  color: Color(0xFF5B32E4),
+                                  size: 16,
+                                )
+                              : Icon(
+                                  _selectedImageBytes != null ? Icons.change_circle_outlined : Icons.add_photo_alternate_outlined,
+                                  size: 18,
+                                  color: const Color(0xFF475569),
+                                ),
                           label: Text(
-                            _selectedImageBytes != null ? 'Change Image' : 'Attach Photo',
+                            _isImageLoading
+                                ? 'Uploading...'
+                                : (_selectedImageBytes != null ? 'Change Image' : 'Attach Photo'),
                             style: GoogleFonts.lato(
                               fontWeight: FontWeight.w600,
                               fontSize: 13,
@@ -461,7 +499,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                               ],
                             ),
                             child: ElevatedButton(
-                              onPressed: _isSending ? null : () => _sendAnnouncement(setModalState),
+                              onPressed: (_isSending || _isImageLoading) ? null : () => _sendAnnouncement(setModalState),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.transparent,
                                 shadowColor: Colors.transparent,
@@ -581,7 +619,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             ? const AnnouncementsSkeleton()
             : ListView(
                 physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 80),
+          padding: EdgeInsets.fromLTRB(16, 14, 16, 96 + MediaQuery.paddingOf(context).bottom),
           children: [
             // Top Hero Banner
             Container(
@@ -810,12 +848,16 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                                         color: Color(0xFF94A3B8),
                                       ),
                                       const SizedBox(width: 4),
-                                      Text(
-                                        dateStr,
-                                        style: GoogleFonts.lato(
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.w500,
-                                          color: const Color(0xFF64748B),
+                                      Flexible(
+                                        child: Text(
+                                          dateStr,
+                                          style: GoogleFonts.lato(
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w500,
+                                            color: const Color(0xFF64748B),
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
                                     ],
@@ -824,24 +866,25 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                               ],
                             ),
                           ),
+                          const SizedBox(width: 6),
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFEEF2FF),
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(Icons.verified_rounded, size: 12, color: Color(0xFF4F46E5)),
-                                    const SizedBox(width: 4),
+                                    const Icon(Icons.verified_rounded, size: 11.5, color: Color(0xFF4F46E5)),
+                                    const SizedBox(width: 3),
                                     Text(
                                       'Official',
                                       style: GoogleFonts.lato(
-                                        fontSize: 11,
+                                        fontSize: 10.5,
                                         fontWeight: FontWeight.w700,
                                         color: const Color(0xFF4F46E5),
                                       ),
@@ -849,14 +892,14 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 2),
                               IconButton(
                                 onPressed: () => _confirmDelete(a['id']?.toString() ?? '', heading),
-                                icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444), size: 19),
+                                icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444), size: 18),
                                 tooltip: 'Delete Announcement',
                                 splashRadius: 18,
-                                padding: const EdgeInsets.all(6),
-                                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                                padding: const EdgeInsets.all(4),
+                                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                               ),
                             ],
                           ),
@@ -909,12 +952,16 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                           children: [
                             const Icon(Icons.check_circle_outline_rounded, size: 14, color: Color(0xFF10B981)),
                             const SizedBox(width: 5),
-                            Text(
-                              'Delivered to all active PG tenants',
-                              style: GoogleFonts.lato(
-                                fontSize: 11.5,
-                                color: const Color(0xFF059669),
-                                fontWeight: FontWeight.w600,
+                            Flexible(
+                              child: Text(
+                                'Delivered to all active PG tenants',
+                                style: GoogleFonts.lato(
+                                  fontSize: 11.5,
+                                  color: const Color(0xFF059669),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],

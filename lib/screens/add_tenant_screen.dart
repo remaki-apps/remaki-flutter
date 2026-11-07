@@ -142,6 +142,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
       child: Scaffold(
         backgroundColor: const Color(0xFFF8F9FD),
         body: SafeArea(
+          bottom: false,
           child: Column(
             children: [
               // Custom Header Bar

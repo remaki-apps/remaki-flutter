@@ -93,13 +93,18 @@ class _AdminComplaintsScreenState extends State<AdminComplaintsScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 18,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
+        builder: (context, setModalState) {
+          final viewInsets = MediaQuery.of(context).viewInsets.bottom;
+          final navPadding = MediaQuery.of(context).padding.bottom;
+          final bottomPad = viewInsets > 0 ? (viewInsets + 20) : (20 + navPadding);
+
+          return Container(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 18,
+              bottom: bottomPad,
+            ),
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -288,8 +293,9 @@ class _AdminComplaintsScreenState extends State<AdminComplaintsScreen> {
             ),
           ),
         ),
-        ),
-      ),
+        );
+      },
+    ),
     );
   }
 
@@ -418,7 +424,7 @@ class _AdminComplaintsScreenState extends State<AdminComplaintsScreen> {
         color: AppTheme.primaryColor,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 24 + MediaQuery.paddingOf(context).bottom),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 750),
@@ -721,11 +727,13 @@ class _AdminComplaintsScreenState extends State<AdminComplaintsScreen> {
             complaint.title,
             style: GoogleFonts.lato(fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
           ),
-          const SizedBox(height: 4),
-          Text(
-            complaint.description,
-            style: GoogleFonts.lato(fontSize: 13.5, color: const Color(0xFF475569), height: 1.4),
-          ),
+          if (complaint.description.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              complaint.description,
+              style: GoogleFonts.lato(fontSize: 13.5, color: const Color(0xFF475569), height: 1.4),
+            ),
+          ],
 
           // Attached Media Preview
           if (complaint.mediaUrl != null && complaint.mediaUrl!.isNotEmpty) ...[

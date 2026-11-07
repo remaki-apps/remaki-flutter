@@ -1,9 +1,12 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sunshine_pg_app/models/models.dart';
 import 'package:sunshine_pg_app/providers/app_provider.dart';
 import 'package:sunshine_pg_app/services/api_service.dart';
 import 'package:sunshine_pg_app/config/env_config.dart';
+import 'package:sunshine_pg_app/widgets/keyboard_responsive_layout.dart';
+import 'package:sunshine_pg_app/widgets/animated_image_upload_progress_bar.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +38,21 @@ void main() {
       expect(room.beds.length, 2);
       expect(room.availableBeds, 1);
       expect(room.isFull, isFalse);
+    });
+
+    test('Complaint deserializes safely with optional category and empty description', () {
+      final complaint = Complaint.fromJson({
+        'id': 'c1',
+        'tenantProfileId': 'tp1',
+        'adminId': 'a1',
+        'title': 'Leaky faucet',
+      });
+      expect(complaint.id, 'c1');
+      expect(complaint.title, 'Leaky faucet');
+      expect(complaint.category, 'OTHER');
+      expect(complaint.description, '');
+      expect(complaint.mediaUrl, isNull);
+      expect(complaint.isPending, isTrue);
     });
 
     test('Tenant calculates total pending bills and total due correctly', () {
@@ -475,6 +493,161 @@ void main() {
       await ApiService.initToken();
       expect(ApiService.isLoggedIn, isTrue);
       expect(ApiService.token, 'prod_token_abc');
+    });
+  });
+
+  group('Android System Navigation Bar & Safe Area Responsiveness Tests', () {
+    testWidgets('KeyboardAwareScrollView handles Android 3-button navigation (48dp)', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MediaQuery(
+            data: const MediaQueryData(
+              padding: EdgeInsets.only(bottom: 48), // Android 3-button navigation bar
+              viewInsets: EdgeInsets.zero,
+            ),
+            child: const Scaffold(
+              body: KeyboardAwareScrollView(
+                padding: EdgeInsets.all(16),
+                child: Text('Content'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final singleChildScrollView = tester.widget<SingleChildScrollView>(find.byType(SingleChildScrollView));
+      final padding = singleChildScrollView.padding as EdgeInsets;
+      expect(padding.bottom, 64.0); // 16 base + 48 navigation bar
+      expect(padding.top, 16.0);
+    });
+
+    testWidgets('KeyboardAwareScrollView handles Android gesture navigation (16dp)', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MediaQuery(
+            data: const MediaQueryData(
+              padding: EdgeInsets.only(bottom: 16), // Android gesture navigation bar
+              viewInsets: EdgeInsets.zero,
+            ),
+            child: const Scaffold(
+              body: KeyboardAwareScrollView(
+                padding: EdgeInsets.all(16),
+                child: Text('Content'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final singleChildScrollView = tester.widget<SingleChildScrollView>(find.byType(SingleChildScrollView));
+      final padding = singleChildScrollView.padding as EdgeInsets;
+      expect(padding.bottom, 32.0); // 16 base + 16 gesture bar
+      expect(padding.top, 16.0);
+    });
+
+    testWidgets('KeyboardAwareScrollView prioritizes keyboard insets when keyboard opens', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MediaQuery(
+            data: const MediaQueryData(
+              padding: EdgeInsets.only(bottom: 48),
+              viewInsets: EdgeInsets.only(bottom: 300), // Keyboard open
+            ),
+            child: const Scaffold(
+              body: KeyboardAwareScrollView(
+                padding: EdgeInsets.all(16),
+                extraBottomPadding: 32,
+                child: Text('Content'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final singleChildScrollView = tester.widget<SingleChildScrollView>(find.byType(SingleChildScrollView));
+      final padding = singleChildScrollView.padding as EdgeInsets;
+      expect(padding.bottom, 48.0); // 16 base + 32 extraBottomPadding
+    });
+
+    testWidgets('KeyboardAwareBottomSheet adapts to Android 3-button navigation (48dp)', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MediaQuery(
+            data: const MediaQueryData(
+              padding: EdgeInsets.only(bottom: 48), // Android 3-button navigation bar
+              viewInsets: EdgeInsets.zero,
+            ),
+            child: const Scaffold(
+              body: KeyboardAwareBottomSheet(
+                child: Text('Sheet Content'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final container = tester.widget<Container>(find.descendant(
+        of: find.byType(KeyboardAwareBottomSheet),
+        matching: find.byType(Container),
+      ).first);
+      final padding = container.padding as EdgeInsets;
+      expect(padding.bottom, 72.0); // 24 default base + 48 navigation bar
+    });
+  });
+
+  group('AnimatedImageUploadProgressBar Tests', () {
+    testWidgets('AnimatedImageUploadProgressBar renders title and animates progress', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: AnimatedImageUploadProgressBar(
+              isUploading: true,
+              title: 'Uploading Photo Proof...',
+            ),
+          ),
+        ),
+      );
+
+      // Initial pump
+      expect(find.text('Uploading Photo Proof...'), findsOneWidget);
+      expect(find.byIcon(Icons.cloud_upload_rounded), findsOneWidget);
+
+      // Advance time slightly to let progress curve run
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.byType(AnimatedImageUploadProgressBar), findsOneWidget);
+    });
+
+    testWidgets('AnimatedImageUploadProgressBar hides cleanly when isUploading is false', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: AnimatedImageUploadProgressBar(
+              isUploading: false,
+              title: 'Uploading Photo Proof...',
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byType(SizedBox), findsWidgets);
+      expect(find.text('Uploading Photo Proof...'), findsNothing);
+    });
+
+    testWidgets('AnimatedUploadButtonLoader renders micro-loader smoothly', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: AnimatedUploadButtonLoader(
+              color: Colors.blue,
+              size: 16,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byIcon(Icons.cloud_upload_rounded), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(AnimatedUploadButtonLoader), findsOneWidget);
     });
   });
 }

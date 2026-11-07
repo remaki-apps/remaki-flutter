@@ -10,6 +10,7 @@ import '../widgets/tenant_avatar.dart';
 import '../utils/image_compress_util.dart';
 import '../widgets/image_adjust_dialog.dart';
 import '../widgets/keyboard_responsive_layout.dart';
+import '../widgets/animated_image_upload_progress_bar.dart';
 
 class EditPersonalInfoDialog extends StatefulWidget {
   final dynamic tenant;
@@ -31,6 +32,7 @@ class _EditPersonalInfoDialogState extends State<EditPersonalInfoDialog> {
   late TextEditingController _emailController;
   late TextEditingController _emergencyContactController;
   bool _isLoading = false;
+  bool _isImageLoading = false;
   Uint8List? _selectedImageBytes;
   String? _existingImageUrl;
 
@@ -87,6 +89,8 @@ class _EditPersonalInfoDialogState extends State<EditPersonalInfoDialog> {
       
       if (image == null) return;
 
+      setState(() => _isImageLoading = true);
+
       final bytes = await image.readAsBytes();
       if (!mounted) return;
 
@@ -97,15 +101,20 @@ class _EditPersonalInfoDialogState extends State<EditPersonalInfoDialog> {
         isCircle: true,
         aspectRatio: 1.0,
       );
-      if (adjusted == null) return;
+      if (adjusted == null) {
+        setState(() => _isImageLoading = false);
+        return;
+      }
 
       final compressed = await ImageCompressUtil.compressProfileImage(adjusted);
       setState(() {
         _selectedImageBytes = compressed;
+        _isImageLoading = false;
       });
     } catch (e) {
       debugPrint('[EditPersonalInfoDialog] Pick image error: $e');
       if (mounted) {
+        setState(() => _isImageLoading = false);
         FancyToast.showError(context, 'Image Error', message: 'Could not process selected image.');
       }
     }
@@ -260,19 +269,27 @@ class _EditPersonalInfoDialogState extends State<EditPersonalInfoDialog> {
                         bottom: 0,
                         right: 0,
                         child: GestureDetector(
-                          onTap: _pickImage,
+                          onTap: _isImageLoading ? null : _pickImage,
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: const BoxDecoration(
                               color: AppTheme.primaryColor,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+                            child: _isImageLoading
+                                ? const AnimatedUploadButtonLoader(color: Colors.white, size: 14)
+                                : const Icon(Icons.camera_alt, color: Colors.white, size: 16),
                           ),
                         ),
                       ),
                     ],
                   ),
+                ),
+                AnimatedImageUploadProgressBar(
+                  isUploading: _isImageLoading,
+                  title: 'Optimizing Profile Picture...',
+                  subtitle: 'Cropping and compressing image...',
+                  margin: const EdgeInsets.only(top: 14),
                 ),
                 const SizedBox(height: 20),
 

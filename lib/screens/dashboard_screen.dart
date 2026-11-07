@@ -488,7 +488,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
           child: Container(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            padding: EdgeInsets.fromLTRB(20, 12, 20, 24 + MediaQuery.paddingOf(context).bottom),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.94),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),

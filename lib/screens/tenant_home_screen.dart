@@ -18,6 +18,7 @@ import 'complete_profile_dialog.dart';
 import '../widgets/app_shimmer.dart';
 import '../utils/image_compress_util.dart';
 import '../widgets/payment_splitup_card.dart';
+import '../widgets/animated_image_upload_progress_bar.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 // import '../providers/notification_provider.dart';
@@ -51,6 +52,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   Map<String, dynamic>? _profileData;
   String? _rejectionReason;
   Uint8List? _selectedImageBytes;
+  bool _isImageLoading = false;
   final TextEditingController _descriptionController = TextEditingController();
   String? _currentTransactionRef;
   List<dynamic> _announcements = [];
@@ -207,17 +209,22 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     final sharedBytes = SharedMediaService.instance.consumePendingImage();
     if (sharedBytes != null && mounted) {
       try {
+        setState(() => _isImageLoading = true);
         // If a bottom sheet or dialog is currently open, pop until the screen root
         Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
         final compressed = await ImageCompressUtil.compressDocumentOrBill(sharedBytes);
         setState(() {
           _selectedImageBytes = compressed;
+          _isImageLoading = false;
         });
         if (mounted) {
           FancyToast.showSuccess(context, 'Screenshot Attached', message: 'Payment screenshot attached. Ready to submit below.');
         }
       } catch (e) {
         debugPrint('[TenantHome] Handle shared screenshot error: $e');
+        if (mounted) {
+          setState(() => _isImageLoading = false);
+        }
       }
     }
   }
@@ -403,10 +410,13 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       );
       if (image == null) return;
 
+      setState(() => _isImageLoading = true);
+
       final bytes = await image.readAsBytes();
       final compressed = await ImageCompressUtil.compressDocumentOrBill(bytes);
       setState(() {
         _selectedImageBytes = compressed;
+        _isImageLoading = false;
       });
 
       if (mounted) {
@@ -415,6 +425,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     } catch (e) {
       debugPrint('[TenantHome] Pick image error: $e');
       if (mounted) {
+        setState(() => _isImageLoading = false);
         FancyToast.showError(context, 'Image Error', message: 'Could not process selected screenshot: $e');
       }
     }
@@ -550,11 +561,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton.icon(
-                        onPressed: _isLoading
+                        onPressed: (_isLoading || _isImageLoading)
                             ? null
-                            : () {
+                            : () async {
                                 Navigator.of(dialogCtx).pop();
-                                _pickImage();
+                                await _pickImage();
+                                if (_selectedImageBytes != null && mounted) {
+                                  _showProofConfirmationDialog(_selectedImageBytes!);
+                                }
                               },
                         icon: const Icon(Icons.photo_library_outlined, size: 14),
                         label: Text('Change Screenshot', style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700)),
@@ -1955,19 +1969,26 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             ),
                           ),
                           if (_announcements.first['createdAt'] != null)
-                            Row(
-                              children: [
-                                const Icon(Icons.schedule_rounded, size: 12, color: TenantTheme.textMuted),
-                                const SizedBox(width: 4),
-                                Text(
-                                  _formatDate(_announcements.first['createdAt']),
-                                  style: GoogleFonts.lato(
-                                    fontSize: 11,
-                                    color: TenantTheme.textMuted,
-                                    fontWeight: FontWeight.w500,
+                            Flexible(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.schedule_rounded, size: 12, color: TenantTheme.textMuted),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      _formatDate(_announcements.first['createdAt']),
+                                      style: GoogleFonts.lato(
+                                        fontSize: 11,
+                                        color: TenantTheme.textMuted,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                         ],
                       ),
@@ -3128,15 +3149,19 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
                   // Compact / Clean Image Upload Button
                   GestureDetector(
-                    onTap: _pickImage,
+                    onTap: _isImageLoading ? null : _pickImage,
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: _selectedImageBytes != null ? const Color(0xFFF0FDF4) : const Color(0xFFF5F7FD),
+                        color: _isImageLoading
+                            ? const Color(0xFFF1F5F9)
+                            : (_selectedImageBytes != null ? const Color(0xFFF0FDF4) : const Color(0xFFF5F7FD)),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: _selectedImageBytes != null ? const Color(0xFF86EFAC) : const Color(0xFFC7D2FE),
+                          color: _isImageLoading
+                              ? const Color(0xFFCBD5E1)
+                              : (_selectedImageBytes != null ? const Color(0xFF86EFAC) : const Color(0xFFC7D2FE)),
                           width: 1.2,
                         ),
                       ),
@@ -3145,14 +3170,21 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: _selectedImageBytes != null ? const Color(0xFFDCFCE7) : TenantTheme.primarySoft,
+                              color: _isImageLoading
+                                  ? const Color(0xFFE2E8F0)
+                                  : (_selectedImageBytes != null ? const Color(0xFFDCFCE7) : TenantTheme.primarySoft),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Icon(
-                              _selectedImageBytes != null ? Icons.check_circle_rounded : Icons.add_photo_alternate_rounded,
-                              color: _selectedImageBytes != null ? const Color(0xFF16A34A) : TenantTheme.primary,
-                              size: 19,
-                            ),
+                            child: _isImageLoading
+                                ? const AnimatedUploadButtonLoader(
+                                    color: TenantTheme.primary,
+                                    size: 16,
+                                  )
+                                : Icon(
+                                    _selectedImageBytes != null ? Icons.check_circle_rounded : Icons.add_photo_alternate_rounded,
+                                    color: _selectedImageBytes != null ? const Color(0xFF16A34A) : TenantTheme.primary,
+                                    size: 19,
+                                  ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -3160,15 +3192,21 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  _selectedImageBytes != null ? 'Screenshot Attached' : 'Attach UPI Screenshot',
+                                  _isImageLoading
+                                      ? (_selectedImageBytes != null ? 'Updating Screenshot...' : 'Uploading Screenshot...')
+                                      : (_selectedImageBytes != null ? 'Screenshot Attached' : 'Attach UPI Screenshot'),
                                   style: GoogleFonts.lato(
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w700,
-                                    color: _selectedImageBytes != null ? const Color(0xFF15803D) : TenantTheme.textPrimary,
+                                    color: _isImageLoading
+                                        ? TenantTheme.primary
+                                        : (_selectedImageBytes != null ? const Color(0xFF15803D) : TenantTheme.textPrimary),
                                   ),
                                 ),
                                 Text(
-                                  _selectedImageBytes != null ? 'Tap to replace image' : 'Proof of transaction for admin approval',
+                                  _isImageLoading
+                                      ? 'Processing & attaching proof, please wait...'
+                                      : (_selectedImageBytes != null ? 'Tap to replace image' : 'Proof of transaction for admin approval'),
                                   style: GoogleFonts.lato(
                                     fontSize: 11,
                                     color: TenantTheme.textSecondary,
@@ -3180,21 +3218,39 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: _selectedImageBytes != null ? const Color(0xFF16A34A) : TenantTheme.primary,
+                              color: _isImageLoading
+                                  ? const Color(0xFF94A3B8)
+                                  : (_selectedImageBytes != null ? const Color(0xFF16A34A) : TenantTheme.primary),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Text(
-                              _selectedImageBytes != null ? 'Change' : 'Upload',
-                              style: GoogleFonts.lato(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
+                            child: _isImageLoading
+                                ? const AnimatedUploadButtonLoader(
+                                    color: Colors.white,
+                                    size: 12,
+                                  )
+                                : Text(
+                                    _selectedImageBytes != null ? 'Change' : 'Upload',
+                                    style: GoogleFonts.lato(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                           ),
                         ],
                       ),
                     ),
+                  ),
+                  AnimatedImageUploadProgressBar(
+                    isUploading: _isImageLoading,
+                    title: _selectedImageBytes != null ? 'Updating Screenshot Proof...' : 'Uploading UPI Screenshot...',
+                    subtitle: 'Compressing and optimizing proof...',
+                    gradientColors: const [
+                      Color(0xFF4F46E5),
+                      Color(0xFF6366F1),
+                      Color(0xFF06B6D4),
+                    ],
+                    margin: const EdgeInsets.only(top: 10),
                   ),
                   if (_selectedImageBytes != null) ...[
                     const SizedBox(height: 10),
@@ -3202,17 +3258,36 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       onTap: () => _showImagePreviewDialog(context, _selectedImageBytes!),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(14),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: const Color(0xFF86EFAC)),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Image.memory(
-                            _selectedImageBytes!,
-                            height: 90,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
+                        child: Stack(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: const Color(0xFF86EFAC)),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Image.memory(
+                                _selectedImageBytes!,
+                                height: 90,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            if (_isImageLoading)
+                              Positioned.fill(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.35),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: const Center(
+                                    child: AnimatedUploadButtonLoader(
+                                      color: Colors.white,
+                                      size: 22,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     ),
@@ -3265,7 +3340,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       ],
                     ),
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _submitRequest,
+                      onPressed: (_isLoading || _isImageLoading) ? null : _submitRequest,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
                         foregroundColor: Colors.white,
@@ -4308,7 +4383,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 860),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                        padding: EdgeInsets.fromLTRB(24.0, 16.0, 24.0, (showHeader ? 120.0 : 24.0) + MediaQuery.paddingOf(context).bottom),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -4455,12 +4530,16 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                       color: TenantTheme.textMuted,
                                     ),
                                     const SizedBox(width: 4),
-                                    Text(
-                                      date,
-                                      style: GoogleFonts.lato(
-                                        fontSize: 11.5,
-                                        color: TenantTheme.textMuted,
-                                        fontWeight: FontWeight.w500,
+                                    Flexible(
+                                      child: Text(
+                                        date,
+                                        style: GoogleFonts.lato(
+                                          fontSize: 11.5,
+                                          color: TenantTheme.textMuted,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],

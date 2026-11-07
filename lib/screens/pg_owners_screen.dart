@@ -67,13 +67,18 @@ class _PgOwnersScreenState extends State<PgOwnersScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
+        builder: (context, setModalState) {
+          final viewInsets = MediaQuery.of(context).viewInsets.bottom;
+          final navPadding = MediaQuery.of(context).padding.bottom;
+          final bottomPad = viewInsets > 0 ? (viewInsets + 20) : (20 + navPadding);
+
+          return Container(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: bottomPad,
+            ),
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -311,8 +316,9 @@ class _PgOwnersScreenState extends State<PgOwnersScreen> {
             ),
           ),
         ),
-        ),
-      ),
+        );
+      },
+    ),
     );
   }
 
@@ -421,7 +427,7 @@ class _PgOwnersScreenState extends State<PgOwnersScreen> {
         color: AppTheme.primaryColor,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 24 + MediaQuery.paddingOf(context).bottom),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 700),

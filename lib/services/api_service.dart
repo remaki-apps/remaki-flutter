@@ -1354,9 +1354,9 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> createComplaint({
-    required String category,
+    String? category,
     required String title,
-    required String description,
+    String? description,
     String? mediaBase64,
   }) async {
     const String mutation = '''
@@ -1382,9 +1382,9 @@ class ApiService {
     ''';
     final data = await performQuery(mutation, variables: {
       'input': {
-        'category': category,
-        'title': title,
-        'description': description,
+        'category': (category != null && category.trim().isNotEmpty) ? category.trim() : 'OTHER',
+        'title': title.trim(),
+        'description': (description != null) ? description.trim() : '',
         if (mediaBase64 != null && mediaBase64.isNotEmpty) 'mediaBase64': mediaBase64,
       }
     });

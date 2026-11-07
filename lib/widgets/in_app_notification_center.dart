@@ -185,7 +185,7 @@ class _NotificationCenterModal extends StatelessWidget {
             child: notifications.isEmpty
                 ? _buildEmptyState()
                 : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                    padding: EdgeInsets.fromLTRB(16, 12, 16, 24 + MediaQuery.paddingOf(context).bottom),
                     itemCount: notifications.length,
                     separatorBuilder: (context, index) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {

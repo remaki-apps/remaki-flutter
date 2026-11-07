@@ -12,6 +12,7 @@ import '../utils/image_compress_util.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/app_shimmer.dart';
 import '../widgets/keyboard_responsive_layout.dart';
+import '../widgets/animated_image_upload_progress_bar.dart';
 
 class TenantComplaintsScreen extends StatefulWidget {
   const TenantComplaintsScreen({super.key});
@@ -73,25 +74,49 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
   }
 
   void _showRaiseComplaintModal() {
-    String selectedCategory = 'PLUMBING';
+    String? selectedCategory;
     final titleCtrl = TextEditingController();
     final descCtrl = TextEditingController();
     Uint8List? selectedImageBytes;
+    bool isImageLoading = false;
     bool isSubmitting = false;
     String? modalError;
+
+    Future<void> pickPhoto(ImageSource source, StateSetter setModalState) async {
+      try {
+        final picker = ImagePicker();
+        final img = await picker.pickImage(source: source, maxWidth: 1200);
+        if (img == null) return;
+        setModalState(() => isImageLoading = true);
+        final bytes = await img.readAsBytes();
+        final compressed = await ImageCompressUtil.compressDocumentOrBill(bytes);
+        setModalState(() {
+          selectedImageBytes = compressed;
+          isImageLoading = false;
+        });
+      } catch (e) {
+        debugPrint('[TenantComplaint] Pick image error: $e');
+        setModalState(() => isImageLoading = false);
+      }
+    }
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 18,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
+        builder: (context, setModalState) {
+          final viewInsets = MediaQuery.of(context).viewInsets.bottom;
+          final navPadding = MediaQuery.of(context).padding.bottom;
+          final bottomPad = viewInsets > 0 ? (viewInsets + 20) : (20 + navPadding);
+
+          return Container(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 18,
+              bottom: bottomPad,
+            ),
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -168,7 +193,7 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
 
                 // Category Chips
                 Text(
-                  'Select Issue Category *',
+                  'Select Issue Category (Optional)',
                   style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
                 ),
                 const SizedBox(height: 8),
@@ -178,7 +203,9 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
                   children: _categories.map((cat) {
                     final isSel = selectedCategory == cat['key'];
                     return GestureDetector(
-                      onTap: () => setModalState(() => selectedCategory = cat['key'] as String),
+                      onTap: () => setModalState(() {
+                        selectedCategory = isSel ? null : cat['key'] as String;
+                      }),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -232,7 +259,7 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
                 const SizedBox(height: 14),
 
                 Text(
-                  'Description & Details *',
+                  'Description & Details (Optional)',
                   style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
                 ),
                 const SizedBox(height: 6),
@@ -240,7 +267,7 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
                   controller: descCtrl,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    hintText: 'Describe the problem clearly so admin can resolve it quickly...',
+                    hintText: 'Describe the problem clearly so admin can resolve it quickly (optional)...',
                     hintStyle: GoogleFonts.lato(color: const Color(0xFF94A3B8), fontSize: 13),
                     contentPadding: const EdgeInsets.all(14),
                     filled: true,
@@ -258,6 +285,16 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
                   style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF334155)),
                 ),
                 const SizedBox(height: 8),
+                AnimatedImageUploadProgressBar(
+                  isUploading: isImageLoading,
+                  title: 'Uploading Photo Proof...',
+                  subtitle: 'Optimizing and attaching to complaint...',
+                  gradientColors: const [
+                    Color(0xFF4F46E5),
+                    Color(0xFF7C3AED),
+                    Color(0xFF06B6D4),
+                  ],
+                ),
                 if (selectedImageBytes != null) ...[
                   Stack(
                     children: [
@@ -282,6 +319,31 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
                           ),
                         ),
                       ),
+                      Positioned(
+                        bottom: 8,
+                        right: 8,
+                        child: GestureDetector(
+                          onTap: () => pickPhoto(ImageSource.gallery, setModalState),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.65),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.change_circle_outlined, size: 14, color: Colors.white),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Change',
+                                  style: GoogleFonts.lato(fontSize: 11.5, color: Colors.white, fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ] else ...[
@@ -289,14 +351,7 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () async {
-                            final picker = ImagePicker();
-                            final img = await picker.pickImage(source: ImageSource.camera, maxWidth: 1200);
-                            if (img == null) return;
-                            final bytes = await img.readAsBytes();
-                            final compressed = await ImageCompressUtil.compressDocumentOrBill(bytes);
-                            setModalState(() => selectedImageBytes = compressed);
-                          },
+                          onPressed: isImageLoading ? null : () => pickPhoto(ImageSource.camera, setModalState),
                           icon: const Icon(Icons.camera_alt_outlined, size: 18),
                           label: const Text('Take Photo'),
                           style: OutlinedButton.styleFrom(
@@ -310,14 +365,7 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () async {
-                            final picker = ImagePicker();
-                            final img = await picker.pickImage(source: ImageSource.gallery, maxWidth: 1200);
-                            if (img == null) return;
-                            final bytes = await img.readAsBytes();
-                            final compressed = await ImageCompressUtil.compressDocumentOrBill(bytes);
-                            setModalState(() => selectedImageBytes = compressed);
-                          },
+                          onPressed: isImageLoading ? null : () => pickPhoto(ImageSource.gallery, setModalState),
                           icon: const Icon(Icons.photo_library_outlined, size: 18),
                           label: const Text('From Gallery'),
                           style: OutlinedButton.styleFrom(
@@ -337,14 +385,14 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: isSubmitting
+                    onPressed: (isSubmitting || isImageLoading)
                         ? null
                         : () async {
                             final title = titleCtrl.text.trim();
                             final desc = descCtrl.text.trim();
 
-                            if (title.isEmpty || desc.isEmpty) {
-                              setModalState(() => modalError = 'Please provide both title and description.');
+                            if (title.isEmpty) {
+                              setModalState(() => modalError = 'Please provide a complaint title.');
                               return;
                             }
 
@@ -404,8 +452,9 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
             ),
           ),
         ),
-        ),
-      ),
+        );
+      },
+    ),
     );
   }
 
@@ -513,7 +562,7 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
         color: AppTheme.primaryColor,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 90),
+          padding: EdgeInsets.fromLTRB(16, 14, 16, 96 + MediaQuery.paddingOf(context).bottom),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 700),
@@ -754,13 +803,14 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
             DateFormat('dd MMM yyyy, hh:mm a').format(complaint.createdAt),
             style: GoogleFonts.lato(fontSize: 11.5, color: const Color(0xFF94A3B8)),
           ),
-          const SizedBox(height: 8),
-
           // Description
-          Text(
-            complaint.description,
-            style: GoogleFonts.lato(fontSize: 13.5, color: const Color(0xFF475569), height: 1.4),
-          ),
+          if (complaint.description.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              complaint.description,
+              style: GoogleFonts.lato(fontSize: 13.5, color: const Color(0xFF475569), height: 1.4),
+            ),
+          ],
 
           // Attached Media Preview
           if (complaint.mediaUrl != null && complaint.mediaUrl!.isNotEmpty) ...[
