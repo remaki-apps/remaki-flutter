@@ -87,8 +87,19 @@ class PaymentSplitupCard extends StatelessWidget {
           ? rentAmount
           : (effectiveFee > 0 && paymentAmount > effectiveFee ? paymentAmount - effectiveFee : paymentAmount);
       rentPortion = effectiveRent;
-      feePortion = (paymentAmount > effectiveRent) ? (paymentAmount - effectiveRent) : 0.0;
-      billsPortion = 0.0;
+      final double surplus = (paymentAmount > effectiveRent) ? (paymentAmount - effectiveRent) : 0.0;
+      if (surplus > 0) {
+        if (effectiveFee > 0) {
+          feePortion = surplus >= effectiveFee ? effectiveFee : surplus;
+          billsPortion = surplus - feePortion;
+        } else {
+          feePortion = 0.0;
+          billsPortion = surplus;
+        }
+      } else {
+        feePortion = 0.0;
+        billsPortion = 0.0;
+      }
     } else if (isExplicitBill) {
       rentPortion = 0.0;
       feePortion = 0.0;
@@ -100,18 +111,32 @@ class PaymentSplitupCard extends StatelessWidget {
       feePortion = 0.0;
     }
 
+    // Determine clean rent label
+    String rentLabel = 'Monthly Rent';
+    if (notes != null && notesLower.contains('rent')) {
+      final rentPart = notes!.split(',').firstWhere((s) => s.toLowerCase().contains('rent'), orElse: () => 'Monthly Rent').trim();
+      rentLabel = rentPart.isNotEmpty ? rentPart : 'Monthly Rent';
+    }
+
     // Itemize bills if billsPortion > 0
     if (billsPortion > 0 && itemizedBills.isEmpty) {
-      final bool hasSpecificNote = notes != null &&
-          notes!.trim().isNotEmpty &&
-          !notesLower.contains('utility bills payment') &&
-          !notesLower.contains('bill payment') &&
-          !notesLower.contains('approved via payment request') &&
-          !notesLower.contains('rent');
+      String billNotes = notes != null ? notes!.trim() : '';
+      if (billNotes.contains(',')) {
+        final nonRentParts = billNotes.split(',').map((s) => s.trim()).where((s) => !s.toLowerCase().contains('rent') && s.isNotEmpty).toList();
+        if (nonRentParts.isNotEmpty) {
+          billNotes = nonRentParts.join(', ');
+        }
+      }
+      final String billNotesLower = billNotes.toLowerCase();
+      final bool hasSpecificNote = billNotes.isNotEmpty &&
+          !billNotesLower.contains('utility bills payment') &&
+          !billNotesLower.contains('bill payment') &&
+          !billNotesLower.contains('approved via payment request') &&
+          !billNotesLower.contains('rent');
 
       if (hasSpecificNote) {
-        if (notes!.contains(',')) {
-          final parts = notes!.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+        if (billNotes.contains(',')) {
+          final parts = billNotes.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
           final double splitAmount = billsPortion / parts.length;
           for (final part in parts) {
             itemizedBills.add({
@@ -121,7 +146,7 @@ class PaymentSplitupCard extends StatelessWidget {
           }
         } else {
           itemizedBills.add({
-            'name': notes!.trim(),
+            'name': billNotes,
             'amount': billsPortion,
           });
         }
@@ -142,13 +167,13 @@ class PaymentSplitupCard extends StatelessWidget {
           });
         } else {
           itemizedBills.add({
-            'name': (notes != null && notes!.isNotEmpty) ? notes! : 'Utility Bill',
+            'name': billNotes.isNotEmpty ? billNotes : 'Utility Bill',
             'amount': billsPortion,
           });
         }
       } else {
         itemizedBills.add({
-          'name': (notes != null && notes!.isNotEmpty) ? notes! : 'Utility Bill',
+          'name': billNotes.isNotEmpty ? billNotes : 'Utility Bill',
           'amount': billsPortion,
         });
       }
@@ -243,7 +268,7 @@ class PaymentSplitupCard extends StatelessWidget {
             _buildSplitRow(
               icon: Icons.home_outlined,
               iconColor: const Color(0xFF6366F1),
-              label: (notes != null && notes!.isNotEmpty) ? notes! : 'Monthly Rent',
+              label: rentLabel,
               amount: rentPortion,
               labelColor: labelColor,
               valueColor: valueColor,
