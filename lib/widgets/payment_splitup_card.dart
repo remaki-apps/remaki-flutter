@@ -66,13 +66,21 @@ class PaymentSplitupCard extends StatelessWidget {
 
     final double effectiveFee = platformFee > 0 ? platformFee : 0.0;
 
-    final bool isRent = (notes != null && notes!.toLowerCase().contains('rent')) || (rentAmount > 0);
-    final bool isExplicitBill = (notes != null && (
-        notes!.toLowerCase().contains('bill') ||
-        notes!.toLowerCase().contains('utility') ||
-        notes!.toLowerCase().contains('electricity') ||
-        notes!.toLowerCase().contains('eb')
-    )) || (!isRent && rentAmount <= 0);
+    final String notesLower = (notes ?? '').toLowerCase();
+    final bool hasExplicitBillNote = notesLower.contains('bill') ||
+        notesLower.contains('utility') ||
+        notesLower.contains('electric') ||
+        notesLower.contains('current') ||
+        notesLower.contains('water') ||
+        notesLower.contains('wifi') ||
+        notesLower.contains('wi-fi') ||
+        notesLower.contains('eb') ||
+        notesLower.contains('food') ||
+        notesLower.contains('mess') ||
+        notesLower.contains('room');
+
+    final bool isRent = !hasExplicitBillNote && ((notesLower.contains('rent')) || (rentAmount > 0));
+    final bool isExplicitBill = hasExplicitBillNote || (!isRent && rentAmount <= 0);
 
     if (isRent) {
       final double effectiveRent = rentAmount > 0
@@ -96,16 +104,27 @@ class PaymentSplitupCard extends StatelessWidget {
     if (billsPortion > 0 && itemizedBills.isEmpty) {
       final bool hasSpecificNote = notes != null &&
           notes!.trim().isNotEmpty &&
-          !notes!.toLowerCase().contains('utility bills payment') &&
-          !notes!.toLowerCase().contains('bill payment') &&
-          !notes!.toLowerCase().contains('approved via payment request') &&
-          !notes!.toLowerCase().contains('rent');
+          !notesLower.contains('utility bills payment') &&
+          !notesLower.contains('bill payment') &&
+          !notesLower.contains('approved via payment request') &&
+          !notesLower.contains('rent');
 
       if (hasSpecificNote) {
-        itemizedBills.add({
-          'name': notes!.trim(),
-          'amount': billsPortion,
-        });
+        if (notes!.contains(',')) {
+          final parts = notes!.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+          final double splitAmount = billsPortion / parts.length;
+          for (final part in parts) {
+            itemizedBills.add({
+              'name': part,
+              'amount': splitAmount,
+            });
+          }
+        } else {
+          itemizedBills.add({
+            'name': notes!.trim(),
+            'amount': billsPortion,
+          });
+        }
       } else if (normalizedBills.isNotEmpty) {
         // Try exact single bill match by amount
         final exactMatch = normalizedBills.firstWhere(
@@ -122,23 +141,10 @@ class PaymentSplitupCard extends StatelessWidget {
             'amount': billsPortion,
           });
         } else {
-          double remaining = billsPortion;
-          for (var b in normalizedBills) {
-            final bAmt = (b['amount'] as num?)?.toDouble() ?? 0.0;
-            if (bAmt > 0 && bAmt <= remaining + 0.01) {
-              itemizedBills.add({
-                'name': (b['name'] != null && b['name'].toString().trim().isNotEmpty) ? b['name'].toString().trim() : 'Utility Bill',
-                'amount': bAmt,
-              });
-              remaining -= bAmt;
-            }
-          }
-          if (remaining > 0.01) {
-            itemizedBills.add({
-              'name': (notes != null && notes!.isNotEmpty) ? notes! : 'Utility Charge',
-              'amount': remaining,
-            });
-          }
+          itemizedBills.add({
+            'name': (notes != null && notes!.isNotEmpty) ? notes! : 'Utility Bill',
+            'amount': billsPortion,
+          });
         }
       } else {
         itemizedBills.add({
@@ -387,6 +393,9 @@ class PaymentSplitupCard extends StatelessWidget {
     }
     if (lower.contains('maintenance')) {
       return Icons.build_outlined;
+    }
+    if (lower.contains('food') || lower.contains('mess')) {
+      return Icons.restaurant_outlined;
     }
     return Icons.receipt_outlined;
   }

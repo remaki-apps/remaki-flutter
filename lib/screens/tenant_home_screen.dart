@@ -3511,16 +3511,20 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         final paymentId = p['_id']?.toString() ?? p['id']?.toString() ?? 'tenant_payment_$i';
         final rawDate = p['date'] != null ? (DateTime.tryParse(p['date'].toString())?.toLocal() ?? DateTime.now()) : DateTime.now();
 
-        final double rAmt = (p['rentAmount'] as num?)?.toDouble() ??
-            ((notes != null && (notes.toLowerCase().contains('bill') || notes.toLowerCase().contains('utility'))) ? 0.0 : (amount >= monthlyRentVal ? monthlyRentVal : amount));
-        final double pFee = (p['platformFee'] as num?)?.toDouble() ?? 0.0;
-        final double cardAmount = rAmt > 0 ? (rAmt + pFee) : amount;
-
         final String notesStr = (notes != null && notes.trim().isNotEmpty) ? notes.trim() : '';
+        final String notesLower = notesStr.toLowerCase();
+        final bool isRentPayment = (p['rentAmount'] != null && (p['rentAmount'] as num).toDouble() > 0) ||
+            notesLower.contains('rent');
+
+        final double rAmt = (p['rentAmount'] as num?)?.toDouble() ??
+            (isRentPayment ? (amount >= monthlyRentVal ? monthlyRentVal : amount) : 0.0);
+        final double pFee = isRentPayment ? ((p['platformFee'] as num?)?.toDouble() ?? 0.0) : 0.0;
+        final double cardAmount = (isRentPayment && rAmt > 0) ? (rAmt + pFee) : amount;
+
         String displayTitle = 'Payment';
-        if (notesStr.isNotEmpty && !notesStr.toLowerCase().contains('approved via payment request') && !notesStr.toLowerCase().contains('utility bills payment')) {
+        if (notesStr.isNotEmpty && !notesLower.contains('approved via payment request') && !notesLower.contains('utility bills payment')) {
           displayTitle = notesStr;
-        } else if (rAmt > 0) {
+        } else if (isRentPayment) {
           displayTitle = 'Rent Payment';
         } else {
           final allTenantBills = (_profileData?['bills'] as List<dynamic>? ?? []);
@@ -3547,7 +3551,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           rawDate: rawDate,
           rentAmount: rAmt,
           platformFee: pFee,
-          bills: _profileData?['bills'],
+          bills: null,
           notes: notes,
         ));
         if (i < displayPayments.length - 1 || pendingMonthBills.isNotEmpty) {
