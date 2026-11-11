@@ -222,9 +222,11 @@ class Room {
   });
 
   bool get isAc => roomType.toUpperCase() == 'AC';
+  int get totalBeds => beds.isNotEmpty ? beds.length : capacity;
   int get availableBeds => beds.where((b) => b.isAvailable).length;
-  bool get isFull => availableBeds == 0;
-  bool get isEmpty => availableBeds == capacity;
+  bool get isFull => totalBeds > 0 && availableBeds == 0;
+  bool get isEmpty => totalBeds > 0 && availableBeds == totalBeds;
+  bool get hasNoBeds => totalBeds == 0;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -236,18 +238,24 @@ class Room {
         'propertyId': propertyId,
       };
 
-  factory Room.fromJson(Map<String, dynamic> json) => Room(
-        id: json['id']?.toString() ?? '',
-        number: (json['number'] ?? json['roomNumber'])?.toString() ?? '',
-        floor: (json['floor'] ?? json['floorNumber'])?.toString() ?? 'Ground Floor',
-        capacity: (json['capacity'] as num?)?.toInt() ?? 0,
-        roomType: (json['roomType']?.toString() ?? 'NON_AC').toUpperCase() == 'AC' ? 'AC' : 'NON_AC',
-        propertyId: json['propertyId']?.toString() ?? '',
-        beds: (json['beds'] as List<dynamic>?)
+  factory Room.fromJson(Map<String, dynamic> json) {
+    final bedList = (json['beds'] as List<dynamic>?)
             ?.whereType<Map<String, dynamic>>()
             .map((e) => Bed.fromJson(e))
-            .toList() ?? [],
-      );
+            .toList() ?? [];
+    final rawCap = (json['capacity'] as num?)?.toInt() ?? 0;
+    final cap = (json['beds'] != null) ? bedList.length : rawCap;
+
+    return Room(
+      id: json['id']?.toString() ?? '',
+      number: (json['number'] ?? json['roomNumber'])?.toString() ?? '',
+      floor: (json['floor'] ?? json['floorNumber'])?.toString() ?? 'Ground Floor',
+      capacity: cap,
+      roomType: (json['roomType']?.toString() ?? 'NON_AC').toUpperCase() == 'AC' ? 'AC' : 'NON_AC',
+      propertyId: json['propertyId']?.toString() ?? '',
+      beds: bedList,
+    );
+  }
 }
 
 class Tenant {

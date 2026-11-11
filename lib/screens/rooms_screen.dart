@@ -530,7 +530,19 @@ class _RoomsScreenState extends State<RoomsScreen> {
   }
 
   Widget _buildStatusBadge(Room room) {
-    if (room.isFull) {
+    if (room.hasNoBeds || room.capacity == 0) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Text(
+          'NO BEDS',
+          style: TextStyle(color: Color(0xFF64748B), fontSize: 10, fontWeight: FontWeight.bold),
+        ),
+      );
+    } else if (room.isFull) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(

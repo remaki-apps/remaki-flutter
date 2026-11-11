@@ -160,18 +160,20 @@ class AppProvider with ChangeNotifier {
       rooms = roomsData.whereType<Map<String, dynamic>>().map((e) {
         final rawBeds = (e['beds'] as List<dynamic>?) ?? [];
         final rawRoomType = (e['roomType']?.toString() ?? 'NON_AC').toUpperCase();
+        final bedList = rawBeds.whereType<Map<String, dynamic>>().map((b) => Bed(
+          id: b['id']?.toString() ?? '',
+          name: b['bedLabel']?.toString() ?? 'Bed',
+          isAvailable: b['status'] == 'AVAILABLE' || b['status'] == 'VACANT',
+        )).toList();
+        final cap = e['beds'] != null ? bedList.length : ((e['capacity'] as num?)?.toInt() ?? rawBeds.length);
         return Room(
           id: e['id']?.toString() ?? '',
           propertyId: e['propertyId']?.toString() ?? '',
           number: e['roomNumber']?.toString() ?? '',
           floor: e['floorNumber']?.toString() ?? 'Ground Floor',
-          capacity: (e['capacity'] as num?)?.toInt() ?? rawBeds.length,
+          capacity: cap,
           roomType: rawRoomType == 'AC' ? 'AC' : 'NON_AC',
-          beds: rawBeds.whereType<Map<String, dynamic>>().map((b) => Bed(
-            id: b['id']?.toString() ?? '',
-            name: b['bedLabel']?.toString() ?? 'Bed',
-            isAvailable: b['status'] == 'AVAILABLE' || b['status'] == 'VACANT',
-          )).toList(),
+          beds: bedList,
         );
       }).toList();
 

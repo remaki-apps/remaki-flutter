@@ -86,7 +86,7 @@ class RoomDetailsScreen extends StatelessWidget {
 
     final roomTenants = appProvider.tenants.where((t) => t.roomId == room.id).toList();
     final totalMonthlyRent = roomTenants.fold(0.0, (sum, t) => sum + t.rentAmount);
-    final occupiedBeds = room.capacity - room.availableBeds;
+    final occupiedBeds = (room.capacity - room.availableBeds).clamp(0, room.capacity);
 
     return PopScope(
       canPop: false,
@@ -145,7 +145,7 @@ class RoomDetailsScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${room.floor} • ${room.capacity} Beds Total • ${room.isAc ? 'AC' : 'Non-AC'}',
+                          '${room.floor} • ${room.capacity} ${room.capacity == 1 ? 'Bed' : 'Beds'} Total • ${room.isAc ? 'AC' : 'Non-AC'}',
                           style: const TextStyle(
                             fontSize: 12,
                             color: Color(0xFF64748B),
@@ -231,7 +231,7 @@ class RoomDetailsScreen extends StatelessWidget {
                           Expanded(
                             child: _buildSummaryBox(
                               title: 'Occupied',
-                              value: '$occupiedBeds Beds',
+                              value: '$occupiedBeds ${occupiedBeds == 1 ? 'Bed' : 'Beds'}',
                               bgColor: const Color(0xFFF0FDF4),
                               borderColor: const Color(0xFFDCFCE7),
                               textColor: const Color(0xFF15803D),
@@ -241,7 +241,7 @@ class RoomDetailsScreen extends StatelessWidget {
                           Expanded(
                             child: _buildSummaryBox(
                               title: 'Available',
-                              value: '${room.availableBeds} Beds',
+                              value: '${room.availableBeds} ${room.availableBeds == 1 ? 'Bed' : 'Beds'}',
                               bgColor: const Color(0xFFFFF7ED),
                               borderColor: const Color(0xFFFFEDD5),
                               textColor: const Color(0xFFC2410C),
@@ -303,7 +303,41 @@ class RoomDetailsScreen extends StatelessWidget {
                     const SizedBox(height: 12),
 
                     // Bed Items List
-                    ...room.beds.map((bed) {
+                    if (room.beds.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFF1F5F9)),
+                        ),
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFF1F5F9),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.single_bed_outlined, color: Color(0xFF94A3B8), size: 28),
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'No beds in this room',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Tap "+ Add Bed" above to configure beds for this room.',
+                              style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      ...room.beds.map((bed) {
                       Tenant? tenant;
                       if (!bed.isAvailable) {
                         if (bed.tenantId != null) {

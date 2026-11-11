@@ -12,12 +12,12 @@ class HelpSupportScreen extends StatefulWidget {
 }
 
 class _HelpSupportScreenState extends State<HelpSupportScreen> {
-  static const String supportName = 'Karthik';
+  static const String supportName = 'Karthick';
   static const String supportPhone = '7539998654';
   static const String supportEmail = 'remakiapps@gmail.com';
 
-  static const String karthikName = 'Karthik';
-  static const String karthikPhone = '7539998654';
+  static const String karthickName = 'Karthick';
+  static const String karthickPhone = '7539998654';
 
   static const String kishoreName = 'Kishore';
   static const String kishorePhone = '9940328087';
@@ -289,24 +289,24 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
             ),
             child: Column(
               children: [
-                // Phone Row - Karthik
+                // Phone Row - Karthick
                 _buildClassicContactTile(
                   icon: Icons.phone_outlined,
-                  title: 'Phone Call (Karthik)',
-                  subtitle: '+91 $karthikPhone',
+                  title: 'Phone Call (Karthick)',
+                  subtitle: '+91 $karthickPhone',
                   actionText: 'Call',
                   isFirst: true,
-                  onTap: () => _makePhoneCall(karthikPhone),
+                  onTap: () => _makePhoneCall(karthickPhone),
                 ),
                 const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9), indent: 56),
 
-                // WhatsApp Row - Karthik
+                // WhatsApp Row - Karthick
                 _buildClassicContactTile(
                   icon: Icons.chat_bubble_outline_rounded,
-                  title: 'WhatsApp Chat (Karthik)',
-                  subtitle: 'Direct messaging with Karthik',
+                  title: 'WhatsApp Chat (Karthick)',
+                  subtitle: 'Direct messaging with Karthick',
                   actionText: 'Message',
-                  onTap: () => _openWhatsApp(karthikPhone, karthikName),
+                  onTap: () => _openWhatsApp(karthickPhone, karthickName),
                 ),
                 const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9), indent: 56),
 
