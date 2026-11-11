@@ -16,6 +16,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../widgets/app_shimmer.dart';
 import '../widgets/payment_splitup_card.dart';
 import '../widgets/custom_expandable_dropdown.dart';
+import '../utils/phone_utils.dart';
 
 class TenantProfileScreen extends StatefulWidget {
   final String tenantId;
@@ -114,8 +115,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
 
   Future<void> _shareCredentials(Tenant tenant, String password, String roomNumber, String floorName) async {
     final appProvider = Provider.of<AppProvider>(context, listen: false);
-    final sanitizedPhone = tenant.phone.replaceAll(RegExp(r'\D'), '');
-    final phoneNum = sanitizedPhone.startsWith('91') ? sanitizedPhone : '91$sanitizedPhone';
+    final phoneNum = PhoneUtils.formatForWhatsApp(tenant.phone);
     final message = buildTenantCredentialsMessage(
       pgName: appProvider.pgName,
       tenantName: tenant.name,
@@ -379,8 +379,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                               Expanded(
                                 child: GestureDetector(
                                   onTap: () async {
-                                    final sanitizedPhone = tenant.phone.replaceAll(RegExp(r'\D'), '');
-                                    final phoneNum = sanitizedPhone.startsWith('91') ? sanitizedPhone : '91$sanitizedPhone';
+                                    final phoneNum = PhoneUtils.formatForWhatsApp(tenant.phone);
                                     final message = tenant.buildDetailedRentBillMessage(roomNumber: roomNumber, floorName: floorName, pgName: appProvider.pgName);
                                     final url = Uri.parse('https://wa.me/$phoneNum?text=$message');
                                     if (await canLaunchUrl(url)) {
@@ -1012,7 +1011,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                           ),
                           if (!tenant.isPaid && tenant.pendingRentAmount > 0 && tenant.pendingRentAmount < tenant.rentAmount)
                             _buildModernDetailItem(Icons.account_balance_wallet_outlined, 'Rent Balance Due', '₹${tenant.pendingRentAmount.toStringAsFixed(0)}', isHighlight: true),
-                          ...tenant.additionalCharges.where((c) => c.billType != 'RENT' && (c.status == 'PENDING' || c.status == 'UNPAID')).map(
+                          ...tenant.additionalCharges.where((c) => c.billType.trim().toUpperCase() != 'RENT' && c.status.trim().toUpperCase() != 'PAID').map(
                             (c) {
                               final dueDateStr = c.billDueDate != null
                                   ? ' (due ${DateFormat('dd/MM').format(c.billDueDate!)})'  

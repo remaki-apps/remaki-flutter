@@ -8,6 +8,7 @@ import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tenant_avatar.dart';
+import '../utils/phone_utils.dart';
 
 class SuccessScreen extends StatelessWidget {
   final String title;
@@ -248,8 +249,8 @@ class _TenantAddedSuccessScreenState extends State<TenantAddedSuccessScreen> {
   bool _isSentLocally = false;
 
   Future<void> _sendWhatsAppCredentials() async {
+    final formattedPhone = PhoneUtils.formatForWhatsApp(widget.phone);
     final cleanPhone = widget.phone.replaceAll(RegExp(r'\D'), '');
-    final formattedPhone = cleanPhone.length == 10 ? '91$cleanPhone' : cleanPhone;
     
     final provider = Provider.of<AppProvider>(context, listen: false);
     String currentRoom = widget.roomNumber ?? '';

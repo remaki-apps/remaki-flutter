@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/fancy_toast.dart';
+import '../utils/phone_utils.dart';
 
 class HelpSupportScreen extends StatefulWidget {
   const HelpSupportScreen({super.key});
@@ -72,7 +73,8 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     final targetPhone = phone ?? supportPhone;
     final targetName = name ?? supportName;
     final msg = Uri.encodeComponent('Hi $targetName, I need help with the Remaki App.');
-    final uri = Uri.parse('https://wa.me/91$targetPhone?text=$msg');
+    final formattedPhone = PhoneUtils.formatForWhatsApp(targetPhone);
+    final uri = Uri.parse('https://wa.me/$formattedPhone?text=$msg');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {

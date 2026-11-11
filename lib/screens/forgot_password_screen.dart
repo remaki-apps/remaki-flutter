@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../services/api_service.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/keyboard_responsive_layout.dart';
+import '../utils/phone_utils.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -55,7 +56,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Future<void> _openWhatsApp(String phone) async {
-    final clean = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    final clean = PhoneUtils.formatForWhatsApp(phone);
     final msg = Uri.encodeComponent(
       'Hello Remaki Support Team, I need help recovering my Security PIN / password.',
     );

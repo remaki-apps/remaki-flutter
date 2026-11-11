@@ -7,6 +7,7 @@ import 'package:sunshine_pg_app/services/api_service.dart';
 import 'package:sunshine_pg_app/config/env_config.dart';
 import 'package:sunshine_pg_app/widgets/keyboard_responsive_layout.dart';
 import 'package:sunshine_pg_app/widgets/animated_image_upload_progress_bar.dart';
+import 'package:sunshine_pg_app/utils/phone_utils.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -648,6 +649,123 @@ void main() {
       expect(find.byIcon(Icons.cloud_upload_rounded), findsOneWidget);
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(AnimatedUploadButtonLoader), findsOneWidget);
+    });
+  });
+
+  group('PhoneUtils WhatsApp Formatting Tests', () {
+    test('10-digit number starting with 91 gets 91 country code prepended', () {
+      // Bug 1 RCA: 9187654321 was mistakenly treated as having 91 country code
+      expect(PhoneUtils.formatForWhatsApp('9187654321'), '919187654321');
+      expect(PhoneUtils.formatForWhatsApp('9123456789'), '919123456789');
+    });
+
+    test('Standard 10-digit mobile number gets 91 country code prepended', () {
+      expect(PhoneUtils.formatForWhatsApp('9876543210'), '919876543210');
+      expect(PhoneUtils.formatForWhatsApp('7539998654'), '917539998654');
+    });
+
+    test('12-digit number already starting with 91 is preserved as 12 digits', () {
+      expect(PhoneUtils.formatForWhatsApp('919876543210'), '919876543210');
+      expect(PhoneUtils.formatForWhatsApp('+91 9187654321'), '919187654321');
+      expect(PhoneUtils.formatForWhatsApp('+91 98765 43210'), '919876543210');
+    });
+
+    test('Trunk 0 prefix on 11-digit numbers is stripped and 91 is added', () {
+      expect(PhoneUtils.formatForWhatsApp('09187654321'), '919187654321');
+      expect(PhoneUtils.formatForWhatsApp('09876543210'), '919876543210');
+    });
+
+    test('Null or empty returns empty string', () {
+      expect(PhoneUtils.formatForWhatsApp(null), '');
+      expect(PhoneUtils.formatForWhatsApp(''), '');
+      expect(PhoneUtils.formatForWhatsApp('   '), '');
+    });
+  });
+
+  group('WhatsApp Statement & Bills Inclusion Tests', () {
+    test('Includes both rent and utility bills when both are pending', () {
+      final tenant = Tenant(
+        id: 't1',
+        name: 'John Doe',
+        phone: '9187654321',
+        email: 'john@example.com',
+        roomId: 'r1',
+        bedId: 'b1',
+        moveInDate: DateTime.now(),
+        rentAmount: 205.0,
+        securityDeposit: 500.0,
+        isPaid: false,
+        paymentStatus: 'UNPAID',
+        rentDueDate: DateTime(2026, 11, 5),
+        pendingRentAmount: 205.0,
+        additionalCharges: [
+          AdditionalCharge(
+            id: 'c1',
+            description: 'EB / Electricity Bill',
+            amount: 33.0,
+            date: DateTime.now(),
+            billType: 'CURRENT',
+            status: 'PENDING',
+          ),
+        ],
+      );
+
+      expect(tenant.totalPendingBills, 33.0);
+      expect(tenant.totalDue, 238.0);
+
+      final encodedMsg = tenant.buildDetailedRentBillMessage(
+        roomNumber: '101',
+        floorName: 'Ground Floor',
+        pgName: 'Sunshine PG',
+      );
+      final decodedMsg = Uri.decodeComponent(encodedMsg);
+
+      expect(decodedMsg, contains('RENT & BILL STATEMENT'));
+      expect(decodedMsg, contains('Monthly Rent:* ₹205'));
+      expect(decodedMsg, contains('EB / Electricity Bill:* ₹33'));
+      expect(decodedMsg, contains('Total Amount Payable:* *₹238*'));
+    });
+
+    test('Omits rent from statement when rent is fully paid and only bills are pending', () {
+      final tenant = Tenant(
+        id: 't2',
+        name: 'Jane Doe',
+        phone: '9876543210',
+        email: 'jane@example.com',
+        roomId: 'r1',
+        bedId: 'b2',
+        moveInDate: DateTime.now(),
+        rentAmount: 205.0,
+        securityDeposit: 500.0,
+        isPaid: true,
+        paymentStatus: 'PAID',
+        rentDueDate: DateTime(2026, 11, 5),
+        pendingRentAmount: 0.0,
+        additionalCharges: [
+          AdditionalCharge(
+            id: 'c2',
+            description: 'Electricity Bill',
+            amount: 33.0,
+            date: DateTime.now(),
+            billType: 'CURRENT',
+            status: 'PENDING',
+          ),
+        ],
+      );
+
+      expect(tenant.totalPendingBills, 33.0);
+      expect(tenant.totalDue, 33.0);
+
+      final encodedMsg = tenant.buildDetailedRentBillMessage(
+        roomNumber: '102',
+        pgName: 'Sunshine PG',
+      );
+      final decodedMsg = Uri.decodeComponent(encodedMsg);
+
+      expect(decodedMsg, contains('UTILITY BILL STATEMENT'));
+      expect(decodedMsg, isNot(contains('Monthly Rent')));
+      expect(decodedMsg, contains('Electricity Bill:* ₹33'));
+      expect(decodedMsg, contains('Total Amount Payable:* *₹33*'));
     });
   });
 }

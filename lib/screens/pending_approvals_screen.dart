@@ -13,6 +13,7 @@ import '../widgets/tenant_avatar.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/app_shimmer.dart';
 import '../widgets/keyboard_responsive_layout.dart';
+import '../utils/phone_utils.dart';
 
 class PendingApprovalsScreen extends StatefulWidget {
   const PendingApprovalsScreen({super.key});
@@ -289,7 +290,8 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
         if (req != null) {
           final tenant = appProvider.tenants.firstWhere((t) => t.id == req['tenantProfileId'], orElse: () => appProvider.tenants.first);
           final msg = Uri.encodeComponent('Your request for marking rent payment as paid is rejected. Reason: $reason. Kindly upload a valid screenshot.');
-          final url = Uri.parse('https://wa.me/${tenant.phone}?text=$msg');
+          final phoneNum = PhoneUtils.formatForWhatsApp(tenant.phone);
+          final url = Uri.parse('https://wa.me/$phoneNum?text=$msg');
           if (await canLaunchUrl(url)) {
             await launchUrl(url, mode: LaunchMode.externalApplication);
           }

@@ -448,54 +448,84 @@ class Tenant {
 
   // totalDue = unpaid utility/other bills only (not rent, as rent is tracked via pendingRentAmount)
   double get totalPendingBills => additionalCharges
-      .where((c) => c.billType != 'RENT' && (c.status == 'PENDING' || c.status == 'UNPAID'))
+      .where((c) => c.billType.trim().toUpperCase() != 'RENT' && c.status.trim().toUpperCase() != 'PAID')
       .fold(0.0, (sum, c) => sum + c.amount);
 
   // totalPaidBills = paid utility/other bills only
   double get totalPaidBills => additionalCharges
-      .where((c) => c.billType != 'RENT' && c.status == 'PAID')
+      .where((c) => c.billType.trim().toUpperCase() != 'RENT' && c.status.trim().toUpperCase() == 'PAID')
       .fold(0.0, (sum, c) => sum + c.amount);
 
   // totalExpectedBills = sum of pending + paid
   double get totalExpectedBills => totalPendingBills + totalPaidBills;
 
   // Grand total owed: pending rent balance + pending utility bills
-  double get totalDue => pendingRentAmount + totalPendingBills;
+  double get totalDue {
+    final bool isRentPaid = isPaid || paymentStatus.trim().toUpperCase() == 'PAID' || (pendingRentAmount == 0 && isPaid);
+    final double rentDue = isRentPaid ? 0.0 : (pendingRentAmount > 0 ? pendingRentAmount : rentAmount);
+    return rentDue + totalPendingBills;
+  }
 
   String buildDetailedRentBillMessage({String roomNumber = '', String floorName = '', String pgName = ''}) {
     final dueDateStr = DateFormat('dd MMM yyyy').format(rentDueDate);
     final List<String> itemLines = [];
 
-    // 1. Rent Amount
-    final rentVal = pendingRentAmount > 0 ? pendingRentAmount : rentAmount;
-    if (rentVal > 0) {
-      itemLines.add('• *Monthly Rent:* ₹${rentVal.toStringAsFixed(0)}');
+    // Check whether rent is actually due
+    final bool isRentPaid = isPaid || paymentStatus.trim().toUpperCase() == 'PAID' || (pendingRentAmount == 0 && isPaid);
+    final double effectiveRentDue = isRentPaid ? 0.0 : (pendingRentAmount > 0 ? pendingRentAmount : rentAmount);
+
+    // 1. Rent Amount (only if rent is actually due and > 0)
+    if (effectiveRentDue > 0) {
+      final rentLabel = (pendingRentAmount > 0 && pendingRentAmount < rentAmount)
+          ? 'Rent Balance'
+          : 'Monthly Rent';
+      itemLines.add('• *$rentLabel:* ₹${effectiveRentDue.toStringAsFixed(0)}');
     }
 
     // 2. Additional Charges & Bills (Electricity, Water, Maintenance, EB etc.)
+    double pendingBillsSum = 0.0;
     for (var charge in additionalCharges) {
-      if (charge.billType != 'RENT' && charge.amount > 0 && (charge.status == 'PENDING' || charge.status == 'UNPAID')) {
+      final chargeType = charge.billType.trim().toUpperCase();
+      final chargeStatus = charge.status.trim().toUpperCase();
+      final bool isChargePaid = chargeStatus == 'PAID';
+
+      if (chargeType != 'RENT' && !isChargePaid && charge.amount > 0) {
         String label = charge.description.trim();
         if (label.isEmpty) {
-          label = charge.billType == 'CURRENT' ? 'Electricity / EB Bill' : 'Utility Charge';
+          label = chargeType == 'CURRENT' ? 'Electricity / EB Bill' : 'Utility Charge';
         }
-        itemLines.add('• *$label:* ₹${charge.amount.toStringAsFixed(0)}');
+        final billDueStr = charge.billDueDate != null
+            ? ' (Due ${DateFormat('dd MMM').format(charge.billDueDate!)})'
+            : '';
+        itemLines.add('• *$label$billDueStr:* ₹${charge.amount.toStringAsFixed(0)}');
+        pendingBillsSum += charge.amount;
       }
     }
 
+    final double totalPayable = effectiveRentDue + pendingBillsSum;
+
     if (itemLines.isEmpty) {
-      itemLines.add('• *Total Rent Balance:* ₹${totalDue.toStringAsFixed(0)}');
+      if (totalPayable > 0) {
+        itemLines.add('• *Total Balance Due:* ₹${totalPayable.toStringAsFixed(0)}');
+      } else {
+        itemLines.add('• *Total Due:* ₹0 (All dues cleared)');
+      }
     }
 
     final itemsText = itemLines.join('\n');
-    final totalStr = (totalDue > 0 ? totalDue : rentAmount).toStringAsFixed(0);
+    final totalStr = totalPayable.toStringAsFixed(0);
 
     final roomDetailStr = roomNumber.isNotEmpty
         ? '${formatRoomName(roomNumber)}${floorName.isNotEmpty ? ' ($floorName)' : ''}'
         : 'Assigned Room';
 
+    // Dynamic statement title
+    final String statementTitle = (effectiveRentDue > 0 && pendingBillsSum > 0)
+        ? '🧾 *RENT & BILL STATEMENT* 🧾'
+        : (effectiveRentDue > 0 ? '🧾 *RENT STATEMENT* 🧾' : '🧾 *UTILITY BILL STATEMENT* 🧾');
+
     return Uri.encodeComponent(
-      '🧾 *RENT & BILL STATEMENT* 🧾\n'
+      '$statementTitle\n'
       '🏢 *${pgName.isNotEmpty ? pgName : 'PG'}*\n'
       '────────────────────────────\n'
       '👤 *Tenant Name:* $name\n'
@@ -509,7 +539,7 @@ class Tenant {
       '💰 *Total Amount Payable:* *₹$totalStr*\n'
       '────────────────────────────\n\n'
       '📲 Track payments & receipts anytime on the *Remaki* app.\n'
-      'Kindly clear your pending bill balance on or before the due date.\n\n'
+      'Kindly clear your pending balance on or before the due date.\n\n'
       'Best regards,\n'
       '*${pgName.isNotEmpty ? '$pgName Management' : 'Property Management'}*'
     );

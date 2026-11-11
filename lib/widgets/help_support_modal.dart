@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'fancy_toast.dart';
+import '../utils/phone_utils.dart';
 
 class HelpSupportModal {
   static const String supportName = 'Karthick';
@@ -186,7 +187,8 @@ class HelpSupportModal {
               actionLabel: 'Message',
               onTap: () async {
                 final msg = Uri.encodeComponent('Hi Karthick, I need help with the Remaki App.');
-                final uri = Uri.parse('https://wa.me/91$karthickPhone?text=$msg');
+                final formattedPhone = PhoneUtils.formatForWhatsApp(karthickPhone);
+                final uri = Uri.parse('https://wa.me/$formattedPhone?text=$msg');
                 if (await canLaunchUrl(uri)) {
                   await launchUrl(uri, mode: LaunchMode.externalApplication);
                 } else {
@@ -231,7 +233,8 @@ class HelpSupportModal {
               actionLabel: 'Message',
               onTap: () async {
                 final msg = Uri.encodeComponent('Hi Kishore, I need help with the Remaki App.');
-                final uri = Uri.parse('https://wa.me/91$kishorePhone?text=$msg');
+                final formattedPhone = PhoneUtils.formatForWhatsApp(kishorePhone);
+                final uri = Uri.parse('https://wa.me/$formattedPhone?text=$msg');
                 if (await canLaunchUrl(uri)) {
                   await launchUrl(uri, mode: LaunchMode.externalApplication);
                 } else {

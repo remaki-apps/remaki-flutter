@@ -10,6 +10,7 @@ import '../theme/app_theme.dart';
 import '../widgets/tenant_avatar.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/app_shimmer.dart';
+import '../utils/phone_utils.dart';
 
 class UnpaidTenantsScreen extends StatelessWidget {
   final String? filter;
@@ -23,8 +24,7 @@ class UnpaidTenantsScreen extends StatelessWidget {
     String pgName = '',
   }) async {
     try {
-      final sanitizedPhone = tenant.phone.replaceAll(RegExp(r'\D'), '');
-      final phoneNum = sanitizedPhone.startsWith('91') ? sanitizedPhone : '91$sanitizedPhone';
+      final phoneNum = PhoneUtils.formatForWhatsApp(tenant.phone);
       final message = tenant.buildDetailedRentBillMessage(
         roomNumber: roomNumber,
         floorName: floorName,

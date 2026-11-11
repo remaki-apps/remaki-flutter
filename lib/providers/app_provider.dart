@@ -451,9 +451,7 @@ class AppProvider with ChangeNotifier {
   List<Tenant> get newTenantsThisMonth => currentTenants.where((t) => t.moveInDate.month == DateTime.now().month).toList();
   List<Tenant> get unpaidTenants => currentTenants.where((t) {
     final bool hasPendingRent = (t.pendingRentAmount > 0 || !t.isPaid);
-    final bool hasPendingBills = t.additionalCharges.any((c) =>
-      c.billType != 'RENT' && (c.status == 'PENDING' || c.status == 'UNPAID')
-    );
+    final bool hasPendingBills = t.totalPendingBills > 0;
 
     if (hasPendingRent) {
       // Both (rent & bills) OR Rent only: wait for due date
@@ -469,9 +467,7 @@ class AppProvider with ChangeNotifier {
   ).toList();
   List<Tenant> get unpaidBillsTenants => currentTenants.where((t) {
     final bool hasPendingRent = (t.pendingRentAmount > 0 || !t.isPaid);
-    final bool hasPendingBills = t.additionalCharges.any((c) =>
-      c.billType != 'RENT' && (c.status == 'PENDING' || c.status == 'UNPAID')
-    );
+    final bool hasPendingBills = t.totalPendingBills > 0;
     if (!hasPendingBills) return false;
     if (hasPendingRent) {
       return _isDueDateReached(t.rentDueDate);
