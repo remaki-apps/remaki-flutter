@@ -571,11 +571,14 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
               items: availableRooms
                   .map((r) => DropdownOption(value: r.id, label: '${formatRoomName(r.number)} [${r.availableBeds} beds left]'))
                   .toList(),
-              onChanged: availableRooms.isEmpty ? null : (val) => setState(() {
-                _selectedRoomId = val;
-                _selectedBedId = null;
-                _inlineError = null;
-              }),
+              onChanged: (val) {
+                if (availableRooms.isEmpty) return;
+                setState(() {
+                  _selectedRoomId = val;
+                  _selectedBedId = null;
+                  _inlineError = null;
+                });
+              },
             ),
 
             // Bed Selection
