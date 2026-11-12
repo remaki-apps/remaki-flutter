@@ -566,11 +566,16 @@ class AppProvider with ChangeNotifier {
 
   Future<void> addRoom(Room room, {List<String>? bedLabels}) async {
     try {
+      final targetPropertyId = room.propertyId.isNotEmpty
+          ? room.propertyId
+          : (selectedPropertyId != null && selectedPropertyId != 'ALL' ? selectedPropertyId : null);
+
       await ApiService.createRoom({
         'roomNumber': room.number,
         'floorNumber': room.floor,
         'capacity': room.capacity,
         'roomType': room.roomType,
+        if (targetPropertyId != null) 'propertyId': targetPropertyId,
         if (bedLabels != null && bedLabels.isNotEmpty) 'bedLabels': bedLabels,
       });
       await loadFromAPI();

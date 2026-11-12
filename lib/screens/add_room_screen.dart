@@ -97,6 +97,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final appProvider = Provider.of<AppProvider>(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       body: SafeArea(
@@ -186,6 +187,49 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
                         GestureDetector(
                           onTap: () => setState(() => _errorMessage = null),
                           child: const Icon(Icons.close_rounded, color: Color(0xFF991B1B), size: 18),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                if (appProvider.properties.length > 1) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.business_rounded, size: 18, color: AppTheme.primaryColor),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Adding to Property',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                appProvider.pgName.isNotEmpty ? appProvider.pgName : 'Selected PG',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF0F172A),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -682,6 +726,10 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
           (i) => _bedNameControllers[i].text.trim(),
         );
 
+        final targetPropId = (provider.selectedPropertyId != null && provider.selectedPropertyId != 'ALL')
+            ? provider.selectedPropertyId!
+            : (provider.properties.isNotEmpty ? provider.properties.first.id : '');
+
         final newRoom = Room(
           id: '',
           number: _roomNumberController.text.trim(),
@@ -689,6 +737,7 @@ class _AddRoomScreenState extends State<AddRoomScreen> {
           capacity: _capacity,
           roomType: _roomType,
           beds: [],
+          propertyId: targetPropId,
         );
 
         final roomNum = _roomNumberController.text.trim();
