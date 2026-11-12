@@ -485,7 +485,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
               child: SafeArea(
                 top: false,
                 child: Text(
-                  'v1.0.0 • Powered by Remaki',
+                  'v1.0.4 • Powered by Remaki',
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
