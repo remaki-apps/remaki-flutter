@@ -380,7 +380,12 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                 child: GestureDetector(
                                   onTap: () async {
                                     final phoneNum = PhoneUtils.formatForWhatsApp(tenant.phone);
-                                    final message = tenant.buildDetailedRentBillMessage(roomNumber: roomNumber, floorName: floorName, pgName: appProvider.pgName);
+                                    final message = tenant.buildDetailedRentBillMessage(
+                                      roomNumber: roomNumber,
+                                      floorName: floorName,
+                                      pgName: appProvider.pgName,
+                                      platformFee: appProvider.platformFee,
+                                    );
                                     final url = Uri.parse('https://wa.me/$phoneNum?text=$message');
                                     if (await canLaunchUrl(url)) {
                                       await launchUrl(url, mode: LaunchMode.externalApplication);
@@ -1903,8 +1908,15 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
     String? selectedBedId;
     bool isSubmitting = false;
 
-    // Filter rooms that have at least one available bed
-    final availableRooms = appProvider.rooms.where((r) => r.beds.any((b) => b.isAvailable)).toList();
+    // Filter rooms that have at least one available bed for THIS tenant's property
+    final targetPropId = widget.tenant.propertyId.isNotEmpty
+        ? widget.tenant.propertyId
+        : appProvider.selectedPropertyId;
+    final availableRooms = appProvider.rooms
+        .where((r) =>
+            (targetPropId == null || targetPropId == 'ALL' || r.propertyId == targetPropId) &&
+            r.beds.any((b) => b.isAvailable))
+        .toList();
 
     showDialog(
       context: context,

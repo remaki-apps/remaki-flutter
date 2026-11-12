@@ -466,7 +466,7 @@ class Tenant {
     return rentDue + totalPendingBills;
   }
 
-  String buildDetailedRentBillMessage({String roomNumber = '', String floorName = '', String pgName = ''}) {
+  String buildDetailedRentBillMessage({String roomNumber = '', String floorName = '', String pgName = '', double? platformFee}) {
     final dueDateStr = DateFormat('dd MMM yyyy').format(rentDueDate);
     final List<String> itemLines = [];
 
@@ -502,7 +502,13 @@ class Tenant {
       }
     }
 
-    final double totalPayable = effectiveRentDue + pendingBillsSum;
+    // 3. Platform Convenience Fee: Included ONLY when rent is present (rent only, or both rent and bills)
+    final double resolvedPlatformFee = platformFee ?? this.platformFee;
+    if (effectiveRentDue > 0 && resolvedPlatformFee > 0) {
+      itemLines.add('• *Platform Convenience Fee:* ₹${resolvedPlatformFee.toStringAsFixed(0)}');
+    }
+
+    final double totalPayable = effectiveRentDue + pendingBillsSum + (effectiveRentDue > 0 ? resolvedPlatformFee : 0.0);
 
     if (itemLines.isEmpty) {
       if (totalPayable > 0) {

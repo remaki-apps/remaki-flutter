@@ -22,6 +22,7 @@ class UnpaidTenantsScreen extends StatelessWidget {
     String roomNumber, {
     String floorName = '',
     String pgName = '',
+    double? platformFee,
   }) async {
     try {
       final phoneNum = PhoneUtils.formatForWhatsApp(tenant.phone);
@@ -29,6 +30,7 @@ class UnpaidTenantsScreen extends StatelessWidget {
         roomNumber: roomNumber,
         floorName: floorName,
         pgName: pgName,
+        platformFee: platformFee,
       );
       final url = Uri.parse('https://wa.me/$phoneNum?text=$message');
       if (await canLaunchUrl(url)) {
@@ -241,6 +243,7 @@ class UnpaidTenantsScreen extends StatelessWidget {
                                     roomNumber,
                                     floorName: floorName,
                                     pgName: appProvider.pgName,
+                                    platformFee: appProvider.platformFee,
                                   ),
                                   child: Container(
                                     width: 34,

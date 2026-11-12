@@ -509,23 +509,69 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
           ],
         );
       case 1:
-        final availableRooms = appProvider.rooms.where((r) => !r.isFull).toList();
+        final availableRooms = appProvider.currentRooms.where((r) => !r.isFull).toList();
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildInlineErrorBanner(),
             _buildSectionHeader('Room & Bed Allocation', Icons.meeting_room_outlined),
 
+            if (availableRooms.isEmpty) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFFECACA)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.info_outline, color: Color(0xFFDC2626), size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'No available rooms found in ${appProvider.pgName.isNotEmpty ? appProvider.pgName : "this PG"}. Please create a room in this PG before allocating beds.',
+                            style: const TextStyle(color: Color(0xFFDC2626), fontSize: 13, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).pushNamed('/add-room');
+                        },
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Add Room to this PG'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFDC2626),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
             // Room Selection
             CustomExpandableDropdown<String>(
               label: 'Select Room *',
               value: _selectedRoomId,
-              hintText: 'Select Available Room',
+              hintText: availableRooms.isEmpty ? 'No available rooms in this PG' : 'Select Available Room',
               icon: Icons.meeting_room_outlined,
               items: availableRooms
                   .map((r) => DropdownOption(value: r.id, label: '${formatRoomName(r.number)} [${r.availableBeds} beds left]'))
                   .toList(),
-              onChanged: (val) => setState(() {
+              onChanged: availableRooms.isEmpty ? null : (val) => setState(() {
                 _selectedRoomId = val;
                 _selectedBedId = null;
                 _inlineError = null;
@@ -539,8 +585,14 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
                 value: _selectedBedId,
                 hintText: 'Select Available Bed',
                 icon: Icons.single_bed_outlined,
-                items: appProvider.rooms
-                    .firstWhere((r) => r.id == _selectedRoomId)
+                items: appProvider.currentRooms
+                    .firstWhere(
+                      (r) => r.id == _selectedRoomId,
+                      orElse: () => appProvider.rooms.firstWhere(
+                        (r) => r.id == _selectedRoomId,
+                        orElse: () => Room(id: '', number: '', floor: '', capacity: 0, beds: []),
+                      ),
+                    )
                     .beds
                     .where((b) => b.isAvailable)
                     .map((b) => DropdownOption(value: b.id, label: b.name))
@@ -731,6 +783,19 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
 
     final isUpcomingCycle = DateTime.now().isBefore(DateTime(firstDueDate.year, firstDueDate.month, firstDueDate.day));
 
+    final room = provider.currentRooms.firstWhere(
+      (r) => r.id == _selectedRoomId,
+      orElse: () => provider.rooms.firstWhere(
+        (r) => r.id == _selectedRoomId,
+        orElse: () => Room(id: '', number: '', floor: '', capacity: 0, beds: []),
+      ),
+    );
+    final targetPropId = room.propertyId.isNotEmpty
+        ? room.propertyId
+        : (provider.selectedPropertyId != null && provider.selectedPropertyId != 'ALL'
+            ? provider.selectedPropertyId!
+            : '');
+
     var tenant = Tenant(
       id: 't_${DateTime.now().millisecondsSinceEpoch}',
       name: _nameController.text.trim(),
@@ -739,17 +804,13 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
       emergencyContact: _emergencyContactController.text.trim(),
       roomId: _selectedRoomId!,
       bedId: _selectedBedId!,
+      propertyId: targetPropId,
       moveInDate: _moveInDate,
       rentAmount: double.tryParse(_rentController.text) ?? 0.0,
       securityDeposit: double.tryParse(_securityController.text) ?? 0.0,
       rentDueDate: firstDueDate,
       pendingRentAmount: double.tryParse(_rentController.text) ?? 0.0,
       paymentStatus: isUpcomingCycle ? 'UPCOMING' : 'UNPAID',
-    );
-
-    final room = provider.rooms.firstWhere(
-      (r) => r.id == _selectedRoomId,
-      orElse: () => Room(id: '', number: '', floor: '', capacity: 0, beds: []),
     );
 
     setState(() => _isLoading = true);
