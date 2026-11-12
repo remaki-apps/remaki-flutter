@@ -1909,8 +1909,9 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
     bool isSubmitting = false;
 
     // Filter rooms that have at least one available bed for THIS tenant's property
-    final targetPropId = widget.tenant.propertyId.isNotEmpty
-        ? widget.tenant.propertyId
+    final tenantProp = tenant is Tenant ? tenant.propertyId : (tenant?.propertyId?.toString() ?? '');
+    final targetPropId = tenantProp.isNotEmpty
+        ? tenantProp
         : appProvider.selectedPropertyId;
     final availableRooms = appProvider.rooms
         .where((r) =>
