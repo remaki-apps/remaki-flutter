@@ -94,39 +94,31 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
     String? reason;
     try {
       reason = await showDialog<String>(
-      context: context,
-      builder: (c) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          return KeyboardAwareDialog(
-            child: Dialog(
+        context: context,
+        builder: (c) => StatefulBuilder(
+          builder: (context, setDialogState) {
+            return KeyboardAwareDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              elevation: 8,
-              backgroundColor: Colors.white,
-              child: KeyboardAutoScroll(
-                child: SingleChildScrollView(
-                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                  child: Padding(
-                    padding: const EdgeInsets.all(22),
-                    child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Top Header with Close Button
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFEE2E2),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.remove_circle_outline_rounded, color: Color(0xFFEF4444), size: 20),
+              child: Padding(
+                padding: const EdgeInsets.all(22),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Top Header with Close Button
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEE2E2),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          const SizedBox(width: 10),
-                          Text(
+                          child: const Icon(Icons.remove_circle_outline_rounded, color: Color(0xFFEF4444), size: 20),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
                             'Decline Payment',
                             style: GoogleFonts.lato(
                               fontSize: 18,
@@ -134,140 +126,137 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                               color: const Color(0xFF0F172A),
                             ),
                           ),
-                        ],
-                      ),
-                      GestureDetector(
-                        onTap: () => Navigator.pop(c),
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFF1F5F9),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.close_rounded, size: 18, color: Color(0xFF64748B)),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Provide a reason so the tenant can correct and re-upload their proof.',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.4),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Quick Suggestion Chips
-                  const Text(
-                    'QUICK REASONS',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.8,
-                      color: Color(0xFF94A3B8),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: presetReasons.map((preset) {
-                      final isSelected = selectedPresetReason == preset;
-                      return GestureDetector(
-                        onTap: () {
-                          setDialogState(() {
-                            selectedPresetReason = preset;
-                            reasonController.text = preset;
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: isSelected ? AppTheme.danger : const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isSelected ? AppTheme.danger : const Color(0xFFE2E8F0),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(c),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF1F5F9),
+                              shape: BoxShape.circle,
                             ),
-                          ),
-                          child: Text(
-                            preset,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                              color: isSelected ? Colors.white : const Color(0xFF475569),
-                            ),
+                            child: const Icon(Icons.close_rounded, size: 18, color: Color(0xFF64748B)),
                           ),
                         ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Reason TextField
-                  TextField(
-                    controller: reasonController,
-                    decoration: InputDecoration(
-                      labelText: 'Rejection Reason *',
-                      hintText: 'e.g. Payment screenshot is unclear',
-                      labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
-                      hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.danger, width: 1.5)),
+                      ],
                     ),
-                    onChanged: (val) {
-                      if (selectedPresetReason != val) {
-                        setDialogState(() {
-                          selectedPresetReason = null;
-                        });
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Provide a reason so the tenant can correct and re-upload their proof.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.4),
+                    ),
+                    const SizedBox(height: 14),
 
-                  // Action Buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            side: const BorderSide(color: Color(0xFFCBD5E1)),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          onPressed: () => Navigator.pop(c),
-                          child: const Text('Cancel', style: TextStyle(color: Color(0xFF475569), fontWeight: FontWeight.bold)),
-                        ),
+                    // Quick Suggestion Chips
+                    const Text(
+                      'QUICK REASONS',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.8,
+                        color: Color(0xFF94A3B8),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.danger,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          onPressed: () {
-                            if (reasonController.text.trim().isNotEmpty) {
-                              Navigator.pop(c, reasonController.text.trim());
-                            }
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: presetReasons.map((preset) {
+                        final isSelected = selectedPresetReason == preset;
+                        return GestureDetector(
+                          onTap: () {
+                            setDialogState(() {
+                              selectedPresetReason = preset;
+                              reasonController.text = preset;
+                            });
                           },
-                          child: const Text('Decline', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        ),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: isSelected ? AppTheme.danger : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isSelected ? AppTheme.danger : const Color(0xFFE2E8F0),
+                              ),
+                            ),
+                            child: Text(
+                              preset,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                color: isSelected ? Colors.white : const Color(0xFF475569),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Reason TextField
+                    TextField(
+                      controller: reasonController,
+                      decoration: InputDecoration(
+                        labelText: 'Rejection Reason *',
+                        hintText: 'e.g. Payment screenshot is unclear',
+                        labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                        hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.danger, width: 1.5)),
                       ),
-                    ],
-                  ),
-                ],
+                      onChanged: (val) {
+                        if (selectedPresetReason != val) {
+                          setDialogState(() {
+                            selectedPresetReason = null;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Action Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              side: const BorderSide(color: Color(0xFFCBD5E1)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: () => Navigator.pop(c),
+                            child: const Text('Cancel', style: TextStyle(color: Color(0xFF475569), fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.danger,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: () {
+                              if (reasonController.text.trim().isNotEmpty) {
+                                Navigator.pop(c, reasonController.text.trim());
+                              }
+                            },
+                            child: const Text('Decline', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
-        ),
-        );
-        },
-      ),
-    );
+      );
   } finally {
     reasonController.dispose();
   }

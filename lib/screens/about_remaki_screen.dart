@@ -86,7 +86,7 @@ class AboutRemakiScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    'Version 1.0.0 (Build 1)',
+                    'Version 1.0.4 (Build 10)',
                     style: GoogleFonts.lato(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w700,
