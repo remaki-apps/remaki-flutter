@@ -443,15 +443,7 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
     final pgName = _summaryData?['propertyName'] ?? appProvider.pgName;
-    final totalCollected = (_summaryData?['monthlyPlatformFeeCollected'] as num?)?.toDouble() ?? 0.0;
-    final feePerTenant = (_summaryData?['feePerTenant'] as num?)?.toDouble() ?? 9.0;
-    final totalTenants = (_summaryData?['totalTenantsContributed'] as num?)?.toInt() ?? 0;
-    final billingMonth = _summaryData?['billingMonth'] as String? ??
-        DateFormat('yyyy-MM').format(DateTime.now());
-    final resetsOn = _summaryData?['resetsOn'] as String? ?? '1st of next month';
-    final platformFeePaid = (_summaryData?['platformFeePaid'] as num?)?.toDouble() ?? 0.0;
     final items = (_summaryData?['items'] as List<dynamic>?) ?? [];
-
     final selectedMonthStr = DateFormat('MMMM yyyy').format(_selectedMonth);
     final bool isCurrentMonth = _selectedMonth.year == _currentMonth.year && _selectedMonth.month == _currentMonth.month;
     final earliestMonth = _earliestMonth;
@@ -462,6 +454,17 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
       0.0,
       (sum, item) => sum + ((item['amount'] as num?)?.toDouble() ?? 0.0),
     );
+    final totalCollected = items.isNotEmpty
+        ? monthTotalCollected
+        : ((_summaryData?['monthlyPlatformFeeCollected'] as num?)?.toDouble() ?? 0.0);
+    final feePerTenant = (_summaryData?['feePerTenant'] as num?)?.toDouble() ?? 5.0;
+    final totalTenants = items.isNotEmpty
+        ? items.length
+        : ((_summaryData?['totalTenantsContributed'] as num?)?.toInt() ?? 0);
+    final billingMonth = _summaryData?['billingMonth'] as String? ??
+        DateFormat('yyyy-MM').format(DateTime.now());
+    final resetsOn = _summaryData?['resetsOn'] as String? ?? '1st of next month';
+    final platformFeePaid = (_summaryData?['platformFeePaid'] as num?)?.toDouble() ?? 0.0;
 
     DateTime? parsedMonthDate;
     try {

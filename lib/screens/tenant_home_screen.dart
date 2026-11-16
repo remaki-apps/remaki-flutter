@@ -305,8 +305,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       }
       String? rawRejection = profile['latestRejectionReason'] as String? ?? profile['rejectionReason'] as String?;
 
-      // Platform fee collected ONLY for rent, NEVER for utility bills alone!
-      final double effectivePlatformFee = pendingRent > 0 ? dynamicPlatformFee : 0.0;
+      final double pendingConvenienceFee = (profile['pendingConvenienceFee'] as num?)?.toDouble() ?? -1.0;
+      final double monthlyRent = (profile['monthlyRent'] as num?)?.toDouble() ?? 0.0;
+      final bool isPartiallyPaid = profile['paymentStatus'] == 'PARTIAL' || (pendingRent > 0 && monthlyRent > 0 && pendingRent < monthlyRent);
+      final bool feeAlreadyPaid = isPartiallyPaid || profile['paymentStatus'] == 'PAID' || pendingConvenienceFee == 0.0;
+
+      // Platform fee collected ONLY for rent on the first payment, NEVER if already partially paid or submitted!
+      final double effectivePlatformFee = (pendingRent > 0 && !feeAlreadyPaid)
+          ? dynamicPlatformFee
+          : 0.0;
 
       final double totalDueAmount = (pendingRent + pendingBills) > 0
           ? (pendingRent + pendingBills + effectivePlatformFee)

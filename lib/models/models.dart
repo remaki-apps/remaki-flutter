@@ -481,11 +481,15 @@ class Tenant {
     return rentDue + totalPendingBills;
   }
 
-  // Total payable by tenant for Admin display (including platform fee when rent is due)
+  // Total payable by tenant for Admin display (including platform fee when rent is due and fee not yet paid)
   double get totalPayableWithPlatformFee {
     if (totalDue <= 0) return 0.0;
     final bool isRentPaid = isPaid || paymentStatus.trim().toUpperCase() == 'PAID' || (pendingRentAmount == 0 && isPaid);
-    final double fee = !isRentPaid ? (platformFee > 0 ? platformFee : 5.0) : 0.0;
+    final bool feeAlreadyPaid = isPartiallyPaid || isRentPaid || pendingConvenienceFee == 0.0;
+    if (feeAlreadyPaid) {
+      return totalDue;
+    }
+    final double fee = pendingConvenienceFee > 0 ? pendingConvenienceFee : (platformFee > 0 ? platformFee : 5.0);
     return totalDue + fee;
   }
 
@@ -529,13 +533,14 @@ class Tenant {
       }
     }
 
-    // 3. Platform Convenience Fee: Included ONLY when rent is present (rent only, or both rent and bills)
-    final double resolvedPlatformFee = platformFee ?? this.platformFee;
+    // 3. Platform Convenience Fee: Included ONLY when rent is present and fee not already paid this cycle
+    final bool feeAlreadyPaid = isPartiallyPaid || isRentPaid || pendingConvenienceFee == 0.0;
+    final double resolvedPlatformFee = feeAlreadyPaid ? 0.0 : (platformFee ?? this.platformFee);
     if (effectiveRentDue > 0 && resolvedPlatformFee > 0) {
       itemLines.add('• *Platform Convenience Fee:* ₹${resolvedPlatformFee.toStringAsFixed(0)}');
     }
 
-    final double totalPayable = effectiveRentDue + pendingBillsSum + (effectiveRentDue > 0 ? resolvedPlatformFee : 0.0);
+    final double totalPayable = effectiveRentDue + pendingBillsSum + resolvedPlatformFee;
 
     if (itemLines.isEmpty) {
       if (totalPayable > 0) {
