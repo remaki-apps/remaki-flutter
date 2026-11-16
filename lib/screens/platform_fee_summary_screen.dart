@@ -1188,6 +1188,18 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
     final amount = (item['amount'] as num?)?.toDouble() ?? 9.0;
     final dateStr = item['date']?.toString() ?? '';
     final status = item['status']?.toString() ?? 'SUBMITTED';
+    final itemMonth = item['month']?.toString() ?? '';
+    final selectedMonthStr = DateFormat('yyyy-MM').format(_selectedMonth);
+    final isArrearsMonth = itemMonth.isNotEmpty && itemMonth != selectedMonthStr;
+    String itemMonthLabel = '';
+    if (isArrearsMonth) {
+      try {
+        final parsedMonth = DateFormat('yyyy-MM').parse(itemMonth);
+        itemMonthLabel = '${DateFormat('MMM yyyy').format(parsedMonth)} fee';
+      } catch (_) {
+        itemMonthLabel = '$itemMonth fee';
+      }
+    }
 
     String formattedDate = '';
     if (dateStr.isNotEmpty) {
@@ -1235,13 +1247,40 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  tenantName,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF0F172A),
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        tenantName,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF0F172A),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (itemMonthLabel.isNotEmpty) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: const Color(0xFFFDE68A)),
+                        ),
+                        child: Text(
+                          itemMonthLabel,
+                          style: GoogleFonts.lato(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFFB45309),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 if (roomBedInfo.isNotEmpty) ...[
                   const SizedBox(height: 2),

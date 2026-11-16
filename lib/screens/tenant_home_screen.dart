@@ -3121,7 +3121,13 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     child: Column(
                       children: [
                         if (_pendingRent > 0) ...[
-                          _buildPaymentBreakdownRow('Pending Rent', '₹${_pendingRent.toStringAsFixed(0)}', icon: Icons.door_sliding_outlined),
+                          Builder(builder: (context) {
+                            final rentMonths = (_monthlyRent > 0 && _pendingRent > _monthlyRent)
+                                ? (_pendingRent / _monthlyRent).round()
+                                : 1;
+                            final rentLabel = rentMonths > 1 ? 'Pending Rent ($rentMonths months)' : 'Pending Rent';
+                            return _buildPaymentBreakdownRow(rentLabel, '₹${_pendingRent.toStringAsFixed(0)}', icon: Icons.door_sliding_outlined);
+                          }),
                           const SizedBox(height: 8),
                         ],
                         if (_pendingBillsList.isNotEmpty) ...[
@@ -3140,7 +3146,13 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           }),
                         ],
                         if (_effectivePlatformFee > 0) ...[
-                          _buildPaymentBreakdownRow('Platform Convenience Fee', '₹${_effectivePlatformFee.toStringAsFixed(0)}', icon: Icons.verified_user_outlined),
+                          Builder(builder: (context) {
+                            final feeMonths = (_dynamicPlatformFee > 0 && _effectivePlatformFee > _dynamicPlatformFee)
+                                ? (_effectivePlatformFee / _dynamicPlatformFee).round()
+                                : 1;
+                            final feeLabel = feeMonths > 1 ? 'Platform Convenience Fee ($feeMonths months)' : 'Platform Convenience Fee';
+                            return _buildPaymentBreakdownRow(feeLabel, '₹${_effectivePlatformFee.toStringAsFixed(0)}', icon: Icons.verified_user_outlined);
+                          }),
                         ] else if (_pendingBills > 0 && _pendingRent == 0) ...[
                           _buildPaymentBreakdownRow('Platform Fee (Waived for bills)', '₹0', icon: Icons.check_circle_outline_rounded),
                         ],

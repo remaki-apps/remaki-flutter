@@ -1023,8 +1023,22 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                             'Rent Due Date',
                             DateFormat('dd/MM/yyyy').format(tenant.rentDueDate),
                           ),
-                          if (!tenant.isPaid && tenant.pendingRentAmount > 0 && tenant.pendingRentAmount < tenant.rentAmount)
-                            _buildModernDetailItem(Icons.account_balance_wallet_outlined, 'Rent Balance Due', '₹${tenant.pendingRentAmount.toStringAsFixed(0)}', isHighlight: true),
+                          if (!tenant.isPaid && tenant.pendingRentAmount > 0) ...[
+                            if (tenant.pendingRentAmount > tenant.rentAmount)
+                              _buildModernDetailItem(
+                                Icons.history_toggle_off_rounded,
+                                'Accumulated Rent Due (${(tenant.pendingRentAmount / (tenant.rentAmount > 0 ? tenant.rentAmount : 1)).toStringAsFixed(0)} months)',
+                                '₹${tenant.pendingRentAmount.toStringAsFixed(0)}',
+                                isHighlight: true,
+                              )
+                            else if (tenant.pendingRentAmount < tenant.rentAmount)
+                              _buildModernDetailItem(
+                                Icons.account_balance_wallet_outlined,
+                                'Rent Balance Due',
+                                '₹${tenant.pendingRentAmount.toStringAsFixed(0)}',
+                                isHighlight: true,
+                              ),
+                          ],
                           ...tenant.additionalCharges.where((c) => c.billType.trim().toUpperCase() != 'RENT' && c.status.trim().toUpperCase() != 'PAID').map(
                             (c) {
                               final dueDateStr = c.billDueDate != null
@@ -1039,7 +1053,14 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                           ),
                           if (tenant.totalPendingBills > 0 || !tenant.isPaid)
                             _buildModernDetailItem(Icons.account_balance_wallet_outlined, 'Total Due', '₹${tenant.totalPayableWithPlatformFee.toStringAsFixed(0)}', isHighlight: true),
-                          _buildModernDetailItem(Icons.local_atm_outlined, 'Platform Fee per Rent Payment', '₹${tenant.platformFee.toStringAsFixed(0)}'),
+                          if (tenant.pendingConvenienceFee > 0)
+                            _buildModernDetailItem(
+                              Icons.local_atm_outlined,
+                              'Platform Fee (${(tenant.pendingConvenienceFee / (tenant.platformFee > 0 ? tenant.platformFee : 5)).round()} months)',
+                              '₹${tenant.pendingConvenienceFee.toStringAsFixed(0)}',
+                            )
+                          else
+                            _buildModernDetailItem(Icons.local_atm_outlined, 'Platform Fee per Rent Payment', '₹${tenant.platformFee.toStringAsFixed(0)}'),
                         ],
                       ),
                     ),
