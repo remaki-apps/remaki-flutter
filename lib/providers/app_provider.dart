@@ -275,6 +275,8 @@ class AppProvider with ChangeNotifier {
           roomNumber: roomInfo,
           notes: e['notes']?.toString(),
           billingMonth: e['billingMonth']?.toString(),
+          platformFee: (e['platformFee'] as num?)?.toDouble() ?? 0.0,
+          rentAmount: (e['rentAmount'] as num?)?.toDouble() ?? 0.0,
         );
       }).toList();
 

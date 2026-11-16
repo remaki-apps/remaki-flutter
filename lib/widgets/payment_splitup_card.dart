@@ -84,7 +84,7 @@ class PaymentSplitupCard extends StatelessWidget {
 
     if (isRent) {
       final double effectiveRent = rentAmount > 0
-          ? rentAmount
+          ? (rentAmount > paymentAmount ? paymentAmount : rentAmount)
           : (effectiveFee > 0 && paymentAmount > effectiveFee ? paymentAmount - effectiveFee : paymentAmount);
       rentPortion = effectiveRent;
       final double surplus = (paymentAmount > effectiveRent) ? (paymentAmount - effectiveRent) : 0.0;

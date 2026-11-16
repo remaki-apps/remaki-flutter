@@ -678,7 +678,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
-                                    tenant.totalDue == 0 ? '₹0' : '₹${tenant.totalDue.toStringAsFixed(0)}',
+                                    tenant.totalPayableWithPlatformFee == 0 ? '₹0' : '₹${tenant.totalPayableWithPlatformFee.toStringAsFixed(0)}',
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -1021,7 +1021,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                           _buildModernDetailItem(
                             Icons.event_outlined,
                             'Rent Due Date',
-                            '${_formatOrdinalDay(tenant.rentDueDate.day)} of every month (${DateFormat('dd MMM yyyy').format(tenant.rentDueDate)})',
+                            DateFormat('dd/MM/yyyy').format(tenant.rentDueDate),
                           ),
                           if (!tenant.isPaid && tenant.pendingRentAmount > 0 && tenant.pendingRentAmount < tenant.rentAmount)
                             _buildModernDetailItem(Icons.account_balance_wallet_outlined, 'Rent Balance Due', '₹${tenant.pendingRentAmount.toStringAsFixed(0)}', isHighlight: true),
@@ -1038,7 +1038,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                             },
                           ),
                           if (tenant.totalPendingBills > 0 || !tenant.isPaid)
-                            _buildModernDetailItem(Icons.account_balance_wallet_outlined, 'Total Due', '₹${tenant.totalDue.toStringAsFixed(0)}', isHighlight: true),
+                            _buildModernDetailItem(Icons.account_balance_wallet_outlined, 'Total Due', '₹${tenant.totalPayableWithPlatformFee.toStringAsFixed(0)}', isHighlight: true),
                           _buildModernDetailItem(Icons.local_atm_outlined, 'Platform Fee per Rent Payment', '₹${tenant.platformFee.toStringAsFixed(0)}'),
                         ],
                       ),

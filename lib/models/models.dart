@@ -294,16 +294,15 @@ class Tenant {
   bool get isUpcoming {
     if (paymentStatus == 'PAID' && isPaid) return false;
     if (isPending || isPartiallyPaid) return false;
-    if (paymentStatus == 'UPCOMING') return true;
-    if (paymentStatus == 'OVERDUE') return false;
     final dueStart = DateTime(rentDueDate.year, rentDueDate.month, rentDueDate.day);
     return DateTime.now().isBefore(dueStart);
   }
 
   bool get isOverdue {
     if (isPaid || isPending || isPartiallyPaid || isUpcoming) return false;
-    if (paymentStatus == 'OVERDUE') return true;
-    final graceDate = DateTime(rentDueDate.year, rentDueDate.month, rentDueDate.day).add(const Duration(days: 3));
+    // Overdue is strictly after 3 full days from the rent due date (until 23:59:59 on the 3rd day)
+    final dueDay = DateTime(rentDueDate.year, rentDueDate.month, rentDueDate.day);
+    final graceDate = dueDay.add(const Duration(days: 3, hours: 23, minutes: 59, seconds: 59));
     return DateTime.now().isAfter(graceDate);
   }
 
@@ -480,6 +479,14 @@ class Tenant {
     final bool isRentPaid = isPaid || paymentStatus.trim().toUpperCase() == 'PAID' || (pendingRentAmount == 0 && isPaid);
     final double rentDue = isRentPaid ? 0.0 : (pendingRentAmount > 0 ? pendingRentAmount : rentAmount);
     return rentDue + totalPendingBills;
+  }
+
+  // Total payable by tenant for Admin display (including platform fee when rent is due)
+  double get totalPayableWithPlatformFee {
+    if (totalDue <= 0) return 0.0;
+    final bool isRentPaid = isPaid || paymentStatus.trim().toUpperCase() == 'PAID' || (pendingRentAmount == 0 && isPaid);
+    final double fee = !isRentPaid ? (platformFee > 0 ? platformFee : 5.0) : 0.0;
+    return totalDue + fee;
   }
 
   String buildDetailedRentBillMessage({String roomNumber = '', String floorName = '', String pgName = '', double? platformFee}) {

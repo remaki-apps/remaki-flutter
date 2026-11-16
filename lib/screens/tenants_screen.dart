@@ -469,7 +469,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
                                     Text(
-                                      '₹${tenant.totalDue.toStringAsFixed(0)}',
+                                      '₹${tenant.totalPayableWithPlatformFee.toStringAsFixed(0)}',
                                       style: const TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold,
