@@ -54,6 +54,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   Uint8List? _selectedImageBytes;
   bool _isImageLoading = false;
   final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _customPaymentAmountController = TextEditingController();
+  bool _isPartialPayment = false;
   String? _currentTransactionRef;
   List<dynamic> _announcements = [];
   List<dynamic> _payments = [];
@@ -197,6 +199,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   void dispose() {
     NetworkProvider.instance.removeRestoredListener(_onNetworkRestored);
     _descriptionController.dispose();
+    _customPaymentAmountController.dispose();
     _tenantNewPasswordController.dispose();
     _tenantConfirmPasswordController.dispose();
     _tenantNewPinController.dispose();
@@ -432,8 +435,13 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   }
 
   void _showProofConfirmationDialog(Uint8List imageBytes) {
-    final effectiveDue = _totalDue > 0 ? _totalDue : _pendingBills;
-    final paymentLabel = _pendingRent > 0 ? 'Rent & Dues' : 'Utility Bill Split';
+    final customAmt = double.tryParse(_customPaymentAmountController.text.trim()) ?? 0.0;
+    final effectiveDue = (_isPartialPayment && customAmt > 0)
+        ? customAmt
+        : (_totalDue > 0 ? _totalDue : _pendingBills);
+    final paymentLabel = _isPartialPayment
+        ? 'Partial Payment'
+        : (_pendingRent > 0 ? 'Rent & Dues' : 'Utility Bill Split');
     final txnRef = _currentTransactionRef ?? 'RMK${DateTime.now().millisecondsSinceEpoch}';
 
     showDialog(
@@ -778,9 +786,13 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   }
 
   Future<bool> _submitRequest() async {
-    final effectiveDue = _totalDue > 0 ? _totalDue : _pendingBills;
+    final double customAmt = double.tryParse(_customPaymentAmountController.text.trim()) ?? 0.0;
+    final effectiveDue = (_isPartialPayment && customAmt > 0)
+        ? customAmt
+        : (_totalDue > 0 ? _totalDue : _pendingBills);
+
     if (effectiveDue <= 0) {
-      FancyToast.showError(context, 'No Dues', message: 'No outstanding dues to pay.');
+      FancyToast.showError(context, 'Invalid Amount', message: 'Please enter a valid payment amount.');
       return false;
     }
     if (_selectedImageBytes == null) {
@@ -818,6 +830,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         setState(() {
           _selectedImageBytes = null;
           _descriptionController.clear();
+          _customPaymentAmountController.clear();
+          _isPartialPayment = false;
           _hasSubmittedForApproval = true;
           _rejectionReason = null;
         });
@@ -3148,6 +3162,248 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       ],
                     ),
                   ),
+                  // Payment Options (Full vs Partial)
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _isPartialPayment = false;
+                              _customPaymentAmountController.clear();
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: !_isPartialPayment ? TenantTheme.primary.withValues(alpha: 0.08) : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: !_isPartialPayment ? TenantTheme.primary : const Color(0xFFE2E8F0),
+                                width: !_isPartialPayment ? 1.5 : 1.0,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  !_isPartialPayment ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  size: 16,
+                                  color: !_isPartialPayment ? TenantTheme.primary : const Color(0xFF94A3B8),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Full Amount',
+                                        style: GoogleFonts.lato(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: !_isPartialPayment ? TenantTheme.primary : TenantTheme.textPrimary,
+                                        ),
+                                      ),
+                                      Text(
+                                        '₹${_totalDue.toStringAsFixed(0)}',
+                                        style: GoogleFonts.lato(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: !_isPartialPayment ? TenantTheme.primary : TenantTheme.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _isPartialPayment = true;
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: _isPartialPayment ? TenantTheme.primary.withValues(alpha: 0.08) : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _isPartialPayment ? TenantTheme.primary : const Color(0xFFE2E8F0),
+                                width: _isPartialPayment ? 1.5 : 1.0,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _isPartialPayment ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  size: 16,
+                                  color: _isPartialPayment ? TenantTheme.primary : const Color(0xFF94A3B8),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Partial Amount',
+                                        style: GoogleFonts.lato(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: _isPartialPayment ? TenantTheme.primary : TenantTheme.textPrimary,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Custom / Part',
+                                        style: GoogleFonts.lato(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
+                                          color: _isPartialPayment ? TenantTheme.primary : TenantTheme.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_isPartialPayment) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: TenantTheme.primary.withValues(alpha: 0.3), width: 1.2),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'ENTER PARTIAL AMOUNT TO PAY',
+                            style: GoogleFonts.lato(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.6,
+                              color: TenantTheme.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFFCBD5E1)),
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  '₹',
+                                  style: GoogleFonts.lato(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w800,
+                                    color: TenantTheme.primary,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _customPaymentAmountController,
+                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                    style: GoogleFonts.lato(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w800,
+                                      color: const Color(0xFF0F172A),
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: 'Enter amount (e.g. ${(_totalDue / 2).toStringAsFixed(0)})',
+                                      hintStyle: GoogleFonts.lato(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: const Color(0xFF94A3B8),
+                                      ),
+                                      isDense: true,
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                                      border: InputBorder.none,
+                                    ),
+                                    onChanged: (_) => setState(() {}),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (_pendingRent > 0 && _pendingBills > 0) ...[
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 6,
+                              children: [
+                                ActionChip(
+                                  label: Text('Rent Only: ₹${_pendingRent.toStringAsFixed(0)}', style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700)),
+                                  backgroundColor: Colors.white,
+                                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                  onPressed: () {
+                                    setState(() {
+                                      _customPaymentAmountController.text = _pendingRent.toStringAsFixed(0);
+                                    });
+                                  },
+                                ),
+                                ActionChip(
+                                  label: Text('Bills Only: ₹${_pendingBills.toStringAsFixed(0)}', style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700)),
+                                  backgroundColor: Colors.white,
+                                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                  onPressed: () {
+                                    setState(() {
+                                      _customPaymentAmountController.text = _pendingBills.toStringAsFixed(0);
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                          const SizedBox(height: 10),
+                          Builder(builder: (context) {
+                            final customAmt = double.tryParse(_customPaymentAmountController.text.trim()) ?? 0.0;
+                            final balanceRemaining = (_totalDue - customAmt).clamp(0.0, double.infinity);
+                            final isOverpaying = customAmt > _totalDue;
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  isOverpaying ? 'Overpaying total dues:' : 'Balance after payment:',
+                                  style: GoogleFonts.lato(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: isOverpaying ? const Color(0xFFDC2626) : const Color(0xFF64748B),
+                                  ),
+                                ),
+                                Text(
+                                  isOverpaying ? '+₹${(customAmt - _totalDue).toStringAsFixed(0)} advance' : '₹${balanceRemaining.toStringAsFixed(0)}',
+                                  style: GoogleFonts.lato(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: isOverpaying ? const Color(0xFFDC2626) : const Color(0xFF0F172A),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
 
                   // Compact / Clean Image Upload Button
@@ -3357,7 +3613,11 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           : FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
-                                'Submit Payment for Approval',
+                                () {
+                                  final customAmt = double.tryParse(_customPaymentAmountController.text.trim()) ?? 0.0;
+                                  final payAmt = (_isPartialPayment && customAmt > 0) ? customAmt : _totalDue;
+                                  return 'Submit Payment • ₹${payAmt.toStringAsFixed(0)}';
+                                }(),
                                 style: GoogleFonts.lato(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800,
