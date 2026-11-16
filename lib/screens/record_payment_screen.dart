@@ -132,10 +132,11 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
     final double billsAmt = tenant.totalPendingBills;
     final bool hasRent = rentAmt > 0 && !tenant.isPaid;
     final bool hasBills = billsAmt > 0;
-    final bool feeAlreadyPaid = tenant.isPartiallyPaid || tenant.isPaid || tenant.pendingConvenienceFee == 0.0;
-    final double pFee = (hasRent && !feeAlreadyPaid)
-        ? (tenant.pendingConvenienceFee > 0 ? tenant.pendingConvenienceFee : (tenant.platformFee > 0 ? tenant.platformFee : 5.0))
-        : 0.0;
+    final double pFee = (hasRent && tenant.pendingConvenienceFee > 0)
+        ? tenant.pendingConvenienceFee
+        : ((hasRent && tenant.pendingConvenienceFee != 0.0 && !tenant.isPaid && !tenant.isPartiallyPaid)
+            ? (tenant.platformFee > 0 ? tenant.platformFee : 5.0)
+            : 0.0);
 
     if (!_initializedTenant) {
       _initializedTenant = true;

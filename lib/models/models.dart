@@ -481,16 +481,19 @@ class Tenant {
     return rentDue + totalPendingBills;
   }
 
-  // Total payable by tenant for Admin display (including platform fee when rent is due and fee not yet paid)
+  // Total payable by tenant for Admin display (including cumulative platform fee for all unpaid cycles)
   double get totalPayableWithPlatformFee {
     if (totalDue <= 0) return 0.0;
     final bool isRentPaid = isPaid || paymentStatus.trim().toUpperCase() == 'PAID' || (pendingRentAmount == 0 && isPaid);
-    final bool feeAlreadyPaid = isPartiallyPaid || isRentPaid || pendingConvenienceFee == 0.0;
-    if (feeAlreadyPaid) {
+    if (isRentPaid) return totalDue;
+
+    if (pendingConvenienceFee > 0) {
+      return totalDue + pendingConvenienceFee;
+    }
+    if (pendingConvenienceFee == 0.0) {
       return totalDue;
     }
-    final double fee = pendingConvenienceFee > 0 ? pendingConvenienceFee : (platformFee > 0 ? platformFee : 5.0);
-    return totalDue + fee;
+    return totalDue + (platformFee > 0 ? platformFee : 5.0);
   }
 
   String buildDetailedRentBillMessage({String roomNumber = '', String floorName = '', String pgName = '', double? platformFee}) {
@@ -533,11 +536,19 @@ class Tenant {
       }
     }
 
-    // 3. Platform Convenience Fee: Included ONLY when rent is present and fee not already paid this cycle
-    final bool feeAlreadyPaid = isPartiallyPaid || isRentPaid || pendingConvenienceFee == 0.0;
-    final double resolvedPlatformFee = feeAlreadyPaid ? 0.0 : (platformFee ?? this.platformFee);
+    // 3. Platform Convenience Fee: Cumulative fee for unpaid cycles
+    final double resolvedPlatformFee = pendingConvenienceFee > 0
+        ? pendingConvenienceFee
+        : ((pendingConvenienceFee == 0.0 || isPartiallyPaid || isRentPaid) ? 0.0 : (platformFee ?? this.platformFee));
     if (effectiveRentDue > 0 && resolvedPlatformFee > 0) {
-      itemLines.add('• *Platform Convenience Fee:* ₹${resolvedPlatformFee.toStringAsFixed(0)}');
+      final baseFee = platformFee ?? this.platformFee;
+      final int unpaidMonthsCount = (baseFee > 0 && resolvedPlatformFee > baseFee)
+          ? (resolvedPlatformFee / baseFee).round()
+          : 1;
+      final String feeLabel = unpaidMonthsCount > 1
+          ? 'Platform Convenience Fee ($unpaidMonthsCount months)'
+          : 'Platform Convenience Fee';
+      itemLines.add('• *$feeLabel:* ₹${resolvedPlatformFee.toStringAsFixed(0)}');
     }
 
     final double totalPayable = effectiveRentDue + pendingBillsSum + resolvedPlatformFee;

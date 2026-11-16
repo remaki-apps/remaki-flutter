@@ -1542,10 +1542,11 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) => StatefulBuilder(
         builder: (ctx, setSheetState) {
-          final bool feeAlreadyPaid = tenant.isPartiallyPaid || tenant.isPaid || tenant.pendingConvenienceFee == 0.0;
-          final double pFee = (hasRent && !feeAlreadyPaid)
-              ? (tenant.pendingConvenienceFee > 0 ? tenant.pendingConvenienceFee : (tenant.platformFee > 0 ? tenant.platformFee : 5.0))
-              : 0.0;
+          final double pFee = (hasRent && tenant.pendingConvenienceFee > 0)
+              ? tenant.pendingConvenienceFee
+              : ((hasRent && tenant.pendingConvenienceFee != 0.0 && !tenant.isPaid && !tenant.isPartiallyPaid)
+                  ? (tenant.platformFee > 0 ? tenant.platformFee : 5.0)
+                  : 0.0);
           double activeAmount = 0.0;
           if (selectedType == 'BOTH') {
             activeAmount = rentAmt + billsAmt + pFee;

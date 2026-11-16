@@ -308,12 +308,13 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       final double pendingConvenienceFee = (profile['pendingConvenienceFee'] as num?)?.toDouble() ?? -1.0;
       final double monthlyRent = (profile['monthlyRent'] as num?)?.toDouble() ?? 0.0;
       final bool isPartiallyPaid = profile['paymentStatus'] == 'PARTIAL' || (pendingRent > 0 && monthlyRent > 0 && pendingRent < monthlyRent);
-      final bool feeAlreadyPaid = isPartiallyPaid || profile['paymentStatus'] == 'PAID' || pendingConvenienceFee == 0.0;
 
-      // Platform fee collected ONLY for rent on the first payment, NEVER if already partially paid or submitted!
-      final double effectivePlatformFee = (pendingRent > 0 && !feeAlreadyPaid)
-          ? dynamicPlatformFee
-          : 0.0;
+      // Cumulative platform fee for all unpaid cycles
+      final double effectivePlatformFee = pendingConvenienceFee > 0
+          ? pendingConvenienceFee
+          : ((pendingConvenienceFee == 0.0 || isPartiallyPaid || profile['paymentStatus'] == 'PAID')
+              ? 0.0
+              : dynamicPlatformFee);
 
       final double totalDueAmount = (pendingRent + pendingBills) > 0
           ? (pendingRent + pendingBills + effectivePlatformFee)
