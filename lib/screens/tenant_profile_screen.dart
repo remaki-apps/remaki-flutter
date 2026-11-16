@@ -1542,11 +1542,12 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) => StatefulBuilder(
         builder: (ctx, setSheetState) {
+          final double pFee = (hasRent && (tenant.platformFee > 0 ? tenant.platformFee : 5.0) > 0) ? (tenant.platformFee > 0 ? tenant.platformFee : 5.0) : 0.0;
           double activeAmount = 0.0;
           if (selectedType == 'BOTH') {
-            activeAmount = rentAmt + billsAmt;
+            activeAmount = rentAmt + billsAmt + pFee;
           } else if (selectedType == 'RENT') {
-            activeAmount = rentAmt;
+            activeAmount = rentAmt + pFee;
           } else {
             activeAmount = billsAmt;
           }
@@ -1667,25 +1668,25 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                   children: [
                     if (hasRent && hasBills)
                       ChoiceChip(
-                        label: Text('Full Dues (₹${(rentAmt + billsAmt).toStringAsFixed(0)})'),
-                        selected: selectedType == 'BOTH' && enteredAmt == (rentAmt + billsAmt),
+                        label: Text('Full Dues (₹${(rentAmt + billsAmt + pFee).toStringAsFixed(0)})'),
+                        selected: selectedType == 'BOTH' && enteredAmt == (rentAmt + billsAmt + pFee),
                         onSelected: (val) {
                           if (val) {
                             setSheetState(() {
                               selectedType = 'BOTH';
-                              amountController.text = (rentAmt + billsAmt).toStringAsFixed(0);
+                              amountController.text = (rentAmt + billsAmt + pFee).toStringAsFixed(0);
                             });
                           }
                         },
                       ),
                     ChoiceChip(
-                      label: Text('Rent Only (₹${rentAmt.toStringAsFixed(0)})'),
-                      selected: selectedType == 'RENT' && enteredAmt == rentAmt,
+                      label: Text('Rent Only (₹${(rentAmt + pFee).toStringAsFixed(0)})'),
+                      selected: selectedType == 'RENT' && enteredAmt == (rentAmt + pFee),
                       onSelected: (val) {
                         if (val) {
                           setSheetState(() {
                             selectedType = 'RENT';
-                            amountController.text = rentAmt.toStringAsFixed(0);
+                            amountController.text = (rentAmt + pFee).toStringAsFixed(0);
                           });
                         }
                       },

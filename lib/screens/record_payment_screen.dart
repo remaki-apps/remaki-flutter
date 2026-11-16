@@ -132,6 +132,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
     final double billsAmt = tenant.totalPendingBills;
     final bool hasRent = rentAmt > 0 && !tenant.isPaid;
     final bool hasBills = billsAmt > 0;
+    final double pFee = (hasRent && (tenant.platformFee > 0 ? tenant.platformFee : 5.0) > 0) ? (tenant.platformFee > 0 ? tenant.platformFee : 5.0) : 0.0;
 
     if (!_initializedTenant) {
       _initializedTenant = true;
@@ -144,14 +145,14 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
       }
       double initAmount = 0.0;
       if (_paymentType == 'BOTH') {
-        initAmount = (hasRent ? rentAmt : 0.0) + (hasBills ? billsAmt : 0.0);
+        initAmount = (hasRent ? (rentAmt + pFee) : 0.0) + (hasBills ? billsAmt : 0.0);
       } else if (_paymentType == 'RENT') {
-        initAmount = rentAmt;
+        initAmount = rentAmt + pFee;
       } else if (_paymentType == 'BILLS') {
         initAmount = billsAmt;
       }
       if (initAmount == 0.0 && tenant.rentAmount > 0) {
-        initAmount = tenant.rentAmount;
+        initAmount = tenant.rentAmount + pFee;
       }
       if (_amountController.text.isEmpty) {
         _amountController.text = initAmount.toStringAsFixed(0);
@@ -167,7 +168,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
 
     final double enteredAmount = double.tryParse(_amountController.text.trim()) ?? 0.0;
     final currentAmount = enteredAmount;
-    final totalDue = tenant.totalDue;
+    final totalDue = tenant.totalPayableWithPlatformFee;
     final isValid = currentAmount > 0;
     final balanceAfter = (totalDue - currentAmount).clamp(0.0, double.infinity);
 
@@ -362,15 +363,15 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                 children: [
                                   if (hasRent && hasBills)
                                     _buildPresetChip(
-                                      'Full Dues (₹${(rentAmt + billsAmt).toStringAsFixed(0)})',
-                                      _paymentType == 'BOTH' && enteredAmount == (rentAmt + billsAmt),
-                                      () => _setAmountAndType(rentAmt + billsAmt, 'BOTH'),
+                                      'Full Dues (₹${(rentAmt + billsAmt + pFee).toStringAsFixed(0)})',
+                                      _paymentType == 'BOTH' && enteredAmount == (rentAmt + billsAmt + pFee),
+                                      () => _setAmountAndType(rentAmt + billsAmt + pFee, 'BOTH'),
                                     ),
                                   if (hasRent)
                                     _buildPresetChip(
-                                      'Rent Only (₹${rentAmt.toStringAsFixed(0)})',
-                                      _paymentType == 'RENT' && enteredAmount == rentAmt,
-                                      () => _setAmountAndType(rentAmt, 'RENT'),
+                                      'Rent Only (₹${(rentAmt + pFee).toStringAsFixed(0)})',
+                                      _paymentType == 'RENT' && enteredAmount == (rentAmt + pFee),
+                                      () => _setAmountAndType(rentAmt + pFee, 'RENT'),
                                     ),
                                   if (hasBills)
                                     _buildPresetChip(
@@ -546,7 +547,19 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                               const SizedBox(height: 6),
                               _buildSummaryRow('Payment Method', _paymentMethod),
                               const SizedBox(height: 6),
-                              _buildSummaryRow('Current Balance', '₹${totalDue.toStringAsFixed(0)}'),
+                              if (hasRent) ...[
+                                _buildSummaryRow('Rent Balance', '₹${rentAmt.toStringAsFixed(0)}'),
+                                const SizedBox(height: 6),
+                              ],
+                              if (pFee > 0 && hasRent) ...[
+                                _buildSummaryRow('Platform Fee', '₹${pFee.toStringAsFixed(0)}'),
+                                const SizedBox(height: 6),
+                              ],
+                              if (hasBills) ...[
+                                _buildSummaryRow('Bills Due', '₹${billsAmt.toStringAsFixed(0)}'),
+                                const SizedBox(height: 6),
+                              ],
+                              _buildSummaryRow('Total Due', '₹${totalDue.toStringAsFixed(0)}', isHighlight: true),
                               const SizedBox(height: 6),
                               _buildSummaryRow('Paying Now', '₹${enteredAmount.toStringAsFixed(0)}'),
                               const Divider(height: 16, color: Color(0xFFE2E8F0)),
