@@ -4399,7 +4399,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               PaymentSplitupCard(
                 paymentAmount: rawAmount ?? 0.0,
                 rentAmount: rentAmount ?? 0.0,
-                platformFee: platformFee ?? 9.0,
+                platformFee: platformFee ?? 0.0,
                 bills: bills,
                 method: method,
                 notes: notes,

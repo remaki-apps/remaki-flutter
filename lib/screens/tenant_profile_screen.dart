@@ -1175,9 +1175,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                       builder: (context) {
                         final targetMonthKey = DateFormat('yyyy-MM').format(_selectedMonth);
                         final monthPayments = tenantPayments.where((p) {
-                          if (p.billingMonth != null && p.billingMonth!.isNotEmpty) {
-                            return p.billingMonth == targetMonthKey;
-                          }
+                          if (p.billingMonth != null && p.billingMonth == targetMonthKey) return true;
                           return p.date.year == _selectedMonth.year && p.date.month == _selectedMonth.month;
                         }).toList();
                         final double monthTotalPaid = monthPayments.fold(0.0, (sum, p) => sum + p.amount);
@@ -1393,7 +1391,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                               PaymentSplitupCard(
                                                 paymentAmount: payment.amount,
                                                 rentAmount: payment.rentAmount,
-                                                platformFee: payment.platformFee > 0 ? payment.platformFee : (payment.rentAmount > 0 ? tenant.platformFee : 0.0),
+                                                platformFee: payment.platformFee,
                                                 bills: null,
                                                 method: payment.method,
                                                 notes: payment.notes,
