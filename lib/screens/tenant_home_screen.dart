@@ -3176,7 +3176,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                            height: 44,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                             decoration: BoxDecoration(
                               color: !_isPartialPayment ? TenantTheme.primary.withValues(alpha: 0.08) : const Color(0xFFF8FAFC),
                               borderRadius: BorderRadius.circular(12),
@@ -3194,26 +3195,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Full Amount',
-                                        style: GoogleFonts.lato(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          color: !_isPartialPayment ? TenantTheme.primary : TenantTheme.textPrimary,
-                                        ),
-                                      ),
-                                      Text(
-                                        '₹${_totalDue.toStringAsFixed(0)}',
-                                        style: GoogleFonts.lato(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: !_isPartialPayment ? TenantTheme.primary : TenantTheme.textSecondary,
-                                        ),
-                                      ),
-                                    ],
+                                  child: Text(
+                                    'Full Amount',
+                                    style: GoogleFonts.lato(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: !_isPartialPayment ? TenantTheme.primary : TenantTheme.textPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
@@ -3231,7 +3221,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                            height: 44,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                             decoration: BoxDecoration(
                               color: _isPartialPayment ? TenantTheme.primary.withValues(alpha: 0.08) : const Color(0xFFF8FAFC),
                               borderRadius: BorderRadius.circular(12),
@@ -3249,26 +3240,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Partial Amount',
-                                        style: GoogleFonts.lato(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                          color: _isPartialPayment ? TenantTheme.primary : TenantTheme.textPrimary,
-                                        ),
-                                      ),
-                                      Text(
-                                        'Custom / Part',
-                                        style: GoogleFonts.lato(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w500,
-                                          color: _isPartialPayment ? TenantTheme.primary : TenantTheme.textSecondary,
-                                        ),
-                                      ),
-                                    ],
+                                  child: Text(
+                                    'Partial Amount',
+                                    style: GoogleFonts.lato(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: _isPartialPayment ? TenantTheme.primary : TenantTheme.textPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
@@ -3779,10 +3759,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         final bool isRentPayment = (p['rentAmount'] != null && (p['rentAmount'] as num).toDouble() > 0) ||
             notesLower.contains('rent');
 
+        final double cardAmount = amount;
+        final double pFee = (p['platformFee'] as num?)?.toDouble() ?? 0.0;
         final double rAmt = (p['rentAmount'] as num?)?.toDouble() ??
-            (isRentPayment ? (amount >= monthlyRentVal ? monthlyRentVal : amount) : 0.0);
-        final double pFee = isRentPayment ? ((p['platformFee'] as num?)?.toDouble() ?? 0.0) : 0.0;
-        final double cardAmount = (isRentPayment && rAmt > 0) ? (rAmt + pFee) : amount;
+            (isRentPayment ? (amount > pFee ? amount - pFee : amount) : 0.0);
 
         String displayTitle = 'Payment';
         if (notesStr.isNotEmpty && !notesLower.contains('approved via payment request') && !notesLower.contains('utility bills payment')) {
@@ -3812,7 +3792,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           paymentId: paymentId,
           rawAmount: cardAmount,
           rawDate: rawDate,
-          rentAmount: rAmt,
+          rentAmount: (rAmt > cardAmount) ? cardAmount : rAmt,
           platformFee: pFee,
           bills: null,
           notes: notes,
