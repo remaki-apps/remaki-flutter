@@ -436,8 +436,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
   void _showProofConfirmationDialog(Uint8List imageBytes) {
     final customAmt = double.tryParse(_customPaymentAmountController.text.trim()) ?? 0.0;
+    final feeToAdd = (_isPartialPayment && customAmt > 0 && _effectivePlatformFee > 0) ? _effectivePlatformFee : 0.0;
     final effectiveDue = (_isPartialPayment && customAmt > 0)
-        ? customAmt
+        ? (customAmt + feeToAdd)
         : (_totalDue > 0 ? _totalDue : _pendingBills);
     final paymentLabel = _isPartialPayment
         ? 'Partial Payment'
@@ -787,8 +788,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
   Future<bool> _submitRequest() async {
     final double customAmt = double.tryParse(_customPaymentAmountController.text.trim()) ?? 0.0;
+    final feeToAdd = (_isPartialPayment && customAmt > 0 && _effectivePlatformFee > 0) ? _effectivePlatformFee : 0.0;
     final effectiveDue = (_isPartialPayment && customAmt > 0)
-        ? customAmt
+        ? (customAmt + feeToAdd)
         : (_totalDue > 0 ? _totalDue : _pendingBills);
 
     if (effectiveDue <= 0) {
@@ -3356,26 +3358,71 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           const SizedBox(height: 10),
                           Builder(builder: (context) {
                             final customAmt = double.tryParse(_customPaymentAmountController.text.trim()) ?? 0.0;
-                            final balanceRemaining = (_totalDue - customAmt).clamp(0.0, double.infinity);
-                            final isOverpaying = customAmt > _totalDue;
-                            return Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            final feeToAdd = (_effectivePlatformFee > 0 && customAmt > 0) ? _effectivePlatformFee : 0.0;
+                            final totalPayForPartial = customAmt + feeToAdd;
+                            final balanceRemaining = ((_pendingRent + _pendingBills) - customAmt).clamp(0.0, double.infinity);
+                            final isOverpaying = customAmt > (_pendingRent + _pendingBills);
+
+                            return Column(
                               children: [
-                                Text(
-                                  isOverpaying ? 'Overpaying total dues:' : 'Balance after payment:',
-                                  style: GoogleFonts.lato(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: isOverpaying ? const Color(0xFFDC2626) : const Color(0xFF64748B),
+                                if (feeToAdd > 0) ...[
+                                  Container(
+                                    margin: const EdgeInsets.only(bottom: 8),
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text('Partial Rent Amount:', style: GoogleFonts.lato(fontSize: 11.5, color: const Color(0xFF64748B), fontWeight: FontWeight.w600)),
+                                            Text('₹${customAmt.toStringAsFixed(0)}', style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A))),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text('Platform Convenience Fee:', style: GoogleFonts.lato(fontSize: 11.5, color: const Color(0xFF64748B), fontWeight: FontWeight.w600)),
+                                            Text('₹${feeToAdd.toStringAsFixed(0)}', style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0EA5E9))),
+                                          ],
+                                        ),
+                                        const Divider(height: 10, color: Color(0xFFF1F5F9)),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text('Total to Pay:', style: GoogleFonts.lato(fontSize: 12, color: TenantTheme.primary, fontWeight: FontWeight.w800)),
+                                            Text('₹${totalPayForPartial.toStringAsFixed(0)}', style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w800, color: TenantTheme.primary)),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                Text(
-                                  isOverpaying ? '+₹${(customAmt - _totalDue).toStringAsFixed(0)} advance' : '₹${balanceRemaining.toStringAsFixed(0)}',
-                                  style: GoogleFonts.lato(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                    color: isOverpaying ? const Color(0xFFDC2626) : const Color(0xFF0F172A),
-                                  ),
+                                ],
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      isOverpaying ? 'Overpaying total dues:' : 'Rent balance after payment:',
+                                      style: GoogleFonts.lato(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: isOverpaying ? const Color(0xFFDC2626) : const Color(0xFF64748B),
+                                      ),
+                                    ),
+                                    Text(
+                                      isOverpaying ? '+₹${(customAmt - (_pendingRent + _pendingBills)).toStringAsFixed(0)} advance' : '₹${balanceRemaining.toStringAsFixed(0)}',
+                                      style: GoogleFonts.lato(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w800,
+                                        color: isOverpaying ? const Color(0xFFDC2626) : const Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             );
@@ -3595,7 +3642,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               child: Text(
                                 () {
                                   final customAmt = double.tryParse(_customPaymentAmountController.text.trim()) ?? 0.0;
-                                  final payAmt = (_isPartialPayment && customAmt > 0) ? customAmt : _totalDue;
+                                  final feeToAdd = (_isPartialPayment && customAmt > 0 && _effectivePlatformFee > 0) ? _effectivePlatformFee : 0.0;
+                                  final payAmt = (_isPartialPayment && customAmt > 0) ? (customAmt + feeToAdd) : _totalDue;
                                   return 'Submit Payment • ₹${payAmt.toStringAsFixed(0)}';
                                 }(),
                                 style: GoogleFonts.lato(
