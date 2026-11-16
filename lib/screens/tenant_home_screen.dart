@@ -3122,8 +3122,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       children: [
                         if (_pendingRent > 0) ...[
                           Builder(builder: (context) {
-                            final rentMonths = (_monthlyRent > 0 && _pendingRent > _monthlyRent)
-                                ? (_pendingRent / _monthlyRent).round()
+                            final monthlyRent = (_profileData?['monthlyRent'] as num?)?.toDouble() ?? 0.0;
+                            final rentMonths = (monthlyRent > 0 && _pendingRent > monthlyRent)
+                                ? (_pendingRent / monthlyRent).round()
                                 : 1;
                             final rentLabel = rentMonths > 1 ? 'Pending Rent ($rentMonths months)' : 'Pending Rent';
                             return _buildPaymentBreakdownRow(rentLabel, '₹${_pendingRent.toStringAsFixed(0)}', icon: Icons.door_sliding_outlined);
@@ -3147,8 +3148,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         ],
                         if (_effectivePlatformFee > 0) ...[
                           Builder(builder: (context) {
-                            final feeMonths = (_dynamicPlatformFee > 0 && _effectivePlatformFee > _dynamicPlatformFee)
-                                ? (_effectivePlatformFee / _dynamicPlatformFee).round()
+                            final platformFee = (_profileData?['platformFee'] as num?)?.toDouble() ?? 5.0;
+                            final feeMonths = (platformFee > 0 && _effectivePlatformFee > platformFee)
+                                ? (_effectivePlatformFee / platformFee).round()
                                 : 1;
                             final feeLabel = feeMonths > 1 ? 'Platform Convenience Fee ($feeMonths months)' : 'Platform Convenience Fee';
                             return _buildPaymentBreakdownRow(feeLabel, '₹${_effectivePlatformFee.toStringAsFixed(0)}', icon: Icons.verified_user_outlined);
