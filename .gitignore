@@ -49,3 +49,6 @@ app.*.map.json
 *.jks
 *.keystore
 
+
+.kotlin/
+android/.kotlin/

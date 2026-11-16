@@ -994,7 +994,16 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                           ),
                           const SizedBox(height: 12),
                           _buildModernDetailItem(Icons.calendar_today_outlined, 'Move-in Date', DateFormat('dd/MM/yyyy').format(tenant.moveInDate)),
-                          _buildModernDetailItem(Icons.payments_outlined, 'Monthly Rent', '₹${tenant.rentAmount.toStringAsFixed(0)}'),
+                          _buildModernDetailItem(
+                            Icons.restaurant_menu_outlined,
+                            'Food Plan',
+                            tenant.foodIncluded ? 'With Food' : 'Without Food',
+                          ),
+                          _buildModernDetailItem(
+                            Icons.payments_outlined,
+                            tenant.foodIncluded ? 'Monthly Rent (With Food)' : 'Monthly Rent (Without Food)',
+                            '₹${tenant.rentAmount.toStringAsFixed(0)}',
+                          ),
                           if (tenant.statusBadgeLabel == 'BILL DUE')
                             _buildModernDetailItem(
                               Icons.check_circle_outline_rounded,

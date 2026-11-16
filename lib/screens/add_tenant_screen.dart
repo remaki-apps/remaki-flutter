@@ -55,6 +55,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
   final _moveInController = TextEditingController();
   String _rentDueDate = '5th of every month';
   String _agreementDuration = 'None';
+  bool _foodIncluded = true;
 
   @override
   void initState() {
@@ -635,6 +636,96 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
           children: [
             _buildInlineErrorBanner(),
             _buildSectionHeader('Rent & Payment Terms', Icons.payments_outlined),
+
+            // Food Plan Selector (Admin Option)
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Food Plan *',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _foodIncluded = true),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: _foodIncluded ? const Color(0xFFEEF2FF) : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _foodIncluded ? AppTheme.primaryColor : const Color(0xFFE2E8F0),
+                                width: _foodIncluded ? 1.6 : 1.0,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.restaurant_rounded, size: 16, color: _foodIncluded ? AppTheme.primaryColor : const Color(0xFF64748B)),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'With Food',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: _foodIncluded ? FontWeight.w700 : FontWeight.w600,
+                                    color: _foodIncluded ? AppTheme.primaryColor : const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _foodIncluded = false),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: !_foodIncluded ? const Color(0xFFEEF2FF) : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: !_foodIncluded ? AppTheme.primaryColor : const Color(0xFFE2E8F0),
+                                width: !_foodIncluded ? 1.6 : 1.0,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.no_meals_rounded, size: 16, color: !_foodIncluded ? AppTheme.primaryColor : const Color(0xFF64748B)),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Without Food',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: !_foodIncluded ? FontWeight.w700 : FontWeight.w600,
+                                    color: !_foodIncluded ? AppTheme.primaryColor : const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
             _buildInputField(_rentController, 'Monthly Rent (₹) *', 'e.g. 8500', Icons.payments_outlined, keyboardType: TextInputType.number),
             _buildInputField(_securityController, 'Security Deposit (₹) *', 'e.g. 10000', Icons.security_outlined, keyboardType: TextInputType.number),
             
@@ -814,6 +905,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
       rentDueDate: firstDueDate,
       pendingRentAmount: double.tryParse(_rentController.text) ?? 0.0,
       paymentStatus: isUpcomingCycle ? 'UPCOMING' : 'UNPAID',
+      foodIncluded: _foodIncluded,
     );
 
     setState(() => _isLoading = true);

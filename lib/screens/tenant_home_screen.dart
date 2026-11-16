@@ -947,6 +947,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       district: _profileData?['district'],
       state: _profileData?['state'],
       pinCode: _profileData?['pinCode'],
+      foodIncluded: _profileData?['foodIncluded'] as bool? ?? true,
     );
   }
 
@@ -2270,6 +2271,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   ),
                 ),
                 const Divider(height: 1, color: TenantTheme.borderLight),
+                _buildStayDetailTile(Icons.restaurant_menu_rounded, 'Food Plan', (_profileData?['foodIncluded'] == false) ? 'Without Food' : 'With Food'),
+                _buildStayDivider(),
                 _buildStayDetailTile(Icons.payments_rounded, 'Monthly Rent', monthlyRent),
                 _buildStayDivider(),
                 _buildStayDetailTile(Icons.shield_rounded, 'Security Deposit', deposit),
@@ -4812,6 +4815,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               subtitle: '$roomNumber${bedLabel != null && bedLabel.isNotEmpty ? ' • $bedLabel' : ''}',
               items: [
                 _buildProfileRow('Room & Bed', '$roomNumber${bedLabel != null && bedLabel.isNotEmpty ? ' • $bedLabel' : ''}', icon: Icons.door_sliding_outlined),
+                _buildProfileRow('Food Plan', (_profileData?['foodIncluded'] == false) ? 'Without Food' : 'With Food', icon: Icons.restaurant_menu_rounded),
                 if (monthlyRentStr != null)
                   _buildProfileRow('Monthly Rent', monthlyRentStr, icon: Icons.currency_rupee_rounded),
                 if (moveInDateStr.isNotEmpty && moveInDateStr != 'Not Provided')

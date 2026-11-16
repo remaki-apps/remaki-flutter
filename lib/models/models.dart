@@ -208,6 +208,9 @@ class Room {
   String floor;
   int capacity;
   String roomType; // 'AC' or 'NON_AC'
+  String foodOption; // 'WITH_FOOD', 'WITHOUT_FOOD', 'BOTH'
+  double? monthlyRentWithFood;
+  double? monthlyRentWithoutFood;
   List<Bed> beds;
   String propertyId;
 
@@ -217,11 +220,17 @@ class Room {
     this.floor = 'Ground Floor',
     required this.capacity,
     this.roomType = 'NON_AC',
+    this.foodOption = 'WITH_FOOD',
+    this.monthlyRentWithFood,
+    this.monthlyRentWithoutFood,
     required this.beds,
     this.propertyId = '',
   });
 
   bool get isAc => roomType.toUpperCase() == 'AC';
+  bool get isWithFood => foodOption.toUpperCase() == 'WITH_FOOD';
+  bool get isWithoutFood => foodOption.toUpperCase() == 'WITHOUT_FOOD';
+  bool get isFoodOptional => foodOption.toUpperCase() == 'BOTH';
   int get totalBeds => beds.isNotEmpty ? beds.length : capacity;
   int get availableBeds => beds.where((b) => b.isAvailable).length;
   bool get isFull => totalBeds > 0 && availableBeds == 0;
@@ -234,6 +243,9 @@ class Room {
         'floor': floor,
         'capacity': capacity,
         'roomType': roomType,
+        'foodOption': foodOption,
+        'monthlyRentWithFood': monthlyRentWithFood,
+        'monthlyRentWithoutFood': monthlyRentWithoutFood,
         'beds': beds.map((b) => b.toJson()).toList(),
         'propertyId': propertyId,
       };
@@ -252,6 +264,9 @@ class Room {
       floor: (json['floor'] ?? json['floorNumber'])?.toString() ?? 'Ground Floor',
       capacity: cap,
       roomType: (json['roomType']?.toString() ?? 'NON_AC').toUpperCase() == 'AC' ? 'AC' : 'NON_AC',
+      foodOption: json['foodOption']?.toString() ?? 'WITH_FOOD',
+      monthlyRentWithFood: (json['monthlyRentWithFood'] as num?)?.toDouble(),
+      monthlyRentWithoutFood: (json['monthlyRentWithoutFood'] as num?)?.toDouble(),
       propertyId: json['propertyId']?.toString() ?? '',
       beds: bedList,
     );
@@ -445,6 +460,7 @@ class Tenant {
   String? nationality;
   String? pinCode;
   double pendingConvenienceFee;
+  bool foodIncluded;
 
   // totalDue = unpaid utility/other bills only (not rent, as rent is tracked via pendingRentAmount)
   double get totalPendingBills => additionalCharges
@@ -469,17 +485,21 @@ class Tenant {
   String buildDetailedRentBillMessage({String roomNumber = '', String floorName = '', String pgName = '', double? platformFee}) {
     final dueDateStr = DateFormat('dd MMM yyyy').format(rentDueDate);
     final List<String> itemLines = [];
+    final foodPlanStr = foodIncluded ? 'With Food' : 'Without Food';
+    final rentFoodLabel = 'Monthly Rent ($foodPlanStr)';
 
     // Check whether rent is actually due
     final bool isRentPaid = isPaid || paymentStatus.trim().toUpperCase() == 'PAID' || (pendingRentAmount == 0 && isPaid);
     final double effectiveRentDue = isRentPaid ? 0.0 : (pendingRentAmount > 0 ? pendingRentAmount : rentAmount);
 
-    // 1. Rent Amount (only if rent is actually due and > 0)
-    if (effectiveRentDue > 0) {
-      final rentLabel = (pendingRentAmount > 0 && pendingRentAmount < rentAmount)
-          ? 'Rent Balance'
-          : 'Monthly Rent';
-      itemLines.add('• *$rentLabel:* ₹${effectiveRentDue.toStringAsFixed(0)}');
+    // 1. Rent Amount (with partial payment breakdown if applicable)
+    if (pendingRentAmount > 0 && pendingRentAmount < rentAmount && !isRentPaid) {
+      final rentPaidSoFar = rentAmount - pendingRentAmount;
+      itemLines.add('• *$rentFoodLabel:* ₹${rentAmount.toStringAsFixed(0)}');
+      itemLines.add('• *Rent Paid So Far:* ₹${rentPaidSoFar.toStringAsFixed(0)}');
+      itemLines.add('• *Rent Balance Due:* ₹${pendingRentAmount.toStringAsFixed(0)}');
+    } else if (effectiveRentDue > 0) {
+      itemLines.add('• *$rentFoodLabel:* ₹${effectiveRentDue.toStringAsFixed(0)}');
     }
 
     // 2. Additional Charges & Bills (Electricity, Water, Maintenance, EB etc.)
@@ -537,6 +557,7 @@ class Tenant {
       '👤 *Tenant Name:* $name\n'
       '📱 *Mobile Number:* $phone\n'
       '🏠 *Room Details:* $roomDetailStr\n'
+      '🍲 *Food Plan:* $foodPlanStr\n'
       '📅 *Due Date:* $dueDateStr\n'
       '────────────────────────────\n'
       '📋 *Detailed Bill Breakdown:*\n'
@@ -603,6 +624,7 @@ class Tenant {
     String? password,
     this.defaultPaymentMode,
     this.pendingConvenienceFee = 0.0,
+    this.foodIncluded = true,
   })  : additionalCharges = additionalCharges ?? [],
         password = password ?? '';
 
@@ -641,6 +663,7 @@ class Tenant {
         'nationality': nationality,
         'pinCode': pinCode,
         'pendingConvenienceFee': pendingConvenienceFee,
+        'foodIncluded': foodIncluded,
       };
 
   factory Tenant.fromJson(Map<String, dynamic> json) => Tenant(
@@ -682,6 +705,7 @@ class Tenant {
         nationality: json['nationality'] as String?,
         pinCode: json['pinCode'] as String?,
         pendingConvenienceFee: (json['pendingConvenienceFee'] as num?)?.toDouble() ?? 0.0,
+        foodIncluded: json['foodIncluded'] as bool? ?? true,
       );
 }
 

@@ -173,6 +173,9 @@ class AppProvider with ChangeNotifier {
           floor: e['floorNumber']?.toString() ?? 'Ground Floor',
           capacity: cap,
           roomType: rawRoomType == 'AC' ? 'AC' : 'NON_AC',
+          foodOption: e['foodOption']?.toString() ?? 'WITH_FOOD',
+          monthlyRentWithFood: (e['monthlyRentWithFood'] as num?)?.toDouble(),
+          monthlyRentWithoutFood: (e['monthlyRentWithoutFood'] as num?)?.toDouble(),
           beds: bedList,
         );
       }).toList();
@@ -217,6 +220,7 @@ class AppProvider with ChangeNotifier {
           nationality: e['nationality']?.toString(),
           pinCode: e['pinCode']?.toString(),
           pendingConvenienceFee: (e['pendingConvenienceFee'] as num?)?.toDouble() ?? 0.0,
+          foodIncluded: e['foodIncluded'] as bool? ?? true,
           additionalCharges: billsList.whereType<Map<String, dynamic>>().map((b) => AdditionalCharge(
             id: b['id']?.toString() ?? '',
             description: b['description']?.toString() ?? 'Bill',
@@ -499,6 +503,7 @@ class AppProvider with ChangeNotifier {
         'securityDeposit': tenant.securityDeposit,
         'dueDay': dueDay,
         'moveInDate': tenant.moveInDate.toIso8601String(),
+        'foodIncluded': tenant.foodIncluded,
       });
       await loadFromAPI();
       return tempPassword;
@@ -575,6 +580,9 @@ class AppProvider with ChangeNotifier {
         'floorNumber': room.floor,
         'capacity': room.capacity,
         'roomType': room.roomType,
+        'foodOption': room.foodOption,
+        if (room.monthlyRentWithFood != null) 'monthlyRentWithFood': room.monthlyRentWithFood,
+        if (room.monthlyRentWithoutFood != null) 'monthlyRentWithoutFood': room.monthlyRentWithoutFood,
         if (targetPropertyId != null) 'propertyId': targetPropertyId,
         if (bedLabels != null && bedLabels.isNotEmpty) 'bedLabels': bedLabels,
       });
@@ -587,7 +595,16 @@ class AppProvider with ChangeNotifier {
     }
   }
 
-  Future<void> updateRoom(String roomId, {String? roomNumber, String? floorNumber, int? capacity, String? roomType}) async {
+  Future<void> updateRoom(
+    String roomId, {
+    String? roomNumber,
+    String? floorNumber,
+    int? capacity,
+    String? roomType,
+    String? foodOption,
+    double? monthlyRentWithFood,
+    double? monthlyRentWithoutFood,
+  }) async {
     try {
       final index = rooms.indexWhere((r) => r.id == roomId);
       if (index != -1) {
@@ -596,6 +613,9 @@ class AppProvider with ChangeNotifier {
         if (floorNumber != null) current.floor = floorNumber;
         if (capacity != null) current.capacity = capacity;
         if (roomType != null) current.roomType = roomType.toUpperCase() == 'AC' ? 'AC' : 'NON_AC';
+        if (foodOption != null) current.foodOption = foodOption;
+        if (monthlyRentWithFood != null) current.monthlyRentWithFood = monthlyRentWithFood;
+        if (monthlyRentWithoutFood != null) current.monthlyRentWithoutFood = monthlyRentWithoutFood;
         notifyListeners();
       }
 
@@ -604,6 +624,9 @@ class AppProvider with ChangeNotifier {
         if (floorNumber != null) 'floorNumber': floorNumber,
         if (capacity != null) 'capacity': capacity,
         if (roomType != null) 'roomType': roomType,
+        if (foodOption != null) 'foodOption': foodOption,
+        if (monthlyRentWithFood != null) 'monthlyRentWithFood': monthlyRentWithFood,
+        if (monthlyRentWithoutFood != null) 'monthlyRentWithoutFood': monthlyRentWithoutFood,
       });
       await loadFromAPI();
       await saveToStorage();
@@ -657,7 +680,14 @@ class AppProvider with ChangeNotifier {
     }
   }
 
-  Future<void> editTenantFinancials(String tenantId, double? rentAmount, double? securityDeposit, int? rentDueDay, String? paymentMode) async {
+  Future<void> editTenantFinancials(
+    String tenantId,
+    double? rentAmount,
+    double? securityDeposit,
+    int? rentDueDay,
+    String? paymentMode, {
+    bool? foodIncluded,
+  }) async {
     try {
       await ApiService.updateTenantFinancials(
         tenantId: tenantId,
@@ -665,6 +695,7 @@ class AppProvider with ChangeNotifier {
         securityDeposit: securityDeposit,
         rentDueDay: rentDueDay,
         paymentMode: paymentMode,
+        foodIncluded: foodIncluded,
       );
       await loadFromAPI();
     } catch (e) {
