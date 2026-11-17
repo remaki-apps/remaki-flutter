@@ -675,7 +675,7 @@ class MoreScreen extends StatelessWidget {
                       const Icon(Icons.lock_outline_rounded, size: 12, color: Color(0xFF94A3B8)),
                       const SizedBox(width: 5),
                       Text(
-                        'Encrypted Session • Remaki v1.0.0 (Build 1)',
+                        'Encrypted Session • Remaki v1.0.4 (Build 10)',
                         style: GoogleFonts.lato(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,

@@ -18,6 +18,7 @@ class TenantsScreen extends StatefulWidget {
 
 class _TenantsScreenState extends State<TenantsScreen> {
   String _filter = 'All'; // All, Paid, Unpaid
+  String _foodFilter = 'ALL'; // ALL, WITH_FOOD, WITHOUT_FOOD
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
 
@@ -50,6 +51,8 @@ class _TenantsScreenState extends State<TenantsScreen> {
       }
       return false;
     }).length;
+    final withFoodCount = appProvider.currentTenants.where((t) => t.foodIncluded).length;
+    final withoutFoodCount = appProvider.currentTenants.where((t) => !t.foodIncluded).length;
 
     var filteredTenants = appProvider.currentTenants.where((t) {
       final bool hasPendingRent = (t.pendingRentAmount > 0 || !t.isPaid);
@@ -66,13 +69,24 @@ class _TenantsScreenState extends State<TenantsScreen> {
           return false;
         }
       }
+
+      // Food Filter
+      if (_foodFilter == 'WITH_FOOD' && !t.foodIncluded) return false;
+      if (_foodFilter == 'WITHOUT_FOOD' && t.foodIncluded) return false;
+
       if (_searchQuery.isNotEmpty) {
-        final query = _searchQuery.toLowerCase();
+        final query = _searchQuery.toLowerCase().trim();
         final roomIndex = appProvider.rooms.indexWhere((r) => r.id == t.roomId);
         final roomNumber = roomIndex != -1 ? appProvider.rooms[roomIndex].number.toLowerCase() : '';
-        return t.name.toLowerCase().contains(query) ||
+        
+        final matchesBasic = t.name.toLowerCase().contains(query) ||
             t.phone.toLowerCase().contains(query) ||
             roomNumber.contains(query);
+
+        final foodPlanText = t.foodIncluded ? 'with food' : 'without food';
+        final matchesFood = foodPlanText.contains(query);
+
+        if (!matchesBasic && !matchesFood) return false;
       }
       return true;
     }).toList();
@@ -99,28 +113,33 @@ class _TenantsScreenState extends State<TenantsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Tenants',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF0F172A),
-                              letterSpacing: -0.5,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Tenants',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF0F172A),
+                                letterSpacing: -0.5,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '$totalCount Total • $paidCount Paid • $unpaidCount Pending',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF64748B),
+                            const SizedBox(height: 2),
+                            Text(
+                              '$totalCount Total • $paidCount Paid • $unpaidCount Pending',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF64748B),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       GestureDetector(
                         onTap: () => context.push('/add_tenant'),
                         child: Container(
@@ -166,7 +185,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                       controller: _searchController,
                       onChanged: (val) => setState(() => _searchQuery = val),
                       decoration: InputDecoration(
-                        hintText: 'Search tenant by name, room, or phone...',
+                        hintText: 'Search by name, room, phone, or "with food"...',
                         hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
                         prefixIcon: const Icon(Icons.search, color: Color(0xFF94A3B8), size: 20),
                         suffixIcon: _searchQuery.isNotEmpty
@@ -225,6 +244,45 @@ class _TenantsScreenState extends State<TenantsScreen> {
                     ),
                   ),
                 ],
+              ),
+            ),
+
+            // Food Plan Filter Chips
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    _buildFoodFilterChip(
+                      label: 'All Plans',
+                      count: '$totalCount',
+                      filterValue: 'ALL',
+                      icon: Icons.all_inclusive_rounded,
+                      activeColor: AppTheme.primaryColor,
+                      activeBgColor: const Color(0xFFEEF2FF),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildFoodFilterChip(
+                      label: 'With Food',
+                      count: '$withFoodCount',
+                      filterValue: 'WITH_FOOD',
+                      icon: Icons.restaurant_rounded,
+                      activeColor: const Color(0xFF16A34A),
+                      activeBgColor: const Color(0xFFDCFCE7),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildFoodFilterChip(
+                      label: 'Without Food',
+                      count: '$withoutFoodCount',
+                      filterValue: 'WITHOUT_FOOD',
+                      icon: Icons.no_meals_rounded,
+                      activeColor: const Color(0xFF475569),
+                      activeBgColor: const Color(0xFFF1F5F9),
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -332,29 +390,28 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                       const SizedBox(height: 5),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
+                                      Wrap(
+                                        spacing: 6,
+                                        runSpacing: 4,
+                                        crossAxisAlignment: WrapCrossAlignment.center,
                                         children: [
-                                          Flexible(
-                                            child: Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFEEF2FF),
-                                                borderRadius: BorderRadius.circular(6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFEEF2FF),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              formatRoomName(roomNumber),
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppTheme.primaryColor,
                                               ),
-                                              child: Text(
-                                                formatRoomName(roomNumber),
-                                                style: const TextStyle(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: AppTheme.primaryColor,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          const SizedBox(width: 6),
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                             decoration: BoxDecoration(
@@ -370,6 +427,36 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                               ),
                                             ),
                                           ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: tenant.foodIncluded ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
+                                              borderRadius: BorderRadius.circular(6),
+                                              border: Border.all(
+                                                color: tenant.foodIncluded ? const Color(0xFFBBF7D0) : const Color(0xFFE2E8F0),
+                                                width: 0.8,
+                                              ),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  tenant.foodIncluded ? Icons.restaurant_rounded : Icons.no_meals_rounded,
+                                                  size: 10,
+                                                  color: tenant.foodIncluded ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+                                                ),
+                                                const SizedBox(width: 3),
+                                                Text(
+                                                  tenant.foodIncluded ? 'With Food' : 'Without Food',
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: tenant.foodIncluded ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ],
@@ -382,7 +469,7 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
                                     Text(
-                                      '₹${tenant.totalDue.toStringAsFixed(0)}',
+                                      '₹${tenant.totalPayableWithPlatformFee.toStringAsFixed(0)}',
                                       style: const TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold,
@@ -473,6 +560,82 @@ class _TenantsScreenState extends State<TenantsScreen> {
                 fontSize: 11,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                 color: isSelected ? textColor : const Color(0xFF64748B),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFoodFilterChip({
+    required String label,
+    required String count,
+    required String filterValue,
+    required IconData icon,
+    required Color activeColor,
+    required Color activeBgColor,
+  }) {
+    final isSelected = _foodFilter == filterValue;
+    return GestureDetector(
+      onTap: () => setState(() => _foodFilter = filterValue),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? activeBgColor : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? activeColor : const Color(0xFFE2E8F0),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: activeColor.withValues(alpha: 0.15),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : const [
+                  BoxShadow(
+                    color: Color(0x04000000),
+                    blurRadius: 4,
+                    offset: Offset(0, 1),
+                  ),
+                ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isSelected ? activeColor : const Color(0xFF64748B),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? activeColor : const Color(0xFF334155),
+              ),
+            ),
+            const SizedBox(width: 5),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: isSelected ? activeColor.withValues(alpha: 0.15) : const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                count,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: isSelected ? activeColor : const Color(0xFF64748B),
+                ),
               ),
             ),
           ],

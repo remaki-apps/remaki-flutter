@@ -678,7 +678,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
-                                    tenant.totalDue == 0 ? '₹0' : '₹${tenant.totalDue.toStringAsFixed(0)}',
+                                    tenant.totalPayableWithPlatformFee == 0 ? '₹0' : '₹${tenant.totalPayableWithPlatformFee.toStringAsFixed(0)}',
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -994,7 +994,16 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                           ),
                           const SizedBox(height: 12),
                           _buildModernDetailItem(Icons.calendar_today_outlined, 'Move-in Date', DateFormat('dd/MM/yyyy').format(tenant.moveInDate)),
-                          _buildModernDetailItem(Icons.payments_outlined, 'Monthly Rent', '₹${tenant.rentAmount.toStringAsFixed(0)}'),
+                          _buildModernDetailItem(
+                            Icons.restaurant_menu_outlined,
+                            'Food Plan',
+                            tenant.foodIncluded ? 'With Food' : 'Without Food',
+                          ),
+                          _buildModernDetailItem(
+                            Icons.payments_outlined,
+                            tenant.foodIncluded ? 'Monthly Rent (With Food)' : 'Monthly Rent (Without Food)',
+                            '₹${tenant.rentAmount.toStringAsFixed(0)}',
+                          ),
                           if (tenant.statusBadgeLabel == 'BILL DUE')
                             _buildModernDetailItem(
                               Icons.check_circle_outline_rounded,
@@ -1012,10 +1021,24 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                           _buildModernDetailItem(
                             Icons.event_outlined,
                             'Rent Due Date',
-                            '${_formatOrdinalDay(tenant.rentDueDate.day)} of every month (${DateFormat('dd MMM yyyy').format(tenant.rentDueDate)})',
+                            DateFormat('dd/MM/yyyy').format(tenant.rentDueDate),
                           ),
-                          if (!tenant.isPaid && tenant.pendingRentAmount > 0 && tenant.pendingRentAmount < tenant.rentAmount)
-                            _buildModernDetailItem(Icons.account_balance_wallet_outlined, 'Rent Balance Due', '₹${tenant.pendingRentAmount.toStringAsFixed(0)}', isHighlight: true),
+                          if (!tenant.isPaid && tenant.pendingRentAmount > 0) ...[
+                            if (tenant.pendingRentAmount > tenant.rentAmount)
+                              _buildModernDetailItem(
+                                Icons.history_toggle_off_rounded,
+                                'Accumulated Rent Due (${(tenant.pendingRentAmount / (tenant.rentAmount > 0 ? tenant.rentAmount : 1)).toStringAsFixed(0)} months)',
+                                '₹${tenant.pendingRentAmount.toStringAsFixed(0)}',
+                                isHighlight: true,
+                              )
+                            else if (tenant.pendingRentAmount < tenant.rentAmount)
+                              _buildModernDetailItem(
+                                Icons.account_balance_wallet_outlined,
+                                'Rent Balance Due',
+                                '₹${tenant.pendingRentAmount.toStringAsFixed(0)}',
+                                isHighlight: true,
+                              ),
+                          ],
                           ...tenant.additionalCharges.where((c) => c.billType.trim().toUpperCase() != 'RENT' && c.status.trim().toUpperCase() != 'PAID').map(
                             (c) {
                               final dueDateStr = c.billDueDate != null
@@ -1029,8 +1052,15 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                             },
                           ),
                           if (tenant.totalPendingBills > 0 || !tenant.isPaid)
-                            _buildModernDetailItem(Icons.account_balance_wallet_outlined, 'Total Due', '₹${tenant.totalDue.toStringAsFixed(0)}', isHighlight: true),
-                          _buildModernDetailItem(Icons.local_atm_outlined, 'Platform Fee per Rent Payment', '₹${tenant.platformFee.toStringAsFixed(0)}'),
+                            _buildModernDetailItem(Icons.account_balance_wallet_outlined, 'Total Due', '₹${tenant.totalPayableWithPlatformFee.toStringAsFixed(0)}', isHighlight: true),
+                          if (tenant.pendingConvenienceFee > 0)
+                            _buildModernDetailItem(
+                              Icons.local_atm_outlined,
+                              'Platform Fee (${(tenant.pendingConvenienceFee / (tenant.platformFee > 0 ? tenant.platformFee : 5)).round()} months)',
+                              '₹${tenant.pendingConvenienceFee.toStringAsFixed(0)}',
+                            )
+                          else
+                            _buildModernDetailItem(Icons.local_atm_outlined, 'Platform Fee per Rent Payment', '₹${tenant.platformFee.toStringAsFixed(0)}'),
                         ],
                       ),
                     ),
@@ -1166,9 +1196,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                       builder: (context) {
                         final targetMonthKey = DateFormat('yyyy-MM').format(_selectedMonth);
                         final monthPayments = tenantPayments.where((p) {
-                          if (p.billingMonth != null && p.billingMonth!.isNotEmpty) {
-                            return p.billingMonth == targetMonthKey;
-                          }
+                          if (p.billingMonth != null && p.billingMonth == targetMonthKey) return true;
                           return p.date.year == _selectedMonth.year && p.date.month == _selectedMonth.month;
                         }).toList();
                         final double monthTotalPaid = monthPayments.fold(0.0, (sum, p) => sum + p.amount);
@@ -1384,7 +1412,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                               PaymentSplitupCard(
                                                 paymentAmount: payment.amount,
                                                 rentAmount: payment.rentAmount,
-                                                platformFee: payment.platformFee > 0 ? payment.platformFee : (payment.rentAmount > 0 ? tenant.platformFee : 0.0),
+                                                platformFee: payment.platformFee,
                                                 bills: null,
                                                 method: payment.method,
                                                 notes: payment.notes,
@@ -1527,6 +1555,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
     String selectedType = hasRent && hasBills ? 'BOTH' : (hasBills ? 'BILLS' : 'RENT');
     String selectedMethod = 'Cash';
     bool isSubmitting = false;
+    final amountController = TextEditingController();
 
     showModalBottomSheet(
       context: context,
@@ -1534,15 +1563,25 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) => StatefulBuilder(
         builder: (ctx, setSheetState) {
+          final double pFee = (hasRent && tenant.pendingConvenienceFee > 0)
+              ? tenant.pendingConvenienceFee
+              : ((hasRent && tenant.pendingConvenienceFee != 0.0 && !tenant.isPaid && !tenant.isPartiallyPaid)
+                  ? (tenant.platformFee > 0 ? tenant.platformFee : 5.0)
+                  : 0.0);
           double activeAmount = 0.0;
           if (selectedType == 'BOTH') {
-            activeAmount = rentAmt + billsAmt;
+            activeAmount = rentAmt + billsAmt + pFee;
           } else if (selectedType == 'RENT') {
-            activeAmount = rentAmt;
+            activeAmount = rentAmt + pFee;
           } else {
             activeAmount = billsAmt;
           }
 
+          if (amountController.text.isEmpty) {
+            amountController.text = activeAmount.toStringAsFixed(0);
+          }
+
+          final enteredAmt = double.tryParse(amountController.text.trim()) ?? activeAmount;
           final viewInsets = MediaQuery.of(ctx).viewInsets.bottom;
           final navPadding = MediaQuery.of(ctx).padding.bottom;
 
@@ -1594,7 +1633,50 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 14),
+
+                // Amount Input Box for partial/full payment
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Text(
+                        '₹',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: amountController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                          ),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                            hintText: 'Enter amount',
+                          ),
+                          onChanged: (_) => setSheetState(() {}),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+
                 const Text(
                   'SELECT PAYMENT FOR',
                   style: TextStyle(
@@ -1611,25 +1693,40 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                   children: [
                     if (hasRent && hasBills)
                       ChoiceChip(
-                        label: Text('Both (₹${(rentAmt + billsAmt).toStringAsFixed(0)})'),
-                        selected: selectedType == 'BOTH',
+                        label: Text('Full Dues (₹${(rentAmt + billsAmt + pFee).toStringAsFixed(0)})'),
+                        selected: selectedType == 'BOTH' && enteredAmt == (rentAmt + billsAmt + pFee),
                         onSelected: (val) {
-                          if (val) setSheetState(() => selectedType = 'BOTH');
+                          if (val) {
+                            setSheetState(() {
+                              selectedType = 'BOTH';
+                              amountController.text = (rentAmt + billsAmt + pFee).toStringAsFixed(0);
+                            });
+                          }
                         },
                       ),
                     ChoiceChip(
-                      label: Text('Rent Only (₹${rentAmt.toStringAsFixed(0)})'),
-                      selected: selectedType == 'RENT',
+                      label: Text('Rent Only (₹${(rentAmt + pFee).toStringAsFixed(0)})'),
+                      selected: selectedType == 'RENT' && enteredAmt == (rentAmt + pFee),
                       onSelected: (val) {
-                        if (val) setSheetState(() => selectedType = 'RENT');
+                        if (val) {
+                          setSheetState(() {
+                            selectedType = 'RENT';
+                            amountController.text = (rentAmt + pFee).toStringAsFixed(0);
+                          });
+                        }
                       },
                     ),
                     if (hasBills)
                       ChoiceChip(
                         label: Text('Bill Only (₹${billsAmt.toStringAsFixed(0)})'),
-                        selected: selectedType == 'BILLS',
+                        selected: selectedType == 'BILLS' && enteredAmt == billsAmt,
                         onSelected: (val) {
-                          if (val) setSheetState(() => selectedType = 'BILLS');
+                          if (val) {
+                            setSheetState(() {
+                              selectedType = 'BILLS';
+                              amountController.text = billsAmt.toStringAsFixed(0);
+                            });
+                          }
                         },
                       ),
                   ],
@@ -1669,14 +1766,14 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
                     ),
-                    onPressed: isSubmitting
+                    onPressed: (isSubmitting || enteredAmt <= 0)
                         ? null
                         : () async {
                             setSheetState(() => isSubmitting = true);
                             try {
                               await Provider.of<AppProvider>(context, listen: false).recordPayment(
                                 tenant.id,
-                                activeAmount,
+                                enteredAmt,
                                 selectedMethod,
                                 paymentType: selectedType,
                                 paymentDate: DateTime.now(),
@@ -1686,7 +1783,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                 FancyToast.showSuccess(
                                   context,
                                   'Payment Recorded',
-                                  message: 'Successfully marked ₹${activeAmount.toStringAsFixed(0)} as paid.',
+                                  message: 'Successfully marked ₹${enteredAmt.toStringAsFixed(0)} as paid.',
                                 );
                               }
                             } catch (e) {
@@ -1707,7 +1804,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                             child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                           )
                         : Text(
-                            'Confirm Payment • ₹${activeAmount.toStringAsFixed(0)}',
+                            'Confirm Payment • ₹${enteredAmt.toStringAsFixed(0)}',
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                           ),
                   ),

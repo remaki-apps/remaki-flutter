@@ -54,6 +54,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   Uint8List? _selectedImageBytes;
   bool _isImageLoading = false;
   final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _customPaymentAmountController = TextEditingController();
+  bool _isPartialPayment = false;
   String? _currentTransactionRef;
   List<dynamic> _announcements = [];
   List<dynamic> _payments = [];
@@ -197,6 +199,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   void dispose() {
     NetworkProvider.instance.removeRestoredListener(_onNetworkRestored);
     _descriptionController.dispose();
+    _customPaymentAmountController.dispose();
     _tenantNewPasswordController.dispose();
     _tenantConfirmPasswordController.dispose();
     _tenantNewPinController.dispose();
@@ -302,8 +305,16 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       }
       String? rawRejection = profile['latestRejectionReason'] as String? ?? profile['rejectionReason'] as String?;
 
-      // Platform fee collected ONLY for rent, NEVER for utility bills alone!
-      final double effectivePlatformFee = pendingRent > 0 ? dynamicPlatformFee : 0.0;
+      final double pendingConvenienceFee = (profile['pendingConvenienceFee'] as num?)?.toDouble() ?? -1.0;
+      final double monthlyRent = (profile['monthlyRent'] as num?)?.toDouble() ?? 0.0;
+      final bool isPartiallyPaid = profile['paymentStatus'] == 'PARTIAL' || (pendingRent > 0 && monthlyRent > 0 && pendingRent < monthlyRent);
+
+      // Cumulative platform fee for all unpaid cycles
+      final double effectivePlatformFee = pendingConvenienceFee > 0
+          ? pendingConvenienceFee
+          : ((pendingConvenienceFee == 0.0 || isPartiallyPaid || profile['paymentStatus'] == 'PAID')
+              ? 0.0
+              : dynamicPlatformFee);
 
       final double totalDueAmount = (pendingRent + pendingBills) > 0
           ? (pendingRent + pendingBills + effectivePlatformFee)
@@ -432,8 +443,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   }
 
   void _showProofConfirmationDialog(Uint8List imageBytes) {
-    final effectiveDue = _totalDue > 0 ? _totalDue : _pendingBills;
-    final paymentLabel = _pendingRent > 0 ? 'Rent & Dues' : 'Utility Bill Split';
+    final customAmt = double.tryParse(_customPaymentAmountController.text.trim()) ?? 0.0;
+    final feeToAdd = (_isPartialPayment && customAmt > 0 && _effectivePlatformFee > 0) ? _effectivePlatformFee : 0.0;
+    final effectiveDue = (_isPartialPayment && customAmt > 0)
+        ? (customAmt + feeToAdd)
+        : (_totalDue > 0 ? _totalDue : _pendingBills);
+    final paymentLabel = _isPartialPayment
+        ? 'Partial Payment'
+        : (_pendingRent > 0 ? 'Rent & Dues' : 'Utility Bill Split');
     final txnRef = _currentTransactionRef ?? 'RMK${DateTime.now().millisecondsSinceEpoch}';
 
     showDialog(
@@ -778,9 +795,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   }
 
   Future<bool> _submitRequest() async {
-    final effectiveDue = _totalDue > 0 ? _totalDue : _pendingBills;
+    final double customAmt = double.tryParse(_customPaymentAmountController.text.trim()) ?? 0.0;
+    final feeToAdd = (_isPartialPayment && customAmt > 0 && _effectivePlatformFee > 0) ? _effectivePlatformFee : 0.0;
+    final effectiveDue = (_isPartialPayment && customAmt > 0)
+        ? (customAmt + feeToAdd)
+        : (_totalDue > 0 ? _totalDue : _pendingBills);
+
     if (effectiveDue <= 0) {
-      FancyToast.showError(context, 'No Dues', message: 'No outstanding dues to pay.');
+      FancyToast.showError(context, 'Invalid Amount', message: 'Please enter a valid payment amount.');
       return false;
     }
     if (_selectedImageBytes == null) {
@@ -818,6 +840,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         setState(() {
           _selectedImageBytes = null;
           _descriptionController.clear();
+          _customPaymentAmountController.clear();
+          _isPartialPayment = false;
           _hasSubmittedForApproval = true;
           _rejectionReason = null;
         });
@@ -947,6 +971,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       district: _profileData?['district'],
       state: _profileData?['state'],
       pinCode: _profileData?['pinCode'],
+      foodIncluded: _profileData?['foodIncluded'] as bool? ?? true,
     );
   }
 
@@ -2270,6 +2295,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   ),
                 ),
                 const Divider(height: 1, color: TenantTheme.borderLight),
+                _buildStayDetailTile(Icons.restaurant_menu_rounded, 'Food Plan', (_profileData?['foodIncluded'] == false) ? 'Without Food' : 'With Food'),
+                _buildStayDivider(),
                 _buildStayDetailTile(Icons.payments_rounded, 'Monthly Rent', monthlyRent),
                 _buildStayDivider(),
                 _buildStayDetailTile(Icons.shield_rounded, 'Security Deposit', deposit),
@@ -3094,7 +3121,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     child: Column(
                       children: [
                         if (_pendingRent > 0) ...[
-                          _buildPaymentBreakdownRow('Pending Rent', '₹${_pendingRent.toStringAsFixed(0)}', icon: Icons.door_sliding_outlined),
+                          Builder(builder: (context) {
+                            final monthlyRent = (_profileData?['monthlyRent'] as num?)?.toDouble() ?? 0.0;
+                            final rentMonths = (monthlyRent > 0 && _pendingRent > monthlyRent)
+                                ? (_pendingRent / monthlyRent).round()
+                                : 1;
+                            final rentLabel = rentMonths > 1 ? 'Pending Rent ($rentMonths months)' : 'Pending Rent';
+                            return _buildPaymentBreakdownRow(rentLabel, '₹${_pendingRent.toStringAsFixed(0)}', icon: Icons.door_sliding_outlined);
+                          }),
                           const SizedBox(height: 8),
                         ],
                         if (_pendingBillsList.isNotEmpty) ...[
@@ -3113,7 +3147,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           }),
                         ],
                         if (_effectivePlatformFee > 0) ...[
-                          _buildPaymentBreakdownRow('Platform Convenience Fee', '₹${_effectivePlatformFee.toStringAsFixed(0)}', icon: Icons.verified_user_outlined),
+                          Builder(builder: (context) {
+                            final platformFee = (_profileData?['platformFee'] as num?)?.toDouble() ?? 5.0;
+                            final feeMonths = (platformFee > 0 && _effectivePlatformFee > platformFee)
+                                ? (_effectivePlatformFee / platformFee).round()
+                                : 1;
+                            final feeLabel = feeMonths > 1 ? 'Platform Convenience Fee ($feeMonths months)' : 'Platform Convenience Fee';
+                            return _buildPaymentBreakdownRow(feeLabel, '₹${_effectivePlatformFee.toStringAsFixed(0)}', icon: Icons.verified_user_outlined);
+                          }),
                         ] else if (_pendingBills > 0 && _pendingRent == 0) ...[
                           _buildPaymentBreakdownRow('Platform Fee (Waived for bills)', '₹0', icon: Icons.check_circle_outline_rounded),
                         ],
@@ -3145,6 +3186,273 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       ],
                     ),
                   ),
+                  // Payment Options (Full vs Partial)
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _isPartialPayment = false;
+                              _customPaymentAmountController.clear();
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            height: 44,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: !_isPartialPayment ? TenantTheme.primary.withValues(alpha: 0.08) : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: !_isPartialPayment ? TenantTheme.primary : const Color(0xFFE2E8F0),
+                                width: !_isPartialPayment ? 1.5 : 1.0,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  !_isPartialPayment ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  size: 16,
+                                  color: !_isPartialPayment ? TenantTheme.primary : const Color(0xFF94A3B8),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Full Amount',
+                                    style: GoogleFonts.lato(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: !_isPartialPayment ? TenantTheme.primary : TenantTheme.textPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _isPartialPayment = true;
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            height: 44,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: _isPartialPayment ? TenantTheme.primary.withValues(alpha: 0.08) : const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _isPartialPayment ? TenantTheme.primary : const Color(0xFFE2E8F0),
+                                width: _isPartialPayment ? 1.5 : 1.0,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _isPartialPayment ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  size: 16,
+                                  color: _isPartialPayment ? TenantTheme.primary : const Color(0xFF94A3B8),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Partial Amount',
+                                    style: GoogleFonts.lato(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: _isPartialPayment ? TenantTheme.primary : TenantTheme.textPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_isPartialPayment) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: TenantTheme.primary.withValues(alpha: 0.3), width: 1.2),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'ENTER PARTIAL AMOUNT TO PAY',
+                            style: GoogleFonts.lato(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.6,
+                              color: TenantTheme.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFFCBD5E1)),
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  '₹',
+                                  style: GoogleFonts.lato(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w800,
+                                    color: TenantTheme.primary,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _customPaymentAmountController,
+                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                    style: GoogleFonts.lato(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w800,
+                                      color: const Color(0xFF0F172A),
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: 'Enter amount (e.g. ${(_totalDue / 2).toStringAsFixed(0)})',
+                                      hintStyle: GoogleFonts.lato(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: const Color(0xFF94A3B8),
+                                      ),
+                                      isDense: true,
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                                      border: InputBorder.none,
+                                    ),
+                                    onChanged: (_) => setState(() {}),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (_pendingRent > 0 && _pendingBills > 0) ...[
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 6,
+                              children: [
+                                ActionChip(
+                                  label: Text('Rent Only: ₹${_pendingRent.toStringAsFixed(0)}', style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700)),
+                                  backgroundColor: Colors.white,
+                                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                  onPressed: () {
+                                    setState(() {
+                                      _customPaymentAmountController.text = _pendingRent.toStringAsFixed(0);
+                                    });
+                                  },
+                                ),
+                                ActionChip(
+                                  label: Text('Bills Only: ₹${_pendingBills.toStringAsFixed(0)}', style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700)),
+                                  backgroundColor: Colors.white,
+                                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                  onPressed: () {
+                                    setState(() {
+                                      _customPaymentAmountController.text = _pendingBills.toStringAsFixed(0);
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                          const SizedBox(height: 10),
+                          Builder(builder: (context) {
+                            final customAmt = double.tryParse(_customPaymentAmountController.text.trim()) ?? 0.0;
+                            final feeToAdd = (_effectivePlatformFee > 0 && customAmt > 0) ? _effectivePlatformFee : 0.0;
+                            final totalPayForPartial = customAmt + feeToAdd;
+                            final balanceRemaining = ((_pendingRent + _pendingBills) - customAmt).clamp(0.0, double.infinity);
+                            final isOverpaying = customAmt > (_pendingRent + _pendingBills);
+
+                            return Column(
+                              children: [
+                                if (feeToAdd > 0) ...[
+                                  Container(
+                                    margin: const EdgeInsets.only(bottom: 8),
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text('Partial Rent Amount:', style: GoogleFonts.lato(fontSize: 11.5, color: const Color(0xFF64748B), fontWeight: FontWeight.w600)),
+                                            Text('₹${customAmt.toStringAsFixed(0)}', style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A))),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text('Platform Convenience Fee:', style: GoogleFonts.lato(fontSize: 11.5, color: const Color(0xFF64748B), fontWeight: FontWeight.w600)),
+                                            Text('₹${feeToAdd.toStringAsFixed(0)}', style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0EA5E9))),
+                                          ],
+                                        ),
+                                        const Divider(height: 10, color: Color(0xFFF1F5F9)),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text('Total to Pay:', style: GoogleFonts.lato(fontSize: 12, color: TenantTheme.primary, fontWeight: FontWeight.w800)),
+                                            Text('₹${totalPayForPartial.toStringAsFixed(0)}', style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w800, color: TenantTheme.primary)),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      isOverpaying ? 'Overpaying total dues:' : 'Rent balance after payment:',
+                                      style: GoogleFonts.lato(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: isOverpaying ? const Color(0xFFDC2626) : const Color(0xFF64748B),
+                                      ),
+                                    ),
+                                    Text(
+                                      isOverpaying ? '+₹${(customAmt - (_pendingRent + _pendingBills)).toStringAsFixed(0)} advance' : '₹${balanceRemaining.toStringAsFixed(0)}',
+                                      style: GoogleFonts.lato(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w800,
+                                        color: isOverpaying ? const Color(0xFFDC2626) : const Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
 
                   // Compact / Clean Image Upload Button
@@ -3354,7 +3662,12 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           : FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
-                                'Submit Payment for Approval',
+                                () {
+                                  final customAmt = double.tryParse(_customPaymentAmountController.text.trim()) ?? 0.0;
+                                  final feeToAdd = (_isPartialPayment && customAmt > 0 && _effectivePlatformFee > 0) ? _effectivePlatformFee : 0.0;
+                                  final payAmt = (_isPartialPayment && customAmt > 0) ? (customAmt + feeToAdd) : _totalDue;
+                                  return 'Submit Payment • ₹${payAmt.toStringAsFixed(0)}';
+                                }(),
                                 style: GoogleFonts.lato(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800,
@@ -3516,10 +3829,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         final bool isRentPayment = (p['rentAmount'] != null && (p['rentAmount'] as num).toDouble() > 0) ||
             notesLower.contains('rent');
 
+        final double cardAmount = amount;
+        final double pFee = (p['platformFee'] as num?)?.toDouble() ?? 0.0;
         final double rAmt = (p['rentAmount'] as num?)?.toDouble() ??
-            (isRentPayment ? (amount >= monthlyRentVal ? monthlyRentVal : amount) : 0.0);
-        final double pFee = isRentPayment ? ((p['platformFee'] as num?)?.toDouble() ?? 0.0) : 0.0;
-        final double cardAmount = (isRentPayment && rAmt > 0) ? (rAmt + pFee) : amount;
+            (isRentPayment ? (amount > pFee ? amount - pFee : amount) : 0.0);
 
         String displayTitle = 'Payment';
         if (notesStr.isNotEmpty && !notesLower.contains('approved via payment request') && !notesLower.contains('utility bills payment')) {
@@ -3549,7 +3862,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           paymentId: paymentId,
           rawAmount: cardAmount,
           rawDate: rawDate,
-          rentAmount: rAmt,
+          rentAmount: (rAmt > cardAmount) ? cardAmount : rAmt,
           platformFee: pFee,
           bills: null,
           notes: notes,
@@ -4156,7 +4469,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               PaymentSplitupCard(
                 paymentAmount: rawAmount ?? 0.0,
                 rentAmount: rentAmount ?? 0.0,
-                platformFee: platformFee ?? 9.0,
+                platformFee: platformFee ?? 0.0,
                 bills: bills,
                 method: method,
                 notes: notes,
@@ -4812,6 +5125,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               subtitle: '$roomNumber${bedLabel != null && bedLabel.isNotEmpty ? ' • $bedLabel' : ''}',
               items: [
                 _buildProfileRow('Room & Bed', '$roomNumber${bedLabel != null && bedLabel.isNotEmpty ? ' • $bedLabel' : ''}', icon: Icons.door_sliding_outlined),
+                _buildProfileRow('Food Plan', (_profileData?['foodIncluded'] == false) ? 'Without Food' : 'With Food', icon: Icons.restaurant_menu_rounded),
                 if (monthlyRentStr != null)
                   _buildProfileRow('Monthly Rent', monthlyRentStr, icon: Icons.currency_rupee_rounded),
                 if (moveInDateStr.isNotEmpty && moveInDateStr != 'Not Provided')

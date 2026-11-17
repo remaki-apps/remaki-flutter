@@ -21,8 +21,7 @@ class RecordPaymentScreen extends StatefulWidget {
 }
 
 class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
-  // Custom amount editing commented out as requested
-  // final _amountController = TextEditingController();
+  final _amountController = TextEditingController();
   final _notesController = TextEditingController();
 
   // Payment method state defaulted to Cash
@@ -48,10 +47,13 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
         setState(() {
           if (hasRent && hasBills) {
             _paymentType = 'BOTH';
+            _amountController.text = (rentAmt + billsAmt).toStringAsFixed(0);
           } else if (hasBills) {
             _paymentType = 'BILLS';
+            _amountController.text = billsAmt.toStringAsFixed(0);
           } else {
             _paymentType = 'RENT';
+            _amountController.text = rentAmt.toStringAsFixed(0);
           }
         });
       }
@@ -60,7 +62,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
 
   @override
   void dispose() {
-    // _amountController.dispose();
+    _amountController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -78,14 +80,12 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
     }
   }
 
-  /*
-  // Custom amount setting commented out as requested
   void _setAmountAndType(double amount, String type) {
     setState(() {
       _paymentType = type;
+      _amountController.text = amount.toStringAsFixed(0);
     });
   }
-  */
 
   @override
   Widget build(BuildContext context) {
@@ -132,6 +132,11 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
     final double billsAmt = tenant.totalPendingBills;
     final bool hasRent = rentAmt > 0 && !tenant.isPaid;
     final bool hasBills = billsAmt > 0;
+    final double pFee = (hasRent && tenant.pendingConvenienceFee > 0)
+        ? tenant.pendingConvenienceFee
+        : ((hasRent && tenant.pendingConvenienceFee != 0.0 && !tenant.isPaid && !tenant.isPartiallyPaid)
+            ? (tenant.platformFee > 0 ? tenant.platformFee : 5.0)
+            : 0.0);
 
     if (!_initializedTenant) {
       _initializedTenant = true;
@@ -142,6 +147,20 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
       } else {
         _paymentType = 'RENT';
       }
+      double initAmount = 0.0;
+      if (_paymentType == 'BOTH') {
+        initAmount = (hasRent ? (rentAmt + pFee) : 0.0) + (hasBills ? billsAmt : 0.0);
+      } else if (_paymentType == 'RENT') {
+        initAmount = rentAmt + pFee;
+      } else if (_paymentType == 'BILLS') {
+        initAmount = billsAmt;
+      }
+      if (initAmount == 0.0 && tenant.rentAmount > 0) {
+        initAmount = tenant.rentAmount + pFee;
+      }
+      if (_amountController.text.isEmpty) {
+        _amountController.text = initAmount.toStringAsFixed(0);
+      }
     }
 
     final roomIndex = appProvider.rooms.indexWhere((r) => r.id == tenant.roomId);
@@ -151,19 +170,9 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
         : '';
     final roomBedString = formatRoomAndBed(roomNumber, bedName);
 
-    double currentAmount = 0.0;
-    if (_paymentType == 'BOTH') {
-      currentAmount = (hasRent ? rentAmt : 0.0) + (hasBills ? billsAmt : 0.0);
-    } else if (_paymentType == 'RENT') {
-      currentAmount = rentAmt;
-    } else if (_paymentType == 'BILLS') {
-      currentAmount = billsAmt;
-    }
-    if (currentAmount == 0.0 && tenant.rentAmount > 0) {
-      currentAmount = tenant.rentAmount;
-    }
-
-    final totalDue = tenant.totalDue;
+    final double enteredAmount = double.tryParse(_amountController.text.trim()) ?? 0.0;
+    final currentAmount = enteredAmount;
+    final totalDue = tenant.totalPayableWithPlatformFee;
     final isValid = currentAmount > 0;
     final balanceAfter = (totalDue - currentAmount).clamp(0.0, double.infinity);
 
@@ -308,61 +317,71 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '₹',
-                                    style: GoogleFonts.lato(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.primaryColor,
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      '₹',
+                                      style: GoogleFonts.lato(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.primaryColor,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    NumberFormat('#,##,###').format(currentAmount),
-                                    style: GoogleFonts.lato(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.w800,
-                                      color: const Color(0xFF0F172A),
-                                      letterSpacing: -0.5,
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _amountController,
+                                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                        style: GoogleFonts.lato(
+                                          fontSize: 26,
+                                          fontWeight: FontWeight.w800,
+                                          color: const Color(0xFF0F172A),
+                                          letterSpacing: -0.5,
+                                        ),
+                                        decoration: const InputDecoration(
+                                          hintText: 'Enter amount',
+                                          hintStyle: TextStyle(fontSize: 18, color: Color(0xFF94A3B8)),
+                                          border: InputBorder.none,
+                                          isDense: true,
+                                          contentPadding: EdgeInsets.zero,
+                                        ),
+                                        onChanged: (_) => setState(() {}),
+                                      ),
                                     ),
-                                  ),
-                                  /*
-                                  // Custom amount input commented out as requested
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _amountController,
-                                      keyboardType: TextInputType.number,
-                                    ),
-                                  ),
-                                  */
-                                ],
+                                  ],
+                                ),
                               ),
-                              const SizedBox(height: 14),
-                              // Choice Chips: Both / Rent Only / Bill Only
+                              const SizedBox(height: 12),
+                              // Choice Chips: Quick Presets
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
                                 children: [
                                   if (hasRent && hasBills)
                                     _buildPresetChip(
-                                      'Both (₹${(rentAmt + billsAmt).toStringAsFixed(0)})',
-                                      _paymentType == 'BOTH',
-                                      () => setState(() => _paymentType = 'BOTH'),
+                                      'Full Dues (₹${(rentAmt + billsAmt + pFee).toStringAsFixed(0)})',
+                                      _paymentType == 'BOTH' && enteredAmount == (rentAmt + billsAmt + pFee),
+                                      () => _setAmountAndType(rentAmt + billsAmt + pFee, 'BOTH'),
                                     ),
                                   if (hasRent)
                                     _buildPresetChip(
-                                      'Rent Only (₹${rentAmt.toStringAsFixed(0)})',
-                                      _paymentType == 'RENT',
-                                      () => setState(() => _paymentType = 'RENT'),
+                                      'Rent Only (₹${(rentAmt + pFee).toStringAsFixed(0)})',
+                                      _paymentType == 'RENT' && enteredAmount == (rentAmt + pFee),
+                                      () => _setAmountAndType(rentAmt + pFee, 'RENT'),
                                     ),
                                   if (hasBills)
                                     _buildPresetChip(
                                       'Bill Only (₹${billsAmt.toStringAsFixed(0)})',
-                                      _paymentType == 'BILLS',
-                                      () => setState(() => _paymentType = 'BILLS'),
+                                      _paymentType == 'BILLS' && enteredAmount == billsAmt,
+                                      () => _setAmountAndType(billsAmt, 'BILLS'),
                                     ),
                                 ],
                               ),
@@ -532,8 +551,21 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                               const SizedBox(height: 6),
                               _buildSummaryRow('Payment Method', _paymentMethod),
                               const SizedBox(height: 6),
-                              _buildSummaryRow('Current Balance', '₹${totalDue.toStringAsFixed(0)}'),
-                              // Recording Amount row removed as requested
+                              if (hasRent) ...[
+                                _buildSummaryRow('Rent Balance', '₹${rentAmt.toStringAsFixed(0)}'),
+                                const SizedBox(height: 6),
+                              ],
+                              if (pFee > 0 && hasRent) ...[
+                                _buildSummaryRow('Platform Fee', '₹${pFee.toStringAsFixed(0)}'),
+                                const SizedBox(height: 6),
+                              ],
+                              if (hasBills) ...[
+                                _buildSummaryRow('Bills Due', '₹${billsAmt.toStringAsFixed(0)}'),
+                                const SizedBox(height: 6),
+                              ],
+                              _buildSummaryRow('Total Due', '₹${totalDue.toStringAsFixed(0)}', isHighlight: true),
+                              const SizedBox(height: 6),
+                              _buildSummaryRow('Paying Now', '₹${enteredAmount.toStringAsFixed(0)}'),
                               const Divider(height: 16, color: Color(0xFFE2E8F0)),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -547,13 +579,13 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                     ),
                                   ),
                                   Text(
-                                    balanceAfter == 0
+                                    balanceAfter <= 0
                                         ? '₹0 (Cleared)'
                                         : '₹${balanceAfter.toStringAsFixed(0)}',
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
-                                      color: balanceAfter == 0
+                                      color: balanceAfter <= 0
                                           ? const Color(0xFF16A34A)
                                           : AppTheme.danger,
                                     ),

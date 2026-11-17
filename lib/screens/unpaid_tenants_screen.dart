@@ -167,7 +167,7 @@ class UnpaidTenantsScreen extends StatelessWidget {
                     : 'N/A';
 
                 // If bill is there, it is combined with rent and shown as total pending
-                final totalPending = tenant.totalDue;
+                final totalPending = tenant.totalPayableWithPlatformFee;
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 10),

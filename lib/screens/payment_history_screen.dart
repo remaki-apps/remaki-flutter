@@ -580,7 +580,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                 PaymentSplitupCard(
                                   paymentAmount: payment.amount,
                                   rentAmount: payment.rentAmount,
-                                  platformFee: payment.platformFee > 0 ? payment.platformFee : (payment.rentAmount > 0 ? (tenant?.platformFee ?? 0.0) : 0.0),
+                                  platformFee: payment.platformFee,
                                   bills: null,
                                   method: payment.method,
                                   notes: payment.notes,

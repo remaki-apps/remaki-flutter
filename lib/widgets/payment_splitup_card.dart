@@ -22,7 +22,7 @@ class PaymentSplitupCard extends StatelessWidget {
     super.key,
     required this.paymentAmount,
     required this.rentAmount,
-    this.platformFee = 5.0,
+    this.platformFee = 0.0,
     this.bills,
     this.method = 'UPI',
     this.notes,
@@ -64,7 +64,7 @@ class PaymentSplitupCard extends StatelessWidget {
       }
     }
 
-    final double effectiveFee = platformFee > 0 ? platformFee : 0.0;
+    final double effectiveFee = platformFee > 0 ? (platformFee > paymentAmount ? paymentAmount : platformFee) : 0.0;
 
     final String notesLower = (notes ?? '').toLowerCase();
     final bool hasExplicitBillNote = notesLower.contains('bill') ||
@@ -82,33 +82,22 @@ class PaymentSplitupCard extends StatelessWidget {
     final bool isRent = !hasExplicitBillNote && ((notesLower.contains('rent')) || (rentAmount > 0));
     final bool isExplicitBill = hasExplicitBillNote || (!isRent && rentAmount <= 0);
 
+    feePortion = effectiveFee;
+    final double remainingAfterFee = (paymentAmount > feePortion) ? (paymentAmount - feePortion) : 0.0;
+
     if (isRent) {
-      final double effectiveRent = rentAmount > 0
-          ? rentAmount
-          : (effectiveFee > 0 && paymentAmount > effectiveFee ? paymentAmount - effectiveFee : paymentAmount);
-      rentPortion = effectiveRent;
-      final double surplus = (paymentAmount > effectiveRent) ? (paymentAmount - effectiveRent) : 0.0;
-      if (surplus > 0) {
-        if (effectiveFee > 0) {
-          feePortion = surplus >= effectiveFee ? effectiveFee : surplus;
-          billsPortion = surplus - feePortion;
-        } else {
-          feePortion = 0.0;
-          billsPortion = surplus;
-        }
+      if (rentAmount > 0) {
+        rentPortion = rentAmount > remainingAfterFee ? remainingAfterFee : rentAmount;
       } else {
-        feePortion = 0.0;
-        billsPortion = 0.0;
+        rentPortion = remainingAfterFee;
       }
+      billsPortion = (remainingAfterFee > rentPortion) ? (remainingAfterFee - rentPortion) : 0.0;
     } else if (isExplicitBill) {
       rentPortion = 0.0;
-      feePortion = 0.0;
-      billsPortion = paymentAmount;
+      billsPortion = remainingAfterFee;
     } else {
-      // Default fallback
-      billsPortion = paymentAmount;
+      billsPortion = remainingAfterFee;
       rentPortion = 0.0;
-      feePortion = 0.0;
     }
 
     // Determine clean rent label

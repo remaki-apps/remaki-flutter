@@ -426,6 +426,7 @@ class ApiService {
           state
           nationality
           pinCode
+          foodIncluded
         }
       }
     ''';
@@ -622,6 +623,7 @@ class ApiService {
           state
           nationality
           pinCode
+          foodIncluded
         }
       }
     ''';
@@ -859,6 +861,9 @@ class ApiService {
           floorNumber
           capacity
           roomType
+          foodOption
+          monthlyRentWithFood
+          monthlyRentWithoutFood
           status
           occupiedBeds
           availableBeds
@@ -938,6 +943,9 @@ class ApiService {
           floorNumber
           capacity
           roomType
+          foodOption
+          monthlyRentWithFood
+          monthlyRentWithoutFood
           beds {
             id
             bedLabel
@@ -959,6 +967,9 @@ class ApiService {
           floorNumber
           capacity
           roomType
+          foodOption
+          monthlyRentWithFood
+          monthlyRentWithoutFood
         }
       }
     ''';
@@ -1064,16 +1075,18 @@ class ApiService {
     double? securityDeposit,
     int? rentDueDay,
     String? paymentMode,
+    bool? foodIncluded,
   }) async {
     const String mutation = '''
-      mutation UpdateTenantFinancials(\$tenantId: ID!, \$rentAmount: Float, \$securityDeposit: Float, \$rentDueDay: Int, \$paymentMode: String) {
-        updateTenantFinancials(tenantId: \$tenantId, rentAmount: \$rentAmount, securityDeposit: \$securityDeposit, rentDueDay: \$rentDueDay, paymentMode: \$paymentMode) {
+      mutation UpdateTenantFinancials(\$tenantId: ID!, \$rentAmount: Float, \$securityDeposit: Float, \$rentDueDay: Int, \$paymentMode: String, \$foodIncluded: Boolean) {
+        updateTenantFinancials(tenantId: \$tenantId, rentAmount: \$rentAmount, securityDeposit: \$securityDeposit, rentDueDay: \$rentDueDay, paymentMode: \$paymentMode, foodIncluded: \$foodIncluded) {
           id
           monthlyRent
           pendingRentAmount
           rentDueDate
           securityDeposit
           paymentStatus
+          foodIncluded
         }
       }
     ''';
@@ -1083,6 +1096,7 @@ class ApiService {
       'securityDeposit': securityDeposit,
       'rentDueDay': rentDueDay,
       'paymentMode': paymentMode,
+      'foodIncluded': foodIncluded,
     });
   }
 

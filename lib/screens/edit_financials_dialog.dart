@@ -24,6 +24,7 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
   late TextEditingController _rentController;
   late TextEditingController _dueDayController;
   String _paymentMode = 'CASH';
+  bool _foodIncluded = true;
   
   // Controllers for bills
   final Map<String, TextEditingController> _billControllers = {};
@@ -32,6 +33,7 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
   @override
   void initState() {
     super.initState();
+    _foodIncluded = widget.tenant.foodIncluded ?? true;
     _rentController = TextEditingController(text: widget.tenant.rentAmount.toStringAsFixed(0));
     _dueDayController = TextEditingController(text: widget.tenant.rentDueDate.day.toString());
     _paymentMode = widget.tenant.defaultPaymentMode ?? 'CASH';
@@ -68,6 +70,7 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
           null, // omit deposit
           dueDay,
           _paymentMode,
+          foodIncluded: _foodIncluded,
         );
       }
 
@@ -151,6 +154,77 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
                   ],
                 ),
               const SizedBox(height: 20),
+
+              const Text('Food Plan', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF334155))),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _foodIncluded = true),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: _foodIncluded ? const Color(0xFFEEF2FF) : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: _foodIncluded ? AppTheme.primaryColor : const Color(0xFFE2E8F0),
+                            width: _foodIncluded ? 1.6 : 1.0,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.restaurant_rounded, size: 16, color: _foodIncluded ? AppTheme.primaryColor : const Color(0xFF64748B)),
+                            const SizedBox(width: 6),
+                            Text(
+                              'With Food',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: _foodIncluded ? FontWeight.w700 : FontWeight.w600,
+                                color: _foodIncluded ? AppTheme.primaryColor : const Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _foodIncluded = false),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: !_foodIncluded ? const Color(0xFFEEF2FF) : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: !_foodIncluded ? AppTheme.primaryColor : const Color(0xFFE2E8F0),
+                            width: !_foodIncluded ? 1.6 : 1.0,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.no_meals_rounded, size: 16, color: !_foodIncluded ? AppTheme.primaryColor : const Color(0xFF64748B)),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Without Food',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: !_foodIncluded ? FontWeight.w700 : FontWeight.w600,
+                                color: !_foodIncluded ? AppTheme.primaryColor : const Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
               
               const Text('Monthly Rent (₹)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF334155))),
               const SizedBox(height: 6),
