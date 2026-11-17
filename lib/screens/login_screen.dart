@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
+import '../providers/organization_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/api_service.dart';
 import '../widgets/fancy_toast.dart';
@@ -188,6 +189,10 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           // Load initial admin data with shimmer
           appProvider.loadFromAPI(showLoading: true);
           if (mounted) context.go('/');
+        } else if (role == 'ORGANIZATION') {
+          final orgProvider = Provider.of<OrganizationProvider>(context, listen: false);
+          orgProvider.loadFromAPI(showLoading: true);
+          if (mounted) context.go('/org_dashboard');
         } else {
           // For Tenants: Check if they have setup their compulsory 4-digit Security Recovery PIN
           if (!hasSecurityPin) {

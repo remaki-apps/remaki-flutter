@@ -46,6 +46,17 @@ import 'screens/platform_fee_summary_screen.dart';
 import 'services/shared_media_service.dart';
 import 'widgets/offline_wrapper.dart';
 import 'widgets/keyboard_responsive_layout.dart';
+import 'models/organization_models.dart';
+import 'providers/organization_provider.dart';
+import 'screens/organization/org_shell.dart';
+import 'screens/organization/org_dashboard_screen.dart';
+import 'screens/organization/org_admins_screen.dart';
+import 'screens/organization/org_create_admin_screen.dart';
+import 'screens/organization/org_admin_details_screen.dart';
+import 'screens/organization/org_edit_admin_screen.dart';
+import 'screens/organization/org_properties_screen.dart';
+import 'screens/organization/org_more_screen.dart';
+import 'screens/organization/org_admin_success_screen.dart';
 
 Future<void> bootstrapApp() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -67,6 +78,7 @@ Future<void> bootstrapApp() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AppProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ChangeNotifierProvider(create: (_) => OrganizationProvider()),
       ],
       child: const RemakiApp(),
     ),
@@ -80,6 +92,7 @@ void main() async {
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
+final _orgShellNavigatorKey = GlobalKey<NavigatorState>();
 
 CustomTransitionPage<T> _buildPageWithTransition<T>({
   required BuildContext context,
@@ -131,6 +144,9 @@ final router = GoRouter(
     }
 
     if (isLoggingIn || location == '/setup_security_pin') {
+      if (ApiService.role == 'ORGANIZATION') {
+        return '/org_dashboard';
+      }
       return ApiService.role == 'TENANT' ? '/tenant_home' : '/';
     }
 
@@ -151,8 +167,27 @@ final router = GoRouter(
         return '/tenant_home';
       }
     } else if (ApiService.role == 'ADMIN') {
-      if (location == '/tenant_home' || location == '/tenant_my_profile') {
+      if (location == '/tenant_home' || location == '/tenant_my_profile' || location.startsWith('/org_')) {
         return '/';
+      }
+    } else if (ApiService.role == 'ORGANIZATION') {
+      const allowedOrgRoutes = {
+        '/org_dashboard',
+        '/org_admins',
+        '/org_create_admin',
+        '/org_admin_success',
+        '/org_properties',
+        '/org_more',
+        '/about',
+        '/terms',
+        '/privacy',
+        '/help_support',
+      };
+      if (location.startsWith('/org_admin_details') || location.startsWith('/org_edit_admin')) {
+        return null;
+      }
+      if (!allowedOrgRoutes.contains(location)) {
+        return '/org_dashboard';
       }
     }
 
@@ -417,6 +452,72 @@ final router = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/help_support',
       builder: (context, state) => const HelpSupportScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/org_create_admin',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: const OrgCreateAdminScreen(),
+      ),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/org_admin_details/:id',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: OrgAdminDetailsScreen(adminId: state.pathParameters['id']!),
+      ),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/org_edit_admin/:id',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: OrgEditAdminScreen(adminId: state.pathParameters['id']!),
+      ),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/org_admin_success',
+      pageBuilder: (context, state) {
+        final extra = state.extra is Map ? (state.extra as Map) : {};
+        return _buildPageWithTransition(
+          context: context,
+          state: state,
+          child: OrgAdminSuccessScreen(
+            payload: extra['payload'] as AdminCreatedPayload,
+            propertyName: (extra['propertyName'] as String?) ?? '',
+          ),
+        );
+      },
+    ),
+    ShellRoute(
+      navigatorKey: _orgShellNavigatorKey,
+      builder: (context, state, child) {
+        return OrgShell(child: child);
+      },
+      routes: [
+        GoRoute(
+          path: '/org_dashboard',
+          builder: (context, state) => const OrgDashboardScreen(),
+        ),
+        GoRoute(
+          path: '/org_admins',
+          builder: (context, state) => const OrgAdminsScreen(),
+        ),
+        GoRoute(
+          path: '/org_properties',
+          builder: (context, state) => const OrgPropertiesScreen(),
+        ),
+        GoRoute(
+          path: '/org_more',
+          builder: (context, state) => const OrgMoreScreen(),
+        ),
+      ],
     ),
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
