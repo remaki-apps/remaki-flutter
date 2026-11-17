@@ -86,7 +86,11 @@ Future<void> bootstrapApp() async {
 }
 
 void main() async {
-  EnvConfig.initialize(Environment.prod);
+  if (appFlavor == 'qa') {
+    EnvConfig.initialize(Environment.qa);
+  } else {
+    EnvConfig.initialize(Environment.prod);
+  }
   await bootstrapApp();
 }
 

@@ -70,16 +70,32 @@ class OrganizationProvider with ChangeNotifier {
 
     try {
       final futures = await Future.wait([
-        ApiService.fetchMyOrganization().catchError((e) => <String, dynamic>{}),
-        ApiService.fetchOrganizationDashboard().catchError((e) => <String, dynamic>{}),
-        ApiService.fetchOrganizationAdmins().catchError((e) => <dynamic>[]),
-        ApiService.fetchOrganizationProperties().catchError((e) => <dynamic>[]),
+        ApiService.fetchMyOrganization().catchError((e) {
+          debugPrint('OrganizationProvider fetchMyOrganization error: $e');
+          return <String, dynamic>{};
+        }),
+        ApiService.fetchOrganizationDashboard().catchError((e) {
+          debugPrint('OrganizationProvider fetchOrganizationDashboard error: $e');
+          return <String, dynamic>{};
+        }),
+        ApiService.fetchOrganizationAdmins().catchError((e) {
+          debugPrint('OrganizationProvider fetchOrganizationAdmins error: $e');
+          return <dynamic>[];
+        }),
+        ApiService.fetchOrganizationProperties().catchError((e) {
+          debugPrint('OrganizationProvider fetchOrganizationProperties error: $e');
+          return <dynamic>[];
+        }),
       ]);
 
       final orgData = futures[0] as Map<String, dynamic>;
       final metricsData = futures[1] as Map<String, dynamic>;
       final adminsData = futures[2] as List<dynamic>;
       final propsData = futures[3] as List<dynamic>;
+
+      if (orgData.isEmpty && metricsData.isEmpty && adminsData.isEmpty) {
+        debugPrint('OrganizationProvider: All responses were empty for ${ApiService.baseUrl}');
+      }
 
       if (orgData.isNotEmpty) {
         currentOrganization = Organization.fromJson(orgData);
