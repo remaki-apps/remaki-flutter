@@ -135,13 +135,14 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         return;
       }
 
-      // Preserve 100% quality for announcement attachment photos as requested
+      // Visually lossless compression for announcement banners (1440px max width, quality 88)
+      final optimized = await ImageCompressUtil.compressAnnouncementImage(adjusted);
       setState(() {
-        _selectedImageBytes = adjusted;
+        _selectedImageBytes = optimized;
         _isImageLoading = false;
       });
       modalSetState(() {
-        _selectedImageBytes = adjusted;
+        _selectedImageBytes = optimized;
         _isImageLoading = false;
       });
     } catch (e) {

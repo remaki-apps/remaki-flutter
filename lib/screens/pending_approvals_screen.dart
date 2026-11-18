@@ -324,6 +324,32 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
     }
   }
 
+  static Uint8List? _decodeValidImageBytes(dynamic raw) {
+    if (raw == null) return null;
+    final str = raw.toString().trim();
+    if (str.isEmpty || str == 'null' || str == 'DIRECT_ADMIN_PAYMENT' || str == 'ADMIN_CASH') {
+      return null;
+    }
+    try {
+      final b64 = str.split(',').last.trim();
+      if (b64.length < 50) return null;
+      final bytes = base64Decode(b64);
+      if (bytes.length < 30) return null;
+
+      final isJpeg = bytes.length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xD8;
+      final isPng = bytes.length >= 4 && bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47;
+      final isRiff = bytes.length >= 4 && bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46;
+      final isGif = bytes.length >= 3 && bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46;
+
+      if (isJpeg || isPng || isRiff || isGif) {
+        return bytes;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   void _showImagePreviewDialog(BuildContext context, Uint8List imageBytes) {
     showDialog(
       context: context,
@@ -427,6 +453,12 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                               imageBytes,
                               fit: BoxFit.contain,
                               filterQuality: FilterQuality.high,
+                              errorBuilder: (_, __, ___) => const Center(
+                                child: Text(
+                                  'Receipt image not available',
+                                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -625,41 +657,30 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
               ),
             ),
           ],
-          if (req['proofImageBase64'] != null &&
-              req['proofImageBase64'].toString().trim().isNotEmpty &&
-              req['proofImageBase64'].toString().trim() != 'null') ...[
-            Builder(
-              builder: (ctx) {
-                Uint8List? proofBytes;
-                try {
-                  final raw = req['proofImageBase64'].toString().trim();
-                  if (raw.isNotEmpty && raw != 'null') {
-                    proofBytes = base64Decode(raw.split(',').last);
-                  }
-                } catch (_) {}
+          Builder(
+            builder: (ctx) {
+              final Uint8List? proofBytes = _decodeValidImageBytes(req['proofImageBase64']);
+              if (proofBytes == null) return const SizedBox.shrink();
 
-                if (proofBytes == null || proofBytes.isEmpty) return const SizedBox.shrink();
-
-                return Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => _showImagePreviewDialog(ctx, proofBytes!),
-                      icon: const Icon(Icons.receipt_long_rounded, size: 15),
-                      label: const Text('View Payment Proof', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.primaryColor,
-                        side: const BorderSide(color: Color(0xFFC7D2FE)),
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
+              return Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showImagePreviewDialog(ctx, proofBytes),
+                    icon: const Icon(Icons.receipt_long_rounded, size: 15),
+                    label: const Text('View Payment Proof', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.primaryColor,
+                      side: const BorderSide(color: Color(0xFFC7D2FE)),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
-                );
-              },
-            ),
-          ],
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -983,12 +1004,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                           }
                         }
 
-                        Uint8List? proofBytes;
-                        if (proofImageBase64 != null && proofImageBase64.isNotEmpty) {
-                          try {
-                            proofBytes = base64Decode(proofImageBase64.split(',').last);
-                          } catch (_) {}
-                        }
+                        final Uint8List? proofBytes = _decodeValidImageBytes(proofImageBase64);
 
                         return Container(
                           margin: const EdgeInsets.only(bottom: 16),

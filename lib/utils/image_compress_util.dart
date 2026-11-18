@@ -153,4 +153,47 @@ class ImageCompressUtil {
 
     return compressed;
   }
+
+  /// Compresses an announcement banner with visually lossless quality.
+  /// Caps max dimension at 1440px (3x Retina display density) and encodes with high JPEG quality (88).
+  /// Reduces 5MB-10MB mobile camera photos down to ~150KB - 250KB without perceptible quality loss.
+  static Future<Uint8List> compressAnnouncementImage(Uint8List rawBytes) async {
+    try {
+      if (kIsWeb) {
+        return _isolateCompressAnnouncement({'bytes': rawBytes});
+      }
+      return await compute(_isolateCompressAnnouncement, {'bytes': rawBytes});
+    } catch (e) {
+      debugPrint('[ImageCompressUtil] compressAnnouncementImage fallback: $e');
+      return rawBytes;
+    }
+  }
+
+  static Uint8List _isolateCompressAnnouncement(Map<String, dynamic> params) {
+    final Uint8List rawBytes = params['bytes'];
+    final original = img.decodeImage(rawBytes);
+    if (original == null) return rawBytes;
+
+    final oriented = img.bakeOrientation(original);
+    img.Image toEncode = oriented;
+
+    const maxDimension = 1440;
+    if (oriented.width > maxDimension || oriented.height > maxDimension) {
+      if (oriented.width >= oriented.height) {
+        toEncode = img.copyResize(
+          oriented,
+          width: maxDimension,
+          interpolation: img.Interpolation.cubic,
+        );
+      } else {
+        toEncode = img.copyResize(
+          oriented,
+          height: maxDimension,
+          interpolation: img.Interpolation.cubic,
+        );
+      }
+    }
+
+    return Uint8List.fromList(img.encodeJpg(toEncode, quality: 88));
+  }
 }
