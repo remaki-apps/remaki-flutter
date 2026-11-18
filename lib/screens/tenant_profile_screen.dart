@@ -991,11 +991,17 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                             ),
                           if (!tenant.isPaid && tenant.pendingRentAmount > 0) ...[
                             if (tenant.pendingRentAmount > tenant.rentAmount)
-                              _buildModernDetailItem(
-                                Icons.history_toggle_off_rounded,
-                                'Accumulated Rent Due (${(tenant.pendingRentAmount / (tenant.rentAmount > 0 ? tenant.rentAmount : 1)).toStringAsFixed(0)} months)',
-                                '₹${tenant.pendingRentAmount.toStringAsFixed(0)}',
-                                isHighlight: true,
+                              Builder(
+                                builder: (context) {
+                                  final int monthsCount = (tenant.pendingRentAmount / (tenant.rentAmount > 0 ? tenant.rentAmount : 1)).round();
+                                  final String monthText = monthsCount == 1 ? '1 month' : '$monthsCount months';
+                                  return _buildModernDetailItem(
+                                    Icons.history_toggle_off_rounded,
+                                    'Accumulated Rent Due ($monthText)',
+                                    '₹${tenant.pendingRentAmount.toStringAsFixed(0)}',
+                                    isHighlight: true,
+                                  );
+                                },
                               )
                             else if (tenant.pendingRentAmount < tenant.rentAmount)
                               _buildModernDetailItem(
@@ -1021,10 +1027,18 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                           ),
 
                           // Platform Fee (placed directly above Total Due)
-                          _buildModernDetailItem(
-                            Icons.layers_outlined,
-                            'Platform Fee (${(tenant.pendingConvenienceFee > tenant.platformFee && tenant.platformFee > 0 ? (tenant.pendingConvenienceFee / tenant.platformFee).round() : 1)} months)',
-                            '₹${(tenant.pendingConvenienceFee > 0 ? tenant.pendingConvenienceFee : tenant.platformFee).toStringAsFixed(0)}',
+                          Builder(
+                            builder: (context) {
+                              final int feeMonths = (tenant.pendingConvenienceFee > tenant.platformFee && tenant.platformFee > 0
+                                  ? (tenant.pendingConvenienceFee / tenant.platformFee).round()
+                                  : 1);
+                              final String monthText = feeMonths == 1 ? '1 month' : '$feeMonths months';
+                              return _buildModernDetailItem(
+                                Icons.layers_outlined,
+                                'Platform Fee ($monthText)',
+                                '₹${(tenant.pendingConvenienceFee > 0 ? tenant.pendingConvenienceFee : tenant.platformFee).toStringAsFixed(0)}',
+                              );
+                            },
                           ),
 
                           const SizedBox(height: 8),
