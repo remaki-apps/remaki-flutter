@@ -670,27 +670,29 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.center,
                                     children: [
                                       const Text('Total Due', style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
-                                      const SizedBox(width: 4),
-                                      Flexible(
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: tenant.statusBgColor,
-                                            borderRadius: BorderRadius.circular(6),
-                                            border: Border.all(color: tenant.statusBorderColor, width: 0.5),
-                                          ),
-                                          child: Text(
-                                            tenant.statusBadgeLabel,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              fontSize: 8.5,
-                                              fontWeight: FontWeight.bold,
-                                              color: tenant.statusColor,
+                                      if (tenant.statusBadgeLabel != 'UPCOMING' && !tenant.isUpcoming) ...[
+                                        const SizedBox(width: 4),
+                                        Flexible(
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: tenant.statusBgColor,
+                                              borderRadius: BorderRadius.circular(6),
+                                              border: Border.all(color: tenant.statusBorderColor, width: 0.5),
+                                            ),
+                                            child: Text(
+                                              tenant.statusBadgeLabel,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 8.5,
+                                                fontWeight: FontWeight.bold,
+                                                color: tenant.statusColor,
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
+                                      ],
                                     ],
                                   ),
                                   const SizedBox(height: 6),
@@ -722,7 +724,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                         color: Color(0xFFEA580C),
                                       ),
                                     ),
-                                  ] else if (!tenant.isPaid && tenant.totalDue > 0) ...[
+                                  ] else if (!tenant.isPaid && tenant.totalDue > 0 && !tenant.isUpcoming && tenant.statusBadgeLabel != 'UPCOMING') ...[
                                      const SizedBox(height: 3),
                                      const Text(
                                        'Rent Pending',
