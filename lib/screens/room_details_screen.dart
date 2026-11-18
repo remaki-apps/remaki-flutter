@@ -494,23 +494,25 @@ class RoomDetailsScreen extends StatelessWidget {
                   imageUrl: tenant.imageUrl,
                   radius: 14,
                 ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: tenant.statusBgColor,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: tenant.statusBorderColor, width: 0.5),
-                  ),
-                  child: Text(
-                    tenant.statusBadgeLabel,
-                    style: TextStyle(
-                      color: tenant.statusColor,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                if (tenant.statusBadgeLabel != 'UPCOMING' && !tenant.isUpcoming) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: tenant.statusBgColor,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: tenant.statusBorderColor, width: 0.5),
+                    ),
+                    child: Text(
+                      tenant.statusBadgeLabel,
+                      style: TextStyle(
+                        color: tenant.statusColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
+                ],
                 const SizedBox(width: 6),
                 const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8), size: 20),
               ],

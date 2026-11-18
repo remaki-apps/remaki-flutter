@@ -735,28 +735,12 @@ class AppProvider with ChangeNotifier {
           'description': description,
         });
         await loadFromAPI();
+        await saveToStorage();
       } catch (e) {
         debugPrint('Error generating bill: $e');
         rethrow;
       }
     }
-
-    // Optimistically add charges to local state so the UI updates immediately
-    for (var tenantId in tenantIds) {
-      final idx = tenants.indexWhere((t) => t.id == tenantId);
-      if (idx != -1) {
-        tenants[idx].additionalCharges.add(AdditionalCharge(
-          id: 'ac_${DateTime.now().millisecondsSinceEpoch}_$tenantId',
-          description: description,
-          amount: splitAmount,
-          date: DateTime.now(),
-          billType: 'CURRENT',
-        ));
-      }
-    }
-
-    await saveToStorage();
-    notifyListeners();
   }
 
   Future<void> addBillWithCustomSplits({
@@ -780,29 +764,11 @@ class AppProvider with ChangeNotifier {
         'description': description,
       });
       await loadFromAPI();
+      await saveToStorage();
     } catch (e) {
       debugPrint('Error generating custom split bill: $e');
       rethrow;
     }
-
-    // Optimistically add charges to local state so the UI updates immediately
-    for (var entry in nonZeroSplits) {
-      final tenantId = entry.key;
-      final amount = entry.value;
-      final idx = tenants.indexWhere((t) => t.id == tenantId);
-      if (idx != -1) {
-        tenants[idx].additionalCharges.add(AdditionalCharge(
-          id: 'ac_${DateTime.now().millisecondsSinceEpoch}_$tenantId',
-          description: description,
-          amount: amount,
-          date: DateTime.now(),
-          billType: 'CURRENT',
-        ));
-      }
-    }
-
-    await saveToStorage();
-    notifyListeners();
   }
 
   Future<void> allocateTenant(String tenantId, String roomId, String bedId, {

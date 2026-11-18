@@ -412,21 +412,22 @@ class _TenantsScreenState extends State<TenantsScreen> {
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                            decoration: BoxDecoration(
-                                              color: tenant.statusBgColor,
-                                              borderRadius: BorderRadius.circular(6),
-                                            ),
-                                            child: Text(
-                                              tenant.paymentStatusTitle,
-                                              style: TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600,
-                                                color: tenant.statusColor,
+                                          if (tenant.statusBadgeLabel != 'UPCOMING' && !tenant.isUpcoming)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: tenant.statusBgColor,
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: Text(
+                                                tenant.paymentStatusTitle,
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: tenant.statusColor,
+                                                ),
                                               ),
                                             ),
-                                          ),
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                             decoration: BoxDecoration(
