@@ -689,6 +689,7 @@ class AppProvider with ChangeNotifier {
     int? rentDueDay,
     String? paymentMode, {
     bool? foodIncluded,
+    String? moveInDate,
   }) async {
     try {
       await ApiService.updateTenantFinancials(
@@ -698,6 +699,7 @@ class AppProvider with ChangeNotifier {
         rentDueDay: rentDueDay,
         paymentMode: paymentMode,
         foodIncluded: foodIncluded,
+        moveInDate: moveInDate,
       );
       await loadFromAPI();
     } catch (e) {

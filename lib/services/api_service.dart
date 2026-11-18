@@ -1076,15 +1076,17 @@ class ApiService {
     int? rentDueDay,
     String? paymentMode,
     bool? foodIncluded,
+    String? moveInDate,
   }) async {
     const String mutation = '''
-      mutation UpdateTenantFinancials(\$tenantId: ID!, \$rentAmount: Float, \$securityDeposit: Float, \$rentDueDay: Int, \$paymentMode: String, \$foodIncluded: Boolean) {
-        updateTenantFinancials(tenantId: \$tenantId, rentAmount: \$rentAmount, securityDeposit: \$securityDeposit, rentDueDay: \$rentDueDay, paymentMode: \$paymentMode, foodIncluded: \$foodIncluded) {
+      mutation UpdateTenantFinancials(\$tenantId: ID!, \$rentAmount: Float, \$securityDeposit: Float, \$rentDueDay: Int, \$paymentMode: String, \$foodIncluded: Boolean, \$moveInDate: String) {
+        updateTenantFinancials(tenantId: \$tenantId, rentAmount: \$rentAmount, securityDeposit: \$securityDeposit, rentDueDay: \$rentDueDay, paymentMode: \$paymentMode, foodIncluded: \$foodIncluded, moveInDate: \$moveInDate) {
           id
           monthlyRent
           pendingRentAmount
           rentDueDate
           securityDeposit
+          moveInDate
           paymentStatus
           foodIncluded
         }
@@ -1097,6 +1099,7 @@ class ApiService {
       'rentDueDay': rentDueDay,
       'paymentMode': paymentMode,
       'foodIncluded': foodIncluded,
+      'moveInDate': moveInDate,
     });
   }
 
