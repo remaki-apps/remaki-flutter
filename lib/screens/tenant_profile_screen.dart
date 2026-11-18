@@ -256,6 +256,23 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                   ),
                   const SizedBox(width: 8),
                   Tooltip(
+                    message: 'Edit Tenant',
+                    child: GestureDetector(
+                      onTap: () => _showCommonEditSheet(context, appProvider, tenant),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3E8FF),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE9D5FF)),
+                        ),
+                        child: const Icon(Icons.edit_outlined, color: Color(0xFF7C3AED), size: 20),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Tooltip(
                     message: 'Change Room',
                     child: GestureDetector(
                       onTap: () => _showChangeRoomDialog(context, appProvider, tenant, roomNumber, bedName),
@@ -722,75 +739,65 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: GestureDetector(
-                              onTap: () => _showEditFinancialsDialog(context, appProvider, tenant),
-                              child: Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF8FAFC),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment: CrossAxisAlignment.center,
-                                      children: [
-                                        const Text('Deposit', style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
-                                        const SizedBox(width: 4),
-                                        Flexible(
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFF1F5F9),
-                                              borderRadius: BorderRadius.circular(6),
-                                              border: Border.all(color: const Color(0xFFE2E8F0), width: 0.5),
-                                            ),
-                                            child: const Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Text(
-                                                  'Security',
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: TextStyle(
-                                                    fontSize: 8.5,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Color(0xFF64748B),
-                                                  ),
-                                                ),
-                                                SizedBox(width: 2),
-                                                Icon(Icons.edit_outlined, size: 9, color: Color(0xFF64748B)),
-                                              ],
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      const Text('Deposit', style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF1F5F9),
+                                            borderRadius: BorderRadius.circular(6),
+                                            border: Border.all(color: const Color(0xFFE2E8F0), width: 0.5),
+                                          ),
+                                          child: const Text(
+                                            'Security',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 8.5,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF64748B),
                                             ),
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      '₹${tenant.securityDeposit.toStringAsFixed(0)}',
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF0F172A),
-                                      ),
-                                    ),
-                                    if (tenant.statusBadgeLabel == 'BILL DUE' || tenant.statusBadgeLabel == 'RENT DUE' || (!tenant.isPaid && tenant.totalDue > 0)) ...[
-                                      const SizedBox(height: 3),
-                                      const Text(
-                                        'Refundable Deposit',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w700,
-                                          color: Color(0xFF64748B),
-                                        ),
                                       ),
                                     ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    '₹${tenant.securityDeposit.toStringAsFixed(0)}',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  if (tenant.statusBadgeLabel == 'BILL DUE' || tenant.statusBadgeLabel == 'RENT DUE' || (!tenant.isPaid && tenant.totalDue > 0)) ...[
+                                    const SizedBox(height: 3),
+                                    const Text(
+                                      'Refundable Deposit',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                    ),
                                   ],
-                                ),
+                                ],
                               ),
                             ),
                           ),
@@ -896,7 +903,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
 
                     // Personal Information Card
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
@@ -908,36 +915,16 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'Personal Information',
-                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                              ),
-                              GestureDetector(
-                                onTap: () => _showEditPersonalInfoDialog(context, appProvider, tenant),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF1F5F9),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Row(
-                                    children: [
-                                      Icon(Icons.edit_outlined, size: 14, color: AppTheme.primaryColor),
-                                      SizedBox(width: 4),
-                                      Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
+                          const Text(
+                            'Personal Information',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
                           ),
                           const SizedBox(height: 12),
                           _buildModernDetailItem(Icons.phone_outlined, 'Phone', tenant.phone),
-                          _buildModernDetailItem(Icons.email_outlined, 'Email', tenant.email.isNotEmpty ? tenant.email : '-'),
-                          _buildModernDetailItem(Icons.contact_phone_outlined, 'Emergency Contact', tenant.emergencyContact != null && tenant.emergencyContact!.isNotEmpty ? tenant.emergencyContact! : '-'),
+                          _buildModernDetailItem(Icons.mail_outline, 'Email', tenant.email.isNotEmpty ? tenant.email : '-'),
+                          _buildModernDetailItem(Icons.badge_outlined, 'Emergency Contact', tenant.emergencyContact != null && tenant.emergencyContact!.isNotEmpty ? tenant.emergencyContact! : '-'),
+                          _buildModernDetailItem(Icons.calendar_today_outlined, 'Move-in Date', DateFormat('dd/MM/yyyy').format(tenant.moveInDate)),
+                          _buildModernDetailItem(Icons.restaurant_outlined, 'Food Plan', tenant.foodIncluded ? 'With Food' : 'Without Food'),
                           if (tenant.dateOfBirth != null && tenant.dateOfBirth!.isNotEmpty) _buildModernDetailItem(Icons.cake_outlined, 'Date of Birth', tenant.dateOfBirth!),
                           if (tenant.maritalStatus != null && tenant.maritalStatus!.isNotEmpty) _buildModernDetailItem(Icons.favorite_border, 'Marital Status', tenant.maritalStatus!),
                           if (tenant.fatherName != null && tenant.fatherName!.isNotEmpty) _buildModernDetailItem(Icons.person_outline, 'Father\'s Name', tenant.fatherName!),
@@ -966,59 +953,83 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: const Color(0xFFFDFBFE),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFF1F5F9)),
+                        border: Border.all(color: const Color(0xFFD8B4FE), width: 1.2),
                         boxShadow: const [
-                          BoxShadow(color: Color(0x04000000), blurRadius: 8, offset: Offset(0, 2)),
+                          BoxShadow(color: Color(0x067C3AED), blurRadius: 10, offset: Offset(0, 2)),
                         ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          const Row(
                             children: [
-                              const Text(
+                              Icon(Icons.calendar_month_outlined, size: 20, color: Color(0xFF7C3AED)),
+                              SizedBox(width: 8),
+                              Text(
                                 'Financial Information',
-                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                              ),
-                              GestureDetector(
-                                onTap: () => _showEditFinancialsDialog(context, appProvider, tenant),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF1F5F9),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Row(
-                                    children: [
-                                      Icon(Icons.edit_outlined, size: 14, color: AppTheme.primaryColor),
-                                      SizedBox(width: 4),
-                                      Text('Edit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
-                                    ],
-                                  ),
-                                ),
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF7C3AED)),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
-                          _buildModernDetailItem(Icons.calendar_today_outlined, 'Move-in Date', DateFormat('dd/MM/yyyy').format(tenant.moveInDate)),
-                          _buildModernDetailItem(
-                            Icons.restaurant_menu_outlined,
-                            'Food Plan',
-                            tenant.foodIncluded ? 'With Food' : 'Without Food',
+                          const SizedBox(height: 10),
+
+                          // Highlighted Rent Due Date Container
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFF1F5F9)),
+                              boxShadow: const [
+                                BoxShadow(color: Color(0x04000000), blurRadius: 4, offset: Offset(0, 1)),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Row(
+                                  children: [
+                                    Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF7C3AED)),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      'Rent Due Date',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  DateFormat('dd/MM/yyyy').format(tenant.rentDueDate),
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
+                          const SizedBox(height: 10),
+
+                          // Monthly Rent
                           _buildModernDetailItem(
-                            Icons.payments_outlined,
+                            Icons.monetization_on_outlined,
                             tenant.foodIncluded ? 'Monthly Rent (With Food)' : 'Monthly Rent (Without Food)',
                             '₹${tenant.rentAmount.toStringAsFixed(0)}',
                           ),
+
+                          // Platform Fee
                           _buildModernDetailItem(
-                            Icons.shield_outlined,
-                            'Security Deposit',
-                            '₹${tenant.securityDeposit.toStringAsFixed(0)}',
+                            Icons.layers_outlined,
+                            'Platform Fee (${(tenant.pendingConvenienceFee > tenant.platformFee && tenant.platformFee > 0 ? (tenant.pendingConvenienceFee / tenant.platformFee).round() : 1)} months)',
+                            '₹${(tenant.pendingConvenienceFee > 0 ? tenant.pendingConvenienceFee : tenant.platformFee).toStringAsFixed(0)}',
                           ),
+
                           if (tenant.statusBadgeLabel == 'BILL DUE')
                             _buildModernDetailItem(
                               Icons.check_circle_outline_rounded,
@@ -1033,11 +1044,6 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                               'Paid (Rent Pending)',
                               isHighlight: true,
                             ),
-                          _buildModernDetailItem(
-                            Icons.event_outlined,
-                            'Rent Due Date',
-                            DateFormat('dd/MM/yyyy').format(tenant.rentDueDate),
-                          ),
                           if (!tenant.isPaid && tenant.pendingRentAmount > 0) ...[
                             if (tenant.pendingRentAmount > tenant.rentAmount)
                               _buildModernDetailItem(
@@ -1066,16 +1072,44 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                               );
                             },
                           ),
-                          if (tenant.totalPendingBills > 0 || !tenant.isPaid)
-                            _buildModernDetailItem(Icons.account_balance_wallet_outlined, 'Total Due', '₹${tenant.totalPayableWithPlatformFee.toStringAsFixed(0)}', isHighlight: true),
-                          if (tenant.pendingConvenienceFee > 0)
-                            _buildModernDetailItem(
-                              Icons.local_atm_outlined,
-                              'Platform Fee (${(tenant.pendingConvenienceFee / (tenant.platformFee > 0 ? tenant.platformFee : 5)).round()} months)',
-                              '₹${tenant.pendingConvenienceFee.toStringAsFixed(0)}',
-                            )
-                          else
-                            _buildModernDetailItem(Icons.local_atm_outlined, 'Platform Fee per Rent Payment', '₹${tenant.platformFee.toStringAsFixed(0)}'),
+
+                          const SizedBox(height: 8),
+
+                          // Highlighted Total Due Banner
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF3E8FF),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Row(
+                                  children: [
+                                    Icon(Icons.receipt_long_rounded, size: 20, color: Color(0xFF7C3AED)),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      'Total Due',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF7C3AED),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  '₹${tenant.totalPayableWithPlatformFee.toStringAsFixed(0)}',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF7C3AED),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -2293,6 +2327,144 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _showCommonEditSheet(BuildContext context, AppProvider appProvider, dynamic tenant) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Edit Tenant Details',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Choose what you would like to edit',
+              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+            ),
+            const SizedBox(height: 20),
+            InkWell(
+              onTap: () {
+                Navigator.pop(ctx);
+                _showEditPersonalInfoDialog(context, appProvider, tenant);
+              },
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.person_outline_rounded, color: Color(0xFF2563EB), size: 22),
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Personal Information',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Name, phone, email, emergency contact, address',
+                            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: () {
+                Navigator.pop(ctx);
+                _showEditFinancialsDialog(context, appProvider, tenant);
+              },
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3E8FF),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.account_balance_wallet_outlined, color: Color(0xFF7C3AED), size: 22),
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Financial & Stay Details',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Move-in date, food plan, rent, security deposit, due day',
+                            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
