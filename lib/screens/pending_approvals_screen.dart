@@ -625,21 +625,39 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
               ),
             ),
           ],
-          if (req['proofImageBase64'] != null && req['proofImageBase64'].toString().isNotEmpty) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => _showProofModal(req['proofImageBase64'].toString()),
-                icon: const Icon(Icons.receipt_long_rounded, size: 15),
-                label: const Text('View Payment Proof', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.primaryColor,
-                  side: const BorderSide(color: Color(0xFFC7D2FE)),
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
+          if (req['proofImageBase64'] != null &&
+              req['proofImageBase64'].toString().trim().isNotEmpty &&
+              req['proofImageBase64'].toString().trim() != 'null') ...[
+            Builder(
+              builder: (ctx) {
+                Uint8List? proofBytes;
+                try {
+                  final raw = req['proofImageBase64'].toString().trim();
+                  if (raw.isNotEmpty && raw != 'null') {
+                    proofBytes = base64Decode(raw.split(',').last);
+                  }
+                } catch (_) {}
+
+                if (proofBytes == null || proofBytes.isEmpty) return const SizedBox.shrink();
+
+                return Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _showImagePreviewDialog(ctx, proofBytes!),
+                      icon: const Icon(Icons.receipt_long_rounded, size: 15),
+                      label: const Text('View Payment Proof', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.primaryColor,
+                        side: const BorderSide(color: Color(0xFFC7D2FE)),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ],

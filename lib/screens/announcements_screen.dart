@@ -135,13 +135,13 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         return;
       }
 
-      final compressed = await ImageCompressUtil.compressDocumentOrBill(adjusted);
+      // Preserve 100% quality for announcement attachment photos as requested
       setState(() {
-        _selectedImageBytes = compressed;
+        _selectedImageBytes = adjusted;
         _isImageLoading = false;
       });
       modalSetState(() {
-        _selectedImageBytes = compressed;
+        _selectedImageBytes = adjusted;
         _isImageLoading = false;
       });
     } catch (e) {
@@ -409,35 +409,6 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'AUTO-REMOVE DURATION',
-                      style: GoogleFonts.lato(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF64748B),
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _buildDurationChip(1, '1 Day', setModalState),
-                        const SizedBox(width: 8),
-                        _buildDurationChip(3, '3 Days', setModalState),
-                        const SizedBox(width: 8),
-                        _buildDurationChip(7, '7 Days', setModalState),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Post will be automatically deleted from feed and database after $_selectedDurationDays ${_selectedDurationDays == 1 ? "day" : "days"}.',
-                      style: GoogleFonts.lato(
-                        fontSize: 11.5,
-                        color: const Color(0xFF94A3B8),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
                       'DESCRIPTION',
                       style: GoogleFonts.lato(
                         fontSize: 11,
@@ -480,7 +451,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'AUTO-REMOVE DURATION',
+                      'DURATION',
                       style: GoogleFonts.lato(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
