@@ -901,54 +901,6 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                     ],
                     const SizedBox(height: 16),
 
-                    // Personal Information Card
-                    Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFF1F5F9)),
-                        boxShadow: const [
-                          BoxShadow(color: Color(0x04000000), blurRadius: 8, offset: Offset(0, 2)),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Personal Information',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                          ),
-                          const SizedBox(height: 12),
-                          _buildModernDetailItem(Icons.phone_outlined, 'Phone', tenant.phone),
-                          _buildModernDetailItem(Icons.mail_outline, 'Email', tenant.email.isNotEmpty ? tenant.email : '-'),
-                          _buildModernDetailItem(Icons.badge_outlined, 'Emergency Contact', tenant.emergencyContact != null && tenant.emergencyContact!.isNotEmpty ? tenant.emergencyContact! : '-'),
-                          _buildModernDetailItem(Icons.calendar_today_outlined, 'Move-in Date', DateFormat('dd/MM/yyyy').format(tenant.moveInDate)),
-                          _buildModernDetailItem(Icons.restaurant_outlined, 'Food Plan', tenant.foodIncluded ? 'With Food' : 'Without Food'),
-                          if (tenant.dateOfBirth != null && tenant.dateOfBirth!.isNotEmpty) _buildModernDetailItem(Icons.cake_outlined, 'Date of Birth', tenant.dateOfBirth!),
-                          if (tenant.maritalStatus != null && tenant.maritalStatus!.isNotEmpty) _buildModernDetailItem(Icons.favorite_border, 'Marital Status', tenant.maritalStatus!),
-                          if (tenant.fatherName != null && tenant.fatherName!.isNotEmpty) _buildModernDetailItem(Icons.person_outline, 'Father\'s Name', tenant.fatherName!),
-                          if (tenant.nationality != null && tenant.nationality!.isNotEmpty) _buildModernDetailItem(Icons.flag_outlined, 'Nationality', tenant.nationality!),
-                          if (tenant.occupation != null && tenant.occupation!.isNotEmpty) _buildModernDetailItem(Icons.work_outline, 'Occupation', tenant.occupation!),
-                          if (tenant.permanentAddress != null && tenant.permanentAddress!.isNotEmpty) ...[
-                            const SizedBox(height: 12),
-                            const Divider(color: Color(0xFFF1F5F9)),
-                            const SizedBox(height: 12),
-                            const Text('Address Details', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
-                            const SizedBox(height: 8),
-                            _buildModernDetailItem(Icons.home_outlined, 'Permanent Address', tenant.permanentAddress!),
-                            if (tenant.houseNo != null && tenant.houseNo!.isNotEmpty) _buildModernDetailItem(Icons.numbers, 'House No.', tenant.houseNo!),
-                            if (tenant.wardNo != null && tenant.wardNo!.isNotEmpty) _buildModernDetailItem(Icons.map_outlined, 'Ward No.', tenant.wardNo!),
-                            if (tenant.villageOrTown != null && tenant.villageOrTown!.isNotEmpty) _buildModernDetailItem(Icons.location_city_outlined, 'Village/Town', tenant.villageOrTown!),
-                            if (tenant.district != null && tenant.district!.isNotEmpty) _buildModernDetailItem(Icons.map, 'District', tenant.district!),
-                            if (tenant.state != null && tenant.state!.isNotEmpty) _buildModernDetailItem(Icons.public, 'State', tenant.state!),
-                            if (tenant.pinCode != null && tenant.pinCode!.isNotEmpty) _buildModernDetailItem(Icons.pin_drop_outlined, 'PIN Code', tenant.pinCode!),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
                     // Financial Information Card
                     Container(
                       padding: const EdgeInsets.all(16),
@@ -1110,6 +1062,54 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                               ],
                             ),
                           ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Personal Information Card
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFF1F5F9)),
+                        boxShadow: const [
+                          BoxShadow(color: Color(0x04000000), blurRadius: 8, offset: Offset(0, 2)),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Personal Information',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildModernDetailItem(Icons.phone_outlined, 'Phone', tenant.phone),
+                          _buildModernDetailItem(Icons.mail_outline, 'Email', tenant.email.isNotEmpty ? tenant.email : '-'),
+                          _buildModernDetailItem(Icons.badge_outlined, 'Emergency Contact', tenant.emergencyContact != null && tenant.emergencyContact!.isNotEmpty ? tenant.emergencyContact! : '-'),
+                          _buildModernDetailItem(Icons.calendar_today_outlined, 'Move-in Date', DateFormat('dd/MM/yyyy').format(tenant.moveInDate)),
+                          _buildModernDetailItem(Icons.restaurant_outlined, 'Food Plan', tenant.foodIncluded ? 'With Food' : 'Without Food'),
+                          if (tenant.dateOfBirth != null && tenant.dateOfBirth!.isNotEmpty) _buildModernDetailItem(Icons.cake_outlined, 'Date of Birth', tenant.dateOfBirth!),
+                          if (tenant.maritalStatus != null && tenant.maritalStatus!.isNotEmpty) _buildModernDetailItem(Icons.favorite_border, 'Marital Status', tenant.maritalStatus!),
+                          if (tenant.fatherName != null && tenant.fatherName!.isNotEmpty) _buildModernDetailItem(Icons.person_outline, 'Father\'s Name', tenant.fatherName!),
+                          if (tenant.nationality != null && tenant.nationality!.isNotEmpty) _buildModernDetailItem(Icons.flag_outlined, 'Nationality', tenant.nationality!),
+                          if (tenant.occupation != null && tenant.occupation!.isNotEmpty) _buildModernDetailItem(Icons.work_outline, 'Occupation', tenant.occupation!),
+                          if (tenant.permanentAddress != null && tenant.permanentAddress!.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            const Divider(color: Color(0xFFF1F5F9)),
+                            const SizedBox(height: 12),
+                            const Text('Address Details', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                            const SizedBox(height: 8),
+                            _buildModernDetailItem(Icons.home_outlined, 'Permanent Address', tenant.permanentAddress!),
+                            if (tenant.houseNo != null && tenant.houseNo!.isNotEmpty) _buildModernDetailItem(Icons.numbers, 'House No.', tenant.houseNo!),
+                            if (tenant.wardNo != null && tenant.wardNo!.isNotEmpty) _buildModernDetailItem(Icons.map_outlined, 'Ward No.', tenant.wardNo!),
+                            if (tenant.villageOrTown != null && tenant.villageOrTown!.isNotEmpty) _buildModernDetailItem(Icons.location_city_outlined, 'Village/Town', tenant.villageOrTown!),
+                            if (tenant.district != null && tenant.district!.isNotEmpty) _buildModernDetailItem(Icons.map, 'District', tenant.district!),
+                            if (tenant.state != null && tenant.state!.isNotEmpty) _buildModernDetailItem(Icons.public, 'State', tenant.state!),
+                            if (tenant.pinCode != null && tenant.pinCode!.isNotEmpty) _buildModernDetailItem(Icons.pin_drop_outlined, 'PIN Code', tenant.pinCode!),
+                          ],
                         ],
                       ),
                     ),
