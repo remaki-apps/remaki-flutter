@@ -6,6 +6,7 @@ import '../providers/app_provider.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_shimmer.dart';
+import '../utils/string_utils.dart';
 
 class RoomsScreen extends StatefulWidget {
   const RoomsScreen({super.key});
@@ -63,6 +64,9 @@ class _RoomsScreenState extends State<RoomsScreen> {
     for (var r in filteredRooms) {
       final normalized = _normalizeFloorName(r.floor);
       roomsByFloor.putIfAbsent(normalized, () => []).add(r);
+    }
+    for (var roomList in roomsByFloor.values) {
+      roomList.sort((a, b) => naturalCompare(a.number, b.number));
     }
 
     int floorOrderIndex(String floor) {

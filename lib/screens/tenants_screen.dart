@@ -8,6 +8,7 @@ import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tenant_avatar.dart';
 import '../widgets/app_shimmer.dart';
+import '../utils/string_utils.dart';
 
 class TenantsScreen extends StatefulWidget {
   const TenantsScreen({super.key});
@@ -16,11 +17,217 @@ class TenantsScreen extends StatefulWidget {
   State<TenantsScreen> createState() => _TenantsScreenState();
 }
 
+enum TenantSortField { name, room, dueDate, amount }
+
 class _TenantsScreenState extends State<TenantsScreen> {
   String _filter = 'All'; // All, Paid, Unpaid
   String _foodFilter = 'ALL'; // ALL, WITH_FOOD, WITHOUT_FOOD
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  TenantSortField _sortField = TenantSortField.name;
+  bool _sortAscending = true;
+
+  String get _sortLabel {
+    switch (_sortField) {
+      case TenantSortField.name:
+        return _sortAscending ? 'Name A-Z' : 'Name Z-A';
+      case TenantSortField.room:
+        return _sortAscending ? 'Room ↑' : 'Room ↓';
+      case TenantSortField.dueDate:
+        return _sortAscending ? 'Due Earliest' : 'Due Latest';
+      case TenantSortField.amount:
+        return _sortAscending ? 'Amount Low' : 'Amount High';
+    }
+  }
+
+  void _showSortModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFCBD5E1),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Sort Tenants',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () {
+                          setModalState(() => _sortAscending = !_sortAscending);
+                          setState(() {});
+                        },
+                        icon: Icon(
+                          _sortAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                          size: 16,
+                          color: AppTheme.primaryColor,
+                        ),
+                        label: Text(
+                          _sortAscending ? 'Ascending' : 'Descending',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          backgroundColor: const Color(0xFFEEF2FF),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'SORT BY',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF64748B),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildSortChip(
+                        field: TenantSortField.name,
+                        label: 'Tenant Name',
+                        icon: Icons.person_rounded,
+                        setModalState: setModalState,
+                      ),
+                      _buildSortChip(
+                        field: TenantSortField.room,
+                        label: 'Room Number',
+                        icon: Icons.meeting_room_rounded,
+                        setModalState: setModalState,
+                      ),
+                      _buildSortChip(
+                        field: TenantSortField.dueDate,
+                        label: 'Due Date',
+                        icon: Icons.calendar_today_rounded,
+                        setModalState: setModalState,
+                      ),
+                      _buildSortChip(
+                        field: TenantSortField.amount,
+                        label: 'Pending Amount',
+                        icon: Icons.currency_rupee_rounded,
+                        setModalState: setModalState,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text(
+                        'Apply Sort',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildSortChip({
+    required TenantSortField field,
+    required String label,
+    required IconData icon,
+    required StateSetter setModalState,
+  }) {
+    final isSelected = _sortField == field;
+    return GestureDetector(
+      onTap: () {
+        setModalState(() => _sortField = field);
+        setState(() {});
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFEEF2FF) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? AppTheme.primaryColor : const Color(0xFFE2E8F0),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 15,
+              color: isSelected ? AppTheme.primaryColor : const Color(0xFF64748B),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? AppTheme.primaryColor : const Color(0xFF334155),
+              ),
+            ),
+            if (isSelected) ...[
+              const SizedBox(width: 6),
+              Icon(
+                _sortAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                size: 14,
+                color: AppTheme.primaryColor,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -90,6 +297,33 @@ class _TenantsScreenState extends State<TenantsScreen> {
       }
       return true;
     }).toList();
+
+    filteredTenants.sort((a, b) {
+      int cmp = 0;
+      switch (_sortField) {
+        case TenantSortField.name:
+          cmp = a.name.toLowerCase().compareTo(b.name.toLowerCase());
+          break;
+        case TenantSortField.room:
+          final roomA = appProvider.rooms.firstWhere(
+            (r) => r.id == a.roomId,
+            orElse: () => Room(id: '', propertyId: '', number: '', floor: '', capacity: 0, roomType: 'NON_AC', foodOption: 'WITH_FOOD', beds: []),
+          ).number;
+          final roomB = appProvider.rooms.firstWhere(
+            (r) => r.id == b.roomId,
+            orElse: () => Room(id: '', propertyId: '', number: '', floor: '', capacity: 0, roomType: 'NON_AC', foodOption: 'WITH_FOOD', beds: []),
+          ).number;
+          cmp = naturalCompare(roomA, roomB);
+          break;
+        case TenantSortField.dueDate:
+          cmp = a.rentDueDate.compareTo(b.rentDueDate);
+          break;
+        case TenantSortField.amount:
+          cmp = a.totalDue.compareTo(b.totalDue);
+          break;
+      }
+      return _sortAscending ? cmp : -cmp;
+    });
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
@@ -171,36 +405,77 @@ class _TenantsScreenState extends State<TenantsScreen> {
                   ),
                   const SizedBox(height: 14),
 
-                  // Search Bar Input
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                      boxShadow: const [
-                        BoxShadow(color: Color(0x04000000), blurRadius: 6, offset: Offset(0, 2)),
-                      ],
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (val) => setState(() => _searchQuery = val),
-                      decoration: InputDecoration(
-                        hintText: 'Search by name, room, phone, or "with food"...',
-                        hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-                        prefixIcon: const Icon(Icons.search, color: Color(0xFF94A3B8), size: 20),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear, size: 18, color: Color(0xFF94A3B8)),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() => _searchQuery = '');
-                                },
-                              )
-                            : null,
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                  // Search Bar & Sort Row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            boxShadow: const [
+                              BoxShadow(color: Color(0x04000000), blurRadius: 6, offset: Offset(0, 2)),
+                            ],
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (val) => setState(() => _searchQuery = val),
+                            decoration: InputDecoration(
+                              hintText: 'Search by name, room, phone, or "with food"...',
+                              hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                              prefixIcon: const Icon(Icons.search, color: Color(0xFF94A3B8), size: 20),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear, size: 18, color: Color(0xFF94A3B8)),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        setState(() => _searchQuery = '');
+                                      },
+                                    )
+                                  : null,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => _showSortModal(context),
+                        child: Container(
+                          height: 48,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            boxShadow: const [
+                              BoxShadow(color: Color(0x04000000), blurRadius: 6, offset: Offset(0, 2)),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _sortAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                                size: 16,
+                                color: AppTheme.primaryColor,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _sortLabel,
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF334155),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

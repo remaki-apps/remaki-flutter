@@ -28,6 +28,50 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   Uint8List? _selectedImageBytes;
   bool _isSending = false;
   bool _isImageLoading = false;
+  int _selectedDurationDays = 3; // 1, 3, or 7 days
+
+  Widget _buildDurationChip(int days, String label, StateSetter setModalState) {
+    final isSelected = _selectedDurationDays == days;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setModalState(() => _selectedDurationDays = days);
+          setState(() => _selectedDurationDays = days);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 9),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFEEF2FF) : const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFFE2E8F0),
+              width: isSelected ? 1.5 : 1.0,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isSelected ? Icons.check_circle_rounded : Icons.timer_outlined,
+                size: 14,
+                color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                  color: isSelected ? const Color(0xFF4F46E5) : const Color(0xFF475569),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -128,6 +172,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         heading: _headingCtrl.text.trim(),
         description: _descCtrl.text.trim(),
         imageBase64: imageBase64,
+        durationDays: _selectedDurationDays,
       );
 
       if (mounted) {
@@ -364,6 +409,35 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
+                      'AUTO-REMOVE DURATION',
+                      style: GoogleFonts.lato(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF64748B),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        _buildDurationChip(1, '1 Day', setModalState),
+                        const SizedBox(width: 8),
+                        _buildDurationChip(3, '3 Days', setModalState),
+                        const SizedBox(width: 8),
+                        _buildDurationChip(7, '7 Days', setModalState),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Post will be automatically deleted from feed and database after $_selectedDurationDays ${_selectedDurationDays == 1 ? "day" : "days"}.',
+                      style: GoogleFonts.lato(
+                        fontSize: 11.5,
+                        color: const Color(0xFF94A3B8),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
                       'DESCRIPTION',
                       style: GoogleFonts.lato(
                         fontSize: 11,
@@ -402,6 +476,35 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                           borderRadius: BorderRadius.circular(14),
                           borderSide: const BorderSide(color: Color(0xFF4F46E5), width: 1.6),
                         ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'AUTO-REMOVE DURATION',
+                      style: GoogleFonts.lato(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF64748B),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        _buildDurationChip(1, '1 Day', setModalState),
+                        const SizedBox(width: 8),
+                        _buildDurationChip(3, '3 Days', setModalState),
+                        const SizedBox(width: 8),
+                        _buildDurationChip(7, '7 Days', setModalState),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Post will be automatically deleted from feed and database after $_selectedDurationDays ${_selectedDurationDays == 1 ? "day" : "days"}.',
+                      style: GoogleFonts.lato(
+                        fontSize: 11.5,
+                        color: const Color(0xFF94A3B8),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -789,6 +892,19 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                 final description = a['description'] ?? '';
                 final imageUrl = a['imageUrl'] as String?;
                 final dateStr = _formatDate(a['createdAt']);
+                final expiresAtRaw = a['expiresAt']?.toString();
+                DateTime? expiresDate = expiresAtRaw != null ? DateTime.tryParse(expiresAtRaw)?.toLocal() : null;
+                String? expiryHint;
+                if (expiresDate != null) {
+                  final diff = expiresDate.difference(DateTime.now());
+                  if (diff.inHours > 24) {
+                    expiryHint = 'Expires in ${diff.inDays + 1}d';
+                  } else if (diff.inHours > 0) {
+                    expiryHint = 'Expires in ${diff.inHours}h';
+                  } else {
+                    expiryHint = 'Expiring soon';
+                  }
+                }
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 14),
@@ -858,6 +974,27 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                                if (expiryHint != null) ...[
+                                  const SizedBox(height: 3),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.timer_outlined,
+                                        size: 11.5,
+                                        color: Color(0xFFD97706),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        expiryHint,
+                                        style: GoogleFonts.lato(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: const Color(0xFFD97706),
                                         ),
                                       ),
                                     ],

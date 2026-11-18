@@ -53,9 +53,11 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
       final data = await ApiService.fetchMyComplaints();
       if (!mounted) return;
       setState(() {
+        final fiveDaysAgo = DateTime.now().subtract(const Duration(days: 5));
         _complaints = data
             .whereType<Map<String, dynamic>>()
             .map((e) => Complaint.fromJson(e))
+            .where((c) => !(c.isResolved && c.resolvedAt != null && c.resolvedAt!.isBefore(fiveDaysAgo)))
             .toList();
         _isLoading = false;
       });

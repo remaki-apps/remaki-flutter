@@ -726,6 +726,8 @@ class ApiService {
           heading
           description
           imageUrl
+          durationDays
+          expiresAt
           createdAt
         }
       }
@@ -743,10 +745,11 @@ class ApiService {
     required String heading,
     required String description,
     String? imageBase64,
+    int durationDays = 3,
   }) async {
     const mutation = '''
-      mutation CreateAnnouncement(\$heading: String!, \$description: String!, \$imageBase64: String) {
-        createAnnouncement(heading: \$heading, description: \$description, imageBase64: \$imageBase64) {
+      mutation CreateAnnouncement(\$heading: String!, \$description: String!, \$imageBase64: String, \$durationDays: Int) {
+        createAnnouncement(heading: \$heading, description: \$description, imageBase64: \$imageBase64, durationDays: \$durationDays) {
           id
         }
       }
@@ -755,6 +758,7 @@ class ApiService {
       'heading': heading,
       'description': description,
       'imageBase64': imageBase64,
+      'durationDays': durationDays,
     });
   }
 
@@ -1136,6 +1140,31 @@ class ApiService {
     ''';
     final data = await performQuery(query);
     return data['pendingPaymentRequests'] ?? [];
+  }
+
+  static Future<List<dynamic>> fetchApprovalHistory({int limit = 100, int offset = 0}) async {
+    const String query = '''
+      query GetApprovalHistory(\$limit: Int, \$offset: Int) {
+        approvalHistory(limit: \$limit, offset: \$offset) {
+          id
+          tenantProfileId
+          tenantName
+          roomNumber
+          bedLabel
+          amount
+          paymentType
+          method
+          proofImageBase64
+          description
+          status
+          rejectionReason
+          createdAt
+          updatedAt
+        }
+      }
+    ''';
+    final data = await performQuery(query, variables: {'limit': limit, 'offset': offset});
+    return data['approvalHistory'] ?? [];
   }
 
   static Future<void> resolvePaymentRequest(String requestId, String action, {String? rejectionReason}) async {

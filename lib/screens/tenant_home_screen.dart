@@ -267,8 +267,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   Future<void> _fetchAnnouncements() async {
     final announcements = await ApiService.fetchAnnouncements(false);
     if (mounted) {
+      final now = DateTime.now();
       setState(() {
-        _announcements = announcements;
+        _announcements = announcements.where((a) {
+          if (a['expiresAt'] != null) {
+            final exp = DateTime.tryParse(a['expiresAt'].toString())?.toLocal();
+            if (exp != null && exp.isBefore(now)) return false;
+          }
+          return true;
+        }).toList();
       });
     }
   }

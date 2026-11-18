@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
+import '../utils/string_utils.dart';
 import 'network_provider.dart';
 
 class AppProvider with ChangeNotifier {
@@ -179,6 +180,7 @@ class AppProvider with ChangeNotifier {
           beds: bedList,
         );
       }).toList();
+      rooms.sort((a, b) => naturalCompare(a.number, b.number));
 
       tenants = tenantsData.whereType<Map<String, dynamic>>().where((e) => e['status'] != 'MOVED_OUT').map((e) {
         final roomMap = e['room'] as Map<String, dynamic>?;
@@ -340,6 +342,7 @@ class AppProvider with ChangeNotifier {
       if (roomsRaw != null) {
         final List<dynamic> decoded = jsonDecode(roomsRaw);
         rooms = decoded.map((e) => Room.fromJson(e as Map<String, dynamic>)).toList();
+        rooms.sort((a, b) => naturalCompare(a.number, b.number));
       }
 
       final tenantsRaw = prefs.getString(_tenantsKey);
