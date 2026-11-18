@@ -975,13 +975,6 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                             '₹${tenant.rentAmount.toStringAsFixed(0)}',
                           ),
 
-                          // Platform Fee
-                          _buildModernDetailItem(
-                            Icons.layers_outlined,
-                            'Platform Fee (${(tenant.pendingConvenienceFee > tenant.platformFee && tenant.platformFee > 0 ? (tenant.pendingConvenienceFee / tenant.platformFee).round() : 1)} months)',
-                            '₹${(tenant.pendingConvenienceFee > 0 ? tenant.pendingConvenienceFee : tenant.platformFee).toStringAsFixed(0)}',
-                          ),
-
                           if (tenant.statusBadgeLabel == 'BILL DUE')
                             _buildModernDetailItem(
                               Icons.check_circle_outline_rounded,
@@ -1012,6 +1005,8 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                 isHighlight: true,
                               ),
                           ],
+
+                          // Split payments / Additional Charges
                           ...tenant.additionalCharges.where((c) => c.billType.trim().toUpperCase() != 'RENT' && c.status.trim().toUpperCase() != 'PAID').map(
                             (c) {
                               final dueDateStr = c.billDueDate != null
@@ -1023,6 +1018,13 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                 '+ ₹${c.amount.toStringAsFixed(0)}',
                               );
                             },
+                          ),
+
+                          // Platform Fee (placed directly above Total Due)
+                          _buildModernDetailItem(
+                            Icons.layers_outlined,
+                            'Platform Fee (${(tenant.pendingConvenienceFee > tenant.platformFee && tenant.platformFee > 0 ? (tenant.pendingConvenienceFee / tenant.platformFee).round() : 1)} months)',
+                            '₹${(tenant.pendingConvenienceFee > 0 ? tenant.pendingConvenienceFee : tenant.platformFee).toStringAsFixed(0)}',
                           ),
 
                           const SizedBox(height: 8),
