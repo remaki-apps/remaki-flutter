@@ -869,7 +869,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
     final selectedDueDay = dueDayMatch != null ? int.tryParse(dueDayMatch.group(0)!) ?? 5 : 5;
 
     DateTime firstDueDate;
-    if (_moveInDate.day > selectedDueDay) {
+    if (_moveInDate.day >= selectedDueDay) {
       firstDueDate = DateTime(_moveInDate.year, _moveInDate.month + 1, selectedDueDay);
     } else {
       firstDueDate = DateTime(_moveInDate.year, _moveInDate.month, selectedDueDay);

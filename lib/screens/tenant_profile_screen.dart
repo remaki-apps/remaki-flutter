@@ -722,65 +722,75 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF8FAFC),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-                                      const Text('Deposit', style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
-                                      const SizedBox(width: 4),
-                                      Flexible(
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFF1F5F9),
-                                            borderRadius: BorderRadius.circular(6),
-                                            border: Border.all(color: const Color(0xFFE2E8F0), width: 0.5),
-                                          ),
-                                          child: const Text(
-                                            'Security',
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              fontSize: 8.5,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF64748B),
+                            child: GestureDetector(
+                              onTap: () => _showEditFinancialsDialog(context, appProvider, tenant),
+                              child: Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        const Text('Deposit', style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+                                        const SizedBox(width: 4),
+                                        Flexible(
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFF1F5F9),
+                                              borderRadius: BorderRadius.circular(6),
+                                              border: Border.all(color: const Color(0xFFE2E8F0), width: 0.5),
+                                            ),
+                                            child: const Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  'Security',
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontSize: 8.5,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Color(0xFF64748B),
+                                                  ),
+                                                ),
+                                                SizedBox(width: 2),
+                                                Icon(Icons.edit_outlined, size: 9, color: Color(0xFF64748B)),
+                                              ],
                                             ),
                                           ),
                                         ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      '₹${tenant.securityDeposit.toStringAsFixed(0)}',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                    if (tenant.statusBadgeLabel == 'BILL DUE' || tenant.statusBadgeLabel == 'RENT DUE' || (!tenant.isPaid && tenant.totalDue > 0)) ...[
+                                      const SizedBox(height: 3),
+                                      const Text(
+                                        'Refundable Deposit',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF64748B),
+                                        ),
                                       ),
                                     ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    '₹${tenant.securityDeposit.toStringAsFixed(0)}',
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF0F172A),
-                                    ),
-                                  ),
-                                  if (tenant.statusBadgeLabel == 'BILL DUE' || tenant.statusBadgeLabel == 'RENT DUE' || (!tenant.isPaid && tenant.totalDue > 0)) ...[
-                                    const SizedBox(height: 3),
-                                    const Text(
-                                      'Refundable Deposit',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700,
-                                        color: Color(0xFF64748B),
-                                      ),
-                                    ),
                                   ],
-                                ],
+                                ),
                               ),
                             ),
                           ),
@@ -1003,6 +1013,11 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                             Icons.payments_outlined,
                             tenant.foodIncluded ? 'Monthly Rent (With Food)' : 'Monthly Rent (Without Food)',
                             '₹${tenant.rentAmount.toStringAsFixed(0)}',
+                          ),
+                          _buildModernDetailItem(
+                            Icons.shield_outlined,
+                            'Security Deposit',
+                            '₹${tenant.securityDeposit.toStringAsFixed(0)}',
                           ),
                           if (tenant.statusBadgeLabel == 'BILL DUE')
                             _buildModernDetailItem(
