@@ -734,6 +734,16 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                          color: Color(0xFFEA580C),
                                        ),
                                      ),
+                                   ] else if ((tenant.isPaid || tenant.paymentStatus == 'PAID' || tenant.statusBadgeLabel == 'PAID') && tenant.totalPayableWithPlatformFee <= 0 && !tenant.isUpcoming && tenant.statusBadgeLabel != 'UPCOMING') ...[
+                                     const SizedBox(height: 3),
+                                     const Text(
+                                       'All Dues Settled',
+                                       style: TextStyle(
+                                         fontSize: 10,
+                                         fontWeight: FontWeight.w700,
+                                         color: Color(0xFF16A34A),
+                                       ),
+                                     ),
                                    ],
                                 ],
                               ),
@@ -788,17 +798,15 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                       color: Color(0xFF0F172A),
                                     ),
                                   ),
-                                  if (tenant.statusBadgeLabel == 'BILL DUE' || tenant.statusBadgeLabel == 'RENT DUE' || (!tenant.isPaid && tenant.totalDue > 0)) ...[
-                                    const SizedBox(height: 3),
-                                    const Text(
-                                      'Refundable Deposit',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700,
-                                        color: Color(0xFF64748B),
-                                      ),
+                                  const SizedBox(height: 3),
+                                  const Text(
+                                    'Refundable Deposit',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF64748B),
                                     ),
-                                  ],
+                                  ),
                                 ],
                               ),
                             ),
@@ -1046,39 +1054,72 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                           const SizedBox(height: 8),
 
                           // Highlighted Total Due Banner
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF3E8FF),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Row(
+                          Builder(
+                            builder: (context) {
+                              final bool isAllDuesSettled = (tenant.isPaid || tenant.paymentStatus == 'PAID' || tenant.statusBadgeLabel == 'PAID') &&
+                                  tenant.totalPayableWithPlatformFee <= 0 &&
+                                  tenant.totalPendingBills <= 0 &&
+                                  !tenant.isUpcoming &&
+                                  tenant.statusBadgeLabel != 'UPCOMING';
+
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                                decoration: BoxDecoration(
+                                  color: isAllDuesSettled ? const Color(0xFFF0FDF4) : const Color(0xFFF3E8FF),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: isAllDuesSettled ? Border.all(color: const Color(0xFFBBF7D0)) : null,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Icon(Icons.receipt_long_rounded, size: 20, color: Color(0xFF7C3AED)),
-                                    SizedBox(width: 10),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          isAllDuesSettled ? Icons.check_circle_rounded : Icons.receipt_long_rounded,
+                                          size: 20,
+                                          color: isAllDuesSettled ? const Color(0xFF16A34A) : const Color(0xFF7C3AED),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Text(
+                                          'Total Due',
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                            color: isAllDuesSettled ? const Color(0xFF16A34A) : const Color(0xFF7C3AED),
+                                          ),
+                                        ),
+                                        if (isAllDuesSettled) ...[
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFDCFCE7),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: const Text(
+                                              'All Dues Settled',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xFF15803D),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
                                     Text(
-                                      'Total Due',
+                                      '₹${tenant.totalPayableWithPlatformFee.toStringAsFixed(0)}',
                                       style: TextStyle(
-                                        fontSize: 15,
+                                        fontSize: 18,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xFF7C3AED),
+                                        color: isAllDuesSettled ? const Color(0xFF16A34A) : const Color(0xFF7C3AED),
                                       ),
                                     ),
                                   ],
                                 ),
-                                Text(
-                                  '₹${tenant.totalPayableWithPlatformFee.toStringAsFixed(0)}',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF7C3AED),
-                                  ),
-                                ),
-                              ],
-                            ),
+                              );
+                            },
                           ),
                         ],
                       ),
