@@ -1724,17 +1724,18 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                       Expanded(
                         child: TextField(
                           controller: amountController,
+                          readOnly: selectedType != 'PARTIAL',
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
+                            color: selectedType == 'PARTIAL' ? const Color(0xFF0F172A) : const Color(0xFF475569),
                           ),
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             border: InputBorder.none,
                             isDense: true,
                             contentPadding: EdgeInsets.zero,
-                            hintText: 'Enter amount',
+                            hintText: selectedType == 'PARTIAL' ? 'Enter partial amount' : 'Enter amount',
                           ),
                           onChanged: (_) => setSheetState(() {}),
                         ),
@@ -1758,6 +1759,18 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
+                    ChoiceChip(
+                      label: const Text('Partial Pay'),
+                      selected: selectedType == 'PARTIAL',
+                      onSelected: (val) {
+                        if (val) {
+                          setSheetState(() {
+                            selectedType = 'PARTIAL';
+                            amountController.text = '';
+                          });
+                        }
+                      },
+                    ),
                     if (hasRent && hasBills)
                       ChoiceChip(
                         label: Text('Full Dues (₹${(rentAmt + billsAmt + pFee).toStringAsFixed(0)})'),
@@ -1796,18 +1809,6 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                           }
                         },
                       ),
-                    ChoiceChip(
-                      label: const Text('Partial Pay'),
-                      selected: selectedType == 'PARTIAL',
-                      onSelected: (val) {
-                        if (val) {
-                          setSheetState(() {
-                            selectedType = 'PARTIAL';
-                            amountController.text = '';
-                          });
-                        }
-                      },
-                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
