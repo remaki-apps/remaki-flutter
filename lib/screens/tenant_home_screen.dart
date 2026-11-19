@@ -3869,7 +3869,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           rawDate: rawDate,
           rentAmount: (rAmt > cardAmount) ? cardAmount : rAmt,
           platformFee: pFee,
-          bills: null,
+          bills: allTenantBills,
           notes: notes,
         ));
         if (i < displayPayments.length - 1 || pendingMonthBills.isNotEmpty) {

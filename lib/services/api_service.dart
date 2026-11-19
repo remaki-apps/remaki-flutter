@@ -822,6 +822,7 @@ class ApiService {
               billingMonth
               platformFee
               rentAmount
+              billAmount
             }
           }
         ''';
@@ -839,6 +840,7 @@ class ApiService {
               billingMonth
               platformFee
               rentAmount
+              billAmount
             }
           }
         ''';
