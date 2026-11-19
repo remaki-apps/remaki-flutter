@@ -76,15 +76,33 @@ class _RentScreenState extends State<RentScreen> {
       return p.date.year == _selectedMonth.year && p.date.month == _selectedMonth.month;
     }).toList();
 
-    final monthRentPayments = monthPayments.where((p) {
-      final isBill = p.notes != null && p.notes!.toLowerCase().contains('bill');
-      return !isBill;
-    }).toList();
+    bool isBillPayment(Payment p) {
+      final notesLower = (p.notes ?? '').toLowerCase();
+      final hasExplicitBillKeyword = notesLower.contains('bill') ||
+          notesLower.contains('utility') ||
+          notesLower.contains('electric') ||
+          notesLower.contains('current') ||
+          notesLower.contains('water') ||
+          notesLower.contains('wifi') ||
+          notesLower.contains('eb') ||
+          notesLower.contains('maintenance') ||
+          notesLower.contains('mess') ||
+          notesLower.contains('food') ||
+          notesLower.contains('split');
+      if (hasExplicitBillKeyword) return true;
+      if (p.rentAmount <= 0 && !notesLower.contains('rent')) return true;
+      return false;
+    }
 
-    final monthBillPayments = monthPayments.where((p) {
-      final isBill = p.notes != null && p.notes!.toLowerCase().contains('bill');
-      return isBill;
-    }).toList();
+    bool isRentPayment(Payment p) {
+      final notesLower = (p.notes ?? '').toLowerCase();
+      if (p.rentAmount > 0) return true;
+      if (notesLower.contains('rent')) return true;
+      return !isBillPayment(p);
+    }
+
+    final monthRentPayments = monthPayments.where(isRentPayment).toList();
+    final monthBillPayments = monthPayments.where(isBillPayment).toList();
 
     // Filter charges for the selected month
     final allMonthCharges = <Map<String, dynamic>>[];
@@ -901,21 +919,32 @@ class _RentScreenState extends State<RentScreen> {
                     ),
                   ),
                   subtitle: Text(
-                    roomBedInfo.isNotEmpty ? roomBedInfo : 'PG Tenant',
+                    (p.notes != null && p.notes!.trim().isNotEmpty)
+                        ? (roomBedInfo.isNotEmpty ? '$roomBedInfo • ${p.notes!.trim()}' : p.notes!.trim())
+                        : (roomBedInfo.isNotEmpty ? roomBedInfo : 'PG Tenant'),
                     style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   trailing: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        '+₹${p.amount.toStringAsFixed(0)}',
-                        style: GoogleFonts.lato(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF16A34A),
-                        ),
-                      ),
+                      Builder(builder: (context) {
+                        final displayAmt = isBillsTab
+                            ? (p.rentAmount > 0 && p.amount > (p.rentAmount + p.platformFee)
+                                ? (p.amount - p.rentAmount - p.platformFee)
+                                : p.amount)
+                            : (p.rentAmount > 0 ? p.rentAmount : p.amount);
+                        return Text(
+                          '+₹${displayAmt.toStringAsFixed(0)}',
+                          style: GoogleFonts.lato(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF16A34A),
+                          ),
+                        );
+                      }),
                       const SizedBox(height: 2),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
