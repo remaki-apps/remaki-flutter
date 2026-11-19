@@ -67,6 +67,7 @@ class _RentScreenState extends State<RentScreen> {
     final bool isCurrentMonth = _selectedMonth.year == _currentMonth.year && _selectedMonth.month == _currentMonth.month;
     final selectedMonthStr = DateFormat('MMMM yyyy').format(_selectedMonth);
     final targetMonthKey = DateFormat('yyyy-MM').format(_selectedMonth);
+    final tenantMap = {for (final t in appProvider.currentTenants) t.id: t};
 
     // Filter payments for the selected month
     final monthPayments = appProvider.currentPayments.where((p) {
@@ -78,7 +79,12 @@ class _RentScreenState extends State<RentScreen> {
 
     bool isBillPayment(Payment p) {
       if (p.billAmount > 0) return true;
-      final billPortion = p.amount - p.rentAmount - p.platformFee;
+      final t = tenantMap[p.tenantId];
+      final tenantRent = t?.rentAmount ?? 0.0;
+      final effectiveRent = (p.rentAmount > 0 && p.rentAmount < p.amount)
+          ? p.rentAmount
+          : (tenantRent > 0 && tenantRent < (p.amount - p.platformFee) ? tenantRent : (p.rentAmount > 0 ? p.rentAmount : p.amount));
+      final billPortion = p.amount - effectiveRent - p.platformFee;
       if (billPortion > 0.01) return true;
       final notesLower = (p.notes ?? '').toLowerCase();
       final hasExplicitBillKeyword = notesLower.contains('bill') ||
@@ -144,7 +150,16 @@ class _RentScreenState extends State<RentScreen> {
           if (t.moveInDate.isAfter(DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1))) return sum;
           return sum + t.rentAmount;
         });
-        collectedAmount = monthRentPayments.fold(0.0, (sum, p) => sum + (p.rentAmount > 0 ? p.rentAmount : p.amount));
+        collectedAmount = monthRentPayments.fold(0.0, (sum, p) {
+          final t = tenantMap[p.tenantId];
+          final tenantRent = t?.rentAmount ?? 0.0;
+          final rAmt = (p.rentAmount > 0 && p.rentAmount < p.amount)
+              ? p.rentAmount
+              : (tenantRent > 0 && tenantRent < (p.amount - p.platformFee)
+                  ? tenantRent
+                  : (p.rentAmount > 0 ? p.rentAmount : (p.amount > p.platformFee ? p.amount - p.platformFee : p.amount)));
+          return sum + rAmt;
+        });
         expectedAmount = math.max(rentExpectedRaw, collectedAmount);
         pendingAmount = math.max(0.0, expectedAmount - collectedAmount);
         paidCount = monthRentPayments.map((p) => p.tenantId).toSet().length;
@@ -159,7 +174,17 @@ class _RentScreenState extends State<RentScreen> {
         unpaidCount = appProvider.currentTenants.where((t) => t.totalPendingBills > 0).length;
       } else {
         final billsExpectedFromCharges = allMonthCharges.fold(0.0, (sum, item) => sum + (item['charge'] as AdditionalCharge).amount);
-        final billsCollectedFromPayments = monthBillPayments.fold(0.0, (sum, p) => sum + (p.billAmount > 0 ? p.billAmount : (p.amount - p.rentAmount - p.platformFee).clamp(0.0, p.amount)));
+        final billsCollectedFromPayments = monthBillPayments.fold(0.0, (sum, p) {
+          final t = tenantMap[p.tenantId];
+          final tenantRent = t?.rentAmount ?? 0.0;
+          final rAmt = (p.rentAmount > 0 && p.rentAmount < p.amount)
+              ? p.rentAmount
+              : (tenantRent > 0 && tenantRent < (p.amount - p.platformFee)
+                  ? tenantRent
+                  : (p.rentAmount > 0 ? p.rentAmount : (p.amount > p.platformFee ? p.amount - p.platformFee : p.amount)));
+          final bAmt = (p.billAmount > 0) ? p.billAmount : (p.amount - rAmt - p.platformFee).clamp(0.0, p.amount);
+          return sum + bAmt;
+        });
         final billsCollectedFromCharges = allMonthCharges.where((item) => (item['charge'] as AdditionalCharge).status == 'PAID').fold(0.0, (sum, item) => sum + (item['charge'] as AdditionalCharge).amount);
         collectedAmount = math.max(billsCollectedFromPayments, billsCollectedFromCharges);
         expectedAmount = math.max(billsExpectedFromCharges, collectedAmount);
@@ -954,13 +979,26 @@ class _RentScreenState extends State<RentScreen> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Builder(builder: (context) {
-                        final displayAmt = isBillsTab
-                            ? (p.billAmount > 0
-                                ? p.billAmount
-                                : (p.rentAmount > 0 && p.amount > (p.rentAmount + p.platformFee)
-                                    ? (p.amount - p.rentAmount - p.platformFee)
-                                    : p.amount))
-                            : (p.rentAmount > 0 ? p.rentAmount : p.amount);
+                        final tenantRent = tenant?.rentAmount ?? 0.0;
+                        final double effectiveRent;
+                        if (p.rentAmount > 0 && p.rentAmount < p.amount) {
+                          effectiveRent = p.rentAmount;
+                        } else if (tenantRent > 0 && tenantRent < (p.amount - p.platformFee)) {
+                          effectiveRent = tenantRent;
+                        } else {
+                          effectiveRent = p.rentAmount > 0
+                              ? p.rentAmount
+                              : (p.amount > p.platformFee ? p.amount - p.platformFee : p.amount);
+                        }
+
+                        final double effectiveBill;
+                        if (p.billAmount > 0) {
+                          effectiveBill = p.billAmount;
+                        } else {
+                          effectiveBill = (p.amount - effectiveRent - p.platformFee).clamp(0.0, p.amount);
+                        }
+
+                        final displayAmt = isBillsTab ? effectiveBill : effectiveRent;
                         return Text(
                           '+₹${displayAmt.toStringAsFixed(0)}',
                           style: GoogleFonts.lato(

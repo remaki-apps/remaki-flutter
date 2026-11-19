@@ -294,6 +294,7 @@ class AppProvider with ChangeNotifier {
           billingMonth: e['billingMonth']?.toString(),
           platformFee: (e['platformFee'] as num?)?.toDouble() ?? 0.0,
           rentAmount: (e['rentAmount'] as num?)?.toDouble() ?? 0.0,
+          billAmount: (e['billAmount'] as num?)?.toDouble() ?? 0.0,
         );
       }).toList();
 
