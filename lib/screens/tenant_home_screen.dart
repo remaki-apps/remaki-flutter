@@ -3196,7 +3196,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       ],
                     ),
                   ),
-                  // Payment Options (Full vs Partial)
+                  /*
+                  // Payment Options (Full vs Partial) - Commented out per requirement: only full payment allowed
                   const SizedBox(height: 14),
                   Row(
                     children: [
@@ -3463,6 +3464,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       ),
                     ),
                   ],
+                  */
                   const SizedBox(height: 16),
 
                   // Compact / Clean Image Upload Button
