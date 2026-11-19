@@ -1640,15 +1640,15 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
             activeAmount = rentAmt + billsAmt + pFee;
           } else if (selectedType == 'RENT') {
             activeAmount = rentAmt + pFee;
-          } else {
+          } else if (selectedType == 'BILLS') {
             activeAmount = billsAmt;
           }
 
-          if (amountController.text.isEmpty) {
+          if (amountController.text.isEmpty && selectedType != 'PARTIAL') {
             amountController.text = activeAmount.toStringAsFixed(0);
           }
 
-          final enteredAmt = double.tryParse(amountController.text.trim()) ?? activeAmount;
+          final enteredAmt = double.tryParse(amountController.text.trim()) ?? 0.0;
           final viewInsets = MediaQuery.of(ctx).viewInsets.bottom;
           final navPadding = MediaQuery.of(ctx).padding.bottom;
 
@@ -1796,6 +1796,18 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                           }
                         },
                       ),
+                    ChoiceChip(
+                      label: const Text('Partial Pay'),
+                      selected: selectedType == 'PARTIAL',
+                      onSelected: (val) {
+                        if (val) {
+                          setSheetState(() {
+                            selectedType = 'PARTIAL';
+                            amountController.text = '';
+                          });
+                        }
+                      },
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -1842,7 +1854,7 @@ class _TenantProfileScreenState extends State<TenantProfileScreen> {
                                 tenant.id,
                                 enteredAmt,
                                 selectedMethod,
-                                paymentType: selectedType,
+                                paymentType: (selectedType == 'PARTIAL' || selectedType == 'BOTH') ? 'BOTH' : selectedType,
                                 paymentDate: DateTime.now(),
                               );
                               if (context.mounted) {

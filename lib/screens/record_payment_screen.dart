@@ -383,6 +383,16 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                       _paymentType == 'BILLS' && enteredAmount == billsAmt,
                                       () => _setAmountAndType(billsAmt, 'BILLS'),
                                     ),
+                                  _buildPresetChip(
+                                    'Partial Pay',
+                                    _paymentType == 'PARTIAL',
+                                    () {
+                                      setState(() {
+                                        _paymentType = 'PARTIAL';
+                                        _amountController.text = '';
+                                      });
+                                    },
+                                  ),
                                 ],
                               ),
                             ],
@@ -613,7 +623,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                         widget.tenantId,
                                         currentAmount,
                                         _paymentMethod,
-                                        paymentType: _paymentType,
+                                        paymentType: (_paymentType == 'PARTIAL' || _paymentType == 'BOTH') ? 'BOTH' : _paymentType,
                                         paymentDate: _paymentDate,
                                         notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
                                       );
