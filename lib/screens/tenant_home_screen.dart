@@ -3839,13 +3839,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         final double rAmt = (p['rentAmount'] as num?)?.toDouble() ??
             (isRentPayment ? (amount > pFee ? amount - pFee : amount) : 0.0);
 
+        final allTenantBills = (_profileData?['bills'] as List<dynamic>? ?? []);
+
         String displayTitle = 'Payment';
         if (notesStr.isNotEmpty && !notesLower.contains('approved via payment request') && !notesLower.contains('utility bills payment')) {
           displayTitle = notesStr;
         } else if (isRentPayment) {
           displayTitle = 'Rent Payment';
         } else {
-          final allTenantBills = (_profileData?['bills'] as List<dynamic>? ?? []);
           final matchingBill = allTenantBills.firstWhere(
             (b) => (((b['amount'] as num?)?.toDouble() ?? 0.0) - amount).abs() < 0.01,
             orElse: () => null,
