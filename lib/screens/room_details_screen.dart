@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../models/models.dart';
@@ -494,25 +495,23 @@ class RoomDetailsScreen extends StatelessWidget {
                   imageUrl: tenant.imageUrl,
                   radius: 14,
                 ),
-                if (tenant.statusBadgeLabel != 'UPCOMING' && !tenant.isUpcoming) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: tenant.statusBgColor,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: tenant.statusBorderColor, width: 0.5),
-                    ),
-                    child: Text(
-                      tenant.statusBadgeLabel,
-                      style: TextStyle(
-                        color: tenant.statusColor,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFBFDBFE), width: 0.8),
+                  ),
+                  child: Text(
+                    'Due ${DateFormat('dd MMM').format(tenant.rentDueDate)}',
+                    style: const TextStyle(
+                      color: Color(0xFF2563EB),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ],
+                ),
                 const SizedBox(width: 6),
                 const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8), size: 20),
               ],

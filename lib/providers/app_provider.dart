@@ -35,8 +35,11 @@ class AppProvider with ChangeNotifier {
   static const String _pgNameKey = 'sunshine_pg_name';
   static const String _adminNameKey = 'sunshine_pg_admin_name';
   static const String _pgAddressKey = 'sunshine_pg_address';
+  static const String _propertiesKey = 'sunshine_pg_properties';
+  static const String _selectedPropertyIdKey = 'sunshine_pg_selected_property_id';
 
   AppProvider({bool autoLoad = true}) {
+    loadFromStorage();
     NetworkProvider.instance.addRestoredListener(() {
       if (ApiService.isLoggedIn && ApiService.role == 'ADMIN') {
         loadFromAPI(showLoading: false);
@@ -46,7 +49,6 @@ class AppProvider with ChangeNotifier {
       loadFromAPI();
     } else {
       isLoading = false;
-      loadFromStorage();
     }
   }
 
@@ -84,6 +86,7 @@ class AppProvider with ChangeNotifier {
     } else {
       selectedPropertyId = propertyId;
     }
+    saveToStorage();
     notifyListeners();
   }
 
@@ -119,11 +122,7 @@ class AppProvider with ChangeNotifier {
     }
     lastSyncError = null;
     try {
-      final tenantsData = await ApiService.fetchTenants();
-      final roomsData = await ApiService.fetchRooms();
-      final paymentsData = await ApiService.fetchPayments();
-
-      // Fetch admin profile for dynamic PG name & multi-PG support
+      // Fetch admin profile first for dynamic PG name & multi-PG support
       if (ApiService.role == 'ADMIN') {
         final adminData = await ApiService.fetchAdminProfile();
         if (adminData != null) {
@@ -156,6 +155,10 @@ class AppProvider with ChangeNotifier {
           }
         }
       }
+
+      final tenantsData = await ApiService.fetchTenants();
+      final roomsData = await ApiService.fetchRooms();
+      final paymentsData = await ApiService.fetchPayments();
       
       rooms = roomsData.whereType<Map<String, dynamic>>().map((e) {
         final rawBeds = (e['beds'] as List<dynamic>?) ?? [];
@@ -367,6 +370,19 @@ class AppProvider with ChangeNotifier {
         pgAddress = storedPgAddress;
       }
 
+      final propertiesRaw = prefs.getString(_propertiesKey);
+      if (propertiesRaw != null) {
+        final List<dynamic> decoded = jsonDecode(propertiesRaw);
+        properties = decoded.map((e) => PropertyItem.fromJson(e as Map<String, dynamic>)).toList();
+      }
+
+      final storedPropId = prefs.getString(_selectedPropertyIdKey);
+      if (storedPropId != null && storedPropId.isNotEmpty) {
+        selectedPropertyId = storedPropId;
+      } else if (properties.isNotEmpty) {
+        selectedPropertyId = properties.first.id;
+      }
+
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading from storage: $e');
@@ -388,6 +404,12 @@ class AppProvider with ChangeNotifier {
       if (pgAddress.isNotEmpty) {
         await prefs.setString(_pgAddressKey, pgAddress);
       }
+      if (selectedPropertyId != null && selectedPropertyId!.isNotEmpty) {
+        await prefs.setString(_selectedPropertyIdKey, selectedPropertyId!);
+      }
+      if (properties.isNotEmpty) {
+        await prefs.setString(_propertiesKey, jsonEncode(properties.map((p) => p.toJson()).toList()));
+      }
     } catch (e) {
       debugPrint('Error saving to storage: $e');
     }
@@ -395,36 +417,45 @@ class AppProvider with ChangeNotifier {
 
   // Filtered rooms and tenants for currently selected PG
   List<Room> get currentRooms {
-    if (selectedPropertyId == null || properties.length <= 1) {
-      return rooms;
+    final activeId = (selectedPropertyId != null && selectedPropertyId != 'ALL')
+        ? selectedPropertyId
+        : (properties.isNotEmpty ? properties.first.id : null);
+    if (activeId != null) {
+      return rooms.where((r) => r.propertyId == activeId).toList();
     }
-    return rooms.where((r) => r.propertyId == selectedPropertyId).toList();
+    return rooms;
   }
 
   List<Tenant> get currentTenants {
-    if (selectedPropertyId == null || properties.length <= 1) {
-      return tenants;
+    final activeId = (selectedPropertyId != null && selectedPropertyId != 'ALL')
+        ? selectedPropertyId
+        : (properties.isNotEmpty ? properties.first.id : null);
+    if (activeId != null) {
+      final roomIds = currentRooms.map((r) => r.id).toSet();
+      return tenants.where((t) {
+        if (t.propertyId.isNotEmpty) {
+          return t.propertyId == activeId;
+        }
+        return t.roomId.isNotEmpty && roomIds.contains(t.roomId);
+      }).toList();
     }
-    final roomIds = currentRooms.map((r) => r.id).toSet();
-    return tenants.where((t) {
-      if (t.propertyId.isNotEmpty) {
-        return t.propertyId == selectedPropertyId;
-      }
-      return t.roomId.isNotEmpty && roomIds.contains(t.roomId);
-    }).toList();
+    return tenants;
   }
 
   List<Payment> get currentPayments {
-    if (selectedPropertyId == null || properties.length <= 1) {
-      return payments;
+    final activeId = (selectedPropertyId != null && selectedPropertyId != 'ALL')
+        ? selectedPropertyId
+        : (properties.isNotEmpty ? properties.first.id : null);
+    if (activeId != null) {
+      final currentTenantIds = currentTenants.map((t) => t.id).toSet();
+      return payments.where((p) {
+        if (p.propertyId != null && p.propertyId!.isNotEmpty) {
+          return p.propertyId == activeId;
+        }
+        return currentTenantIds.contains(p.tenantId);
+      }).toList();
     }
-    final currentTenantIds = currentTenants.map((t) => t.id).toSet();
-    return payments.where((p) {
-      if (p.propertyId != null && p.propertyId!.isNotEmpty) {
-        return p.propertyId == selectedPropertyId;
-      }
-      return currentTenantIds.contains(p.tenantId);
-    }).toList();
+    return payments;
   }
 
   int get totalBeds => currentRooms.fold(0, (sum, room) => sum + room.capacity);
@@ -862,6 +893,8 @@ class AppProvider with ChangeNotifier {
       prefs.remove(_pgNameKey);
       prefs.remove(_adminNameKey);
       prefs.remove(_pgAddressKey);
+      prefs.remove(_propertiesKey);
+      prefs.remove(_selectedPropertyIdKey);
     }).catchError((_) {});
   }
 }
