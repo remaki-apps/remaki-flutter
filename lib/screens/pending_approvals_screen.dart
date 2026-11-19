@@ -659,15 +659,24 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
           ],
           Builder(
             builder: (ctx) {
-              final Uint8List? proofBytes = _decodeValidImageBytes(req['proofImageBase64']);
-              if (proofBytes == null) return const SizedBox.shrink();
+              final bool hasProof = req['hasProofImage'] == true || _decodeValidImageBytes(req['proofImageBase64']) != null;
+              if (!hasProof) return const SizedBox.shrink();
 
               return Padding(
                 padding: const EdgeInsets.only(top: 10),
                 child: SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: () => _showImagePreviewDialog(ctx, proofBytes),
+                    onPressed: () async {
+                      Uint8List? proofBytes = _decodeValidImageBytes(req['proofImageBase64']);
+                      if (proofBytes == null) {
+                        final base64Str = await ApiService.fetchPaymentRequestProof(req['id'].toString());
+                        proofBytes = _decodeValidImageBytes(base64Str);
+                      }
+                      if (proofBytes != null && ctx.mounted) {
+                        _showImagePreviewDialog(ctx, proofBytes);
+                      }
+                    },
                     icon: const Icon(Icons.receipt_long_rounded, size: 15),
                     label: const Text('View Payment Proof', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                     style: OutlinedButton.styleFrom(
