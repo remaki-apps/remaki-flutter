@@ -122,43 +122,55 @@ class AppProvider with ChangeNotifier {
     }
     lastSyncError = null;
     try {
-      // Fetch admin profile first for dynamic PG name & multi-PG support
-      if (ApiService.role == 'ADMIN') {
-        final adminData = await ApiService.fetchAdminProfile();
-        if (adminData != null) {
-          adminName = adminData['adminName'] ?? adminData['name'] ?? '';
-          platformFee = (adminData['platformFee'] as num?)?.toDouble() ?? 9.0;
+      // Fetch admin profile, tenants, rooms, and payments concurrently in parallel
+      final adminProfileFuture = ApiService.role == 'ADMIN'
+          ? ApiService.fetchAdminProfile()
+          : Future<Map<String, dynamic>?>.value(null);
+      final tenantsFuture = ApiService.fetchTenants();
+      final roomsFuture = ApiService.fetchRooms();
+      final paymentsFuture = ApiService.fetchPayments();
 
-          final rawProps = (adminData['properties'] as List<dynamic>?) ?? [];
-          properties = rawProps
-              .whereType<Map<String, dynamic>>()
-              .map((p) => PropertyItem.fromJson(p))
-              .toList();
+      final results = await Future.wait([
+        adminProfileFuture,
+        tenantsFuture,
+        roomsFuture,
+        paymentsFuture,
+      ]);
 
-          if (properties.isNotEmpty) {
-            if (selectedPropertyId == null || selectedPropertyId == 'ALL' || !properties.any((p) => p.id == selectedPropertyId)) {
-              selectedPropertyId = properties.first.id;
-            }
-            final currentProp = properties.firstWhere(
-              (p) => p.id == selectedPropertyId,
-              orElse: () => properties.first,
-            );
-            pgName = currentProp.name;
-            platformFee = currentProp.platformFee;
-            final parts = [currentProp.address, currentProp.city, currentProp.state]
-                .where((s) => s.trim().isNotEmpty)
-                .toList();
-            pgAddress = parts.isNotEmpty ? parts.join(', ') : currentProp.address;
-          } else {
-            pgName = adminData['pgName'] ?? adminData['name'] ?? '';
-            pgAddress = adminData['pgAddress'] ?? '';
+      final adminData = results[0] as Map<String, dynamic>?;
+      final tenantsData = results[1] as List<dynamic>;
+      final roomsData = results[2] as List<dynamic>;
+      final paymentsData = results[3] as List<dynamic>;
+
+      if (adminData != null) {
+        adminName = adminData['adminName'] ?? adminData['name'] ?? '';
+        platformFee = (adminData['platformFee'] as num?)?.toDouble() ?? 9.0;
+
+        final rawProps = (adminData['properties'] as List<dynamic>?) ?? [];
+        properties = rawProps
+            .whereType<Map<String, dynamic>>()
+            .map((p) => PropertyItem.fromJson(p))
+            .toList();
+
+        if (properties.isNotEmpty) {
+          if (selectedPropertyId == null || selectedPropertyId == 'ALL' || !properties.any((p) => p.id == selectedPropertyId)) {
+            selectedPropertyId = properties.first.id;
           }
+          final currentProp = properties.firstWhere(
+            (p) => p.id == selectedPropertyId,
+            orElse: () => properties.first,
+          );
+          pgName = currentProp.name;
+          platformFee = currentProp.platformFee;
+          final parts = [currentProp.address, currentProp.city, currentProp.state]
+              .where((s) => s.trim().isNotEmpty)
+              .toList();
+          pgAddress = parts.isNotEmpty ? parts.join(', ') : currentProp.address;
+        } else {
+          pgName = adminData['pgName'] ?? adminData['name'] ?? '';
+          pgAddress = adminData['pgAddress'] ?? '';
         }
       }
-
-      final tenantsData = await ApiService.fetchTenants();
-      final roomsData = await ApiService.fetchRooms();
-      final paymentsData = await ApiService.fetchPayments();
       
       rooms = roomsData.whereType<Map<String, dynamic>>().map((e) {
         final rawBeds = (e['beds'] as List<dynamic>?) ?? [];

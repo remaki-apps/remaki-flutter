@@ -1117,10 +1117,55 @@ class ApiService {
     });
   }
 
-  static Future<List<dynamic>> fetchPendingPaymentRequests() async {
+  static Future<String> fetchPaymentRequestProof(String requestId) async {
+    const String query = '''
+      query GetPaymentProof(\$id: ID!) {
+        paymentRequestProof(id: \$id)
+      }
+    ''';
+    try {
+      final data = await performQuery(query, variables: {'id': requestId});
+      return data['paymentRequestProof']?.toString() ?? '';
+    } catch (e) {
+      debugPrint('Error fetching payment proof: \$e');
+      return '';
+    }
+  }
+
+  static Future<int> fetchPendingApprovalsCount({String? propertyId}) async {
+    const String query = '''
+      query GetPendingApprovalsCount(\$propertyId: ID) {
+        pendingPaymentRequestsCount(propertyId: \$propertyId)
+      }
+    ''';
+    try {
+      final data = await performQuery(query, variables: {'propertyId': propertyId});
+      return (data['pendingPaymentRequestsCount'] as num?)?.toInt() ?? 0;
+    } catch (e) {
+      debugPrint('Error fetching pending approvals count: \$e');
+      return 0;
+    }
+  }
+
+  static Future<int> fetchPendingComplaintsCount() async {
     const String query = '''
       query {
-        pendingPaymentRequests {
+        pendingComplaintsCount
+      }
+    ''';
+    try {
+      final data = await performQuery(query);
+      return (data['pendingComplaintsCount'] as num?)?.toInt() ?? 0;
+    } catch (e) {
+      debugPrint('Error fetching pending complaints count: \$e');
+      return 0;
+    }
+  }
+
+  static Future<List<dynamic>> fetchPendingPaymentRequests({String? propertyId}) async {
+    const String query = '''
+      query GetPendingPayments(\$propertyId: ID) {
+        pendingPaymentRequests(propertyId: \$propertyId) {
           id
           tenantProfileId
           tenantName
@@ -1128,13 +1173,14 @@ class ApiService {
           paymentType
           method
           proofImageBase64
+          hasProofImage
           description
           status
           createdAt
         }
       }
     ''';
-    final data = await performQuery(query);
+    final data = await performQuery(query, variables: {'propertyId': propertyId});
     return data['pendingPaymentRequests'] ?? [];
   }
 
