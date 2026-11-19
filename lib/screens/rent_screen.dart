@@ -152,12 +152,23 @@ class _RentScreenState extends State<RentScreen> {
         });
         collectedAmount = monthRentPayments.fold(0.0, (sum, p) {
           final t = tenantMap[p.tenantId];
-          final tenantRent = t?.rentAmount ?? 0.0;
-          final rAmt = (p.rentAmount > 0 && p.rentAmount < p.amount)
-              ? p.rentAmount
-              : (tenantRent > 0 && tenantRent < (p.amount - p.platformFee)
-                  ? tenantRent
-                  : (p.rentAmount > 0 ? p.rentAmount : (p.amount > p.platformFee ? p.amount - p.platformFee : p.amount)));
+          double rAmt = p.rentAmount;
+          double bAmt = p.billAmount;
+          final nLower = (p.notes ?? '').toLowerCase();
+          if (nLower.contains('&') && bAmt <= 0) {
+            final charges = t?.additionalCharges ?? [];
+            final matched = charges.firstWhere(
+              (c) => c.description.trim().isNotEmpty && c.description.toLowerCase().trim() != 'bill' && nLower.contains(c.description.toLowerCase().trim()),
+              orElse: () => AdditionalCharge(id: '', description: '', amount: 0, date: DateTime.now(), billType: '', status: ''),
+            );
+            if (matched.amount > 0 && matched.amount < (p.amount - p.platformFee)) {
+              bAmt = matched.amount;
+              rAmt = math.max(0.0, p.amount - p.platformFee - bAmt);
+            }
+          }
+          if (rAmt <= 0) {
+            rAmt = math.max(0.0, p.amount - p.platformFee - bAmt);
+          }
           return sum + rAmt;
         });
         expectedAmount = math.max(rentExpectedRaw, collectedAmount);
@@ -176,13 +187,18 @@ class _RentScreenState extends State<RentScreen> {
         final billsExpectedFromCharges = allMonthCharges.fold(0.0, (sum, item) => sum + (item['charge'] as AdditionalCharge).amount);
         final billsCollectedFromPayments = monthBillPayments.fold(0.0, (sum, p) {
           final t = tenantMap[p.tenantId];
-          final tenantRent = t?.rentAmount ?? 0.0;
-          final rAmt = (p.rentAmount > 0 && p.rentAmount < p.amount)
-              ? p.rentAmount
-              : (tenantRent > 0 && tenantRent < (p.amount - p.platformFee)
-                  ? tenantRent
-                  : (p.rentAmount > 0 ? p.rentAmount : (p.amount > p.platformFee ? p.amount - p.platformFee : p.amount)));
-          final bAmt = (p.billAmount > 0) ? p.billAmount : (p.amount - rAmt - p.platformFee).clamp(0.0, p.amount);
+          double bAmt = p.billAmount;
+          final nLower = (p.notes ?? '').toLowerCase();
+          if (nLower.contains('&') && bAmt <= 0) {
+            final charges = t?.additionalCharges ?? [];
+            final matched = charges.firstWhere(
+              (c) => c.description.trim().isNotEmpty && c.description.toLowerCase().trim() != 'bill' && nLower.contains(c.description.toLowerCase().trim()),
+              orElse: () => AdditionalCharge(id: '', description: '', amount: 0, date: DateTime.now(), billType: '', status: ''),
+            );
+            if (matched.amount > 0 && matched.amount < (p.amount - p.platformFee)) {
+              bAmt = matched.amount;
+            }
+          }
           return sum + bAmt;
         });
         final billsCollectedFromCharges = allMonthCharges.where((item) => (item['charge'] as AdditionalCharge).status == 'PAID').fold(0.0, (sum, item) => sum + (item['charge'] as AdditionalCharge).amount);
@@ -979,23 +995,29 @@ class _RentScreenState extends State<RentScreen> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Builder(builder: (context) {
-                        final tenantRent = tenant?.rentAmount ?? 0.0;
-                        final double effectiveRent;
-                        if (p.rentAmount > 0 && p.rentAmount < p.amount) {
-                          effectiveRent = p.rentAmount;
-                        } else if (tenantRent > 0 && tenantRent < (p.amount - p.platformFee)) {
-                          effectiveRent = tenantRent;
-                        } else {
-                          effectiveRent = p.rentAmount > 0
-                              ? p.rentAmount
-                              : (p.amount > p.platformFee ? p.amount - p.platformFee : p.amount);
+                        double effectiveBill = p.billAmount;
+                        double effectiveRent = p.rentAmount;
+
+                        final notesLower = (p.notes ?? '').toLowerCase();
+                        final bool isCombinedNote = notesLower.contains('&');
+
+                        if (isCombinedNote && effectiveBill <= 0) {
+                          final charges = tenant?.additionalCharges ?? [];
+                          final matchedCharge = charges.firstWhere(
+                            (c) {
+                              final desc = c.description.toLowerCase().trim();
+                              return desc.isNotEmpty && desc != 'bill' && desc != 'utility' && notesLower.contains(desc);
+                            },
+                            orElse: () => AdditionalCharge(id: '', description: '', amount: 0, date: DateTime.now(), billType: '', status: ''),
+                          );
+                          if (matchedCharge.amount > 0 && matchedCharge.amount < (p.amount - p.platformFee)) {
+                            effectiveBill = matchedCharge.amount;
+                            effectiveRent = math.max(0.0, p.amount - p.platformFee - effectiveBill);
+                          }
                         }
 
-                        final double effectiveBill;
-                        if (p.billAmount > 0) {
-                          effectiveBill = p.billAmount;
-                        } else {
-                          effectiveBill = (p.amount - effectiveRent - p.platformFee).clamp(0.0, p.amount);
+                        if (effectiveRent <= 0) {
+                          effectiveRent = math.max(0.0, p.amount - p.platformFee - effectiveBill);
                         }
 
                         final displayAmt = isBillsTab ? effectiveBill : effectiveRent;
