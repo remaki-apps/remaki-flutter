@@ -478,10 +478,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFEFF6FF),
+                                color: TenantTheme.primarySoft,
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Icon(Icons.receipt_long_rounded, color: Color(0xFF2563EB), size: 20),
+                              child: const Icon(Icons.receipt_long_rounded, color: TenantTheme.primary, size: 20),
                             ),
                             const SizedBox(width: 10),
                             Text(
@@ -515,9 +515,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: const Color(0xFFF7F5EF),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: TenantTheme.glassBorder),
                       ),
                       child: Column(
                         children: [
@@ -542,7 +542,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text('Session Ref:', style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF64748B))),
-                              Text(txnRef, style: GoogleFonts.lato(fontSize: 11.5, fontWeight: FontWeight.w700, color: const Color(0xFF2563EB))),
+                              Text(txnRef, style: GoogleFonts.lato(fontSize: 11.5, fontWeight: FontWeight.w700, color: TenantTheme.primary)),
                             ],
                           ),
                         ],
@@ -601,7 +601,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         hintText: 'Add optional note or UTR number...',
                         hintStyle: GoogleFonts.lato(fontSize: 12.5, color: const Color(0xFF94A3B8)),
                         filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
+                      fillColor: const Color(0xFFF7F5EF),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -1123,7 +1123,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   offset: Offset(0, 8),
                 ),
                 BoxShadow(
-                  color: Color(0x0A4F46E5),
+                  color: Color(0x0A9CAF88),
                   blurRadius: 10,
                   spreadRadius: 0,
                   offset: Offset(0, 2),
@@ -1496,10 +1496,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           width: 42,
                           height: 42,
                           decoration: BoxDecoration(
-                            color: unread > 0 ? const Color(0xFFEEF2FF) : Colors.white,
+                            color: unread > 0 ? TenantTheme.primarySoft : Colors.white,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: unread > 0 ? const Color(0xFFC7D2FE) : const Color(0xFFE2E8F0),
+                              color: unread > 0 ? TenantTheme.primaryBorder : const Color(0xFFE2E8F0),
                               width: 1.2,
                             ),
                             boxShadow: const [
@@ -1527,7 +1527,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFEF4444),
+                                      color: TenantTheme.danger,
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(color: Colors.white, width: 1.5),
                                     ),
@@ -1767,7 +1767,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                   ? TenantTheme.successBg
                                   : (isPending
                                       ? TenantTheme.warningBg
-                                      : (isUpcoming ? const Color(0xFFEFF6FF) : TenantTheme.dangerBg))),
+                                      : (isUpcoming ? TenantTheme.primarySoft : TenantTheme.dangerBg))),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: isRentPaidBillsDue
@@ -1776,7 +1776,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                     ? TenantTheme.successBorder
                                     : (isPending
                                         ? TenantTheme.warningBorder
-                                        : (isUpcoming ? const Color(0xFFBFDBFE) : TenantTheme.dangerBorder))),
+                                        : (isUpcoming ? TenantTheme.primaryBorder : TenantTheme.dangerBorder))),
                             width: 0.8,
                           ),
                         ),
@@ -1794,7 +1794,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                         ? TenantTheme.success
                                         : (isPending
                                             ? TenantTheme.warning
-                                            : (isUpcoming ? const Color(0xFF2563EB) : TenantTheme.danger))),
+                                            : (isUpcoming ? TenantTheme.primary : TenantTheme.danger))),
                               ),
                             ),
                             const SizedBox(width: 4.5),
@@ -1816,7 +1816,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                         ? TenantTheme.success
                                         : (isPending
                                             ? TenantTheme.warning
-                                            : (isUpcoming ? const Color(0xFF2563EB) : TenantTheme.danger))),
+                                            : (isUpcoming ? TenantTheme.primary : TenantTheme.danger))),
                               ),
                             ),
                           ],
@@ -1879,14 +1879,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
                             color: isRentPaidBillsDue
-                                ? const Color(0xFFEFF6FF)
+                                ? TenantTheme.dangerBg
                                 : (isPaid
                                     ? TenantTheme.surface
                                     : (isPending ? TenantTheme.warningBg : TenantTheme.primarySoft)),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: isRentPaidBillsDue
-                                  ? const Color(0xFFBFDBFE)
+                                  ? TenantTheme.dangerBorder
                                   : (isPaid
                                       ? TenantTheme.glassBorder
                                       : (isPending ? TenantTheme.warningBorder : TenantTheme.primaryBorder)),
@@ -1904,7 +1904,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w700,
                                   color: isRentPaidBillsDue
-                                      ? const Color(0xFF2563EB)
+                                      ? TenantTheme.danger
                                       : (isPaid
                                           ? TenantTheme.textSecondary
                                           : (isPending ? TenantTheme.warning : TenantTheme.primary)),
@@ -1917,7 +1917,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                     : (isPending ? Icons.hourglass_top_rounded : Icons.arrow_forward_rounded),
                                 size: 13,
                                 color: isRentPaidBillsDue
-                                    ? const Color(0xFF2563EB)
+                                    ? TenantTheme.danger
                                     : (isPaid
                                         ? TenantTheme.textSecondary
                                         : (isPending ? TenantTheme.warning : TenantTheme.primary)),
@@ -2459,7 +2459,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             width: double.infinity,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF281E99), Color(0xFF3722D3), Color(0xFF5034EA)],
+                colors: TenantTheme.heroGradient,
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -2467,12 +2467,12 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               border: Border.all(color: Colors.white.withValues(alpha: 0.22), width: 1.2),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF5034EA).withValues(alpha: 0.32),
+                  color: TenantTheme.primary.withValues(alpha: 0.28),
                   blurRadius: 22,
                   offset: const Offset(0, 10),
                 ),
                 BoxShadow(
-                  color: const Color(0xFF281E99).withValues(alpha: 0.20),
+                  color: TenantTheme.primaryDark.withValues(alpha: 0.20),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -2561,7 +2561,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                               ? const Color(0xFFF59E0B).withValues(alpha: 0.32)
                                               : (isUpcoming
                                                   ? Colors.white.withValues(alpha: 0.18)
-                                                  : const Color(0xFFEF4444).withValues(alpha: 0.32)))),
+                                                  : TenantTheme.danger.withValues(alpha: 0.32)))),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
                                     color: isRentPaidBillsDue
@@ -2571,8 +2571,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                             : (isPending
                                                 ? const Color(0xFFFDE68A).withValues(alpha: 0.7)
                                                 : (isUpcoming
-                                                    ? const Color(0xFF93C5FD).withValues(alpha: 0.7)
-                                                    : const Color(0xFFFCA5A5).withValues(alpha: 0.6)))),
+                                                    ? TenantTheme.primaryBorder.withValues(alpha: 0.8)
+                                                    : TenantTheme.dangerBorder.withValues(alpha: 0.6)))),
                                     width: 1,
                                   ),
                                 ),
@@ -2597,8 +2597,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                               : (isPending
                                                   ? const Color(0xFFFDE68A)
                                                   : (isUpcoming
-                                                      ? const Color(0xFFBFDBFE)
-                                                      : const Color(0xFFFECACA)))),
+                                                      ? TenantTheme.primaryBorder
+                                                      : TenantTheme.dangerBorder))),
                                     ),
                                     const SizedBox(width: 4),
                                     Flexible(
@@ -2682,8 +2682,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                                 : (isPending
                                                     ? const Color(0xFFFDE68A)
                                                     : (isUpcoming
-                                                        ? const Color(0xFFBFDBFE)
-                                                        : const Color(0xFFFCA5A5)))),
+                                                        ? TenantTheme.primaryBorder
+                                                        : TenantTheme.dangerBorder))),
                                       ),
                                       const SizedBox(width: 5),
                                       Expanded(
@@ -2823,14 +2823,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFFFF1F2), Color(0xFFFFE4E6)],
+                  colors: [Color(0xFFFEF5F4), TenantTheme.dangerBg],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFFECDD3), width: 1.2),
+                border: Border.all(color: TenantTheme.dangerBorder, width: 1.2),
                 boxShadow: const [
-                  BoxShadow(color: Color(0x0DE11D48), blurRadius: 12, offset: Offset(0, 4)),
+                  BoxShadow(color: Color(0x0DE3412C), blurRadius: 12, offset: Offset(0, 4)),
                 ],
               ),
               child: Column(
@@ -2841,10 +2841,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: const BoxDecoration(
-                          color: Color(0xFFFFE4E6),
+                          color: Color(0xFFFDDCD7),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.gpp_bad_rounded, color: Color(0xFFE11D48), size: 20),
+                        child: const Icon(Icons.gpp_bad_rounded, color: TenantTheme.danger, size: 20),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -2855,7 +2855,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               'Payment Proof Rejected',
                               style: GoogleFonts.lato(
                                 fontSize: 14.5,
-                                color: const Color(0xFF9F1239),
+                                color: Color(0xFF8B1E12),
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -2863,7 +2863,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               'Re-upload proof below to resubmit for approval',
                               style: GoogleFonts.lato(
                                 fontSize: 11.5,
-                                color: const Color(0xFFBE123C),
+                                color: Color(0xFFB52B1B),
                               ),
                             ),
                           ],
@@ -2873,16 +2873,16 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFE4E6),
+                          color: TenantTheme.dangerBg,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFFDA4AF)),
+                          border: Border.all(color: TenantTheme.dangerBorder),
                         ),
                         child: Text(
                           'Rejected',
                           style: GoogleFonts.lato(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFFE11D48),
+                            color: TenantTheme.danger,
                           ),
                         ),
                       ),
@@ -2895,12 +2895,12 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.8),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFFECDD3)),
+                      border: Border.all(color: TenantTheme.dangerBorder),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFFE11D48), size: 16),
+                        const Icon(Icons.chat_bubble_outline_rounded, color: TenantTheme.danger, size: 16),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Column(
@@ -2911,7 +2911,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 style: GoogleFonts.lato(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF9F1239),
+                                  color: Color(0xFF8B1E12),
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -2919,7 +2919,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 _rejectionReason!,
                                 style: GoogleFonts.lato(
                                   fontSize: 12.5,
-                                  color: const Color(0xFF4C0519),
+                                  color: Color(0xFF5A140B),
                                   fontWeight: FontWeight.w600,
                                   height: 1.35,
                                 ),
@@ -3054,10 +3054,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFEE2E2),
+                                color: TenantTheme.dangerBg,
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFFEF4444), size: 18),
+                              child: const Icon(Icons.account_balance_wallet_rounded, color: TenantTheme.danger, size: 18),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
@@ -3093,16 +3093,16 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFEE2E2),
+                          color: TenantTheme.dangerBg,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFFECACA), width: 0.8),
+                          border: Border.all(color: TenantTheme.dangerBorder, width: 0.8),
                         ),
                         child: Text(
                           'Action Required',
                           style: GoogleFonts.lato(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFFDC2626),
+                            color: TenantTheme.danger,
                           ),
                         ),
                       ),
@@ -3114,7 +3114,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: const Color(0xFFF7F5EF),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: const Color(0xFFEDF2F7), width: 1),
                     ),
@@ -3203,7 +3203,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             height: 44,
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             decoration: BoxDecoration(
-                              color: !_isPartialPayment ? TenantTheme.primary.withValues(alpha: 0.08) : const Color(0xFFF8FAFC),
+                                color: !_isPartialPayment ? TenantTheme.primary.withValues(alpha: 0.08) : const Color(0xFFF7F5EF),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: !_isPartialPayment ? TenantTheme.primary : const Color(0xFFE2E8F0),
@@ -3248,7 +3248,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             height: 44,
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             decoration: BoxDecoration(
-                              color: _isPartialPayment ? TenantTheme.primary.withValues(alpha: 0.08) : const Color(0xFFF8FAFC),
+                                color: _isPartialPayment ? TenantTheme.primary.withValues(alpha: 0.08) : const Color(0xFFF7F5EF),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: _isPartialPayment ? TenantTheme.primary : const Color(0xFFE2E8F0),
@@ -3287,7 +3287,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: const Color(0xFFF7F5EF),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: TenantTheme.primary.withValues(alpha: 0.3), width: 1.2),
                       ),
@@ -3410,7 +3410,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text('Platform Convenience Fee:', style: GoogleFonts.lato(fontSize: 11.5, color: const Color(0xFF64748B), fontWeight: FontWeight.w600)),
-                                            Text('₹${feeToAdd.toStringAsFixed(0)}', style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF0EA5E9))),
+                                            Text('₹${feeToAdd.toStringAsFixed(0)}', style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700, color: TenantTheme.primary)),
                                           ],
                                         ),
                                         const Divider(height: 10, color: Color(0xFFF1F5F9)),
@@ -3433,7 +3433,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                       style: GoogleFonts.lato(
                                         fontSize: 11.5,
                                         fontWeight: FontWeight.w600,
-                                        color: isOverpaying ? const Color(0xFFDC2626) : const Color(0xFF64748B),
+                                        color: isOverpaying ? TenantTheme.danger : const Color(0xFF64748B),
                                       ),
                                     ),
                                     Text(
@@ -3441,7 +3441,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                       style: GoogleFonts.lato(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w800,
-                                        color: isOverpaying ? const Color(0xFFDC2626) : const Color(0xFF0F172A),
+                                        color: isOverpaying ? TenantTheme.danger : const Color(0xFF0F172A),
                                       ),
                                     ),
                                   ],
@@ -3464,12 +3464,12 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       decoration: BoxDecoration(
                         color: _isImageLoading
                             ? const Color(0xFFF1F5F9)
-                            : (_selectedImageBytes != null ? const Color(0xFFF0FDF4) : const Color(0xFFF5F7FD)),
+                            : (_selectedImageBytes != null ? const Color(0xFFF0FDF4) : TenantTheme.background),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: _isImageLoading
                               ? const Color(0xFFCBD5E1)
-                              : (_selectedImageBytes != null ? const Color(0xFF86EFAC) : const Color(0xFFC7D2FE)),
+                              : (_selectedImageBytes != null ? const Color(0xFF86EFAC) : TenantTheme.primaryBorder),
                           width: 1.2,
                         ),
                       ),
@@ -3554,9 +3554,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     title: _selectedImageBytes != null ? 'Updating Screenshot Proof...' : 'Uploading UPI Screenshot...',
                     subtitle: 'Compressing and optimizing proof...',
                     gradientColors: const [
-                      Color(0xFF4F46E5),
-                      Color(0xFF6366F1),
-                      Color(0xFF06B6D4),
+                      Color(0xFF758A63),
+                      Color(0xFF9CAF88),
+                      Color(0xFFAEC09C),
                     ],
                     margin: const EdgeInsets.only(top: 10),
                   ),
@@ -3613,7 +3613,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       isDense: true,
                       filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
+                      fillColor: const Color(0xFFF7F5EF),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
@@ -3637,7 +3637,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(14),
                       gradient: const LinearGradient(
-                        colors: [TenantTheme.primary, Color(0xFF4338CA)],
+                        colors: [TenantTheme.primary, TenantTheme.primaryDark],
                       ),
                       boxShadow: [
                         BoxShadow(
@@ -3780,9 +3780,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         statusColor = TenantTheme.warning;
       } else if (_profileData?['paymentStatus'] == 'UPCOMING') {
         statusBadge = 'UPCOMING';
-        statusBg = const Color(0xFFEFF6FF);
-        statusBorder = const Color(0xFFBFDBFE);
-        statusColor = const Color(0xFF2563EB);
+        statusBg = TenantTheme.primarySoft;
+        statusBorder = TenantTheme.primaryBorder;
+        statusColor = TenantTheme.primary;
       } else if (_totalDue > 0) {
         statusBadge = 'DUE';
         statusBg = TenantTheme.dangerBg;
@@ -3801,9 +3801,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       statusColor = const Color(0xFF64748B);
     } else {
       statusBadge = 'UPCOMING';
-      statusBg = const Color(0xFFEFF6FF);
-      statusBorder = const Color(0xFFBFDBFE);
-      statusColor = const Color(0xFF2563EB);
+      statusBg = TenantTheme.primarySoft;
+      statusBorder = TenantTheme.primaryBorder;
+      statusColor = TenantTheme.primary;
     }
 
     final List<Widget> transactionWidgets = [];
@@ -4037,10 +4037,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6.5, vertical: 2),
                               decoration: BoxDecoration(
-                                color: isCurrentMonth ? const Color(0xFFEEF2FF) : const Color(0xFFF1F5F9),
+                                color: isCurrentMonth ? TenantTheme.primarySoft : const Color(0xFFF7F5EF),
                                 borderRadius: BorderRadius.circular(6),
                                 border: Border.all(
-                                  color: isCurrentMonth ? const Color(0xFFC7D2FE) : const Color(0xFFE2E8F0),
+                                  color: isCurrentMonth ? TenantTheme.primaryBorder : const Color(0xFFE5E2D9),
                                   width: 0.6,
                                 ),
                               ),
@@ -4049,7 +4049,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 style: GoogleFonts.lato(
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.w700,
-                                  color: isCurrentMonth ? const Color(0xFF4F46E5) : const Color(0xFF64748B),
+                                  color: isCurrentMonth ? TenantTheme.primary : const Color(0xFF64748B),
                                 ),
                               ),
                             ),
@@ -4222,7 +4222,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 11),
                       decoration: const BoxDecoration(
-                        color: Color(0xFFF8FAFC),
+                        color: Color(0xFFF7F5EF),
                         borderRadius: BorderRadius.vertical(bottom: Radius.circular(18)),
                         border: Border(top: BorderSide(color: Color(0xFFF1F5F9), width: 1)),
                       ),
@@ -4388,14 +4388,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                         ? TenantTheme.primarySoft
                                         : (isCash
                                             ? const Color(0xFFFEF3C7)
-                                            : (isBank ? const Color(0xFFE0F2FE) : const Color(0xFFF1F5F9))),
+                                            : (isBank ? const Color(0xFFEFF3EB) : const Color(0xFFF7F5EF))),
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(
                                       color: isUPI
                                           ? TenantTheme.primaryBorder.withValues(alpha: 0.6)
                                           : (isCash
                                               ? const Color(0xFFFDE68A)
-                                              : (isBank ? const Color(0xFFBAE6FD) : const Color(0xFFE2E8F0))),
+                                              : (isBank ? TenantTheme.primaryBorder : const Color(0xFFE5E2D9))),
                                       width: 0.8,
                                     ),
                                   ),
@@ -4409,7 +4409,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                           ? TenantTheme.primary
                                           : (isCash
                                               ? const Color(0xFFB45309)
-                                              : (isBank ? const Color(0xFF0284C7) : const Color(0xFF64748B))),
+                                              : (isBank ? TenantTheme.primary : const Color(0xFF64748B))),
                                     ),
                                   ),
                                 ),
@@ -4418,10 +4418,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                                 decoration: BoxDecoration(
-                                  color: isSuccess ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2),
+                                  color: isSuccess ? const Color(0xFFECFDF5) : TenantTheme.dangerBg,
                                   borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
-                                    color: isSuccess ? const Color(0xFFA7F3D0) : const Color(0xFFFECACA),
+                                    color: isSuccess ? const Color(0xFFA7F3D0) : TenantTheme.dangerBorder,
                                     width: 0.8,
                                   ),
                                 ),
@@ -4431,7 +4431,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                     fontSize: 9,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: 0.3,
-                                    color: isSuccess ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                                    color: isSuccess ? const Color(0xFF10B981) : TenantTheme.danger,
                                   ),
                                 ),
                               ),
@@ -4535,7 +4535,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: const Color(0xFFF7F5EF),
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
@@ -5189,8 +5189,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               width: double.infinity,
               height: 52,
               borderRadius: 16,
-              customGlassFill: const Color(0xFFEEF2FF),
-              customBorderColor: const Color(0xFFC7D2FE),
+              customGlassFill: TenantTheme.primarySoft,
+              customBorderColor: TenantTheme.primaryBorder,
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
@@ -5204,14 +5204,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.sync_rounded, color: Color(0xFF4F46E5), size: 18),
+                      const Icon(Icons.sync_rounded, color: TenantTheme.primary, size: 18),
                       const SizedBox(width: 8),
                       Text(
                         'Refresh App / Clear Web Cache',
                         style: GoogleFonts.lato(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF4F46E5),
+                          color: TenantTheme.primary,
                         ),
                       ),
                     ],
@@ -5227,11 +5227,11 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             width: double.infinity,
             height: 52,
             borderRadius: 16,
-            customGlassFill: const Color(0xFFFEF2F2),
-            customBorderColor: const Color(0xFFFECACA),
+            customGlassFill: TenantTheme.dangerBg,
+            customBorderColor: TenantTheme.dangerBorder,
             customShadow: const [
               BoxShadow(
-                color: Color(0x06EF4444),
+                color: Color(0x06E3412C),
                 blurRadius: 10,
                 offset: Offset(0, 3),
               ),
@@ -5463,7 +5463,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
     return _buildGlassContainer(
       borderRadius: 20,
-      customBorderColor: isExpanded ? const Color(0xFF6366F1).withValues(alpha: 0.85) : TenantTheme.glassBorder,
+      customBorderColor: isExpanded ? TenantTheme.primaryBorder.withValues(alpha: 0.85) : TenantTheme.glassBorder,
       customShadow: [
         BoxShadow(
           color: const Color(0x0A0F172A),
@@ -5471,7 +5471,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           offset: Offset(0, isExpanded ? 6 : 3),
         ),
         BoxShadow(
-          color: isExpanded ? const Color(0x146366F1) : const Color(0x040F172A),
+          color: isExpanded ? TenantTheme.primary.withValues(alpha: 0.08) : const Color(0x040F172A),
           blurRadius: 4,
           offset: const Offset(0, 1),
         ),
@@ -5490,19 +5490,19 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: isExpanded ? const Color(0xFF6366F1) : const Color(0xFFEEF2FF),
+                        color: isExpanded ? TenantTheme.primary : TenantTheme.primarySoft,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: isExpanded
                             ? [
                                 BoxShadow(
-                                  color: const Color(0xFF6366F1).withValues(alpha: 0.28),
+                                  color: TenantTheme.primary.withValues(alpha: 0.28),
                                   blurRadius: 8,
                                   offset: const Offset(0, 3),
                                 ),
                               ]
                             : null,
                       ),
-                      child: Icon(Icons.pin_outlined, color: isExpanded ? Colors.white : const Color(0xFF6366F1), size: 19),
+                      child: Icon(Icons.pin_outlined, color: isExpanded ? Colors.white : TenantTheme.primary, size: 19),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -5567,10 +5567,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: isExpanded ? const Color(0xFFEEF2FF) : const Color(0xFFF1F5F9),
+                        color: isExpanded ? TenantTheme.primarySoft : const Color(0xFFF7F5EF),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isExpanded ? const Color(0xFFC7D2FE) : const Color(0xFFE2E8F0),
+                          color: isExpanded ? TenantTheme.primaryBorder : const Color(0xFFE5E2D9),
                           width: 0.8,
                         ),
                       ),
@@ -5580,7 +5580,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         curve: Curves.easeInOutCubic,
                         child: Icon(
                           Icons.keyboard_arrow_down_rounded,
-                          color: isExpanded ? const Color(0xFF6366F1) : const Color(0xFF64748B),
+                          color: isExpanded ? TenantTheme.primary : const Color(0xFF64748B),
                           size: 20,
                         ),
                       ),
@@ -5642,7 +5642,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         onPressed: () => setState(() => _obscureTenantPin = !_obscureTenantPin),
                       ),
                       filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
+                      fillColor: const Color(0xFFF7F5EF),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -5654,7 +5654,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFF6366F1), width: 1.5),
+                        borderSide: const BorderSide(color: TenantTheme.primary, width: 1.5),
                       ),
                     ),
                   ),
@@ -5690,7 +5690,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         onPressed: () => setState(() => _obscureTenantConfirmPin = !_obscureTenantConfirmPin),
                       ),
                       filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
+                      fillColor: const Color(0xFFF7F5EF),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -5702,7 +5702,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFF6366F1), width: 1.5),
+                        borderSide: const BorderSide(color: TenantTheme.primary, width: 1.5),
                       ),
                     ),
                   ),
@@ -5711,20 +5711,20 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFEF2F2),
+                        color: TenantTheme.dangerBg,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFFECACA)),
+                        border: Border.all(color: TenantTheme.dangerBorder),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline_rounded, color: Color(0xFFDC2626), size: 16),
+                          const Icon(Icons.error_outline_rounded, color: TenantTheme.danger, size: 16),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               _securityPinError!,
                               style: GoogleFonts.lato(
                                 fontSize: 12,
-                                color: const Color(0xFFDC2626),
+                                color: TenantTheme.danger,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -5740,7 +5740,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     child: ElevatedButton(
                       onPressed: _isUpdatingPin ? null : _handleTenantUpdateSecurityPin,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6366F1),
+                        backgroundColor: TenantTheme.primary,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
@@ -5987,7 +5987,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         onPressed: () => setState(() => _obscureTenantNewPassword = !_obscureTenantNewPassword),
                       ),
                       filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
+                      fillColor: const Color(0xFFF7F5EF),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -6029,7 +6029,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         onPressed: () => setState(() => _obscureTenantConfirmPassword = !_obscureTenantConfirmPassword),
                       ),
                       filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
+                      fillColor: const Color(0xFFF7F5EF),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -6050,20 +6050,20 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFEF2F2),
+                        color: TenantTheme.dangerBg,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFFECACA)),
+                        border: Border.all(color: TenantTheme.dangerBorder),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline_rounded, color: Color(0xFFDC2626), size: 16),
+                          const Icon(Icons.error_outline_rounded, color: TenantTheme.danger, size: 16),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               _changePasswordError!,
                               style: GoogleFonts.lato(
                                 fontSize: 12,
-                                color: const Color(0xFFDC2626),
+                                color: TenantTheme.danger,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -6133,7 +6133,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: const Color(0xFFF7F5EF),
                 borderRadius: BorderRadius.circular(9),
                 border: Border.all(color: const Color(0xFFF1F5F9)),
               ),
