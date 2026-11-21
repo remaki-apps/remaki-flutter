@@ -81,8 +81,8 @@ class OrgPropertiesScreen extends StatelessWidget {
   }
 
   Widget _buildPropertyCard(OrganizationPropertyItem prop) {
-    final double occupancyRate = prop.totalBeds > 0 ? (prop.occupiedBeds / prop.totalBeds) : 0.0;
-    final int percent = (occupancyRate * 100).toInt();
+    final double occupancyRate = prop.totalBeds > 0 ? (prop.occupiedBeds / prop.totalBeds).clamp(0.0, 1.0) : 0.0;
+    final int percent = (occupancyRate * 100).round();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -166,12 +166,16 @@ class OrgPropertiesScreen extends StatelessWidget {
                 'Managed by: ',
                 style: GoogleFonts.lato(fontSize: 12.5, color: const Color(0xFF64748B)),
               ),
-              Text(
-                prop.adminName,
-                style: GoogleFonts.lato(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryDark,
+              Flexible(
+                child: Text(
+                  prop.adminName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.lato(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.primaryDark,
+                  ),
                 ),
               ),
               const SizedBox(width: 6),
@@ -228,12 +232,15 @@ class OrgPropertiesScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(
-            value,
-            style: GoogleFonts.lato(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.primaryDark,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: GoogleFonts.lato(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.primaryDark,
+              ),
             ),
           ),
           const SizedBox(height: 2),

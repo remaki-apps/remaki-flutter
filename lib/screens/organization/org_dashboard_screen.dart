@@ -356,8 +356,8 @@ class _OrgDashboardScreenState extends State<OrgDashboardScreen> {
   }
 
   Widget _buildOccupancyCard(metrics) {
-    final double rate = metrics.occupancyRate;
-    final int percent = (rate * 100).toInt();
+    final double rate = (metrics.occupancyRate as double).clamp(0.0, 1.0);
+    final int percent = (rate * 100).round();
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -512,12 +512,15 @@ class _OrgDashboardScreenState extends State<OrgDashboardScreen> {
   Widget _buildFinancialItem(String label, String amount, Color color) {
     return Column(
       children: [
-        Text(
-          amount,
-          style: GoogleFonts.lato(
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-            color: color,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            amount,
+            style: GoogleFonts.lato(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
           ),
         ),
         const SizedBox(height: 2),
@@ -534,6 +537,7 @@ class _OrgDashboardScreenState extends State<OrgDashboardScreen> {
   }
 
   Widget _buildAdminTile(admin) {
+    final trimmedName = admin.displayName.toString().trim();
     return GestureDetector(
       onTap: () => context.push('/org_admin_details/${admin.id}'),
       child: Container(
@@ -549,7 +553,7 @@ class _OrgDashboardScreenState extends State<OrgDashboardScreen> {
               radius: 22,
               backgroundColor: admin.isActive ? AppTheme.accentColor : const Color(0xFFF1F5F9),
               child: Text(
-                admin.displayName.isNotEmpty ? admin.displayName[0].toUpperCase() : 'A',
+                trimmedName.isNotEmpty ? trimmedName[0].toUpperCase() : 'A',
                 style: GoogleFonts.lato(
                   fontWeight: FontWeight.w800,
                   fontSize: 16,

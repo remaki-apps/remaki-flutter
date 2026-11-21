@@ -22,6 +22,17 @@ class _OrgAdminDetailsScreenState extends State<OrgAdminDetailsScreen> {
   bool _isTogglingStatus = false;
   bool _isDeleting = false;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<OrganizationProvider>();
+      if (provider.admins.isEmpty) {
+        provider.loadFromAPI(showLoading: false);
+      }
+    });
+  }
+
   OrganizationAdminSummary? _getAdmin(OrganizationProvider provider) {
     try {
       return provider.admins.firstWhere((a) => a.id == widget.adminId);
@@ -152,6 +163,12 @@ class _OrgAdminDetailsScreenState extends State<OrgAdminDetailsScreen> {
     final admin = _getAdmin(orgProvider);
 
     if (admin == null) {
+      if (orgProvider.isLoading) {
+        return const Scaffold(
+          backgroundColor: AppTheme.backgroundColor,
+          body: Center(child: CircularProgressIndicator(color: AppTheme.primaryColor)),
+        );
+      }
       return Scaffold(
         appBar: AppBar(title: const Text('Admin Details')),
         body: const Center(child: Text('Admin not found.')),
@@ -161,6 +178,7 @@ class _OrgAdminDetailsScreenState extends State<OrgAdminDetailsScreen> {
     final String createdDate = admin.createdAt.isNotEmpty
         ? DateFormat('dd MMM yyyy').format(DateTime.tryParse(admin.createdAt) ?? DateTime.now())
         : 'N/A';
+    final trimmedName = admin.displayName.trim();
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
@@ -183,7 +201,12 @@ class _OrgAdminDetailsScreenState extends State<OrgAdminDetailsScreen> {
           IconButton(
             icon: const Icon(Icons.edit_outlined, color: AppTheme.primaryColor),
             tooltip: 'Edit Admin',
-            onPressed: () => context.push('/org_edit_admin/${admin.id}'),
+            onPressed: () async {
+              final provider = context.read<OrganizationProvider>();
+              await context.push('/org_edit_admin/${admin.id}');
+              if (!mounted) return;
+              provider.loadFromAPI(showLoading: false);
+            },
           ),
         ],
       ),
@@ -208,7 +231,7 @@ class _OrgAdminDetailsScreenState extends State<OrgAdminDetailsScreen> {
                       radius: 36,
                       backgroundColor: admin.isActive ? AppTheme.accentColor : const Color(0xFFF1F5F9),
                       child: Text(
-                        admin.displayName.isNotEmpty ? admin.displayName[0].toUpperCase() : 'A',
+                        trimmedName.isNotEmpty ? trimmedName[0].toUpperCase() : 'A',
                         style: GoogleFonts.lato(
                           fontSize: 28,
                           fontWeight: FontWeight.w800,
@@ -287,7 +310,7 @@ class _OrgAdminDetailsScreenState extends State<OrgAdminDetailsScreen> {
                       'Beds',
                       '${admin.occupiedBeds}/${admin.totalBeds}',
                       Icons.bed_rounded,
-                      subtitle: '${(admin.occupancyRate * 100).toInt()}% occupied',
+                      subtitle: '${(admin.occupancyRate.clamp(0.0, 1.0) * 100).round()}% occupied',
                     ),
                   ),
                 ],
@@ -488,23 +511,29 @@ class _OrgAdminDetailsScreenState extends State<OrgAdminDetailsScreen> {
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: const Color(0xFF94A3B8)),
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Icon(icon, size: 18, color: const Color(0xFF94A3B8)),
+        ),
         const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: GoogleFonts.lato(fontSize: 11.5, color: const Color(0xFF64748B))),
-            const SizedBox(height: 1),
-            Text(
-              value,
-              style: GoogleFonts.lato(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.primaryDark,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: GoogleFonts.lato(fontSize: 11.5, color: const Color(0xFF64748B))),
+              const SizedBox(height: 1),
+              Text(
+                value,
+                style: GoogleFonts.lato(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.primaryDark,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );

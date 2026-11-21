@@ -353,6 +353,10 @@ class _OrgCreateAdminScreenState extends State<OrgCreateAdminScreen> {
                               child: TextFormField(
                                 controller: _floorsController,
                                 keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(3),
+                                ],
                                 style: GoogleFonts.lato(fontSize: 14),
                                 decoration: _buildInputDecoration(
                                   label: 'Total Floors',

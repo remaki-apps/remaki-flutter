@@ -489,11 +489,19 @@ final router = GoRouter(
       path: '/org_admin_success',
       pageBuilder: (context, state) {
         final extra = state.extra is Map ? (state.extra as Map) : {};
+        final payload = extra['payload'] as AdminCreatedPayload?;
+        if (payload == null) {
+          return _buildPageWithTransition(
+            context: context,
+            state: state,
+            child: const OrgAdminsScreen(),
+          );
+        }
         return _buildPageWithTransition(
           context: context,
           state: state,
           child: OrgAdminSuccessScreen(
-            payload: extra['payload'] as AdminCreatedPayload,
+            payload: payload,
             propertyName: (extra['propertyName'] as String?) ?? '',
           ),
         );

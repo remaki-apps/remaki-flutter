@@ -192,6 +192,7 @@ class _OrgAdminsScreenState extends State<OrgAdminsScreen> {
   }
 
   Widget _buildAdminCard(BuildContext context, OrganizationAdminSummary admin) {
+    final trimmedName = admin.displayName.trim();
     return GestureDetector(
       onTap: () => context.push('/org_admin_details/${admin.id}'),
       child: Container(
@@ -221,7 +222,7 @@ class _OrgAdminsScreenState extends State<OrgAdminsScreen> {
                   radius: 24,
                   backgroundColor: admin.isActive ? AppTheme.accentColor : const Color(0xFFF1F5F9),
                   child: Text(
-                    admin.displayName.isNotEmpty ? admin.displayName[0].toUpperCase() : 'A',
+                    trimmedName.isNotEmpty ? trimmedName[0].toUpperCase() : 'A',
                     style: GoogleFonts.lato(
                       fontWeight: FontWeight.w800,
                       fontSize: 18,
@@ -325,12 +326,12 @@ class _OrgAdminsScreenState extends State<OrgAdminsScreen> {
             const SizedBox(height: 8),
 
             // Row 3: Operational Breakdown Pills
-            Row(
+            Wrap(
+              spacing: 12,
+              runSpacing: 6,
               children: [
                 _buildMiniStat(Icons.door_front_door_outlined, '${admin.totalRooms} Rooms'),
-                const SizedBox(width: 14),
                 _buildMiniStat(Icons.bed_outlined, '${admin.occupiedBeds}/${admin.totalBeds} Beds'),
-                const SizedBox(width: 14),
                 _buildMiniStat(Icons.people_outline_rounded, '${admin.totalTenants} Tenants'),
               ],
             ),
