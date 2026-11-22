@@ -165,14 +165,36 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
     modalSetState(() => _isSending = true);
     try {
       String? imageBase64;
+      String? r2PublicUrl;
       if (_selectedImageBytes != null) {
-        imageBase64 = 'data:image/jpeg;base64,${base64Encode(_selectedImageBytes!)}';
+        try {
+          final presigned = await ApiService.getPresignedUploadUrl(
+            folder: 'announcements',
+            fileName: 'announcement_${DateTime.now().millisecondsSinceEpoch}.jpg',
+            contentType: 'image/jpeg',
+          );
+          final uploadUrl = presigned['uploadUrl']?.toString();
+          final publicUrl = presigned['publicUrl']?.toString();
+          if (uploadUrl != null && publicUrl != null && !uploadUrl.contains('mock-presigned=true')) {
+            final ok = await ApiService.uploadBytesToR2(uploadUrl, _selectedImageBytes!, 'image/jpeg');
+            if (ok) {
+              r2PublicUrl = publicUrl;
+            }
+          }
+        } catch (e) {
+          debugPrint('[Announcement] Storage upload bypassed, fallback to base64: $e');
+        }
+
+        if (r2PublicUrl == null) {
+          imageBase64 = 'data:image/jpeg;base64,${base64Encode(_selectedImageBytes!)}';
+        }
       }
 
       await ApiService.createAnnouncement(
         heading: _headingCtrl.text.trim(),
         description: _descCtrl.text.trim(),
         imageBase64: imageBase64,
+        imageUrl: r2PublicUrl,
         durationDays: _selectedDurationDays,
       );
 

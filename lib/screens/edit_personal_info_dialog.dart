@@ -143,9 +143,30 @@ class _EditPersonalInfoDialogState extends State<EditPersonalInfoDialog> {
     setState(() => _isLoading = true);
 
     try {
+      String? publicUrl;
       String? base64Image;
       if (_selectedImageBytes != null) {
-        base64Image = 'data:image/jpeg;base64,${base64Encode(_selectedImageBytes!)}';
+        try {
+          final presigned = await ApiService.getPresignedUploadUrl(
+            folder: 'profiles',
+            fileName: 'avatar_${DateTime.now().millisecondsSinceEpoch}.jpg',
+            contentType: 'image/jpeg',
+          );
+          final uploadUrl = presigned['uploadUrl']?.toString();
+          final pubUrl = presigned['publicUrl']?.toString();
+          if (uploadUrl != null && pubUrl != null && !uploadUrl.contains('mock-presigned=true')) {
+            final ok = await ApiService.uploadBytesToR2(uploadUrl, _selectedImageBytes!, 'image/jpeg');
+            if (ok) {
+              publicUrl = pubUrl;
+            }
+          }
+        } catch (e) {
+          debugPrint('[EditProfile] Direct storage upload bypassed: $e');
+        }
+
+        if (publicUrl == null) {
+          base64Image = 'data:image/jpeg;base64,${base64Encode(_selectedImageBytes!)}';
+        }
       }
 
       final input = <String, dynamic>{
@@ -155,7 +176,9 @@ class _EditPersonalInfoDialogState extends State<EditPersonalInfoDialog> {
         'emergencyContact': emergency.isNotEmpty ? emergency : null,
       };
       
-      if (base64Image != null) {
+      if (publicUrl != null) {
+        input['photoUrl'] = publicUrl;
+      } else if (base64Image != null) {
         input['photoUrl'] = base64Image;
       }
 

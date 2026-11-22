@@ -745,11 +745,12 @@ class ApiService {
     required String heading,
     required String description,
     String? imageBase64,
+    String? imageUrl,
     int durationDays = 3,
   }) async {
     const mutation = '''
-      mutation CreateAnnouncement(\$heading: String!, \$description: String!, \$imageBase64: String, \$durationDays: Int) {
-        createAnnouncement(heading: \$heading, description: \$description, imageBase64: \$imageBase64, durationDays: \$durationDays) {
+      mutation CreateAnnouncement(\$heading: String!, \$description: String!, \$imageBase64: String, \$imageUrl: String, \$durationDays: Int) {
+        createAnnouncement(heading: \$heading, description: \$description, imageBase64: \$imageBase64, imageUrl: \$imageUrl, durationDays: \$durationDays) {
           id
         }
       }
@@ -758,6 +759,7 @@ class ApiService {
       'heading': heading,
       'description': description,
       'imageBase64': imageBase64,
+      'imageUrl': imageUrl,
       'durationDays': durationDays,
     });
   }
