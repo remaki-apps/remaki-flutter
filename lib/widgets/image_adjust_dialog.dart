@@ -1,3 +1,4 @@
+import '../theme/tenant_theme.dart';
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -36,11 +37,14 @@ class ImageAdjustDialog extends StatefulWidget {
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.black.withValues(alpha: 0.88),
-      builder: (ctx) => ImageAdjustDialog(
-        imageBytes: imageBytes,
-        title: title,
-        isCircle: isCircle,
-        aspectRatio: aspectRatio,
+      builder: (ctx) => Theme(
+        data: TenantTheme.themeData,
+        child: ImageAdjustDialog(
+          imageBytes: imageBytes,
+          title: title,
+          isCircle: isCircle,
+          aspectRatio: aspectRatio,
+        ),
       ),
     );
   }
@@ -264,7 +268,7 @@ class _ImageAdjustDialogState extends State<ImageAdjustDialog> {
                             color: Colors.black45,
                             child: const Center(
                               child: CircularProgressIndicator(
-                                color: Color(0xFF6366F1),
+                                color: Color(0xFF9CAF88),
                                 strokeWidth: 3,
                               ),
                             ),
@@ -396,11 +400,11 @@ class _ImageAdjustDialogState extends State<ImageAdjustDialog> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)],
+                      colors: [Color(0xFF7A8D67), Color(0xFF9CAF88)],
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF4F46E5).withValues(alpha: 0.4),
+                        color: const Color(0xFF9CAF88).withValues(alpha: 0.35),
                         blurRadius: 10,
                         offset: const Offset(0, 3),
                       ),

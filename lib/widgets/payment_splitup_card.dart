@@ -168,12 +168,12 @@ class PaymentSplitupCard extends StatelessWidget {
       }
     }
 
-    final cardBg = isDark ? const Color(0xFF1E1B4B).withValues(alpha: 0.6) : const Color(0xFFF8FAFC);
-    final borderColor = isDark ? const Color(0xFF4338CA).withValues(alpha: 0.4) : const Color(0xFFE2E8F0);
-    final titleColor = isDark ? Colors.white : const Color(0xFF1E293B);
-    final labelColor = isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569);
-    final valueColor = isDark ? Colors.white : const Color(0xFF0F172A);
-    final dividerColor = isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0);
+    final cardBg = isDark ? const Color(0xFF2E3826).withValues(alpha: 0.6) : const Color(0xFFF7F5EF);
+    final borderColor = isDark ? const Color(0xFF7A8D67).withValues(alpha: 0.4) : const Color(0xFFE5E2D9);
+    final titleColor = isDark ? Colors.white : const Color(0xFF1F241C);
+    final labelColor = isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4A5243);
+    final valueColor = isDark ? Colors.white : const Color(0xFF1F241C);
+    final dividerColor = isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE5E2D9);
 
     final localDate = paymentDate.toLocal();
     final timeStr = (localDate.hour == 0 && localDate.minute == 0 && localDate.second == 0)
@@ -208,13 +208,13 @@ class PaymentSplitupCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF4F46E5).withValues(alpha: 0.12),
+                      color: const Color(0xFF9CAF88).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
                       Icons.receipt_long_rounded,
                       size: 15,
-                      color: Color(0xFF4F46E5),
+                      color: Color(0xFF9CAF88),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -256,7 +256,7 @@ class PaymentSplitupCard extends StatelessWidget {
           if (rentPortion > 0) ...[
             _buildSplitRow(
               icon: Icons.home_outlined,
-              iconColor: const Color(0xFF6366F1),
+              iconColor: const Color(0xFF9CAF88),
               label: rentLabel,
               amount: rentPortion,
               labelColor: labelColor,
@@ -282,7 +282,7 @@ class PaymentSplitupCard extends StatelessWidget {
           if (feePortion > 0) ...[
             _buildSplitRow(
               icon: Icons.verified_user_outlined,
-              iconColor: const Color(0xFF0EA5E9),
+              iconColor: const Color(0xFF7A8D67),
               label: 'Platform Convenience Fee',
               amount: feePortion,
               labelColor: labelColor,
@@ -311,7 +311,7 @@ class PaymentSplitupCard extends StatelessWidget {
                 style: GoogleFonts.lato(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFF4F46E5),
+                  color: const Color(0xFF9CAF88),
                   letterSpacing: -0.3,
                 ),
               ),

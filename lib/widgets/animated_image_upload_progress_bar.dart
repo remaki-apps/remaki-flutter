@@ -141,9 +141,9 @@ class _AnimatedImageUploadProgressBarState extends State<AnimatedImageUploadProg
     }
 
     final colors = widget.gradientColors ?? const [
-      Color(0xFF4F46E5),
-      Color(0xFF7C3AED),
-      Color(0xFF06B6D4),
+      Color(0xFF7A8D67),
+      Color(0xFF9CAF88),
+      Color(0xFFAEC09B),
     ];
     final primaryAccent = colors.first;
 

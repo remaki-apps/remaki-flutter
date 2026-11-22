@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../theme/app_theme.dart';
 
 class FancyToast {
   static void showSuccess(
@@ -130,15 +129,15 @@ class _FancyToastWidgetState extends State<_FancyToastWidget> with SingleTickerP
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: widget.isError ? const Color(0xFFFEF2F2) : Colors.white,
+                color: widget.isError ? const Color(0xFFFDE8E5) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: widget.isError ? const Color(0xFFFCA5A5) : AppTheme.primaryColor.withValues(alpha: 0.2), 
+                  color: widget.isError ? const Color(0xFFF8B5AC) : const Color(0xFFC7D7BE), 
                   width: 1.5
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: widget.isError ? const Color(0x14EF4444) : const Color(0x145B32E4),
+                    color: widget.isError ? const Color(0x14E3412C) : const Color(0x149CAF88),
                     blurRadius: 18,
                     spreadRadius: 2,
                     offset: const Offset(0, 6),
@@ -156,12 +155,12 @@ class _FancyToastWidgetState extends State<_FancyToastWidget> with SingleTickerP
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: widget.isError ? const Color(0xFFFEE2E2) : const Color(0xFFEEF2FF),
+                      color: widget.isError ? const Color(0xFFFDE8E5) : const Color(0xFFEFF3EB),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       widget.isError ? Icons.error_outline_rounded : Icons.check_circle_rounded,
-                      color: widget.isError ? const Color(0xFFEF4444) : AppTheme.primaryColor,
+                      color: widget.isError ? const Color(0xFFE3412C) : const Color(0xFF9CAF88),
                       size: 22,
                     ),
                   ),

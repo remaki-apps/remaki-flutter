@@ -456,7 +456,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     showDialog(
       context: context,
       barrierDismissible: !_isLoading,
-      builder: (dialogCtx) => StatefulBuilder(
+      builder: (dialogCtx) => Theme(
+        data: TenantTheme.themeData,
+        child: StatefulBuilder(
         builder: (context, setDialogState) {
           return Dialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -587,8 +589,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                   _showProofConfirmationDialog(_selectedImageBytes!);
                                 }
                               },
-                        icon: const Icon(Icons.photo_library_outlined, size: 14),
-                        label: Text('Change Screenshot', style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700)),
+                        icon: const Icon(Icons.photo_library_outlined, size: 14, color: TenantTheme.primary),
+                        label: Text('Change Screenshot', style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700, color: TenantTheme.primary)),
+                        style: TextButton.styleFrom(foregroundColor: TenantTheme.primary),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -601,9 +604,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                         hintText: 'Add optional note or UTR number...',
                         hintStyle: GoogleFonts.lato(fontSize: 12.5, color: const Color(0xFF94A3B8)),
                         filled: true,
-                      fillColor: const Color(0xFFF7F5EF),
+                        fillColor: const Color(0xFFF7F5EF),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: TenantTheme.primary, width: 1.5)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       ),
                     ),
@@ -633,7 +637,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           style: GoogleFonts.lato(fontSize: 14, fontWeight: FontWeight.w800),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF16A34A),
+                          backgroundColor: TenantTheme.primary,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -647,6 +651,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           );
         },
       ),
+      ),
     );
   }
 
@@ -654,7 +659,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     showDialog(
       context: context,
       barrierColor: Colors.transparent,
-      builder: (ctx) => Stack(
+      builder: (ctx) => Theme(
+        data: TenantTheme.themeData,
+        child: Stack(
         children: [
           // Immersive Dark Frosted Glass Backdrop (Tap outside to dismiss)
           Positioned.fill(
@@ -790,6 +797,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -1013,8 +1021,10 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: TenantTheme.background,
+    return Theme(
+      data: TenantTheme.themeData,
+      child: Scaffold(
+        backgroundColor: TenantTheme.background,
       resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
@@ -1072,6 +1082,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -4488,7 +4499,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
     showDialog(
       context: context,
-      builder: (ctx) => Dialog(
+      builder: (ctx) => Theme(
+        data: TenantTheme.themeData,
+        child: Dialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
@@ -4605,6 +4618,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           ),
         ),
       ),
+    ),
     ),
     );
   }
@@ -6172,9 +6186,12 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     if (_profileData == null) return;
     showDialog(
       context: context,
-      builder: (ctx) => EditPersonalInfoDialog(
-        tenant: _buildTenantModel(),
-        isAdmin: false,
+      builder: (ctx) => Theme(
+        data: TenantTheme.themeData,
+        child: EditPersonalInfoDialog(
+          tenant: _buildTenantModel(),
+          isAdmin: false,
+        ),
       ),
     ).then((_) => _loadAllData());
   }
@@ -6183,11 +6200,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     if (_profileData == null) return;
     showDialog(
       context: context,
-      builder: (ctx) => CompleteProfileDialog(
-        tenant: _buildTenantModel(),
-        onProfileUpdated: () {
-          _loadAllData();
-        },
+      builder: (ctx) => Theme(
+        data: TenantTheme.themeData,
+        child: CompleteProfileDialog(
+          tenant: _buildTenantModel(),
+          onProfileUpdated: () {
+            _loadAllData();
+          },
+        ),
       ),
     );
   }
@@ -6195,7 +6215,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   void _confirmLogout() {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => Theme(
+        data: TenantTheme.themeData,
+        child: AlertDialog(
         backgroundColor: TenantTheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
@@ -6234,6 +6256,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
             child: Text('Log Out', style: GoogleFonts.lato(fontWeight: FontWeight.w700, color: Colors.white)),
           ),
         ],
+      ),
       ),
     );
   }

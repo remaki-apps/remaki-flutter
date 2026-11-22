@@ -1,8 +1,8 @@
+import '../theme/tenant_theme.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
 
 class TenantAvatar extends StatelessWidget {
   final String name;
@@ -40,7 +40,9 @@ class TenantAvatar extends StatelessWidget {
     showDialog(
       context: context,
       barrierColor: Colors.transparent,
-      builder: (ctx) => Stack(
+      builder: (ctx) => Theme(
+        data: TenantTheme.themeData,
+        child: Stack(
         children: [
           // Immersive Dark Frosted Glass Backdrop (tappable to dismiss)
           Positioned.fill(
@@ -175,6 +177,7 @@ class TenantAvatar extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 
@@ -209,7 +212,7 @@ class TenantAvatar extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 56,
-            backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.25),
+            backgroundColor: const Color(0xFF9CAF88).withValues(alpha: 0.25),
             child: Text(
               initial,
               style: const TextStyle(
@@ -239,8 +242,8 @@ class TenantAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveBg = backgroundColor ?? AppTheme.primaryColor.withValues(alpha: 0.1);
-    final effectiveFg = textColor ?? AppTheme.primaryColor;
+    final effectiveBg = backgroundColor ?? const Color(0xFFEFF3EB);
+    final effectiveFg = textColor ?? const Color(0xFF9CAF88);
     final initial = name.trim().isNotEmpty ? name.trim().substring(0, 1).toUpperCase() : 'T';
 
     Widget avatarContent;

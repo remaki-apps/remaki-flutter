@@ -1,3 +1,4 @@
+import '../theme/tenant_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -26,7 +27,10 @@ class InAppNotificationCenter {
         backgroundColor: Colors.transparent,
         useSafeArea: true,
         useRootNavigator: true,
-        builder: (modalCtx) => _NotificationCenterModal(onNavigate: onNavigate),
+        builder: (modalCtx) => Theme(
+          data: TenantTheme.themeData,
+          child: _NotificationCenterModal(onNavigate: onNavigate),
+        ),
       );
     } finally {
       appProvider?.setNavBarHidden(false);
@@ -74,7 +78,7 @@ class _NotificationCenterModal extends StatelessWidget {
         maxHeight: MediaQuery.sizeOf(context).height * 0.82,
       ),
       decoration: const BoxDecoration(
-        color: Color(0xFFF8FAFC),
+        color: Color(0xFFF7F5EF),
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
@@ -104,12 +108,12 @@ class _NotificationCenterModal extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEEF2FF),
+                          color: const Color(0xFFEFF3EB),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Icon(
                           Icons.notifications_active_rounded,
-                          color: Color(0xFF4F46E5),
+                          color: Color(0xFF9CAF88),
                           size: 18,
                         ),
                       ),
@@ -132,7 +136,7 @@ class _NotificationCenterModal extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEF4444),
+                            color: const Color(0xFFE3412C),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
@@ -162,7 +166,7 @@ class _NotificationCenterModal extends StatelessWidget {
                       style: GoogleFonts.lato(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF4F46E5),
+                        color: const Color(0xFF9CAF88),
                       ),
                     ),
                   ),
@@ -210,14 +214,14 @@ class _NotificationCenterModal extends StatelessWidget {
               width: 68,
               height: 68,
               decoration: BoxDecoration(
-                color: const Color(0xFFEEF2FF),
+                color: const Color(0xFFEFF3EB),
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFC7D2FE), width: 1.5),
+                border: Border.all(color: const Color(0xFFC7D7BE), width: 1.5),
               ),
               child: const Icon(
                 Icons.notifications_none_rounded,
                 size: 34,
-                color: Color(0xFF4F46E5),
+                color: Color(0xFF9CAF88),
               ),
             ),
             const SizedBox(height: 16),
@@ -258,14 +262,14 @@ class _NotificationCenterModal extends StatelessWidget {
           border: Border.all(
             color: item.isRead
                 ? const Color(0xFFE2E8F0)
-                : const Color(0xFFC7D2FE),
+                : const Color(0xFFC7D7BE),
             width: item.isRead ? 1 : 1.5,
           ),
           boxShadow: [
             BoxShadow(
               color: item.isRead
                   ? const Color(0x050F172A)
-                  : const Color(0x104F46E5),
+                  : const Color(0x109CAF88),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -341,7 +345,7 @@ class _NotificationCenterModal extends StatelessWidget {
                           width: 8,
                           height: 8,
                           decoration: const BoxDecoration(
-                            color: Color(0xFF4F46E5),
+                            color: Color(0xFF9CAF88),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -376,14 +380,14 @@ class _NotificationCenterModal extends StatelessWidget {
                         style: GoogleFonts.lato(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF4F46E5),
+                          color: const Color(0xFF9CAF88),
                         ),
                       ),
                       const SizedBox(width: 4),
                       const Icon(
                         Icons.arrow_forward_rounded,
                         size: 14,
-                        color: Color(0xFF4F46E5),
+                        color: Color(0xFF9CAF88),
                       ),
                     ],
                   ),

@@ -1,3 +1,4 @@
+import '../theme/tenant_theme.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -7,7 +8,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
-import '../theme/app_theme.dart';
 import '../utils/image_compress_util.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/app_shimmer.dart';
@@ -28,12 +28,12 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
   String _selectedFilter = 'ALL'; // 'ALL', 'PENDING', 'IN_PROGRESS', 'RESOLVED'
 
   final List<Map<String, dynamic>> _categories = [
-    {'key': 'PLUMBING', 'label': 'Plumbing', 'icon': Icons.plumbing_rounded, 'color': Color(0xFF0284C7)},
+    {'key': 'PLUMBING', 'label': 'Plumbing', 'icon': Icons.plumbing_rounded, 'color': Color(0xFF6B7E58)},
     {'key': 'ELECTRICAL', 'label': 'Electrical', 'icon': Icons.electric_bolt_rounded, 'color': Color(0xFFD97706)},
     {'key': 'CLEANING', 'label': 'Cleaning', 'icon': Icons.cleaning_services_rounded, 'color': Color(0xFF059669)},
-    {'key': 'WIFI', 'label': 'WiFi & Net', 'icon': Icons.wifi_rounded, 'color': Color(0xFF4F46E5)},
-    {'key': 'MAINTENANCE', 'label': 'Room & Furniture', 'icon': Icons.build_rounded, 'color': Color(0xFF7C3AED)},
-    {'key': 'NOISE', 'label': 'Noise / Disturbance', 'icon': Icons.volume_off_rounded, 'color': Color(0xFFE11D48)},
+    {'key': 'WIFI', 'label': 'WiFi & Net', 'icon': Icons.wifi_rounded, 'color': Color(0xFF7A8D67)},
+    {'key': 'MAINTENANCE', 'label': 'Room & Furniture', 'icon': Icons.build_rounded, 'color': Color(0xFF8A9E76)},
+    {'key': 'NOISE', 'label': 'Noise / Disturbance', 'icon': Icons.volume_off_rounded, 'color': Color(0xFFE3412C)},
     {'key': 'OTHER', 'label': 'Other', 'icon': Icons.help_outline_rounded, 'color': Color(0xFF64748B)},
   ];
 
@@ -104,7 +104,9 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
+      builder: (ctx) => Theme(
+        data: TenantTheme.themeData,
+        child: StatefulBuilder(
         builder: (context, setModalState) {
           final viewInsets = MediaQuery.of(context).viewInsets.bottom;
           final navPadding = MediaQuery.of(context).padding.bottom;
@@ -253,7 +255,7 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
                     fillColor: const Color(0xFFF8FAFC),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: TenantTheme.primary, width: 1.5)),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -274,7 +276,7 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
                     fillColor: const Color(0xFFF8FAFC),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
                     enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: TenantTheme.primary, width: 1.5)),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -290,9 +292,9 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
                   title: 'Uploading Photo Proof...',
                   subtitle: 'Optimizing and attaching to complaint...',
                   gradientColors: const [
-                    Color(0xFF4F46E5),
-                    Color(0xFF7C3AED),
-                    Color(0xFF06B6D4),
+                    Color(0xFF7A8D67),
+                    Color(0xFF9CAF88),
+                    Color(0xFFAEC09B),
                   ],
                 ),
                 if (selectedImageBytes != null) ...[
@@ -431,7 +433,7 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
                             }
                           },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
+                      backgroundColor: TenantTheme.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       elevation: 0,
@@ -455,13 +457,16 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
         );
       },
     ),
+    ),
     );
   }
 
   void _showMediaDialog(String mediaUrl, String title) {
     showDialog(
       context: context,
-      builder: (ctx) => Dialog(
+      builder: (ctx) => Theme(
+        data: TenantTheme.themeData,
+        child: Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.all(16),
         child: Column(
@@ -505,6 +510,7 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -524,8 +530,10 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+    return Theme(
+      data: TenantTheme.themeData,
+      child: Scaffold(
+        backgroundColor: TenantTheme.background,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -550,7 +558,7 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showRaiseComplaintModal,
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: TenantTheme.primary,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: Text(
           'Raise Complaint',
@@ -559,7 +567,7 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _fetchComplaints,
-        color: AppTheme.primaryColor,
+        color: TenantTheme.primary,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.fromLTRB(16, 14, 16, 96 + MediaQuery.paddingOf(context).bottom),
@@ -661,6 +669,7 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 
@@ -672,11 +681,11 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: isSel ? AppTheme.primaryColor : Colors.white,
+          color: isSel ? TenantTheme.primary : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSel ? AppTheme.primaryColor : const Color(0xFFE2E8F0)),
+          border: Border.all(color: isSel ? TenantTheme.primary : const Color(0xFFE2E8F0)),
           boxShadow: isSel
-              ? [BoxShadow(color: AppTheme.primaryColor.withValues(alpha: 0.25), blurRadius: 8, offset: const Offset(0, 2))]
+              ? [BoxShadow(color: TenantTheme.primary.withValues(alpha: 0.25), blurRadius: 8, offset: const Offset(0, 2))]
               : const [],
         ),
         child: Text(
@@ -708,8 +717,8 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
       statusText = 'Resolved';
       statusIcon = Icons.check_circle_rounded;
     } else if (complaint.isInProgress) {
-      statusColor = const Color(0xFF2563EB);
-      statusBg = const Color(0xFFEFF6FF);
+      statusColor = const Color(0xFF7A8D67);
+      statusBg = const Color(0xFFEFF3EB);
       statusText = 'In Progress';
       statusIcon = Icons.autorenew_rounded;
     } else {
@@ -851,20 +860,20 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFEEF2FF),
+                color: TenantTheme.primarySoft,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFC7D2FE)),
+                border: Border.all(color: TenantTheme.primaryBorder),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.forum_outlined, size: 15, color: AppTheme.primaryColor),
+                      const Icon(Icons.forum_outlined, size: 15, color: TenantTheme.primary),
                       const SizedBox(width: 6),
                       Text(
                         'Admin Response',
-                        style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.primaryColor),
+                        style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w800, color: TenantTheme.primary),
                       ),
                       if (complaint.repliedAt != null) ...[
                         const SizedBox(width: 8),
@@ -873,7 +882,7 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
                             alignment: Alignment.centerRight,
                             child: Text(
                               DateFormat('dd MMM, hh:mm a').format(complaint.repliedAt!),
-                              style: GoogleFonts.lato(fontSize: 10.5, color: const Color(0xFF6366F1)),
+                              style: GoogleFonts.lato(fontSize: 10.5, color: TenantTheme.primary),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -885,7 +894,7 @@ class _TenantComplaintsScreenState extends State<TenantComplaintsScreen> {
                   const SizedBox(height: 6),
                   Text(
                     complaint.adminReply!,
-                    style: GoogleFonts.lato(fontSize: 13, color: const Color(0xFF1E1B4B), height: 1.4),
+                    style: GoogleFonts.lato(fontSize: 13, color: TenantTheme.textPrimary, height: 1.4),
                   ),
                 ],
               ),

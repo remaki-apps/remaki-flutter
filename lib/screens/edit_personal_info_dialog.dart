@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import '../theme/app_theme.dart';
+import '../theme/tenant_theme.dart';
 import '../services/api_service.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/tenant_avatar.dart';
@@ -273,7 +273,7 @@ class _EditPersonalInfoDialogState extends State<EditPersonalInfoDialog> {
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: const BoxDecoration(
-                              color: AppTheme.primaryColor,
+                              color: TenantTheme.primary,
                               shape: BoxShape.circle,
                             ),
                             child: _isImageLoading
@@ -341,7 +341,7 @@ class _EditPersonalInfoDialogState extends State<EditPersonalInfoDialog> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      backgroundColor: AppTheme.primaryColor,
+                      backgroundColor: TenantTheme.primary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: _isLoading ? null : _saveChanges,
@@ -364,18 +364,18 @@ class _EditPersonalInfoDialogState extends State<EditPersonalInfoDialog> {
       hintText: hintText,
       hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
       filled: true,
-      fillColor: const Color(0xFFF8FAFC),
+      fillColor: const Color(0xFFF7F5EF),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: const BorderSide(color: TenantTheme.glassBorder),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        borderSide: const BorderSide(color: TenantTheme.glassBorder),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppTheme.primaryColor),
+        borderSide: const BorderSide(color: TenantTheme.primary, width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     );

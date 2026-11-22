@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
-import '../theme/app_theme.dart';
+import '../theme/tenant_theme.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/keyboard_responsive_layout.dart';
 
@@ -87,6 +87,18 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
       initialDate: initial,
       firstDate: DateTime(1930),
       lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: TenantTheme.primary,
+              onPrimary: Colors.white,
+              onSurface: TenantTheme.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (picked != null) {
@@ -161,7 +173,7 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: const BoxDecoration(
-                color: AppTheme.primaryColor,
+                color: TenantTheme.primary,
                 borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
               ),
               child: Row(
@@ -203,7 +215,7 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                       readOnly: true,
                       onTap: _pickDateOfBirth,
                       suffixIcon: IconButton(
-                        icon: const Icon(Icons.calendar_month_rounded, color: AppTheme.primaryColor, size: 20),
+                        icon: const Icon(Icons.calendar_month_rounded, color: TenantTheme.primary, size: 20),
                         onPressed: _pickDateOfBirth,
                       ),
                     ),
@@ -252,7 +264,7 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _submit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
+                    backgroundColor: TenantTheme.primary,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -294,8 +306,9 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
             hintText: hint,
             hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
             filled: true,
-            fillColor: const Color(0xFFF8FAFC),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+            fillColor: const Color(0xFFF7F5EF),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E2D9))),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: TenantTheme.primary, width: 1.5)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             suffixIcon: suffixIcon,
           ),
@@ -316,8 +329,9 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
           onChanged: onChanged,
           decoration: InputDecoration(
             filled: true,
-            fillColor: const Color(0xFFF8FAFC),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+            fillColor: const Color(0xFFF7F5EF),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E2D9))),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: TenantTheme.primary, width: 1.5)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         ),
