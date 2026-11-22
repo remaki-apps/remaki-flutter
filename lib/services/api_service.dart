@@ -1168,6 +1168,44 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> getPresignedUploadUrl({
+    String folder = 'receipts',
+    required String fileName,
+    required String contentType,
+  }) async {
+    const String mutation = '''
+      mutation GetPresignedUploadUrl(\$folder: String, \$fileName: String!, \$contentType: String!) {
+        getPresignedUploadUrl(folder: \$folder, fileName: \$fileName, contentType: \$contentType) {
+          uploadUrl
+          publicUrl
+          key
+          expiresInSeconds
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {
+      'folder': folder,
+      'fileName': fileName,
+      'contentType': contentType,
+    });
+    return (data['getPresignedUploadUrl'] as Map<String, dynamic>?) ?? {};
+  }
+
+  static Future<bool> uploadBytesToR2(String uploadUrl, Uint8List bytes, String contentType) async {
+    try {
+      final uri = Uri.parse(uploadUrl);
+      final response = await http.put(
+        uri,
+        headers: {'Content-Type': contentType},
+        body: bytes,
+      );
+      return response.statusCode >= 200 && response.statusCode < 300;
+    } catch (e) {
+      debugPrint('[ApiService] Failed to upload direct to R2: \$e');
+      return false;
+    }
+  }
+
   static Future<List<dynamic>> fetchPendingPaymentRequests({String? propertyId}) async {
     const String query = '''
       query GetPendingPayments(\$propertyId: ID) {
@@ -1178,6 +1216,7 @@ class ApiService {
           amount
           paymentType
           method
+          imageUrl
           proofImageBase64
           hasProofImage
           description
@@ -1202,6 +1241,7 @@ class ApiService {
           amount
           paymentType
           method
+          imageUrl
           hasProofImage
           description
           status

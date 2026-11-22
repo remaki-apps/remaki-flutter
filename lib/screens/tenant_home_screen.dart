@@ -825,6 +825,25 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       final userDesc = _descriptionController.text.trim();
       final finalDesc = '$refPrefix$userDesc'.trim();
 
+      String? r2PublicUrl;
+      try {
+        final presigned = await ApiService.getPresignedUploadUrl(
+          folder: 'receipts',
+          fileName: 'receipt_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          contentType: 'image/jpeg',
+        );
+        final uploadUrl = presigned['uploadUrl']?.toString();
+        final publicUrl = presigned['publicUrl']?.toString();
+        if (uploadUrl != null && publicUrl != null && !uploadUrl.contains('mock-presigned=true')) {
+          final success = await ApiService.uploadBytesToR2(uploadUrl, _selectedImageBytes!, 'image/jpeg');
+          if (success) {
+            r2PublicUrl = publicUrl;
+          }
+        }
+      } catch (err) {
+        debugPrint('[TenantHome] R2 direct upload bypassed: $err');
+      }
+
       await ApiService.performQuery('''
         mutation SubmitPaymentRequest(\$input: SubmitPaymentRequestInput!) {
           submitPaymentRequest(input: \$input) {
@@ -836,7 +855,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           'tenantId': _profileData?['id'] ?? '',
           'amount': effectiveDue,
           'paymentType': _paymentType,
-          'proofImageBase64': 'data:image/jpeg;base64,$base64Image',
+          if (r2PublicUrl != null) 'imageUrl': r2PublicUrl,
+          'proofImageBase64': r2PublicUrl == null ? 'data:image/jpeg;base64,$base64Image' : null,
           'description': finalDesc.isNotEmpty ? finalDesc : null,
         }
       });

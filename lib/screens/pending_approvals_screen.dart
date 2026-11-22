@@ -350,7 +350,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
     }
   }
 
-  void _showImagePreviewDialog(BuildContext context, Uint8List imageBytes) {
+  void _showImagePreviewDialog(BuildContext context, Uint8List? imageBytes, {String? imageUrl}) {
     showDialog(
       context: context,
       barrierColor: Colors.transparent,
@@ -449,17 +449,42 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                           minScale: 0.8,
                           maxScale: 4.0,
                           child: Center(
-                            child: Image.memory(
-                              imageBytes,
-                              fit: BoxFit.contain,
-                              filterQuality: FilterQuality.high,
-                              errorBuilder: (_, __, ___) => const Center(
-                                child: Text(
-                                  'Receipt image not available',
-                                  style: TextStyle(color: Colors.white70, fontSize: 13),
-                                ),
-                              ),
-                            ),
+                            child: (imageUrl != null && imageUrl.isNotEmpty)
+                                ? Image.network(
+                                    imageUrl,
+                                    fit: BoxFit.contain,
+                                    filterQuality: FilterQuality.high,
+                                    loadingBuilder: (context, child, progress) {
+                                      if (progress == null) return child;
+                                      return const Center(
+                                        child: CircularProgressIndicator(color: Colors.white70),
+                                      );
+                                    },
+                                    errorBuilder: (_, __, ___) => const Center(
+                                      child: Text(
+                                        'Receipt image not available',
+                                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                                      ),
+                                    ),
+                                  )
+                                : (imageBytes != null
+                                    ? Image.memory(
+                                        imageBytes,
+                                        fit: BoxFit.contain,
+                                        filterQuality: FilterQuality.high,
+                                        errorBuilder: (_, __, ___) => const Center(
+                                          child: Text(
+                                            'Receipt image not available',
+                                            style: TextStyle(color: Colors.white70, fontSize: 13),
+                                          ),
+                                        ),
+                                      )
+                                    : const Center(
+                                        child: Text(
+                                          'Receipt image not available',
+                                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                                        ),
+                                      )),
                           ),
                         ),
                       ),
@@ -659,7 +684,10 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
           ],
           Builder(
             builder: (ctx) {
-              final bool hasProof = req['hasProofImage'] == true || _decodeValidImageBytes(req['proofImageBase64']) != null;
+              final String? directUrl = req['imageUrl']?.toString();
+              final bool hasProof = req['hasProofImage'] == true ||
+                  (directUrl != null && directUrl.isNotEmpty) ||
+                  _decodeValidImageBytes(req['proofImageBase64']) != null;
               if (!hasProof) return const SizedBox.shrink();
 
               return Padding(
@@ -668,13 +696,26 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: () async {
-                      Uint8List? proofBytes = _decodeValidImageBytes(req['proofImageBase64']);
-                      if (proofBytes == null) {
-                        final base64Str = await ApiService.fetchPaymentRequestProof(req['id'].toString());
-                        proofBytes = _decodeValidImageBytes(base64Str);
+                      if (directUrl != null && directUrl.isNotEmpty && ctx.mounted) {
+                        _showImagePreviewDialog(ctx, null, imageUrl: directUrl);
+                        return;
                       }
-                      if (proofBytes != null && ctx.mounted) {
-                        _showImagePreviewDialog(ctx, proofBytes);
+                      Uint8List? proofBytes = _decodeValidImageBytes(req['proofImageBase64']);
+                      String? fetchedUrl;
+                      if (proofBytes == null) {
+                        final proofStr = await ApiService.fetchPaymentRequestProof(req['id'].toString());
+                        if (proofStr.startsWith('http://') || proofStr.startsWith('https://')) {
+                          fetchedUrl = proofStr;
+                        } else {
+                          proofBytes = _decodeValidImageBytes(proofStr);
+                        }
+                      }
+                      if (ctx.mounted) {
+                        if (fetchedUrl != null) {
+                          _showImagePreviewDialog(ctx, null, imageUrl: fetchedUrl);
+                        } else if (proofBytes != null) {
+                          _showImagePreviewDialog(ctx, proofBytes);
+                        }
                       }
                     },
                     icon: const Icon(Icons.receipt_long_rounded, size: 15),
@@ -1001,6 +1042,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                         final String paymentType = req['paymentType']?.toString() ?? 'RENT';
                         final String? description = req['description']?.toString();
                         final String? proofImageBase64 = req['proofImageBase64']?.toString();
+                        final String? imageUrl = req['imageUrl']?.toString();
                         final String method = req['method']?.toString() ?? '';
                         final String? createdAtRaw = req['createdAt']?.toString();
 
@@ -1179,7 +1221,63 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
                                 ],
 
                                 // Screenshot Proof Container
-                                if (proofBytes != null) ...[
+                                if (imageUrl != null && imageUrl.isNotEmpty) ...[
+                                  const SizedBox(height: 14),
+                                  GestureDetector(
+                                    onTap: () => _showImagePreviewDialog(context, null, imageUrl: imageUrl),
+                                    child: Container(
+                                      height: 160,
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(14),
+                                        child: Stack(
+                                          fit: StackFit.expand,
+                                          children: [
+                                            Image.network(
+                                              imageUrl,
+                                              fit: BoxFit.cover,
+                                              loadingBuilder: (context, child, progress) {
+                                                if (progress == null) return child;
+                                                return const Center(
+                                                  child: CircularProgressIndicator(color: AppTheme.primaryColor),
+                                                );
+                                              },
+                                              errorBuilder: (_, __, ___) => const Center(
+                                                child: Text('Invalid Screenshot', style: TextStyle(color: Color(0xFF94A3B8))),
+                                              ),
+                                            ),
+                                            Positioned(
+                                              bottom: 8,
+                                              right: 8,
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black.withValues(alpha: 0.65),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: const Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(Icons.fullscreen_rounded, color: Colors.white, size: 14),
+                                                    SizedBox(width: 4),
+                                                    Text(
+                                                      'Tap to expand',
+                                                      style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ] else if (proofBytes != null) ...[
                                   const SizedBox(height: 14),
                                   GestureDetector(
                                     onTap: () => _showImagePreviewDialog(context, proofBytes!),
