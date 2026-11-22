@@ -65,9 +65,12 @@ class PaymentSplitupCard extends StatelessWidget {
     }
 
     final double effectiveFee = platformFee > 0 ? (platformFee > paymentAmount ? paymentAmount : platformFee) : 0.0;
+    feePortion = effectiveFee;
+    final double remainingAfterFee = (paymentAmount > feePortion) ? (paymentAmount - feePortion) : 0.0;
 
     final String notesLower = (notes ?? '').toLowerCase();
-    final bool hasExplicitBillNote = notesLower.contains('bill') ||
+    final bool hasRentText = notesLower.contains('rent');
+    final bool hasBillText = notesLower.contains('bill') ||
         notesLower.contains('utility') ||
         notesLower.contains('electric') ||
         notesLower.contains('current') ||
@@ -75,26 +78,36 @@ class PaymentSplitupCard extends StatelessWidget {
         notesLower.contains('wifi') ||
         notesLower.contains('wi-fi') ||
         notesLower.contains('eb') ||
+        notesLower.contains('clean') ||
+        notesLower.contains('maintenance') ||
         notesLower.contains('food') ||
         notesLower.contains('mess') ||
         notesLower.contains('room');
 
-    final bool isRent = !hasExplicitBillNote && ((notesLower.contains('rent')) || (rentAmount > 0));
-    final bool isExplicitBill = hasExplicitBillNote || (!isRent && rentAmount <= 0);
+    final bool hasBoth = (rentAmount > 0 && (paymentAmount - rentAmount - feePortion) > 0.01) ||
+        (notesLower.contains('&') && hasRentText) ||
+        (hasRentText && hasBillText);
 
-    feePortion = effectiveFee;
-    final double remainingAfterFee = (paymentAmount > feePortion) ? (paymentAmount - feePortion) : 0.0;
-
-    if (isRent) {
-      if (rentAmount > 0) {
-        rentPortion = rentAmount > remainingAfterFee ? remainingAfterFee : rentAmount;
+    if (hasBoth) {
+      if (rentAmount > 0 && rentAmount < remainingAfterFee) {
+        rentPortion = rentAmount;
+        billsPortion = remainingAfterFee - rentPortion;
+      } else if (normalizedBills.isNotEmpty) {
+        final double totalBillsAmt = normalizedBills.fold(0.0, (sum, b) => sum + ((b['amount'] as num?)?.toDouble() ?? 0.0));
+        if (totalBillsAmt > 0 && totalBillsAmt < remainingAfterFee) {
+          billsPortion = totalBillsAmt;
+          rentPortion = remainingAfterFee - billsPortion;
+        } else {
+          rentPortion = rentAmount > 0 ? (rentAmount > remainingAfterFee ? remainingAfterFee : rentAmount) : remainingAfterFee;
+          billsPortion = (remainingAfterFee > rentPortion) ? (remainingAfterFee - rentPortion) : 0.0;
+        }
       } else {
-        rentPortion = remainingAfterFee;
+        rentPortion = (rentAmount > 0 && rentAmount <= remainingAfterFee) ? rentAmount : remainingAfterFee;
+        billsPortion = (remainingAfterFee > rentPortion) ? (remainingAfterFee - rentPortion) : 0.0;
       }
-      billsPortion = (remainingAfterFee > rentPortion) ? (remainingAfterFee - rentPortion) : 0.0;
-    } else if (isExplicitBill) {
-      rentPortion = 0.0;
-      billsPortion = remainingAfterFee;
+    } else if (hasRentText || (rentAmount > 0 && !hasBillText)) {
+      rentPortion = remainingAfterFee;
+      billsPortion = 0.0;
     } else {
       billsPortion = remainingAfterFee;
       rentPortion = 0.0;
@@ -102,41 +115,41 @@ class PaymentSplitupCard extends StatelessWidget {
 
     // Determine clean rent label
     String rentLabel = 'Monthly Rent';
-    if (notes != null && notesLower.contains('rent')) {
-      final rentPart = notes!.split(',').firstWhere((s) => s.toLowerCase().contains('rent'), orElse: () => 'Monthly Rent').trim();
+    if (notes != null && hasRentText) {
+      final segments = notes!.split(RegExp(r'[,&]')).map((s) => s.trim()).toList();
+      final rentPart = segments.firstWhere((s) => s.toLowerCase().contains('rent'), orElse: () => 'Monthly Rent').trim();
       rentLabel = rentPart.isNotEmpty ? rentPart : 'Monthly Rent';
+    }
+
+    // Helper to clean bill name from raw notes
+    String cleanBillName(String raw) {
+      var s = raw.replaceAll(RegExp(r'^(utility\s*bills?|bills?)\s*:\s*', caseSensitive: false), '').trim();
+      s = s.replaceAll(RegExp(r'^(utility\s*bills?|bills?)\s*', caseSensitive: false), '').trim();
+      return s.isNotEmpty ? s : 'Utility Bill';
     }
 
     // Itemize bills if billsPortion > 0
     if (billsPortion > 0 && itemizedBills.isEmpty) {
-      String billNotes = notes != null ? notes!.trim() : '';
-      if (billNotes.contains(',')) {
-        final nonRentParts = billNotes.split(',').map((s) => s.trim()).where((s) => !s.toLowerCase().contains('rent') && s.isNotEmpty).toList();
-        if (nonRentParts.isNotEmpty) {
-          billNotes = nonRentParts.join(', ');
-        }
-      }
-      final String billNotesLower = billNotes.toLowerCase();
-      final bool hasSpecificNote = billNotes.isNotEmpty &&
-          !billNotesLower.contains('utility bills payment') &&
-          !billNotesLower.contains('bill payment') &&
-          !billNotesLower.contains('approved via payment request') &&
-          !billNotesLower.contains('rent');
+      final segments = (notes ?? '')
+          .split(RegExp(r'[,&]'))
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty && !s.toLowerCase().contains('rent'))
+          .toList();
 
-      if (hasSpecificNote) {
-        if (billNotes.contains(',')) {
-          final parts = billNotes.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
-          final double splitAmount = billsPortion / parts.length;
-          for (final part in parts) {
-            itemizedBills.add({
-              'name': part,
-              'amount': splitAmount,
-            });
-          }
-        } else {
+      final nonRentNames = segments
+          .map(cleanBillName)
+          .where((name) =>
+              !name.toLowerCase().contains('utility bills payment') &&
+              !name.toLowerCase().contains('bill payment') &&
+              !name.toLowerCase().contains('approved via payment request'))
+          .toList();
+
+      if (nonRentNames.isNotEmpty) {
+        final double splitAmount = billsPortion / nonRentNames.length;
+        for (final name in nonRentNames) {
           itemizedBills.add({
-            'name': billNotes,
-            'amount': billsPortion,
+            'name': name,
+            'amount': splitAmount,
           });
         }
       } else if (normalizedBills.isNotEmpty) {
@@ -156,13 +169,13 @@ class PaymentSplitupCard extends StatelessWidget {
           });
         } else {
           itemizedBills.add({
-            'name': billNotes.isNotEmpty ? billNotes : 'Utility Bill',
+            'name': 'Utility Bill',
             'amount': billsPortion,
           });
         }
       } else {
         itemizedBills.add({
-          'name': billNotes.isNotEmpty ? billNotes : 'Utility Bill',
+          'name': 'Utility Bill',
           'amount': billsPortion,
         });
       }
@@ -404,6 +417,9 @@ class PaymentSplitupCard extends StatelessWidget {
     }
     if (lower.contains('wifi') || lower.contains('internet')) {
       return Icons.wifi_rounded;
+    }
+    if (lower.contains('clean')) {
+      return Icons.cleaning_services_outlined;
     }
     if (lower.contains('maintenance')) {
       return Icons.build_outlined;

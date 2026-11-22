@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
+import '../utils/string_utils.dart';
 import 'network_provider.dart';
 
 class AppProvider with ChangeNotifier {
@@ -35,8 +36,11 @@ class AppProvider with ChangeNotifier {
   static const String _pgNameKey = 'sunshine_pg_name';
   static const String _adminNameKey = 'sunshine_pg_admin_name';
   static const String _pgAddressKey = 'sunshine_pg_address';
+  static const String _propertiesKey = 'sunshine_pg_properties';
+  static const String _selectedPropertyIdKey = 'sunshine_pg_selected_property_id';
 
   AppProvider({bool autoLoad = true}) {
+    loadFromStorage();
     NetworkProvider.instance.addRestoredListener(() {
       if (ApiService.isLoggedIn && ApiService.role == 'ADMIN') {
         loadFromAPI(showLoading: false);
@@ -46,7 +50,6 @@ class AppProvider with ChangeNotifier {
       loadFromAPI();
     } else {
       isLoading = false;
-      loadFromStorage();
     }
   }
 
@@ -84,6 +87,7 @@ class AppProvider with ChangeNotifier {
     } else {
       selectedPropertyId = propertyId;
     }
+    saveToStorage();
     notifyListeners();
   }
 
@@ -107,7 +111,8 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<void> _performLoadFromAPI({bool showLoading = true}) async {
-    if (showLoading && !isLoading) {
+    final bool hasData = rooms.isNotEmpty || tenants.isNotEmpty;
+    if (showLoading && !isLoading && !hasData) {
       isLoading = true;
       try {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -119,41 +124,53 @@ class AppProvider with ChangeNotifier {
     }
     lastSyncError = null;
     try {
-      final tenantsData = await ApiService.fetchTenants();
-      final roomsData = await ApiService.fetchRooms();
-      final paymentsData = await ApiService.fetchPayments();
+      // Fetch admin profile, tenants, rooms, and payments concurrently in parallel
+      final adminProfileFuture = ApiService.role == 'ADMIN'
+          ? ApiService.fetchAdminProfile()
+          : Future<Map<String, dynamic>?>.value(null);
+      final tenantsFuture = ApiService.fetchTenants();
+      final roomsFuture = ApiService.fetchRooms();
+      final paymentsFuture = ApiService.fetchPayments();
 
-      // Fetch admin profile for dynamic PG name & multi-PG support
-      if (ApiService.role == 'ADMIN') {
-        final adminData = await ApiService.fetchAdminProfile();
-        if (adminData != null) {
-          adminName = adminData['adminName'] ?? adminData['name'] ?? '';
-          platformFee = (adminData['platformFee'] as num?)?.toDouble() ?? 9.0;
+      final results = await Future.wait([
+        adminProfileFuture,
+        tenantsFuture,
+        roomsFuture,
+        paymentsFuture,
+      ]);
 
-          final rawProps = (adminData['properties'] as List<dynamic>?) ?? [];
-          properties = rawProps
-              .whereType<Map<String, dynamic>>()
-              .map((p) => PropertyItem.fromJson(p))
-              .toList();
+      final adminData = results[0] as Map<String, dynamic>?;
+      final tenantsData = results[1] as List<dynamic>;
+      final roomsData = results[2] as List<dynamic>;
+      final paymentsData = results[3] as List<dynamic>;
 
-          if (properties.isNotEmpty) {
-            if (selectedPropertyId == null || selectedPropertyId == 'ALL' || !properties.any((p) => p.id == selectedPropertyId)) {
-              selectedPropertyId = properties.first.id;
-            }
-            final currentProp = properties.firstWhere(
-              (p) => p.id == selectedPropertyId,
-              orElse: () => properties.first,
-            );
-            pgName = currentProp.name;
-            platformFee = currentProp.platformFee;
-            final parts = [currentProp.address, currentProp.city, currentProp.state]
-                .where((s) => s.trim().isNotEmpty)
-                .toList();
-            pgAddress = parts.isNotEmpty ? parts.join(', ') : currentProp.address;
-          } else {
-            pgName = adminData['pgName'] ?? adminData['name'] ?? '';
-            pgAddress = adminData['pgAddress'] ?? '';
+      if (adminData != null) {
+        adminName = adminData['adminName'] ?? adminData['name'] ?? '';
+        platformFee = (adminData['platformFee'] as num?)?.toDouble() ?? 9.0;
+
+        final rawProps = (adminData['properties'] as List<dynamic>?) ?? [];
+        properties = rawProps
+            .whereType<Map<String, dynamic>>()
+            .map((p) => PropertyItem.fromJson(p))
+            .toList();
+
+        if (properties.isNotEmpty) {
+          if (selectedPropertyId == null || selectedPropertyId == 'ALL' || !properties.any((p) => p.id == selectedPropertyId)) {
+            selectedPropertyId = properties.first.id;
           }
+          final currentProp = properties.firstWhere(
+            (p) => p.id == selectedPropertyId,
+            orElse: () => properties.first,
+          );
+          pgName = currentProp.name;
+          platformFee = currentProp.platformFee;
+          final parts = [currentProp.address, currentProp.city, currentProp.state]
+              .where((s) => s.trim().isNotEmpty)
+              .toList();
+          pgAddress = parts.isNotEmpty ? parts.join(', ') : currentProp.address;
+        } else {
+          pgName = adminData['pgName'] ?? adminData['name'] ?? '';
+          pgAddress = adminData['pgAddress'] ?? '';
         }
       }
       
@@ -179,6 +196,7 @@ class AppProvider with ChangeNotifier {
           beds: bedList,
         );
       }).toList();
+      rooms.sort((a, b) => naturalCompare(a.number, b.number));
 
       tenants = tenantsData.whereType<Map<String, dynamic>>().where((e) => e['status'] != 'MOVED_OUT').map((e) {
         final roomMap = e['room'] as Map<String, dynamic>?;
@@ -277,6 +295,7 @@ class AppProvider with ChangeNotifier {
           billingMonth: e['billingMonth']?.toString(),
           platformFee: (e['platformFee'] as num?)?.toDouble() ?? 0.0,
           rentAmount: (e['rentAmount'] as num?)?.toDouble() ?? 0.0,
+          billAmount: (e['billAmount'] as num?)?.toDouble() ?? 0.0,
         );
       }).toList();
 
@@ -340,6 +359,7 @@ class AppProvider with ChangeNotifier {
       if (roomsRaw != null) {
         final List<dynamic> decoded = jsonDecode(roomsRaw);
         rooms = decoded.map((e) => Room.fromJson(e as Map<String, dynamic>)).toList();
+        rooms.sort((a, b) => naturalCompare(a.number, b.number));
       }
 
       final tenantsRaw = prefs.getString(_tenantsKey);
@@ -367,6 +387,19 @@ class AppProvider with ChangeNotifier {
         pgAddress = storedPgAddress;
       }
 
+      final propertiesRaw = prefs.getString(_propertiesKey);
+      if (propertiesRaw != null) {
+        final List<dynamic> decoded = jsonDecode(propertiesRaw);
+        properties = decoded.map((e) => PropertyItem.fromJson(e as Map<String, dynamic>)).toList();
+      }
+
+      final storedPropId = prefs.getString(_selectedPropertyIdKey);
+      if (storedPropId != null && storedPropId.isNotEmpty) {
+        selectedPropertyId = storedPropId;
+      } else if (properties.isNotEmpty) {
+        selectedPropertyId = properties.first.id;
+      }
+
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading from storage: $e');
@@ -388,6 +421,12 @@ class AppProvider with ChangeNotifier {
       if (pgAddress.isNotEmpty) {
         await prefs.setString(_pgAddressKey, pgAddress);
       }
+      if (selectedPropertyId != null && selectedPropertyId!.isNotEmpty) {
+        await prefs.setString(_selectedPropertyIdKey, selectedPropertyId!);
+      }
+      if (properties.isNotEmpty) {
+        await prefs.setString(_propertiesKey, jsonEncode(properties.map((p) => p.toJson()).toList()));
+      }
     } catch (e) {
       debugPrint('Error saving to storage: $e');
     }
@@ -395,36 +434,45 @@ class AppProvider with ChangeNotifier {
 
   // Filtered rooms and tenants for currently selected PG
   List<Room> get currentRooms {
-    if (selectedPropertyId == null || properties.length <= 1) {
-      return rooms;
+    final activeId = (selectedPropertyId != null && selectedPropertyId != 'ALL')
+        ? selectedPropertyId
+        : (properties.isNotEmpty ? properties.first.id : null);
+    if (activeId != null) {
+      return rooms.where((r) => r.propertyId == activeId).toList();
     }
-    return rooms.where((r) => r.propertyId == selectedPropertyId).toList();
+    return rooms;
   }
 
   List<Tenant> get currentTenants {
-    if (selectedPropertyId == null || properties.length <= 1) {
-      return tenants;
+    final activeId = (selectedPropertyId != null && selectedPropertyId != 'ALL')
+        ? selectedPropertyId
+        : (properties.isNotEmpty ? properties.first.id : null);
+    if (activeId != null) {
+      final roomIds = currentRooms.map((r) => r.id).toSet();
+      return tenants.where((t) {
+        if (t.propertyId.isNotEmpty) {
+          return t.propertyId == activeId;
+        }
+        return t.roomId.isNotEmpty && roomIds.contains(t.roomId);
+      }).toList();
     }
-    final roomIds = currentRooms.map((r) => r.id).toSet();
-    return tenants.where((t) {
-      if (t.propertyId.isNotEmpty) {
-        return t.propertyId == selectedPropertyId;
-      }
-      return t.roomId.isNotEmpty && roomIds.contains(t.roomId);
-    }).toList();
+    return tenants;
   }
 
   List<Payment> get currentPayments {
-    if (selectedPropertyId == null || properties.length <= 1) {
-      return payments;
+    final activeId = (selectedPropertyId != null && selectedPropertyId != 'ALL')
+        ? selectedPropertyId
+        : (properties.isNotEmpty ? properties.first.id : null);
+    if (activeId != null) {
+      final currentTenantIds = currentTenants.map((t) => t.id).toSet();
+      return payments.where((p) {
+        if (p.propertyId != null && p.propertyId!.isNotEmpty) {
+          return p.propertyId == activeId;
+        }
+        return currentTenantIds.contains(p.tenantId);
+      }).toList();
     }
-    final currentTenantIds = currentTenants.map((t) => t.id).toSet();
-    return payments.where((p) {
-      if (p.propertyId != null && p.propertyId!.isNotEmpty) {
-        return p.propertyId == selectedPropertyId;
-      }
-      return currentTenantIds.contains(p.tenantId);
-    }).toList();
+    return payments;
   }
 
   int get totalBeds => currentRooms.fold(0, (sum, room) => sum + room.capacity);
@@ -689,6 +737,7 @@ class AppProvider with ChangeNotifier {
     int? rentDueDay,
     String? paymentMode, {
     bool? foodIncluded,
+    String? moveInDate,
   }) async {
     try {
       await ApiService.updateTenantFinancials(
@@ -698,6 +747,7 @@ class AppProvider with ChangeNotifier {
         rentDueDay: rentDueDay,
         paymentMode: paymentMode,
         foodIncluded: foodIncluded,
+        moveInDate: moveInDate,
       );
       await loadFromAPI();
     } catch (e) {
@@ -733,28 +783,12 @@ class AppProvider with ChangeNotifier {
           'description': description,
         });
         await loadFromAPI();
+        await saveToStorage();
       } catch (e) {
         debugPrint('Error generating bill: $e');
         rethrow;
       }
     }
-
-    // Optimistically add charges to local state so the UI updates immediately
-    for (var tenantId in tenantIds) {
-      final idx = tenants.indexWhere((t) => t.id == tenantId);
-      if (idx != -1) {
-        tenants[idx].additionalCharges.add(AdditionalCharge(
-          id: 'ac_${DateTime.now().millisecondsSinceEpoch}_$tenantId',
-          description: description,
-          amount: splitAmount,
-          date: DateTime.now(),
-          billType: 'CURRENT',
-        ));
-      }
-    }
-
-    await saveToStorage();
-    notifyListeners();
   }
 
   Future<void> addBillWithCustomSplits({
@@ -778,29 +812,11 @@ class AppProvider with ChangeNotifier {
         'description': description,
       });
       await loadFromAPI();
+      await saveToStorage();
     } catch (e) {
       debugPrint('Error generating custom split bill: $e');
       rethrow;
     }
-
-    // Optimistically add charges to local state so the UI updates immediately
-    for (var entry in nonZeroSplits) {
-      final tenantId = entry.key;
-      final amount = entry.value;
-      final idx = tenants.indexWhere((t) => t.id == tenantId);
-      if (idx != -1) {
-        tenants[idx].additionalCharges.add(AdditionalCharge(
-          id: 'ac_${DateTime.now().millisecondsSinceEpoch}_$tenantId',
-          description: description,
-          amount: amount,
-          date: DateTime.now(),
-          billType: 'CURRENT',
-        ));
-      }
-    }
-
-    await saveToStorage();
-    notifyListeners();
   }
 
   Future<void> allocateTenant(String tenantId, String roomId, String bedId, {
@@ -894,6 +910,8 @@ class AppProvider with ChangeNotifier {
       prefs.remove(_pgNameKey);
       prefs.remove(_adminNameKey);
       prefs.remove(_pgAddressKey);
+      prefs.remove(_propertiesKey);
+      prefs.remove(_selectedPropertyIdKey);
     }).catchError((_) {});
   }
 }

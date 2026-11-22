@@ -267,8 +267,15 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   Future<void> _fetchAnnouncements() async {
     final announcements = await ApiService.fetchAnnouncements(false);
     if (mounted) {
+      final now = DateTime.now();
       setState(() {
-        _announcements = announcements;
+        _announcements = announcements.where((a) {
+          if (a['expiresAt'] != null) {
+            final exp = DateTime.tryParse(a['expiresAt'].toString())?.toLocal();
+            if (exp != null && exp.isBefore(now)) return false;
+          }
+          return true;
+        }).toList();
       });
     }
   }
@@ -826,6 +833,25 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       final userDesc = _descriptionController.text.trim();
       final finalDesc = '$refPrefix$userDesc'.trim();
 
+      String? r2PublicUrl;
+      try {
+        final presigned = await ApiService.getPresignedUploadUrl(
+          folder: 'receipts',
+          fileName: 'receipt_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          contentType: 'image/jpeg',
+        );
+        final uploadUrl = presigned['uploadUrl']?.toString();
+        final publicUrl = presigned['publicUrl']?.toString();
+        if (uploadUrl != null && publicUrl != null && !uploadUrl.contains('mock-presigned=true')) {
+          final success = await ApiService.uploadBytesToR2(uploadUrl, _selectedImageBytes!, 'image/jpeg');
+          if (success) {
+            r2PublicUrl = publicUrl;
+          }
+        }
+      } catch (err) {
+        debugPrint('[TenantHome] R2 direct upload bypassed: $err');
+      }
+
       await ApiService.performQuery('''
         mutation SubmitPaymentRequest(\$input: SubmitPaymentRequestInput!) {
           submitPaymentRequest(input: \$input) {
@@ -837,7 +863,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           'tenantId': _profileData?['id'] ?? '',
           'amount': effectiveDue,
           'paymentType': _paymentType,
-          'proofImageBase64': 'data:image/jpeg;base64,$base64Image',
+          if (r2PublicUrl != null) 'imageUrl': r2PublicUrl,
+          'proofImageBase64': r2PublicUrl == null ? 'data:image/jpeg;base64,$base64Image' : null,
           'description': finalDesc.isNotEmpty ? finalDesc : null,
         }
       });
@@ -1769,8 +1796,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                           color: TenantTheme.textSecondary,
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                      if (!isUpcoming)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                         decoration: BoxDecoration(
                           color: isRentPaidBillsDue
                               ? const Color(0xFFFEF3C7)
@@ -2559,82 +2587,76 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: isRentPaidBillsDue
-                                      ? const Color(0xFFF59E0B).withValues(alpha: 0.28)
-                                      : (isPaid
-                                          ? const Color(0xFF10B981).withValues(alpha: 0.25)
-                                          : (isPending
-                                              ? const Color(0xFFF59E0B).withValues(alpha: 0.32)
-                                              : (isUpcoming
-                                                  ? Colors.white.withValues(alpha: 0.18)
-                                                  : TenantTheme.danger.withValues(alpha: 0.32)))),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
+                            if (!isUpcoming) ...[
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
                                     color: isRentPaidBillsDue
-                                        ? const Color(0xFFFDE68A).withValues(alpha: 0.8)
+                                        ? const Color(0xFFF59E0B).withValues(alpha: 0.28)
                                         : (isPaid
-                                            ? const Color(0xFF6EE7B7).withValues(alpha: 0.6)
+                                            ? const Color(0xFF10B981).withValues(alpha: 0.25)
                                             : (isPending
-                                                ? const Color(0xFFFDE68A).withValues(alpha: 0.7)
-                                                : (isUpcoming
-                                                    ? TenantTheme.primaryBorder.withValues(alpha: 0.8)
-                                                    : TenantTheme.dangerBorder.withValues(alpha: 0.6)))),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      isRentPaidBillsDue
-                                          ? Icons.bolt_rounded
-                                          : (isPaid
-                                              ? Icons.check_circle_rounded
-                                              : (isPending
-                                                  ? Icons.hourglass_top_rounded
-                                                  : (isUpcoming
-                                                      ? Icons.schedule_rounded
-                                                      : Icons.error_outline_rounded))),
-                                      size: 13,
+                                                ? const Color(0xFFF59E0B).withValues(alpha: 0.32)
+                                                : TenantTheme.danger.withValues(alpha: 0.32))),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
                                       color: isRentPaidBillsDue
-                                          ? const Color(0xFFFDE68A)
+                                          ? const Color(0xFFFDE68A).withValues(alpha: 0.8)
                                           : (isPaid
-                                              ? const Color(0xFF6EE7B7)
+                                              ? const Color(0xFF6EE7B7).withValues(alpha: 0.6)
                                               : (isPending
-                                                  ? const Color(0xFFFDE68A)
-                                                  : (isUpcoming
-                                                      ? TenantTheme.primaryBorder
-                                                      : TenantTheme.dangerBorder))),
+                                                  ? const Color(0xFFFDE68A).withValues(alpha: 0.7)
+                                                  : TenantTheme.dangerBorder)),
+                                      width: 1,
                                     ),
-                                    const SizedBox(width: 4),
-                                    Flexible(
-                                      child: Text(
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
                                         isRentPaidBillsDue
-                                            ? 'RENT PAID • BILL DUE'
+                                            ? Icons.bolt_rounded
                                             : (isPaid
-                                                ? 'PAID & SETTLED'
+                                                ? Icons.check_circle_rounded
                                                 : (isPending
-                                                    ? 'PENDING APPROVAL'
-                                                    : (isUpcoming ? 'UPCOMING DUE' : 'PAYMENT OVERDUE'))),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: GoogleFonts.lato(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: 0.3,
-                                          color: Colors.white,
+                                                    ? Icons.hourglass_top_rounded
+                                                    : Icons.error_outline_rounded)),
+                                        size: 13,
+                                        color: isRentPaidBillsDue
+                                            ? const Color(0xFFFDE68A)
+                                            : (isPaid
+                                                ? const Color(0xFF6EE7B7)
+                                                : (isPending
+                                                    ? const Color(0xFFFDE68A)
+                                                    : const Color(0xFFFECACA))),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        child: Text(
+                                          isRentPaidBillsDue
+                                              ? 'RENT PAID • BILL DUE'
+                                              : (isPaid
+                                                  ? 'PAID & SETTLED'
+                                                  : (isPending
+                                                      ? 'PENDING APPROVAL'
+                                                      : 'PAYMENT OVERDUE')),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.lato(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 0.3,
+                                            color: Colors.white,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -3197,7 +3219,8 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       ],
                     ),
                   ),
-                  // Payment Options (Full vs Partial)
+                  /*
+                  // Payment Options (Full vs Partial) - Commented out per requirement: only full payment allowed
                   const SizedBox(height: 14),
                   Row(
                     children: [
@@ -3464,6 +3487,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                       ),
                     ),
                   ],
+                  */
                   const SizedBox(height: 16),
 
                   // Compact / Clean Image Upload Button
@@ -3845,13 +3869,14 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
         final double rAmt = (p['rentAmount'] as num?)?.toDouble() ??
             (isRentPayment ? (amount > pFee ? amount - pFee : amount) : 0.0);
 
+        final allTenantBills = (_profileData?['bills'] as List<dynamic>? ?? []);
+
         String displayTitle = 'Payment';
         if (notesStr.isNotEmpty && !notesLower.contains('approved via payment request') && !notesLower.contains('utility bills payment')) {
           displayTitle = notesStr;
         } else if (isRentPayment) {
           displayTitle = 'Rent Payment';
         } else {
-          final allTenantBills = (_profileData?['bills'] as List<dynamic>? ?? []);
           final matchingBill = allTenantBills.firstWhere(
             (b) => (((b['amount'] as num?)?.toDouble() ?? 0.0) - amount).abs() < 0.01,
             orElse: () => null,
@@ -3875,7 +3900,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
           rawDate: rawDate,
           rentAmount: (rAmt > cardAmount) ? cardAmount : rAmt,
           platformFee: pFee,
-          bills: null,
+          bills: allTenantBills,
           notes: notes,
         ));
         if (i < displayPayments.length - 1 || pendingMonthBills.isNotEmpty) {
@@ -4150,24 +4175,26 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-                decoration: BoxDecoration(
-                  color: statusBg,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: statusBorder, width: 0.8),
-                ),
-                child: Text(
-                  statusBadge,
-                  style: GoogleFonts.lato(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.3,
-                    color: statusColor,
+              if (statusBadge != 'UPCOMING') ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                  decoration: BoxDecoration(
+                    color: statusBg,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: statusBorder, width: 0.8),
+                  ),
+                  child: Text(
+                    statusBadge,
+                    style: GoogleFonts.lato(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.3,
+                      color: statusColor,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         ),

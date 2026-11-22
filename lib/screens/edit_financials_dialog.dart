@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/api_service.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/keyboard_responsive_layout.dart';
+import '../widgets/custom_date_picker.dart';
 
 class EditFinancialsDialog extends StatefulWidget {
   final AppProvider provider;
@@ -22,7 +24,10 @@ class EditFinancialsDialog extends StatefulWidget {
 
 class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
   late TextEditingController _rentController;
+  late TextEditingController _securityDepositController;
   late TextEditingController _dueDayController;
+  late TextEditingController _moveInController;
+  late DateTime _selectedMoveInDate;
   String _paymentMode = 'CASH';
   bool _foodIncluded = true;
   
@@ -35,7 +40,10 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
     super.initState();
     _foodIncluded = widget.tenant.foodIncluded ?? true;
     _rentController = TextEditingController(text: widget.tenant.rentAmount.toStringAsFixed(0));
+    _securityDepositController = TextEditingController(text: widget.tenant.securityDeposit.toStringAsFixed(0));
     _dueDayController = TextEditingController(text: widget.tenant.rentDueDate.day.toString());
+    _selectedMoveInDate = widget.tenant.moveInDate ?? DateTime.now();
+    _moveInController = TextEditingController(text: DateFormat('dd/MM/yyyy').format(_selectedMoveInDate));
     _paymentMode = widget.tenant.defaultPaymentMode ?? 'CASH';
 
     // Initialize controllers for pending bills
@@ -49,11 +57,29 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
   @override
   void dispose() {
     _rentController.dispose();
+    _securityDepositController.dispose();
     _dueDayController.dispose();
+    _moveInController.dispose();
     for (var controller in _billControllers.values) {
       controller.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _pickMoveInDate() async {
+    final picked = await showAppDatePicker(
+      context: context,
+      initialDate: _selectedMoveInDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      helpText: 'Select Move-in Date',
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedMoveInDate = picked;
+        _moveInController.text = DateFormat('dd/MM/yyyy').format(picked);
+      });
+    }
   }
 
   Future<void> _saveChanges() async {
@@ -61,19 +87,21 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
 
     try {
       final rent = double.tryParse(_rentController.text);
+      final securityDeposit = double.tryParse(_securityDepositController.text) ?? 0.0;
       final dueDay = int.tryParse(_dueDayController.text) ?? 5;
+      final moveInDateStr = _selectedMoveInDate.toIso8601String();
 
       if (rent != null) {
         await widget.provider.editTenantFinancials(
           widget.tenant.id,
           rent,
-          null, // omit deposit
+          securityDeposit,
           dueDay,
           _paymentMode,
           foodIncluded: _foodIncluded,
+          moveInDate: moveInDateStr,
         );
       }
-
 
       for (var entry in _billControllers.entries) {
         final amount = double.tryParse(entry.value.text);
@@ -136,7 +164,7 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
                   children: [
                     const Expanded(
                       child: Text(
-                        'Edit Financials',
+                        'Edit Financial & Stay',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -225,11 +253,38 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
                 ],
               ),
               const SizedBox(height: 16),
+
+              const Text('Move-in Date', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF334155))),
+              const SizedBox(height: 6),
+              InkWell(
+                onTap: _pickMoveInDate,
+                borderRadius: BorderRadius.circular(12),
+                child: IgnorePointer(
+                  child: TextField(
+                    controller: _moveInController,
+                    readOnly: true,
+                    decoration: _inputDecoration(
+                      prefixIcon: const Icon(Icons.calendar_today_outlined, size: 18, color: AppTheme.primaryColor),
+                      suffixIcon: const Icon(Icons.arrow_drop_down, color: Color(0xFF64748B)),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
               
               const Text('Monthly Rent (₹)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF334155))),
               const SizedBox(height: 6),
               TextField(
                 controller: _rentController,
+                keyboardType: TextInputType.number,
+                decoration: _inputDecoration(),
+              ),
+              const SizedBox(height: 16),
+
+              const Text('Security Deposit (₹)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF334155))),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _securityDepositController,
                 keyboardType: TextInputType.number,
                 decoration: _inputDecoration(),
               ),
@@ -307,8 +362,10 @@ class _EditFinancialsDialogState extends State<EditFinancialsDialog> {
   );
 }
 
-  InputDecoration _inputDecoration() {
+  InputDecoration _inputDecoration({Widget? prefixIcon, Widget? suffixIcon}) {
     return InputDecoration(
+      prefixIcon: prefixIcon,
+      suffixIcon: suffixIcon,
       filled: true,
       fillColor: const Color(0xFFF8FAFC),
       border: OutlineInputBorder(

@@ -45,7 +45,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return;
       }
       final appProvider = Provider.of<AppProvider>(context, listen: false);
-      await appProvider.loadFromAPI(showLoading: true);
+      final bool hasExistingData = appProvider.rooms.isNotEmpty || appProvider.tenants.isNotEmpty;
+      await appProvider.loadFromAPI(showLoading: !hasExistingData);
       if (!ApiService.isLoggedIn && mounted) {
         context.go('/login');
         return;
@@ -79,10 +80,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _loadPendingComplaints() async {
     try {
-      final list = await ApiService.fetchAdminComplaints(status: 'PENDING');
+      final count = await ApiService.fetchPendingComplaintsCount();
       if (mounted) {
         setState(() {
-          _pendingComplaintsCount = list.length;
+          _pendingComplaintsCount = count;
         });
       }
     } catch (_) {}
@@ -93,30 +94,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _isLoadingApprovals = true;
     try {
       final appProvider = Provider.of<AppProvider>(context, listen: false);
-      final reqs = await ApiService.fetchPendingPaymentRequests();
+      final propId = (appProvider.selectedPropertyId != null && appProvider.selectedPropertyId != 'ALL')
+          ? appProvider.selectedPropertyId
+          : null;
+      final count = await ApiService.fetchPendingApprovalsCount(propertyId: propId);
       if (mounted) {
-        // Filter to only count requests for the currently selected property
-        final currentTenantIds = appProvider.currentTenants.map((t) => t.id).toSet();
-        final filteredReqs = reqs.where((r) {
-          if (appProvider.properties.length <= 1 ||
-              appProvider.selectedPropertyId == null) {
-            return true;
-          }
-          final tid = r['tenantProfileId']?.toString() ?? '';
-          return currentTenantIds.contains(tid);
-        }).toList();
-
         setState(() {
-          _pendingApprovalsCount = filteredReqs.length;
+          _pendingApprovalsCount = count;
         });
-
-        // Evaluate Owner In-App Notifications (Commented out notification flow)
-        // final notifProvider = Provider.of<NotificationProvider>(context, listen: false);
-        // notifProvider.checkOwnerNotifications(
-        //   appProvider: appProvider,
-        //   pendingRequests: filteredReqs,
-        //   context: context,
-        // );
       }
     } catch (_) {
       // Gracefully ignore if offline or error
@@ -1776,7 +1761,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 paymentAmount: payment.amount,
                 rentAmount: payment.rentAmount,
                 platformFee: payment.platformFee,
-                bills: null,
+                bills: tenant?.additionalCharges,
                 method: payment.method,
                 notes: payment.notes,
                 paymentDate: payment.date,

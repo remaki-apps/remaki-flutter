@@ -726,6 +726,8 @@ class ApiService {
           heading
           description
           imageUrl
+          durationDays
+          expiresAt
           createdAt
         }
       }
@@ -743,10 +745,11 @@ class ApiService {
     required String heading,
     required String description,
     String? imageBase64,
+    int durationDays = 3,
   }) async {
     const mutation = '''
-      mutation CreateAnnouncement(\$heading: String!, \$description: String!, \$imageBase64: String) {
-        createAnnouncement(heading: \$heading, description: \$description, imageBase64: \$imageBase64) {
+      mutation CreateAnnouncement(\$heading: String!, \$description: String!, \$imageBase64: String, \$durationDays: Int) {
+        createAnnouncement(heading: \$heading, description: \$description, imageBase64: \$imageBase64, durationDays: \$durationDays) {
           id
         }
       }
@@ -755,6 +758,7 @@ class ApiService {
       'heading': heading,
       'description': description,
       'imageBase64': imageBase64,
+      'durationDays': durationDays,
     });
   }
 
@@ -822,6 +826,7 @@ class ApiService {
               billingMonth
               platformFee
               rentAmount
+              billAmount
             }
           }
         ''';
@@ -839,6 +844,7 @@ class ApiService {
               billingMonth
               platformFee
               rentAmount
+              billAmount
             }
           }
         ''';
@@ -1076,15 +1082,17 @@ class ApiService {
     int? rentDueDay,
     String? paymentMode,
     bool? foodIncluded,
+    String? moveInDate,
   }) async {
     const String mutation = '''
-      mutation UpdateTenantFinancials(\$tenantId: ID!, \$rentAmount: Float, \$securityDeposit: Float, \$rentDueDay: Int, \$paymentMode: String, \$foodIncluded: Boolean) {
-        updateTenantFinancials(tenantId: \$tenantId, rentAmount: \$rentAmount, securityDeposit: \$securityDeposit, rentDueDay: \$rentDueDay, paymentMode: \$paymentMode, foodIncluded: \$foodIncluded) {
+      mutation UpdateTenantFinancials(\$tenantId: ID!, \$rentAmount: Float, \$securityDeposit: Float, \$rentDueDay: Int, \$paymentMode: String, \$foodIncluded: Boolean, \$moveInDate: String) {
+        updateTenantFinancials(tenantId: \$tenantId, rentAmount: \$rentAmount, securityDeposit: \$securityDeposit, rentDueDay: \$rentDueDay, paymentMode: \$paymentMode, foodIncluded: \$foodIncluded, moveInDate: \$moveInDate) {
           id
           monthlyRent
           pendingRentAmount
           rentDueDate
           securityDeposit
+          moveInDate
           paymentStatus
           foodIncluded
         }
@@ -1097,6 +1105,7 @@ class ApiService {
       'rentDueDay': rentDueDay,
       'paymentMode': paymentMode,
       'foodIncluded': foodIncluded,
+      'moveInDate': moveInDate,
     });
   }
 
@@ -1114,25 +1123,136 @@ class ApiService {
     });
   }
 
-  static Future<List<dynamic>> fetchPendingPaymentRequests() async {
+  static Future<String> fetchPaymentRequestProof(String requestId) async {
+    const String query = '''
+      query GetPaymentProof(\$id: ID!) {
+        paymentRequestProof(id: \$id)
+      }
+    ''';
+    try {
+      final data = await performQuery(query, variables: {'id': requestId});
+      return data['paymentRequestProof']?.toString() ?? '';
+    } catch (e) {
+      debugPrint('Error fetching payment proof: \$e');
+      return '';
+    }
+  }
+
+  static Future<int> fetchPendingApprovalsCount({String? propertyId}) async {
+    const String query = '''
+      query GetPendingApprovalsCount(\$propertyId: ID) {
+        pendingPaymentRequestsCount(propertyId: \$propertyId)
+      }
+    ''';
+    try {
+      final data = await performQuery(query, variables: {'propertyId': propertyId});
+      return (data['pendingPaymentRequestsCount'] as num?)?.toInt() ?? 0;
+    } catch (e) {
+      debugPrint('Error fetching pending approvals count: \$e');
+      return 0;
+    }
+  }
+
+  static Future<int> fetchPendingComplaintsCount() async {
     const String query = '''
       query {
-        pendingPaymentRequests {
+        pendingComplaintsCount
+      }
+    ''';
+    try {
+      final data = await performQuery(query);
+      return (data['pendingComplaintsCount'] as num?)?.toInt() ?? 0;
+    } catch (e) {
+      debugPrint('Error fetching pending complaints count: \$e');
+      return 0;
+    }
+  }
+
+  static Future<Map<String, dynamic>> getPresignedUploadUrl({
+    String folder = 'receipts',
+    required String fileName,
+    required String contentType,
+  }) async {
+    const String mutation = '''
+      mutation GetPresignedUploadUrl(\$folder: String, \$fileName: String!, \$contentType: String!) {
+        getPresignedUploadUrl(folder: \$folder, fileName: \$fileName, contentType: \$contentType) {
+          uploadUrl
+          publicUrl
+          key
+          expiresInSeconds
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {
+      'folder': folder,
+      'fileName': fileName,
+      'contentType': contentType,
+    });
+    return (data['getPresignedUploadUrl'] as Map<String, dynamic>?) ?? {};
+  }
+
+  static Future<bool> uploadBytesToR2(String uploadUrl, Uint8List bytes, String contentType) async {
+    try {
+      final uri = Uri.parse(uploadUrl);
+      final response = await http.put(
+        uri,
+        headers: {'Content-Type': contentType},
+        body: bytes,
+      );
+      return response.statusCode >= 200 && response.statusCode < 300;
+    } catch (e) {
+      debugPrint('[ApiService] Failed to upload direct to R2: \$e');
+      return false;
+    }
+  }
+
+  static Future<List<dynamic>> fetchPendingPaymentRequests({String? propertyId}) async {
+    const String query = '''
+      query GetPendingPayments(\$propertyId: ID) {
+        pendingPaymentRequests(propertyId: \$propertyId) {
           id
           tenantProfileId
           tenantName
           amount
           paymentType
           method
+          imageUrl
           proofImageBase64
+          hasProofImage
           description
           status
           createdAt
         }
       }
     ''';
-    final data = await performQuery(query);
+    final data = await performQuery(query, variables: {'propertyId': propertyId});
     return data['pendingPaymentRequests'] ?? [];
+  }
+
+  static Future<List<dynamic>> fetchApprovalHistory({int limit = 100, int offset = 0, String? propertyId}) async {
+    const String query = '''
+      query GetApprovalHistory(\$limit: Int, \$offset: Int, \$propertyId: ID) {
+        approvalHistory(limit: \$limit, offset: \$offset, propertyId: \$propertyId) {
+          id
+          tenantProfileId
+          tenantName
+          roomNumber
+          bedLabel
+          amount
+          paymentType
+          method
+          imageUrl
+          hasProofImage
+          description
+          status
+          rejectionReason
+          createdAt
+          updatedAt
+        }
+      }
+    ''';
+    final data = await performQuery(query, variables: {'limit': limit, 'offset': offset, 'propertyId': propertyId});
+    return data['approvalHistory'] ?? [];
   }
 
   static Future<void> resolvePaymentRequest(String requestId, String action, {String? rejectionReason}) async {

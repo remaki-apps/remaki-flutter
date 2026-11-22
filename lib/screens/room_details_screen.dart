@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../models/models.dart';
@@ -498,16 +499,16 @@ class RoomDetailsScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: tenant.statusBgColor,
+                    color: const Color(0xFFEFF6FF),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: tenant.statusBorderColor, width: 0.5),
+                    border: Border.all(color: const Color(0xFFBFDBFE), width: 0.8),
                   ),
                   child: Text(
-                    tenant.statusBadgeLabel,
-                    style: TextStyle(
-                      color: tenant.statusColor,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                    'Due ${DateFormat('dd MMM').format(tenant.rentDueDate)}',
+                    style: const TextStyle(
+                      color: Color(0xFF2563EB),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),

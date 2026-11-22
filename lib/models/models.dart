@@ -745,6 +745,7 @@ class Payment {
   String? billingMonth;
   double platformFee;
   double rentAmount;
+  double billAmount;
 
   Payment({
     required this.id,
@@ -759,6 +760,7 @@ class Payment {
     this.billingMonth,
     this.platformFee = 0.0,
     this.rentAmount = 0.0,
+    this.billAmount = 0.0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -774,12 +776,14 @@ class Payment {
         'billingMonth': billingMonth,
         'platformFee': platformFee,
         'rentAmount': rentAmount,
+        'billAmount': billAmount,
       };
 
   factory Payment.fromJson(Map<String, dynamic> json) {
     final amt = (json['amount'] as num?)?.toDouble() ?? 0.0;
     final fee = (json['platformFee'] as num?)?.toDouble() ?? 0.0;
-    final rent = (json['rentAmount'] as num?)?.toDouble() ?? amt;
+    final bill = (json['billAmount'] as num?)?.toDouble() ?? 0.0;
+    final rent = (json['rentAmount'] as num?)?.toDouble() ?? (bill > 0 ? (amt - fee - bill).clamp(0.0, amt) : amt);
     return Payment(
       id: json['id'] as String? ?? '',
       tenantId: json['tenantId'] as String? ?? '',
@@ -795,6 +799,7 @@ class Payment {
       billingMonth: json['billingMonth'] as String?,
       platformFee: fee,
       rentAmount: rent,
+      billAmount: bill,
     );
   }
 

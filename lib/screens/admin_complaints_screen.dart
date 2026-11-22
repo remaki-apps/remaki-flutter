@@ -49,9 +49,11 @@ class _AdminComplaintsScreenState extends State<AdminComplaintsScreen> {
       final data = await ApiService.fetchAdminComplaints();
       if (!mounted) return;
       setState(() {
+        final fiveDaysAgo = DateTime.now().subtract(const Duration(days: 5));
         _complaints = data
             .whereType<Map<String, dynamic>>()
             .map((e) => Complaint.fromJson(e))
+            .where((c) => !(c.isResolved && c.resolvedAt != null && c.resolvedAt!.isBefore(fiveDaysAgo)))
             .toList();
         _isLoading = false;
       });

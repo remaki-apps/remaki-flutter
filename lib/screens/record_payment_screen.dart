@@ -339,16 +339,17 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                     Expanded(
                                       child: TextField(
                                         controller: _amountController,
+                                        readOnly: _paymentType != 'PARTIAL',
                                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                         style: GoogleFonts.lato(
                                           fontSize: 26,
                                           fontWeight: FontWeight.w800,
-                                          color: const Color(0xFF0F172A),
+                                          color: _paymentType == 'PARTIAL' ? const Color(0xFF0F172A) : const Color(0xFF475569),
                                           letterSpacing: -0.5,
                                         ),
-                                        decoration: const InputDecoration(
-                                          hintText: 'Enter amount',
-                                          hintStyle: TextStyle(fontSize: 18, color: Color(0xFF94A3B8)),
+                                        decoration: InputDecoration(
+                                          hintText: _paymentType == 'PARTIAL' ? 'Enter partial amount' : 'Enter amount',
+                                          hintStyle: const TextStyle(fontSize: 18, color: Color(0xFF94A3B8)),
                                           border: InputBorder.none,
                                           isDense: true,
                                           contentPadding: EdgeInsets.zero,
@@ -365,6 +366,16 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                 spacing: 8,
                                 runSpacing: 8,
                                 children: [
+                                  _buildPresetChip(
+                                    'Partial Pay',
+                                    _paymentType == 'PARTIAL',
+                                    () {
+                                      setState(() {
+                                        _paymentType = 'PARTIAL';
+                                        _amountController.text = '';
+                                      });
+                                    },
+                                  ),
                                   if (hasRent && hasBills)
                                     _buildPresetChip(
                                       'Full Dues (₹${(rentAmt + billsAmt + pFee).toStringAsFixed(0)})',
@@ -613,7 +624,7 @@ class _RecordPaymentScreenState extends State<RecordPaymentScreen> {
                                         widget.tenantId,
                                         currentAmount,
                                         _paymentMethod,
-                                        paymentType: _paymentType,
+                                        paymentType: (_paymentType == 'PARTIAL' || _paymentType == 'BOTH') ? 'BOTH' : _paymentType,
                                         paymentDate: _paymentDate,
                                         notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
                                       );

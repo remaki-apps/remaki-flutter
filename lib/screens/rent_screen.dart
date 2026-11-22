@@ -67,6 +67,7 @@ class _RentScreenState extends State<RentScreen> {
     final bool isCurrentMonth = _selectedMonth.year == _currentMonth.year && _selectedMonth.month == _currentMonth.month;
     final selectedMonthStr = DateFormat('MMMM yyyy').format(_selectedMonth);
     final targetMonthKey = DateFormat('yyyy-MM').format(_selectedMonth);
+    final tenantMap = {for (final t in appProvider.currentTenants) t.id: t};
 
     // Filter payments for the selected month
     final monthPayments = appProvider.currentPayments.where((p) {
@@ -76,15 +77,42 @@ class _RentScreenState extends State<RentScreen> {
       return p.date.year == _selectedMonth.year && p.date.month == _selectedMonth.month;
     }).toList();
 
-    final monthRentPayments = monthPayments.where((p) {
-      final isBill = p.notes != null && p.notes!.toLowerCase().contains('bill');
-      return !isBill;
-    }).toList();
+    bool isBillPayment(Payment p) {
+      if (p.billAmount > 0) return true;
+      final t = tenantMap[p.tenantId];
+      final tenantRent = t?.rentAmount ?? 0.0;
+      final effectiveRent = (p.rentAmount > 0 && p.rentAmount < p.amount)
+          ? p.rentAmount
+          : (tenantRent > 0 && tenantRent < (p.amount - p.platformFee) ? tenantRent : (p.rentAmount > 0 ? p.rentAmount : p.amount));
+      final billPortion = p.amount - effectiveRent - p.platformFee;
+      if (billPortion > 0.01) return true;
+      final notesLower = (p.notes ?? '').toLowerCase();
+      final hasExplicitBillKeyword = notesLower.contains('bill') ||
+          notesLower.contains('utility') ||
+          notesLower.contains('electric') ||
+          notesLower.contains('current') ||
+          notesLower.contains('water') ||
+          notesLower.contains('wifi') ||
+          notesLower.contains('eb') ||
+          notesLower.contains('clean') ||
+          notesLower.contains('maintenance') ||
+          notesLower.contains('mess') ||
+          notesLower.contains('food') ||
+          notesLower.contains('split');
+      if (hasExplicitBillKeyword) return true;
+      if (p.rentAmount <= 0 && !notesLower.contains('rent')) return true;
+      return false;
+    }
 
-    final monthBillPayments = monthPayments.where((p) {
-      final isBill = p.notes != null && p.notes!.toLowerCase().contains('bill');
-      return isBill;
-    }).toList();
+    bool isRentPayment(Payment p) {
+      if (p.rentAmount > 0) return true;
+      final notesLower = (p.notes ?? '').toLowerCase();
+      if (notesLower.contains('rent')) return true;
+      return !isBillPayment(p);
+    }
+
+    final monthRentPayments = monthPayments.where(isRentPayment).toList();
+    final monthBillPayments = monthPayments.where(isBillPayment).toList();
 
     // Filter charges for the selected month
     final allMonthCharges = <Map<String, dynamic>>[];
@@ -122,7 +150,27 @@ class _RentScreenState extends State<RentScreen> {
           if (t.moveInDate.isAfter(DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1))) return sum;
           return sum + t.rentAmount;
         });
-        collectedAmount = monthRentPayments.fold(0.0, (sum, p) => sum + (p.rentAmount > 0 ? p.rentAmount : p.amount));
+        collectedAmount = monthRentPayments.fold(0.0, (sum, p) {
+          final t = tenantMap[p.tenantId];
+          double rAmt = p.rentAmount;
+          double bAmt = p.billAmount;
+          final nLower = (p.notes ?? '').toLowerCase();
+          if (nLower.contains('&') && bAmt <= 0) {
+            final charges = t?.additionalCharges ?? [];
+            final matched = charges.firstWhere(
+              (c) => c.description.trim().isNotEmpty && c.description.toLowerCase().trim() != 'bill' && nLower.contains(c.description.toLowerCase().trim()),
+              orElse: () => AdditionalCharge(id: '', description: '', amount: 0, date: DateTime.now(), billType: '', status: ''),
+            );
+            if (matched.amount > 0 && matched.amount < (p.amount - p.platformFee)) {
+              bAmt = matched.amount;
+              rAmt = math.max(0.0, p.amount - p.platformFee - bAmt);
+            }
+          }
+          if (rAmt <= 0) {
+            rAmt = math.max(0.0, p.amount - p.platformFee - bAmt);
+          }
+          return sum + rAmt;
+        });
         expectedAmount = math.max(rentExpectedRaw, collectedAmount);
         pendingAmount = math.max(0.0, expectedAmount - collectedAmount);
         paidCount = monthRentPayments.map((p) => p.tenantId).toSet().length;
@@ -137,7 +185,22 @@ class _RentScreenState extends State<RentScreen> {
         unpaidCount = appProvider.currentTenants.where((t) => t.totalPendingBills > 0).length;
       } else {
         final billsExpectedFromCharges = allMonthCharges.fold(0.0, (sum, item) => sum + (item['charge'] as AdditionalCharge).amount);
-        final billsCollectedFromPayments = monthBillPayments.fold(0.0, (sum, p) => sum + p.amount);
+        final billsCollectedFromPayments = monthBillPayments.fold(0.0, (sum, p) {
+          final t = tenantMap[p.tenantId];
+          double bAmt = p.billAmount;
+          final nLower = (p.notes ?? '').toLowerCase();
+          if (nLower.contains('&') && bAmt <= 0) {
+            final charges = t?.additionalCharges ?? [];
+            final matched = charges.firstWhere(
+              (c) => c.description.trim().isNotEmpty && c.description.toLowerCase().trim() != 'bill' && nLower.contains(c.description.toLowerCase().trim()),
+              orElse: () => AdditionalCharge(id: '', description: '', amount: 0, date: DateTime.now(), billType: '', status: ''),
+            );
+            if (matched.amount > 0 && matched.amount < (p.amount - p.platformFee)) {
+              bAmt = matched.amount;
+            }
+          }
+          return sum + bAmt;
+        });
         final billsCollectedFromCharges = allMonthCharges.where((item) => (item['charge'] as AdditionalCharge).status == 'PAID').fold(0.0, (sum, item) => sum + (item['charge'] as AdditionalCharge).amount);
         collectedAmount = math.max(billsCollectedFromPayments, billsCollectedFromCharges);
         expectedAmount = math.max(billsExpectedFromCharges, collectedAmount);
@@ -900,22 +963,73 @@ class _RentScreenState extends State<RentScreen> {
                       color: const Color(0xFF0F172A),
                     ),
                   ),
-                  subtitle: Text(
-                    roomBedInfo.isNotEmpty ? roomBedInfo : 'PG Tenant',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
-                  ),
+                  subtitle: Builder(builder: (context) {
+                    String sub = (p.notes != null && p.notes!.trim().isNotEmpty)
+                        ? (roomBedInfo.isNotEmpty ? '$roomBedInfo • ${p.notes!.trim()}' : p.notes!.trim())
+                        : (roomBedInfo.isNotEmpty ? roomBedInfo : 'PG Tenant');
+                    if (isBillsTab && p.notes != null) {
+                      final segments = p.notes!.split(RegExp(r'[,&]')).map((s) => s.trim()).where((s) => s.isNotEmpty && !s.toLowerCase().contains('rent')).toList();
+                      if (segments.isNotEmpty) {
+                        var billName = segments.first.replaceAll(RegExp(r'^(utility\s*bills?|bills?)\s*:\s*', caseSensitive: false), '').trim();
+                        billName = billName.replaceAll(RegExp(r'^(utility\s*bills?|bills?)\s*', caseSensitive: false), '').trim();
+                        if (billName.isNotEmpty) {
+                          sub = roomBedInfo.isNotEmpty ? '$roomBedInfo • $billName' : billName;
+                        }
+                      }
+                    } else if (!isBillsTab && p.notes != null && p.notes!.toLowerCase().contains('rent')) {
+                      final segments = p.notes!.split(RegExp(r'[,&]')).map((s) => s.trim()).toList();
+                      final rentPart = segments.firstWhere((s) => s.toLowerCase().contains('rent'), orElse: () => '').trim();
+                      if (rentPart.isNotEmpty) {
+                        sub = roomBedInfo.isNotEmpty ? '$roomBedInfo • $rentPart' : rentPart;
+                      }
+                    }
+                    return Text(
+                      sub,
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    );
+                  }),
                   trailing: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        '+₹${p.amount.toStringAsFixed(0)}',
-                        style: GoogleFonts.lato(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF16A34A),
-                        ),
-                      ),
+                      Builder(builder: (context) {
+                        double effectiveBill = p.billAmount;
+                        double effectiveRent = p.rentAmount;
+
+                        final notesLower = (p.notes ?? '').toLowerCase();
+                        final bool isCombinedNote = notesLower.contains('&');
+
+                        if (isCombinedNote && effectiveBill <= 0) {
+                          final charges = tenant?.additionalCharges ?? [];
+                          final matchedCharge = charges.firstWhere(
+                            (c) {
+                              final desc = c.description.toLowerCase().trim();
+                              return desc.isNotEmpty && desc != 'bill' && desc != 'utility' && notesLower.contains(desc);
+                            },
+                            orElse: () => AdditionalCharge(id: '', description: '', amount: 0, date: DateTime.now(), billType: '', status: ''),
+                          );
+                          if (matchedCharge.amount > 0 && matchedCharge.amount < (p.amount - p.platformFee)) {
+                            effectiveBill = matchedCharge.amount;
+                            effectiveRent = math.max(0.0, p.amount - p.platformFee - effectiveBill);
+                          }
+                        }
+
+                        if (effectiveRent <= 0) {
+                          effectiveRent = math.max(0.0, p.amount - p.platformFee - effectiveBill);
+                        }
+
+                        final displayAmt = isBillsTab ? effectiveBill : effectiveRent;
+                        return Text(
+                          '+₹${displayAmt.toStringAsFixed(0)}',
+                          style: GoogleFonts.lato(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF16A34A),
+                          ),
+                        );
+                      }),
                       const SizedBox(height: 2),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
