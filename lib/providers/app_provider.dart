@@ -111,7 +111,8 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<void> _performLoadFromAPI({bool showLoading = true}) async {
-    if (showLoading && !isLoading) {
+    final bool hasData = rooms.isNotEmpty || tenants.isNotEmpty;
+    if (showLoading && !isLoading && !hasData) {
       isLoading = true;
       try {
         WidgetsBinding.instance.addPostFrameCallback((_) {

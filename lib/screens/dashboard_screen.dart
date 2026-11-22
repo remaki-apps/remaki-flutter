@@ -45,7 +45,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return;
       }
       final appProvider = Provider.of<AppProvider>(context, listen: false);
-      await appProvider.loadFromAPI(showLoading: true);
+      final bool hasExistingData = appProvider.rooms.isNotEmpty || appProvider.tenants.isNotEmpty;
+      await appProvider.loadFromAPI(showLoading: !hasExistingData);
       if (!ApiService.isLoggedIn && mounted) {
         context.go('/login');
         return;
