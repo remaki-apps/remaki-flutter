@@ -83,6 +83,7 @@ Future<void> bootstrapApp() async {
   );
   await ApiService.initToken();
   ApiService.warmupServer();
+  await FcmService.instance.init(onNavigate: (route) => router.go(route));
   runApp(
     MultiProvider(
       providers: [
@@ -93,7 +94,6 @@ Future<void> bootstrapApp() async {
       child: const RemakiApp(),
     ),
   );
-  FcmService.instance.init(onNavigate: (route) => router.go(route));
 }
 
 void main() async {

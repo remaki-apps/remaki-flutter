@@ -34,23 +34,7 @@ class FcmService {
     _onNavigate = onNavigate;
 
     try {
-      // 1. Request runtime notification permissions (Android 13+ & Web)
-      final settings = await _messaging.requestPermission(
-        alert: true,
-        announcement: false,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        sound: true,
-      );
-
-      if (settings.authorizationStatus == AuthorizationStatus.denied) {
-        debugPrint('[FCM] User declined notification permissions.');
-        return;
-      }
-
-      // 2. Setup Android local notifications channel for foreground alerts
+      // 1. Setup Android local notifications channel for foreground alerts
       if (!kIsWeb) {
         const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
         const initSettings = InitializationSettings(android: androidInit);
@@ -71,12 +55,29 @@ class FcmService {
           },
         );
 
-        await _localNotifications
-            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-            ?.createNotificationChannel(_channel);
+        final androidImpl = _localNotifications
+            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+
+        await androidImpl?.createNotificationChannel(_channel);
+
+        // Explicitly trigger the Android 13+ (API 33+) runtime permission prompt
+        final granted = await androidImpl?.requestNotificationsPermission();
+        debugPrint('[FCM] Android POST_NOTIFICATIONS permission granted: $granted');
+      } else {
+        // Request Web notification permissions
+        final settings = await _messaging.requestPermission(
+          alert: true,
+          announcement: false,
+          badge: true,
+          carPlay: false,
+          criticalAlert: false,
+          provisional: false,
+          sound: true,
+        );
+        debugPrint('[FCM] Web notification permission: ${settings.authorizationStatus}');
       }
 
-      // 3. Obtain initial FCM token and synchronize with backend
+      // 2. Obtain initial FCM token and synchronize with backend
       await syncTokenWithBackend();
 
       // Listen for token refresh events
