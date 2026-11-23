@@ -79,12 +79,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 1. API calls: always network directly, never cached
-  const isApiCall =
+  // 1. API calls & Service Worker scripts: always network directly, never cached
+  const isBypass =
     url.pathname.includes('/api/') ||
+    url.pathname.includes('firebase-messaging-sw.js') ||
     url.hostname !== self.location.hostname;
 
-  if (isApiCall || request.method !== 'GET') {
+  if (isBypass || request.method !== 'GET') {
     event.respondWith(fetch(request));
     return;
   }
@@ -101,9 +102,13 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => {
+        .catch(async () => {
           // If offline or network error, fallback to cached entry
-          return caches.match(request);
+          const cached = await caches.match(request);
+          if (cached) return cached;
+          const fallback = await caches.match('/');
+          if (fallback) return fallback;
+          return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
         })
     );
     return;

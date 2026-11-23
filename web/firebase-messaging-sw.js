@@ -14,12 +14,13 @@ const messaging = firebase.messaging();
 
 // Handle background messages
 messaging.onBackgroundMessage((payload) => {
-  const notificationTitle = payload.notification?.title || 'Remaki Notification';
+  const notificationTitle = payload.notification?.title || payload.data?.title || 'Remaki Notification';
   const notificationOptions = {
-    body: payload.notification?.body || '',
+    body: payload.notification?.body || payload.data?.body || '',
     icon: '/icons/Icon-192.png',
     badge: '/icons/Icon-192.png',
     data: payload.data || {},
+    requireInteraction: true,
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);

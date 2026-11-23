@@ -3,7 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
+import 'fcm_web_helper_stub.dart'
+    if (dart.library.html) 'fcm_web_helper_web.dart' as web_helper;
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -98,23 +101,32 @@ class FcmService {
         final notification = message.notification;
         final data = message.data;
 
-        if (notification != null && !kIsWeb) {
-          _localNotifications.show(
-            notification.hashCode,
-            notification.title,
-            notification.body,
-            NotificationDetails(
-              android: AndroidNotificationDetails(
-                _channel.id,
-                _channel.name,
-                channelDescription: _channel.description,
-                importance: Importance.max,
-                priority: Priority.high,
-                icon: '@mipmap/ic_launcher',
+        if (notification != null) {
+          if (!kIsWeb) {
+            _localNotifications.show(
+              notification.hashCode,
+              notification.title,
+              notification.body,
+              NotificationDetails(
+                android: AndroidNotificationDetails(
+                  _channel.id,
+                  _channel.name,
+                  channelDescription: _channel.description,
+                  importance: Importance.max,
+                  priority: Priority.high,
+                  icon: '@mipmap/ic_launcher',
+                ),
               ),
-            ),
-            payload: jsonEncode(data),
-          );
+              payload: jsonEncode(data),
+            );
+          } else {
+            // Trigger native browser notification on Web even when tab is in foreground
+            web_helper.showWebNotificationImpl(
+              notification.title ?? 'Remaki Notification',
+              notification.body ?? '',
+              data['route']?.toString() ?? '',
+            );
+          }
         }
       });
 
@@ -155,6 +167,15 @@ class FcmService {
     try {
       String? token;
       if (kIsWeb) {
+        final prefs = await SharedPreferences.getInstance();
+        final storedVapid = prefs.getString('fcm_vapid_key');
+        if (storedVapid != webVapidKey) {
+          try {
+            await _messaging.deleteToken();
+            debugPrint('[FCM] Purged obsolete Web token from IndexedDB to bind new VAPID key');
+          } catch (_) {}
+          await prefs.setString('fcm_vapid_key', webVapidKey);
+        }
         token = await _messaging.getToken(
           vapidKey: webVapidKey.isNotEmpty ? webVapidKey : null,
         );
