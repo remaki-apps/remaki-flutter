@@ -679,22 +679,49 @@
     window.showWebNotification = function(title, body, route) {
       if (!('Notification' in window)) return;
       if (Notification.permission === 'granted') {
-        try {
-          const n = new Notification(title || 'Remaki', {
-            body: body || '',
-            icon: '/icons/Icon-192.png',
-            badge: '/icons/Icon-192.png',
-            data: { route: route || '/' }
-          });
-          n.onclick = function() {
-            window.focus();
-            if (route && route.length > 0) {
-              window.location.hash = '#' + route;
+        const notifTitle = title || 'Remaki Alert';
+        const notifOptions = {
+          body: body || '',
+          icon: '/icons/Icon-192.png',
+          badge: '/icons/Icon-192.png',
+          data: { route: route || '/' },
+          requireInteraction: true,
+          tag: 'remaki_' + Date.now()
+        };
+
+        if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
+          navigator.serviceWorker.ready.then(function(reg) {
+            if (reg && reg.showNotification) {
+              return reg.showNotification(notifTitle, notifOptions);
+            } else {
+              const n = new Notification(notifTitle, notifOptions);
+              n.onclick = function() {
+                window.focus();
+                if (route && route.length > 0) window.location.hash = '#' + route;
+                n.close();
+              };
             }
-            n.close();
-          };
-        } catch (e) {
-          console.warn('[FCM] Native notification failed:', e);
+          }).catch(function() {
+            try {
+              const n = new Notification(notifTitle, notifOptions);
+              n.onclick = function() {
+                window.focus();
+                if (route && route.length > 0) window.location.hash = '#' + route;
+                n.close();
+              };
+            } catch (_) {}
+          });
+        } else {
+          try {
+            const n = new Notification(notifTitle, notifOptions);
+            n.onclick = function() {
+              window.focus();
+              if (route && route.length > 0) window.location.hash = '#' + route;
+              n.close();
+            };
+          } catch (e) {
+            console.warn('[FCM] Native notification failed:', e);
+          }
         }
       }
     };

@@ -116,6 +116,8 @@ class FcmService {
         final body = notification?.body ?? data['body']?.toString() ?? '';
         final route = data['route']?.toString() ?? '';
 
+        debugPrint('[FCM] Foreground push message received: $title - $body');
+
         // Trigger reactive stream so active screens live auto-refresh data (notices, bills, etc.)
         onForegroundMessage.value = message;
 
@@ -145,8 +147,10 @@ class FcmService {
         }
 
         // Floating In-App Banner for active screen (Works on Web, iOS Safari, Android, and Desktop!)
-        final context = _navigatorKey?.currentContext;
-        if (context != null && context.mounted) {
+        final navState = _navigatorKey?.currentState;
+        final overlayState = navState?.overlay;
+        final context = _navigatorKey?.currentContext ?? navState?.context;
+        if (overlayState != null || (context != null && context.mounted)) {
           final item = InAppNotificationItem(
             id: 'fcm_${DateTime.now().millisecondsSinceEpoch}',
             title: title,
@@ -162,10 +166,13 @@ class FcmService {
           );
 
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (context.mounted) {
+            final activeContext = _navigatorKey?.currentContext ?? navState?.context;
+            final activeOverlay = _navigatorKey?.currentState?.overlay ?? overlayState;
+            if (activeOverlay != null || (activeContext != null && activeContext.mounted)) {
               InAppNotificationBanner.show(
-                context,
+                activeContext ?? activeOverlay!.context,
                 item,
+                explicitOverlay: activeOverlay,
                 onTap: () {
                   if (route.isNotEmpty) {
                     _onNavigate?.call(route);

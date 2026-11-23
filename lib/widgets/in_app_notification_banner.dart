@@ -12,12 +12,18 @@ class InAppNotificationBanner {
     InAppNotificationItem notification, {
     VoidCallback? onDismiss,
     VoidCallback? onTap,
+    OverlayState? explicitOverlay,
   }) {
     // Dismiss any existing active banner
     dismiss();
 
-    final overlayState = Overlay.maybeOf(context, rootOverlay: true);
-    if (overlayState == null) return;
+    final overlayState = explicitOverlay ??
+        Overlay.maybeOf(context, rootOverlay: true) ??
+        Navigator.maybeOf(context)?.overlay;
+    if (overlayState == null) {
+      debugPrint('[InAppBanner] OverlayState is null; cannot display banner.');
+      return;
+    }
 
     _currentEntry = OverlayEntry(
       builder: (ctx) => _NotificationBannerWidget(
