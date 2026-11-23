@@ -10,6 +10,7 @@ import '../providers/app_provider.dart';
 import '../providers/organization_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/api_service.dart';
+import '../services/fcm_service.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/keyboard_responsive_layout.dart';
 
@@ -183,6 +184,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
       // Save token in ApiService (persisted via SharedPreferences only if _keepLoggedIn is true)
       await ApiService.setAuthToken(token, role, hasSecurityPin: hasSecurityPin, persist: _keepLoggedIn);
+      FcmService.instance.syncTokenWithBackend();
 
       if (mounted) {
         if (role == 'ADMIN') {

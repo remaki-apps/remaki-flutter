@@ -43,7 +43,11 @@ import 'screens/pg_owners_screen.dart';
 import 'screens/tenant_complaints_screen.dart';
 import 'screens/admin_complaints_screen.dart';
 import 'screens/platform_fee_summary_screen.dart';
+import 'screens/configuration_screen.dart';
 import 'services/shared_media_service.dart';
+import 'services/fcm_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'widgets/offline_wrapper.dart';
 import 'widgets/keyboard_responsive_layout.dart';
 import 'models/organization_models.dart';
@@ -60,6 +64,12 @@ import 'screens/organization/org_admin_success_screen.dart';
 
 Future<void> bootstrapApp() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    debugPrint('[Firebase] Init skipped or error: $e');
+  }
   SharedMediaService.instance.init();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(
@@ -83,6 +93,7 @@ Future<void> bootstrapApp() async {
       child: const RemakiApp(),
     ),
   );
+  FcmService.instance.init(onNavigate: (route) => router.go(route));
 }
 
 void main() async {
@@ -426,6 +437,15 @@ final router = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/platform_fee_summary',
       builder: (context, state) => const PlatformFeeSummaryScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/configuration',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: const ConfigurationScreen(),
+      ),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

@@ -1,0 +1,90 @@
+{
+  "project_info": {
+    "project_number": "260854340023",
+    "project_id": "remaki-apps",
+    "storage_bucket": "remaki-apps.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:260854340023:android:2159188649ccf406723032",
+        "android_client_info": {
+          "package_name": "com.example.remaki_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "260854340023-61d7ci4eaahf6dmt09kts7j1127dsisl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.remaki_mobile",
+            "certificate_hash": "e04fb2a24f0ba97bbff3a92e6dd2aab24ce3e7a3"
+          }
+        },
+        {
+          "client_id": "260854340023-fdjle5i0vs0euiap4e9bp7fn6r11jh2g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCaLBY8wjDpL4EQVu1AtWIpjhtk1ZaxcuQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "260854340023-fdjle5i0vs0euiap4e9bp7fn6r11jh2g.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "260854340023-3k74jgd1l54q0krl2chv5vogeeqislo5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.remakiMobile"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:260854340023:android:80c4b120e5f678c9723032",
+        "android_client_info": {
+          "package_name": "com.remaki.app.qa"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "260854340023-fdjle5i0vs0euiap4e9bp7fn6r11jh2g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCaLBY8wjDpL4EQVu1AtWIpjhtk1ZaxcuQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "260854340023-fdjle5i0vs0euiap4e9bp7fn6r11jh2g.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "260854340023-3k74jgd1l54q0krl2chv5vogeeqislo5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.remakiMobile"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

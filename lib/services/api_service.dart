@@ -1875,4 +1875,85 @@ class ApiService {
     final data = await performQuery(mutation, variables: {'input': input});
     return data['updateMyOrganization'] as Map<String, dynamic>;
   }
+
+  // ----------------------------------------------------
+  // Push Notification & Reminder Settings API Methods
+  // ----------------------------------------------------
+
+  static Future<bool> registerDeviceToken(String token, String platform) async {
+    const String mutation = '''
+      mutation RegisterDeviceToken(\$input: RegisterDeviceTokenInput!) {
+        registerDeviceToken(input: \$input)
+      }
+    ''';
+    try {
+      final res = await performQuery(mutation, variables: {
+        'input': {
+          'token': token,
+          'platform': platform,
+        }
+      });
+      return res['registerDeviceToken'] == true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static Future<bool> unregisterDeviceToken(String token) async {
+    const String mutation = '''
+      mutation UnregisterDeviceToken(\$token: String!) {
+        unregisterDeviceToken(token: \$token)
+      }
+    ''';
+    try {
+      final res = await performQuery(mutation, variables: {'token': token});
+      return res['unregisterDeviceToken'] == true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static Future<Map<String, dynamic>?> fetchReminderSettings({String? propertyId}) async {
+    const String query = '''
+      query ReminderSettings(\$propertyId: String) {
+        reminderSettings(propertyId: \$propertyId) {
+          adminDefault
+          propertyOverride
+          effectiveThreshold
+        }
+      }
+    ''';
+    try {
+      final res = await performQuery(query, variables: {'propertyId': propertyId});
+      return res['reminderSettings'] as Map<String, dynamic>?;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static Future<Map<String, dynamic>?> updateReminderSettings({
+    String? propertyId,
+    required int reminderDaysBeforeDue,
+  }) async {
+    const String mutation = '''
+      mutation UpdateReminderSettings(\$input: UpdateReminderSettingsInput!) {
+        updateReminderSettings(input: \$input) {
+          adminDefault
+          propertyOverride
+          effectiveThreshold
+        }
+      }
+    ''';
+    try {
+      final res = await performQuery(mutation, variables: {
+        'input': {
+          'propertyId': propertyId,
+          'reminderDaysBeforeDue': reminderDaysBeforeDue,
+        }
+      });
+      return res['updateReminderSettings'] as Map<String, dynamic>?;
+    } catch (e) {
+      return null;
+    }
+  }
 }

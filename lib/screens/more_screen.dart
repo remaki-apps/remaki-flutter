@@ -7,6 +7,7 @@ import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../providers/notification_provider.dart';
 import '../services/api_service.dart';
+import '../services/fcm_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/export_data_modal.dart';
 import '../widgets/fancy_toast.dart';
@@ -79,6 +80,7 @@ class MoreScreen extends StatelessWidget {
                   context.read<NotificationProvider>().reset();
                 } catch (_) {}
               }
+              await FcmService.instance.unregisterOnLogout();
               await ApiService.clearAuthToken();
               if (context.mounted) {
                 context.go('/login');
@@ -597,6 +599,17 @@ class MoreScreen extends StatelessWidget {
                     subtitle: 'Export property records to Excel (.csv)',
                     badge: 'Excel',
                     onTap: () => ExportDataModal.show(context),
+                  ),
+                  const SizedBox(height: 8),
+
+                  _buildActionCard(
+                    icon: Icons.tune_rounded,
+                    iconColor: const Color(0xFF4F46E5),
+                    iconBg: const Color(0xFFEEF2FF),
+                    title: 'Configuration',
+                    subtitle: 'Rent reminders, due dates & notification rules',
+                    badge: 'New',
+                    onTap: () => context.push('/configuration'),
                   ),
                   const SizedBox(height: 8),
 

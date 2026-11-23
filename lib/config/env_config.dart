@@ -7,8 +7,8 @@ class EnvConfig {
   static Environment _environment = Environment.prod;
   static bool _manuallyConfigured = false;
 
-  static const String prodApiUrl = 'https://remaki-backend.onrender.com/graphql';
-  static const String qaApiUrl = 'https://remaki-backend-qa.onrender.com/graphql';
+  static const String prodApiUrl = 'https://remaki-backend-prod.vercel.app/graphql';
+  static const String qaApiUrl = 'https://remaki-backend-qa.vercel.app/graphql';
 
   /// Call in main.dart or main_qa.dart to initialize environment
   static void initialize(Environment env) {

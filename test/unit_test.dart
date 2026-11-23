@@ -464,7 +464,7 @@ void main() {
       expect(EnvConfig.isProd, isFalse);
       expect(EnvConfig.appName, 'Remaki QA');
       expect(EnvConfig.apiUrl, EnvConfig.qaApiUrl);
-      expect(EnvConfig.warmupUrl, 'https://remaki-backend-qa.onrender.com/');
+      expect(EnvConfig.warmupUrl, 'https://remaki-backend-qa.vercel.app/');
     });
 
     test('ApiService clears token if saved auth_env does not match current environment', () async {
