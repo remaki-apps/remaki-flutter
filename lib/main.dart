@@ -110,9 +110,10 @@ Future<void> bootstrapApp() async {
 }
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   if (appFlavor == 'qa') {
     EnvConfig.initialize(Environment.qa);
-  } else {
+  } else if (appFlavor == 'prod') {
     EnvConfig.initialize(Environment.prod);
   }
   await bootstrapApp();

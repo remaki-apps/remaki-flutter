@@ -36,12 +36,30 @@ class ApiService {
   static Future<void> initToken() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final currentEnv = EnvConfig.environment.name;
       final savedEnv = prefs.getString('auth_env');
+
+      // On mobile devices (Android / iOS), app sandbox storage is isolated per package ID.
+      // If a saved session exists, align EnvConfig with that session if not explicitly set by flavor.
+      if (!kIsWeb && savedEnv != null) {
+        if (savedEnv == 'qa' && EnvConfig.environment != Environment.qa) {
+          EnvConfig.initialize(Environment.qa);
+        } else if (savedEnv == 'prod' && EnvConfig.environment != Environment.prod) {
+          EnvConfig.initialize(Environment.prod);
+        }
+      }
+
+      final currentEnv = EnvConfig.environment.name;
       if (savedEnv != null && savedEnv != currentEnv) {
-        // Environment switched (e.g. was QA, now Prod on same origin)
-        // Clear cached token to prevent invalid cross-environment sessions
-        await clearAuthToken();
+        // Environment switched (e.g. was QA, now Prod on same web origin)
+        // Only clear cached token on web where origins might be shared across environments.
+        if (kIsWeb) {
+          await clearAuthToken();
+        } else {
+          _token = prefs.getString('auth_token');
+          _role = prefs.getString('user_role');
+          _hasSecurityPin = prefs.getBool('user_has_security_pin');
+          authNotifier.value = isLoggedIn;
+        }
       } else {
         _token = prefs.getString('auth_token');
         _role = prefs.getString('user_role');

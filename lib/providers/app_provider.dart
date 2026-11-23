@@ -46,7 +46,7 @@ class AppProvider with ChangeNotifier {
         loadFromAPI(showLoading: false);
       }
     });
-    if (autoLoad && ApiService.isLoggedIn) {
+    if (autoLoad && ApiService.isLoggedIn && ApiService.role == 'ADMIN') {
       loadFromAPI();
     } else {
       isLoading = false;
@@ -94,9 +94,11 @@ class AppProvider with ChangeNotifier {
   Future<void>? _activeLoadFuture;
 
   Future<void> loadFromAPI({bool showLoading = true}) async {
-    if (!ApiService.isLoggedIn) {
+    if (!ApiService.isLoggedIn || ApiService.role != 'ADMIN') {
       isLoading = false;
-      await loadFromStorage();
+      if (ApiService.role == 'ADMIN') {
+        await loadFromStorage();
+      }
       return;
     }
     if (_activeLoadFuture != null) {
@@ -111,6 +113,10 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<void> _performLoadFromAPI({bool showLoading = true}) async {
+    if (!ApiService.isLoggedIn || ApiService.role != 'ADMIN') {
+      isLoading = false;
+      return;
+    }
     final bool hasData = rooms.isNotEmpty || tenants.isNotEmpty;
     if (showLoading && !isLoading && !hasData) {
       isLoading = true;
@@ -320,11 +326,9 @@ class AppProvider with ChangeNotifier {
       final errLower = e.toString().toLowerCase();
       final bool isAuthOrUserFailure = errLower.contains('unauthorized') ||
           errLower.contains('unauthenticated') ||
-          errLower.contains('user not found') ||
-          errLower.contains('not found') ||
           errLower.contains('invalid token') ||
           errLower.contains('jwt expired') ||
-          errLower.contains('forbidden') ||
+          (errLower.contains('user not found') && !errLower.contains('room')) ||
           !ApiService.isLoggedIn;
 
       if (isAuthOrUserFailure) {

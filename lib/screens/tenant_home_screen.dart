@@ -290,11 +290,13 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
   Future<void> _fetchProfile() async {
     final profile = await ApiService.fetchCurrentTenantProfile();
-    if (profile == null || !ApiService.isLoggedIn) {
-      debugPrint('[TenantHome] Profile not found or tenant deleted from DB. Logging out immediately.');
-      await ApiService.clearAuthToken();
-      if (mounted) {
+    if (!mounted) return;
+    if (profile == null) {
+      if (!ApiService.isLoggedIn) {
+        debugPrint('[TenantHome] User is not logged in. Navigating to login.');
         context.go('/login');
+      } else {
+        debugPrint('[TenantHome] Profile fetch returned null; keeping session active.');
       }
       return;
     }
