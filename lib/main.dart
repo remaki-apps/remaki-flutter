@@ -70,7 +70,7 @@ Future<void> bootstrapApp() async {
       await Firebase.initializeApp(
         options: const FirebaseOptions(
           apiKey: 'AIzaSyCaLBY8wjDpL4EQVu1AtWIpjhtk1ZaxcuQ',
-          appId: '1:260854340023:web:remaki_web',
+          appId: '1:260854340023:web:9bf29859f0bb5c87723032',
           messagingSenderId: '260854340023',
           projectId: 'remaki-apps',
           storageBucket: 'remaki-apps.firebasestorage.app',

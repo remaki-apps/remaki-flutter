@@ -7,7 +7,7 @@ firebase.initializeApp({
   apiKey: "AIzaSyCaLBY8wjDpL4EQVu1AtWIpjhtk1ZaxcuQ",
   projectId: "remaki-apps",
   messagingSenderId: "260854340023",
-  appId: "1:260854340023:web:remaki_web"
+  appId: "1:260854340023:web:9bf29859f0bb5c87723032"
 });
 
 const messaging = firebase.messaging();

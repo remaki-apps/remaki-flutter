@@ -146,7 +146,7 @@ class FcmService {
   /// Can be set here or passed via --dart-define=VAPID_KEY=...
   static const String webVapidKey = String.fromEnvironment(
     'VAPID_KEY',
-    defaultValue: '', // Paste your Firebase Console Web Push Key Pair here
+    defaultValue: 'BPii2JyOrNQCOxLPCngBoAU7y79vcdk7ngYmzVAoekY-PWfUomeWbIAZhaaN1iTjf6JVN-OOjwWHVy7iP-UwtWs', // Paste your Firebase Console Web Push Key Pair here
   );
 
   /// Synchronize the current device token with the backend if user is authenticated
