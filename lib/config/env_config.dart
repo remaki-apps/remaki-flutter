@@ -82,6 +82,6 @@ class EnvConfig {
   }
 
   static String get warmupUrl {
-    return apiUrl.replaceAll('/graphql', '/');
+    return apiUrl.replaceAll('/graphql', '/health');
   }
 }
