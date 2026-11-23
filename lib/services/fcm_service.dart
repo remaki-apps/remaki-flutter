@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/in_app_notification.dart';
+import '../widgets/in_app_notification_banner.dart';
 import 'api_service.dart';
 import 'fcm_web_helper_stub.dart'
     if (dart.library.html) 'fcm_web_helper_web.dart' as web_helper;
@@ -23,6 +26,7 @@ class FcmService {
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
   Function(String route)? _onNavigate;
+  GlobalKey<NavigatorState>? _navigatorKey;
   String? _lastToken;
 
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
@@ -33,8 +37,12 @@ class FcmService {
     playSound: true,
   );
 
-  Future<void> init({Function(String route)? onNavigate}) async {
+  Future<void> init({
+    Function(String route)? onNavigate,
+    GlobalKey<NavigatorState>? navigatorKey,
+  }) async {
     _onNavigate = onNavigate;
+    _navigatorKey = navigatorKey;
 
     if (Firebase.apps.isEmpty) {
       debugPrint('[FCM] Firebase not initialized; skipping FCM setup.');
@@ -96,37 +104,70 @@ class FcmService {
         }
       });
 
-      // 4. Handle Foreground Messages
+      // 4. Handle Foreground Messages (Active tab / In-App)
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         final notification = message.notification;
         final data = message.data;
 
-        if (notification != null) {
-          if (!kIsWeb) {
-            _localNotifications.show(
-              notification.hashCode,
-              notification.title,
-              notification.body,
-              NotificationDetails(
-                android: AndroidNotificationDetails(
-                  _channel.id,
-                  _channel.name,
-                  channelDescription: _channel.description,
-                  importance: Importance.max,
-                  priority: Priority.high,
-                  icon: '@mipmap/ic_launcher',
-                ),
+        final title = notification?.title ?? data['title']?.toString() ?? 'Remaki Alert';
+        final body = notification?.body ?? data['body']?.toString() ?? '';
+        final route = data['route']?.toString() ?? '';
+
+        // Native Android system notification
+        if (notification != null && !kIsWeb) {
+          _localNotifications.show(
+            notification.hashCode,
+            title,
+            body,
+            NotificationDetails(
+              android: AndroidNotificationDetails(
+                _channel.id,
+                _channel.name,
+                channelDescription: _channel.description,
+                importance: Importance.max,
+                priority: Priority.high,
+                icon: '@mipmap/ic_launcher',
               ),
-              payload: jsonEncode(data),
-            );
-          } else {
-            // Trigger native browser notification on Web even when tab is in foreground
-            web_helper.showWebNotificationImpl(
-              notification.title ?? 'Remaki Notification',
-              notification.body ?? '',
-              data['route']?.toString() ?? '',
-            );
-          }
+            ),
+            payload: jsonEncode(data),
+          );
+        }
+
+        // Native desktop OS notification for Web browsers
+        if (kIsWeb) {
+          web_helper.showWebNotificationImpl(title, body, route);
+        }
+
+        // Floating In-App Banner for active screen (Works on Web, iOS Safari, Android, and Desktop!)
+        final context = _navigatorKey?.currentContext;
+        if (context != null && context.mounted) {
+          final item = InAppNotificationItem(
+            id: 'fcm_${DateTime.now().millisecondsSinceEpoch}',
+            title: title,
+            message: body,
+            category: NotificationCategory.announcement,
+            priority: NotificationPriority.urgent,
+            targetRoute: route,
+            timestamp: DateTime.now(),
+            iconData: Icons.notifications_active_rounded,
+            iconColor: const Color(0xFF4F46E5),
+            iconBgColor: const Color(0xFFEEF2FF),
+            data: data,
+          );
+
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              InAppNotificationBanner.show(
+                context,
+                item,
+                onTap: () {
+                  if (route.isNotEmpty) {
+                    _onNavigate?.call(route);
+                  }
+                },
+              );
+            }
+          });
         }
       });
 

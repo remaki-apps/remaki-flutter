@@ -96,7 +96,10 @@ Future<void> bootstrapApp() async {
   );
   await ApiService.initToken();
   ApiService.warmupServer();
-  await FcmService.instance.init(onNavigate: (route) => router.go(route));
+  await FcmService.instance.init(
+    onNavigate: (route) => router.go(route),
+    navigatorKey: _rootNavigatorKey,
+  );
   runApp(
     MultiProvider(
       providers: [
