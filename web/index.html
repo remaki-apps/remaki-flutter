@@ -533,6 +533,8 @@
           if ('serviceWorker' in navigator) {
             const regs = await navigator.serviceWorker.getRegistrations();
             for (const reg of regs) {
+              // Do NOT unregister the Firebase Web Push service worker!
+              if (reg.active?.scriptURL?.includes('firebase-messaging-sw.js')) continue;
               if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
               if (reg.active) reg.active.postMessage({ type: 'SKIP_WAITING' });
               await reg.unregister().catch(function() {});

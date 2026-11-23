@@ -142,14 +142,22 @@ class FcmService {
     }
   }
 
+  /// Web Push VAPID public key (from Firebase Console -> Project Settings -> Cloud Messaging -> Web Push certificates)
+  /// Can be set here or passed via --dart-define=VAPID_KEY=...
+  static const String webVapidKey = String.fromEnvironment(
+    'VAPID_KEY',
+    defaultValue: '', // Paste your Firebase Console Web Push Key Pair here
+  );
+
   /// Synchronize the current device token with the backend if user is authenticated
   Future<void> syncTokenWithBackend() async {
     if (Firebase.apps.isEmpty) return;
     try {
       String? token;
       if (kIsWeb) {
-        // Web requires VAPID key if configured, or default token
-        token = await _messaging.getToken();
+        token = await _messaging.getToken(
+          vapidKey: webVapidKey.isNotEmpty ? webVapidKey : null,
+        );
       } else {
         token = await _messaging.getToken();
       }
