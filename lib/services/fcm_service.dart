@@ -230,9 +230,16 @@ class FcmService {
           } catch (_) {}
           await prefs.setString('fcm_vapid_key', webVapidKey);
         }
-        token = await _messaging.getToken(
+
+        // Try to get the token via the explicitly registered firebase-messaging-sw.js.
+        // This binds the push subscription to the correct SW (not flutter_service_worker.js).
+        token = await web_helper.getWebFcmToken(webVapidKey);
+
+        // Fallback: if JS interop failed (e.g. SW not yet installed), use the standard getToken().
+        token ??= await _messaging.getToken(
           vapidKey: webVapidKey.isNotEmpty ? webVapidKey : null,
         );
+        debugPrint('[FCM] Web FCM token obtained: ${token?.substring(0, token.length < 20 ? token.length : 20)}...');
       } else {
         token = await _messaging.getToken();
       }

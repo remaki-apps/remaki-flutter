@@ -618,11 +618,12 @@
 
     // ── Service Worker Registration & Smooth Auto-Activation ────────────────
     if ('serviceWorker' in navigator) {
+      // ── 1. Register flutter_service_worker.js (caching / offline) ──────────
       navigator.serviceWorker.register(
         'flutter_service_worker.js',
         { scope: '/' }
       ).then(function (registration) {
-        console.log('[SW] Registered successfully');
+        console.log('[SW] flutter_service_worker.js registered successfully');
         registration.update().catch(function() {});
 
         // Automatically activate waiting workers without stalling
@@ -645,7 +646,47 @@
           }
         });
       }).catch(function (err) {
-        console.warn('[SW] Registration note:', err);
+        console.warn('[SW] flutter_service_worker.js registration note:', err);
+      });
+
+      // ── 2. Register firebase-messaging-sw.js (FCM push subscriptions) ──────
+      // This MUST be registered separately so Chrome's PushManager binds the
+      // push subscription to firebase-messaging-sw.js, not flutter_service_worker.js.
+      // Without this, incoming push packets are routed to flutter_service_worker.js
+      // which has no messaging handler and silently drops every notification.
+      navigator.serviceWorker.register(
+        '/firebase-messaging-sw.js',
+        { scope: '/' }
+      ).then(function (fcmReg) {
+        console.log('[FCM-SW] firebase-messaging-sw.js registered. State:', fcmReg.active ? 'active' : 'installing/waiting');
+        // Store registration globally so fcm_web_helper_web.dart can pass it to getToken().
+        window._fcmSwRegistration = fcmReg;
+
+        // ── 3. After Firebase JS SDK is initialised (via Flutter / flutterfire),
+        //       store the messaging instance so fcm_web_helper_web.dart can call
+        //       getToken({ vapidKey, serviceWorkerRegistration }) with the correct SW.
+        //       We poll until window.firebase is available (loaded async by Flutter).
+        var _fcmInitAttempts = 0;
+        function _tryInitFcmInstance() {
+          _fcmInitAttempts++;
+          if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0) {
+            try {
+              var messagingInstance = firebase.messaging();
+              window._firebaseMessagingInstance = messagingInstance;
+              console.log('[FCM] _firebaseMessagingInstance exposed on window.');
+            } catch (e) {
+              console.warn('[FCM] Could not get firebase.messaging():', e);
+            }
+          } else if (_fcmInitAttempts < 60) {
+            // Retry up to 6 seconds (60 × 100 ms)
+            setTimeout(_tryInitFcmInstance, 100);
+          } else {
+            console.warn('[FCM] firebase.messaging() not available after 6s — token will use default SW binding.');
+          }
+        }
+        setTimeout(_tryInitFcmInstance, 500);
+      }).catch(function (err) {
+        console.warn('[FCM-SW] firebase-messaging-sw.js registration failed:', err);
       });
     }
 
