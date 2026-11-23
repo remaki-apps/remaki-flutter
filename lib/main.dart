@@ -48,6 +48,7 @@ import 'services/shared_media_service.dart';
 import 'services/fcm_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'widgets/offline_wrapper.dart';
 import 'widgets/keyboard_responsive_layout.dart';
 import 'models/organization_models.dart';
@@ -65,8 +66,20 @@ import 'screens/organization/org_admin_success_screen.dart';
 Future<void> bootstrapApp() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    await Firebase.initializeApp();
-    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    if (kIsWeb) {
+      await Firebase.initializeApp(
+        options: const FirebaseOptions(
+          apiKey: 'AIzaSyCaLBY8wjDpL4EQVu1AtWIpjhtk1ZaxcuQ',
+          appId: '1:260854340023:web:remaki_web',
+          messagingSenderId: '260854340023',
+          projectId: 'remaki-apps',
+          storageBucket: 'remaki-apps.firebasestorage.app',
+        ),
+      );
+    } else {
+      await Firebase.initializeApp();
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    }
   } catch (e) {
     debugPrint('[Firebase] Init skipped or error: $e');
   }

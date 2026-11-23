@@ -16,7 +16,7 @@ class FcmService {
   FcmService._();
   static final FcmService instance = FcmService._();
 
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  FirebaseMessaging get _messaging => FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
   Function(String route)? _onNavigate;
@@ -32,6 +32,11 @@ class FcmService {
 
   Future<void> init({Function(String route)? onNavigate}) async {
     _onNavigate = onNavigate;
+
+    if (Firebase.apps.isEmpty) {
+      debugPrint('[FCM] Firebase not initialized; skipping FCM setup.');
+      return;
+    }
 
     try {
       // 1. Setup Android local notifications channel for foreground alerts
@@ -139,6 +144,7 @@ class FcmService {
 
   /// Synchronize the current device token with the backend if user is authenticated
   Future<void> syncTokenWithBackend() async {
+    if (Firebase.apps.isEmpty) return;
     try {
       String? token;
       if (kIsWeb) {
