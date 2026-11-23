@@ -22,6 +22,9 @@ class FcmService {
   FcmService._();
   static final FcmService instance = FcmService._();
 
+  /// Reactive notifier triggered whenever a push notification arrives in foreground
+  static final ValueNotifier<RemoteMessage?> onForegroundMessage = ValueNotifier(null);
+
   FirebaseMessaging get _messaging => FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
@@ -112,6 +115,9 @@ class FcmService {
         final title = notification?.title ?? data['title']?.toString() ?? 'Remaki Alert';
         final body = notification?.body ?? data['body']?.toString() ?? '';
         final route = data['route']?.toString() ?? '';
+
+        // Trigger reactive stream so active screens live auto-refresh data (notices, bills, etc.)
+        onForegroundMessage.value = message;
 
         // Native Android system notification
         if (notification != null && !kIsWeb) {

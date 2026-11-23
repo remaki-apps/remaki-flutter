@@ -174,6 +174,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     NetworkProvider.instance.addRestoredListener(_onNetworkRestored);
     _loadAllData();
     SharedMediaService.instance.pendingSharedImage.addListener(_handleIncomingSharedScreenshot);
+    FcmService.onForegroundMessage.addListener(_handleIncomingPush);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _handleIncomingSharedScreenshot();
     });
@@ -181,6 +182,23 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
 
   void _onNetworkRestored() {
     if (mounted) {
+      _loadAllData();
+    }
+  }
+
+  void _handleIncomingPush() {
+    final message = FcmService.onForegroundMessage.value;
+    if (message == null || !mounted) return;
+    final entityType = message.data['entityType']?.toString().toUpperCase();
+    final route = message.data['route']?.toString();
+
+    // Auto-refresh notices, bills, and payments live without requiring manual page reload!
+    if (entityType == 'ANNOUNCEMENT' || (route != null && route.contains('announcement'))) {
+      _fetchAnnouncements();
+    } else if (entityType == 'BILL' || entityType == 'PAYMENT_REQUEST' || entityType == 'RENT_REMINDER') {
+      _fetchProfile();
+      _fetchPayments();
+    } else {
       _loadAllData();
     }
   }
@@ -205,6 +223,7 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     _tenantNewPinController.dispose();
     _tenantConfirmNewPinController.dispose();
     SharedMediaService.instance.pendingSharedImage.removeListener(_handleIncomingSharedScreenshot);
+    FcmService.onForegroundMessage.removeListener(_handleIncomingPush);
     super.dispose();
   }
 

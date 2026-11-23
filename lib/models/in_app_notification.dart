@@ -5,6 +5,8 @@ enum NotificationCategory {
   rentDigest,
   overdueEscalation,
   paymentStatus,
+  announcement,
+  general,
 }
 
 enum NotificationPriority {
@@ -53,6 +55,10 @@ class InAppNotificationItem {
         return 'Overdue Escalation';
       case NotificationCategory.paymentStatus:
         return 'Payment Status';
+      case NotificationCategory.announcement:
+        return 'Announcement';
+      case NotificationCategory.general:
+        return 'Alert';
     }
   }
 
