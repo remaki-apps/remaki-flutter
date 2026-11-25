@@ -291,6 +291,12 @@ class OrgMoreScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     _buildMenuItem(
+                      icon: Icons.account_balance_wallet_outlined,
+                      title: 'Platform Fee & Settlements',
+                      onTap: () => context.push('/org_platform_fee'),
+                    ),
+                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                    _buildMenuItem(
                       icon: Icons.business_outlined,
                       title: 'Edit Organization Details',
                       onTap: () => _showEditProfileDialog(context, orgProvider),

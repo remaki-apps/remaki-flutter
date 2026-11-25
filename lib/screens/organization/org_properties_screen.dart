@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/organization_provider.dart';
@@ -49,6 +50,16 @@ class OrgPropertiesScreen extends StatelessWidget {
                     ),
                   ),
                   IconButton(
+                    tooltip: 'Platform Fee & Settlements',
+                    icon: const Icon(Icons.account_balance_wallet_outlined, color: AppTheme.primaryColor),
+                    onPressed: () => context.push('/org_platform_fee'),
+                  ),
+                  IconButton(
+                    tooltip: 'Add PG Property',
+                    icon: const Icon(Icons.add_business_rounded, color: AppTheme.primaryColor),
+                    onPressed: () => context.push('/org_property_form'),
+                  ),
+                  IconButton(
                     icon: const Icon(Icons.refresh_rounded, color: AppTheme.primaryColor),
                     onPressed: () => orgProvider.loadFromAPI(showLoading: false),
                   ),
@@ -69,7 +80,7 @@ class OrgPropertiesScreen extends StatelessWidget {
                         separatorBuilder: (_, __) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           final prop = properties[index];
-                          return _buildPropertyCard(prop);
+                          return _buildPropertyCard(context, prop);
                         },
                       ),
               ),
@@ -80,11 +91,14 @@ class OrgPropertiesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPropertyCard(OrganizationPropertyItem prop) {
+  Widget _buildPropertyCard(BuildContext context, OrganizationPropertyItem prop) {
     final double occupancyRate = prop.totalBeds > 0 ? (prop.occupiedBeds / prop.totalBeds).clamp(0.0, 1.0) : 0.0;
     final int percent = (occupancyRate * 100).round();
 
-    return Container(
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () => context.push('/org_property_details/${prop.id}'),
+      child: Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -135,6 +149,16 @@ class OrgPropertiesScreen extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+              IconButton(
+                tooltip: 'Edit PG',
+                icon: const Icon(Icons.edit_outlined, size: 19, color: AppTheme.primaryColor),
+                onPressed: () => context.push('/org_property_form?propertyId=${prop.id}'),
+              ),
+              IconButton(
+                tooltip: 'Delete / Deactivate PG',
+                icon: const Icon(Icons.delete_outline_rounded, size: 19, color: AppTheme.danger),
+                onPressed: () => context.push('/org_stepwise_delete?targetId=${prop.id}&isAdmin=false&name=${Uri.encodeComponent(prop.name)}'),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -220,6 +244,7 @@ class OrgPropertiesScreen extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 
@@ -253,6 +278,7 @@ class OrgPropertiesScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

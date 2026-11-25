@@ -499,11 +499,13 @@ class AppProvider with ChangeNotifier {
   double get collectedBillsOnly => currentTenants.fold(0.0, (sum, t) => sum + t.totalPaidBills);
   double get pendingBillsOnly => currentTenants.fold(0.0, (sum, t) => sum + t.totalPendingBills);
 
-  bool _isDueDateReached(DateTime? dueDate) {
+  bool _isDueDateReached(DateTime? dueDate, {int reminderDaysBeforeDue = 0, bool? isReminderDue}) {
+    if (isReminderDue != null) return isReminderDue;
     if (dueDate == null) return true;
     final dueStart = DateTime(dueDate.year, dueDate.month, dueDate.day);
+    final reminderStart = dueStart.subtract(Duration(days: reminderDaysBeforeDue));
     final nowStart = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-    return !nowStart.isBefore(dueStart); // true if today >= dueDate
+    return !nowStart.isBefore(reminderStart);
   }
 
   List<Tenant> get newTenantsThisMonth => currentTenants.where((t) => t.moveInDate.month == DateTime.now().month).toList();
@@ -512,8 +514,12 @@ class AppProvider with ChangeNotifier {
     final bool hasPendingBills = t.totalPendingBills > 0;
 
     if (hasPendingRent) {
-      // Both (rent & bills) OR Rent only: wait for due date
-      return _isDueDateReached(t.rentDueDate);
+      // Wait until the configured reminder window (default 0 days = exact due date)
+      return _isDueDateReached(
+        t.rentDueDate,
+        reminderDaysBeforeDue: t.reminderDaysBeforeDue,
+        isReminderDue: t.isReminderDue,
+      );
     } else if (hasPendingBills) {
       // Only bills: show immediately as no due date for those
       return true;
@@ -521,14 +527,23 @@ class AppProvider with ChangeNotifier {
     return false;
   }).toList();
   List<Tenant> get unpaidRentTenants => currentTenants.where((t) =>
-    (t.pendingRentAmount > 0 || !t.isPaid) && _isDueDateReached(t.rentDueDate)
+    (t.pendingRentAmount > 0 || !t.isPaid) &&
+    _isDueDateReached(
+      t.rentDueDate,
+      reminderDaysBeforeDue: t.reminderDaysBeforeDue,
+      isReminderDue: t.isReminderDue,
+    )
   ).toList();
   List<Tenant> get unpaidBillsTenants => currentTenants.where((t) {
     final bool hasPendingRent = (t.pendingRentAmount > 0 || !t.isPaid);
     final bool hasPendingBills = t.totalPendingBills > 0;
     if (!hasPendingBills) return false;
     if (hasPendingRent) {
-      return _isDueDateReached(t.rentDueDate);
+      return _isDueDateReached(
+        t.rentDueDate,
+        reminderDaysBeforeDue: t.reminderDaysBeforeDue,
+        isReminderDue: t.isReminderDue,
+      );
     }
     return true;
   }).toList();

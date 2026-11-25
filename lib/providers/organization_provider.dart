@@ -181,6 +181,56 @@ class OrganizationProvider with ChangeNotifier {
     }
   }
 
+  Future<void> changeAdminPassword(String adminId, String newPassword) async {
+    try {
+      await ApiService.changeAdminPasswordUnderOrg(adminId, newPassword);
+    } catch (e) {
+      throw ApiService.cleanErrorMessage(e);
+    }
+  }
+
+  Future<OrganizationPropertyItem> createProperty(Map<String, dynamic> input) async {
+    try {
+      final data = await ApiService.createPropertyUnderOrg(input);
+      final created = OrganizationPropertyItem.fromJson(data);
+      properties.insert(0, created);
+      loadFromAPI(showLoading: false);
+      notifyListeners();
+      return created;
+    } catch (e) {
+      throw ApiService.cleanErrorMessage(e);
+    }
+  }
+
+  Future<OrganizationPropertyItem> updateProperty(Map<String, dynamic> input) async {
+    try {
+      final data = await ApiService.updatePropertyUnderOrg(input);
+      final updated = OrganizationPropertyItem.fromJson(data);
+      final idx = properties.indexWhere((p) => p.id == updated.id);
+      if (idx != -1) {
+        properties[idx] = updated;
+      }
+      loadFromAPI(showLoading: false);
+      notifyListeners();
+      return updated;
+    } catch (e) {
+      throw ApiService.cleanErrorMessage(e);
+    }
+  }
+
+  Future<void> deleteProperty(String propertyId) async {
+    try {
+      final ok = await ApiService.deletePropertyUnderOrg(propertyId);
+      if (ok) {
+        properties.removeWhere((p) => p.id == propertyId);
+        loadFromAPI(showLoading: false);
+        notifyListeners();
+      }
+    } catch (e) {
+      throw ApiService.cleanErrorMessage(e);
+    }
+  }
+
   Future<void> updateProfile(Map<String, dynamic> input) async {
     try {
       final data = await ApiService.updateMyOrganization(input);

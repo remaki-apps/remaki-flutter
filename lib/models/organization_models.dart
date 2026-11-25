@@ -198,55 +198,331 @@ class AdminCreatedPayload {
 class OrganizationPropertyItem {
   final String id;
   final String name;
+  final String? description;
   final String address;
   final String city;
   final String state;
   final String pincode;
   final int totalFloors;
+  final bool isActive;
   final String adminId;
   final String adminName;
   final String adminCode;
+  final String? upiId;
+  final String? upiPayeeName;
+  final double platformFee;
+  final String? platformFeeUpiId;
+  final String? platformFeePayeeName;
+  final double monthlyPlatformFeeCollected;
+  final double platformFeePaid;
+  final String? platformFeeBillingMonth;
   final int totalRooms;
   final int totalBeds;
   final int occupiedBeds;
   final int availableBeds;
   final int totalTenants;
+  final int coOwnersCount;
 
   OrganizationPropertyItem({
     required this.id,
     required this.name,
+    this.description,
     required this.address,
     required this.city,
     required this.state,
     required this.pincode,
     required this.totalFloors,
+    this.isActive = true,
     required this.adminId,
     required this.adminName,
     required this.adminCode,
+    this.upiId,
+    this.upiPayeeName,
+    this.platformFee = 9.0,
+    this.platformFeeUpiId,
+    this.platformFeePayeeName,
+    this.monthlyPlatformFeeCollected = 0.0,
+    this.platformFeePaid = 0.0,
+    this.platformFeeBillingMonth,
     required this.totalRooms,
     required this.totalBeds,
     required this.occupiedBeds,
     required this.availableBeds,
     required this.totalTenants,
+    this.coOwnersCount = 0,
   });
 
   factory OrganizationPropertyItem.fromJson(Map<String, dynamic> json) {
     return OrganizationPropertyItem(
       id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? '',
+      description: json['description'] as String?,
       address: json['address'] as String? ?? '',
       city: json['city'] as String? ?? '',
       state: json['state'] as String? ?? '',
       pincode: json['pincode'] as String? ?? '',
       totalFloors: (json['totalFloors'] as num?)?.toInt() ?? 0,
+      isActive: json['isActive'] != false,
       adminId: json['adminId'] as String? ?? '',
       adminName: json['adminName'] as String? ?? '',
       adminCode: json['adminCode'] as String? ?? '',
+      upiId: json['upiId'] as String?,
+      upiPayeeName: json['upiPayeeName'] as String?,
+      platformFee: (json['platformFee'] as num?)?.toDouble() ?? 9.0,
+      platformFeeUpiId: json['platformFeeUpiId'] as String?,
+      platformFeePayeeName: json['platformFeePayeeName'] as String?,
+      monthlyPlatformFeeCollected: (json['monthlyPlatformFeeCollected'] as num?)?.toDouble() ?? 0.0,
+      platformFeePaid: (json['platformFeePaid'] as num?)?.toDouble() ?? 0.0,
+      platformFeeBillingMonth: json['platformFeeBillingMonth'] as String?,
       totalRooms: (json['totalRooms'] as num?)?.toInt() ?? 0,
       totalBeds: (json['totalBeds'] as num?)?.toInt() ?? 0,
       occupiedBeds: (json['occupiedBeds'] as num?)?.toInt() ?? 0,
       availableBeds: (json['availableBeds'] as num?)?.toInt() ?? 0,
       totalTenants: (json['totalTenants'] as num?)?.toInt() ?? 0,
+      coOwnersCount: (json['coOwnersCount'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+class OrganizationPropertyOwnerItem {
+  final String id;
+  final String userId;
+  final String propertyId;
+  final String name;
+  final String phoneNumber;
+  final String? email;
+  final String role;
+  final bool isPrimary;
+  final bool isActive;
+
+  OrganizationPropertyOwnerItem({
+    required this.id,
+    required this.userId,
+    required this.propertyId,
+    required this.name,
+    required this.phoneNumber,
+    this.email,
+    required this.role,
+    required this.isPrimary,
+    required this.isActive,
+  });
+
+  factory OrganizationPropertyOwnerItem.fromJson(Map<String, dynamic> json) {
+    return OrganizationPropertyOwnerItem(
+      id: json['id'] as String? ?? '',
+      userId: json['userId'] as String? ?? '',
+      propertyId: json['propertyId'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      phoneNumber: json['phoneNumber'] as String? ?? '',
+      email: json['email'] as String?,
+      role: json['role'] as String? ?? 'CO_OWNER',
+      isPrimary: json['isPrimary'] == true,
+      isActive: json['isActive'] != false,
+    );
+  }
+}
+
+class OrganizationBedItem {
+  final String id;
+  final String roomId;
+  final String bedLabel;
+  final String status;
+  final String? tenantName;
+
+  OrganizationBedItem({
+    required this.id,
+    required this.roomId,
+    required this.bedLabel,
+    required this.status,
+    this.tenantName,
+  });
+
+  factory OrganizationBedItem.fromJson(Map<String, dynamic> json) {
+    return OrganizationBedItem(
+      id: json['id'] as String? ?? '',
+      roomId: json['roomId'] as String? ?? '',
+      bedLabel: json['bedLabel'] as String? ?? '',
+      status: json['status'] as String? ?? 'AVAILABLE',
+      tenantName: json['tenantName'] as String?,
+    );
+  }
+}
+
+class OrganizationRoomItem {
+  final String id;
+  final String propertyId;
+  final String roomNumber;
+  final String floorNumber;
+  final int capacity;
+  final String roomType;
+  final String foodOption;
+  final double monthlyRentWithFood;
+  final double monthlyRentWithoutFood;
+  final String status;
+  final int occupiedBeds;
+  final int availableBeds;
+  final List<OrganizationBedItem> beds;
+
+  OrganizationRoomItem({
+    required this.id,
+    required this.propertyId,
+    required this.roomNumber,
+    required this.floorNumber,
+    required this.capacity,
+    required this.roomType,
+    required this.foodOption,
+    required this.monthlyRentWithFood,
+    required this.monthlyRentWithoutFood,
+    required this.status,
+    required this.occupiedBeds,
+    required this.availableBeds,
+    required this.beds,
+  });
+
+  factory OrganizationRoomItem.fromJson(Map<String, dynamic> json) {
+    return OrganizationRoomItem(
+      id: json['id'] as String? ?? '',
+      propertyId: json['propertyId'] as String? ?? '',
+      roomNumber: json['roomNumber'] as String? ?? '',
+      floorNumber: json['floorNumber'] as String? ?? '',
+      capacity: (json['capacity'] as num?)?.toInt() ?? 0,
+      roomType: json['roomType'] as String? ?? 'NON_AC',
+      foodOption: json['foodOption'] as String? ?? 'WITH_AND_WITHOUT_FOOD',
+      monthlyRentWithFood: (json['monthlyRentWithFood'] as num?)?.toDouble() ?? 0.0,
+      monthlyRentWithoutFood: (json['monthlyRentWithoutFood'] as num?)?.toDouble() ?? 0.0,
+      status: json['status'] as String? ?? 'EMPTY',
+      occupiedBeds: (json['occupiedBeds'] as num?)?.toInt() ?? 0,
+      availableBeds: (json['availableBeds'] as num?)?.toInt() ?? 0,
+      beds: (json['beds'] as List<dynamic>?)
+              ?.map((b) => OrganizationBedItem.fromJson(b as Map<String, dynamic>))
+              .toList() ??
+          [],
+    );
+  }
+}
+
+class DeletionPreview {
+  final int propertiesCount;
+  final int roomsCount;
+  final int bedsCount;
+  final int tenantsCount;
+  final int coOwnersCount;
+  final int paymentsCount;
+
+  DeletionPreview({
+    required this.propertiesCount,
+    required this.roomsCount,
+    required this.bedsCount,
+    required this.tenantsCount,
+    required this.coOwnersCount,
+    required this.paymentsCount,
+  });
+
+  factory DeletionPreview.fromJson(Map<String, dynamic> json) {
+    return DeletionPreview(
+      propertiesCount: (json['propertiesCount'] as num?)?.toInt() ?? 0,
+      roomsCount: (json['roomsCount'] as num?)?.toInt() ?? 0,
+      bedsCount: (json['bedsCount'] as num?)?.toInt() ?? 0,
+      tenantsCount: (json['tenantsCount'] as num?)?.toInt() ?? 0,
+      coOwnersCount: (json['coOwnersCount'] as num?)?.toInt() ?? 0,
+      paymentsCount: (json['paymentsCount'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+class OrgPlatformFeeSettlementItem {
+  final String id;
+  final String propertyId;
+  final String adminId;
+  final String billingMonth;
+  final double amountPaid;
+  final String paymentMode;
+  final String? referenceId;
+  final String? notes;
+  final String paidAt;
+  final String? recordedBy;
+
+  OrgPlatformFeeSettlementItem({
+    required this.id,
+    required this.propertyId,
+    required this.adminId,
+    required this.billingMonth,
+    required this.amountPaid,
+    required this.paymentMode,
+    this.referenceId,
+    this.notes,
+    required this.paidAt,
+    this.recordedBy,
+  });
+
+  factory OrgPlatformFeeSettlementItem.fromJson(Map<String, dynamic> json) {
+    return OrgPlatformFeeSettlementItem(
+      id: json['id'] as String? ?? '',
+      propertyId: json['propertyId'] as String? ?? '',
+      adminId: json['adminId'] as String? ?? '',
+      billingMonth: json['billingMonth'] as String? ?? '',
+      amountPaid: (json['amountPaid'] as num?)?.toDouble() ?? 0.0,
+      paymentMode: json['paymentMode'] as String? ?? 'UPI',
+      referenceId: json['referenceId'] as String?,
+      notes: json['notes'] as String?,
+      paidAt: json['paidAt'] as String? ?? '',
+      recordedBy: json['recordedBy'] as String?,
+    );
+  }
+}
+
+class OrganizationPropertyPlatformFeeSummary {
+  final String propertyId;
+  final String propertyName;
+  final String adminId;
+  final String adminName;
+  final String adminCode;
+  final String billingMonth;
+  final double feePerTenant;
+  final String? platformFeeUpiId;
+  final String? platformFeePayeeName;
+  final double totalCollected;
+  final double totalSettled;
+  final double pendingAmount;
+  final int tenantsContributed;
+  final List<OrgPlatformFeeSettlementItem> settlements;
+
+  OrganizationPropertyPlatformFeeSummary({
+    required this.propertyId,
+    required this.propertyName,
+    required this.adminId,
+    required this.adminName,
+    required this.adminCode,
+    required this.billingMonth,
+    required this.feePerTenant,
+    this.platformFeeUpiId,
+    this.platformFeePayeeName,
+    required this.totalCollected,
+    required this.totalSettled,
+    required this.pendingAmount,
+    required this.tenantsContributed,
+    required this.settlements,
+  });
+
+  factory OrganizationPropertyPlatformFeeSummary.fromJson(Map<String, dynamic> json) {
+    return OrganizationPropertyPlatformFeeSummary(
+      propertyId: json['propertyId'] as String? ?? '',
+      propertyName: json['propertyName'] as String? ?? '',
+      adminId: json['adminId'] as String? ?? '',
+      adminName: json['adminName'] as String? ?? '',
+      adminCode: json['adminCode'] as String? ?? '',
+      billingMonth: json['billingMonth'] as String? ?? '',
+      feePerTenant: (json['feePerTenant'] as num?)?.toDouble() ?? 9.0,
+      platformFeeUpiId: json['platformFeeUpiId'] as String?,
+      platformFeePayeeName: json['platformFeePayeeName'] as String?,
+      totalCollected: (json['totalCollected'] as num?)?.toDouble() ?? 0.0,
+      totalSettled: (json['totalSettled'] as num?)?.toDouble() ?? 0.0,
+      pendingAmount: (json['pendingAmount'] as num?)?.toDouble() ?? 0.0,
+      tenantsContributed: (json['tenantsContributed'] as num?)?.toInt() ?? 0,
+      settlements: (json['settlements'] as List<dynamic>?)
+              ?.map((s) => OrgPlatformFeeSettlementItem.fromJson(s as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 }

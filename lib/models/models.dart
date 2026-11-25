@@ -438,6 +438,8 @@ class Tenant {
     }
   }
   DateTime rentDueDate;
+  int reminderDaysBeforeDue;
+  bool isReminderDue;
   // Amount still owed on rent this cycle (0 if fully paid, partial if partially paid)
   double pendingRentAmount;
   List<AdditionalCharge> additionalCharges;
@@ -640,6 +642,8 @@ class Tenant {
     this.platformFee = 5.0,
     this.propertyId = '',
     required this.rentDueDate,
+    this.reminderDaysBeforeDue = 0,
+    this.isReminderDue = true,
     this.pendingRentAmount = 0,
     List<AdditionalCharge>? additionalCharges,
     this.imageUrl,
@@ -667,6 +671,8 @@ class Tenant {
         'platformFee': platformFee,
         'propertyId': propertyId,
         'rentDueDate': rentDueDate.toIso8601String(),
+        'reminderDaysBeforeDue': reminderDaysBeforeDue,
+        'isReminderDue': isReminderDue,
         'pendingRentAmount': pendingRentAmount,
         'additionalCharges': additionalCharges.map((c) => c.toJson()).toList(),
         'imageUrl': imageUrl,
@@ -707,6 +713,8 @@ class Tenant {
         platformFee: (json['platformFee'] as num?)?.toDouble() ?? 5.0,
         propertyId: json['propertyId'] as String? ?? (json['room'] != null && json['room']['propertyId'] != null ? json['room']['propertyId'].toString() : ''),
         rentDueDate: (DateTime.tryParse(json['rentDueDate']?.toString() ?? '') ?? DateTime.now()).toLocal(),
+        reminderDaysBeforeDue: (json['reminderDaysBeforeDue'] as num?)?.toInt() ?? 0,
+        isReminderDue: json['isReminderDue'] as bool? ?? true,
         pendingRentAmount: (json['pendingRentAmount'] as num?)?.toDouble() ?? 0,
         additionalCharges: (json['additionalCharges'] as List<dynamic>?)?.map((e) => AdditionalCharge.fromJson(e as Map<String, dynamic>)).toList() ??
             (json['bills'] as List<dynamic>?)?.map((e) => AdditionalCharge.fromJson(e as Map<String, dynamic>)).toList() ??

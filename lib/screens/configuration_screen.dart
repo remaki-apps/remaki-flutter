@@ -18,9 +18,9 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
   bool _isSaving = false;
 
   String? _selectedPropertyId; // null = Global Admin Default
-  int _adminDefaultDays = 5;
+  int _adminDefaultDays = 0;
   int? _propertyOverrideDays;
-  int _currentSliderDays = 5;
+  int _currentSliderDays = 0;
   bool _isPropertyOverrideActive = false;
 
   @override
@@ -35,10 +35,10 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
       final res = await ApiService.fetchReminderSettings(propertyId: _selectedPropertyId);
       if (res != null) {
         setState(() {
-          _adminDefaultDays = (res['adminDefault'] as num?)?.toInt() ?? 5;
+          _adminDefaultDays = (res['adminDefault'] as num?)?.toInt() ?? 0;
           _propertyOverrideDays = (res['propertyOverride'] as num?)?.toInt();
           _isPropertyOverrideActive = _selectedPropertyId != null && _propertyOverrideDays != null;
-          _currentSliderDays = _isPropertyOverrideActive ? (_propertyOverrideDays ?? 5) : _adminDefaultDays;
+          _currentSliderDays = (_isPropertyOverrideActive ? (_propertyOverrideDays ?? 0) : _adminDefaultDays).clamp(0, 7);
         });
       }
     } catch (_) {
@@ -61,6 +61,9 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
       if (res != null && mounted) {
         FancyToast.showSuccess(context, 'Configuration updated successfully!');
         await _loadSettings();
+        if (mounted) {
+          Provider.of<AppProvider>(context, listen: false).loadFromAPI(showLoading: false);
+        }
       } else if (mounted) {
         FancyToast.showError(context, 'Save Failed', message: 'Could not update reminder settings.');
       }
@@ -259,7 +262,7 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
                                     onChanged: (val) {
                                       setState(() {
                                         _isPropertyOverrideActive = val;
-                                        _currentSliderDays = val ? (_propertyOverrideDays ?? 5) : _adminDefaultDays;
+                                        _currentSliderDays = (val ? (_propertyOverrideDays ?? 0) : _adminDefaultDays).clamp(0, 7);
                                       });
                                     },
                                   ),
@@ -286,7 +289,7 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
-                                    '$_currentSliderDays Days Before',
+                                    _currentSliderDays == 0 ? 'On Due Date' : '$_currentSliderDays Days Before',
                                     style: GoogleFonts.lato(
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.w800,
@@ -298,12 +301,14 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'Daily countdown notifications will trigger starting $_currentSliderDays days prior to rent due date.',
+                              _currentSliderDays == 0
+                                  ? 'Notifications and Unpaid Tenants will trigger on the exact rent due date.'
+                                  : 'Daily countdown notifications and Unpaid Tenants will trigger starting $_currentSliderDays days prior to rent due date.',
                               style: GoogleFonts.lato(fontSize: 12.5, color: const Color(0xFF64748B)),
                             ),
                             const SizedBox(height: 16),
 
-                            // Slider (3 to 7 days)
+                            // Slider (0 to 7 days)
                             SliderTheme(
                               data: SliderTheme.of(context).copyWith(
                                 activeTrackColor: const Color(0xFF4F46E5),
@@ -313,11 +318,11 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
                                 trackHeight: 6,
                               ),
                               child: Slider(
-                                value: _currentSliderDays.toDouble(),
-                                min: 3,
+                                value: _currentSliderDays.toDouble().clamp(0.0, 7.0),
+                                min: 0,
                                 max: 7,
-                                divisions: 4,
-                                label: '$_currentSliderDays Days',
+                                divisions: 7,
+                                label: _currentSliderDays == 0 ? 'Due Date' : '$_currentSliderDays Days',
                                 onChanged: (_selectedPropertyId != null && !_isPropertyOverrideActive)
                                     ? null
                                     : (val) {
@@ -329,7 +334,7 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
                             // Segmented Days Chips
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [3, 4, 5, 6, 7].map((days) {
+                              children: [0, 1, 2, 3, 5, 7].map((days) {
                                 final isSelected = _currentSliderDays == days;
                                 return InkWell(
                                   onTap: (_selectedPropertyId != null && !_isPropertyOverrideActive)

@@ -419,6 +419,8 @@ class ApiService {
           paymentStatus
           hasPendingRequest
           rentDueDate
+          reminderDaysBeforeDue
+          isReminderDue
           pendingRentAmount
           defaultPaymentMode
           bills {
@@ -1622,6 +1624,18 @@ class ApiService {
             status
             date
           }
+          settlements {
+            id
+            propertyId
+            adminId
+            billingMonth
+            amountPaid
+            paymentMode
+            referenceId
+            notes
+            paidAt
+            recordedBy
+          }
         }
       }
     ''';
@@ -1744,30 +1758,432 @@ class ApiService {
     return data['organizationAdminDetails'] as Map<String, dynamic>;
   }
 
+  static const String _orgPropertyFields = '''
+    id
+    name
+    description
+    address
+    city
+    state
+    pincode
+    totalFloors
+    isActive
+    adminId
+    adminName
+    adminCode
+    upiId
+    upiPayeeName
+    platformFee
+    platformFeeUpiId
+    platformFeePayeeName
+    monthlyPlatformFeeCollected
+    platformFeePaid
+    platformFeeBillingMonth
+    totalRooms
+    totalBeds
+    occupiedBeds
+    availableBeds
+    totalTenants
+    coOwnersCount
+  ''';
+
   static Future<List<dynamic>> fetchOrganizationProperties() async {
     const String query = '''
       query OrganizationProperties {
         organizationProperties {
-          id
-          name
-          address
-          city
-          state
-          pincode
-          totalFloors
-          adminId
-          adminName
-          adminCode
-          totalRooms
-          totalBeds
-          occupiedBeds
-          availableBeds
-          totalTenants
+          $_orgPropertyFields
         }
       }
     ''';
     final data = await performQuery(query);
     return data['organizationProperties'] as List<dynamic>;
+  }
+
+  static Future<bool> changeAdminPasswordUnderOrg(String adminId, String newPassword) async {
+    const String mutation = '''
+      mutation ChangeAdminPasswordUnderOrg(\$adminId: ID!, \$newPassword: String!) {
+        changeAdminPasswordUnderOrg(adminId: \$adminId, newPassword: \$newPassword)
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {
+      'adminId': adminId,
+      'newPassword': newPassword,
+    });
+    return data['changeAdminPasswordUnderOrg'] == true;
+  }
+
+  static Future<Map<String, dynamic>> fetchAdminDeletionPreview(String adminId) async {
+    const String query = '''
+      query AdminDeletionPreviewUnderOrg(\$adminId: ID!) {
+        adminDeletionPreviewUnderOrg(adminId: \$adminId) {
+          propertiesCount
+          roomsCount
+          bedsCount
+          tenantsCount
+          coOwnersCount
+          paymentsCount
+        }
+      }
+    ''';
+    final data = await performQuery(query, variables: {'adminId': adminId});
+    return data['adminDeletionPreviewUnderOrg'] as Map<String, dynamic>;
+  }
+
+  static Future<bool> deleteAdminStepwiseUnderOrg(String adminId, String step) async {
+    const String mutation = '''
+      mutation DeleteAdminStepwiseUnderOrg(\$adminId: ID!, \$step: String!) {
+        deleteAdminStepwiseUnderOrg(adminId: \$adminId, step: \$step)
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'adminId': adminId, 'step': step});
+    return data['deleteAdminStepwiseUnderOrg'] == true;
+  }
+
+  static Future<Map<String, dynamic>> createPropertyUnderOrg(Map<String, dynamic> input) async {
+    const String mutation = '''
+      mutation CreatePropertyUnderOrg(\$input: CreatePropertyUnderOrgInput!) {
+        createPropertyUnderOrg(input: \$input) {
+          $_orgPropertyFields
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'input': input});
+    return data['createPropertyUnderOrg'] as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> updatePropertyUnderOrg(Map<String, dynamic> input) async {
+    const String mutation = '''
+      mutation UpdatePropertyUnderOrg(\$input: UpdatePropertyUnderOrgInput!) {
+        updatePropertyUnderOrg(input: \$input) {
+          $_orgPropertyFields
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'input': input});
+    return data['updatePropertyUnderOrg'] as Map<String, dynamic>;
+  }
+
+  static Future<bool> deletePropertyUnderOrg(String propertyId) async {
+    const String mutation = '''
+      mutation DeletePropertyUnderOrg(\$propertyId: ID!) {
+        deletePropertyUnderOrg(propertyId: \$propertyId)
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'propertyId': propertyId});
+    return data['deletePropertyUnderOrg'] == true;
+  }
+
+  static Future<Map<String, dynamic>> fetchPropertyDeletionPreview(String propertyId) async {
+    const String query = '''
+      query PropertyDeletionPreviewUnderOrg(\$propertyId: ID!) {
+        propertyDeletionPreviewUnderOrg(propertyId: \$propertyId) {
+          propertiesCount
+          roomsCount
+          bedsCount
+          tenantsCount
+          coOwnersCount
+          paymentsCount
+        }
+      }
+    ''';
+    final data = await performQuery(query, variables: {'propertyId': propertyId});
+    return data['propertyDeletionPreviewUnderOrg'] as Map<String, dynamic>;
+  }
+
+  static Future<bool> deletePropertyStepwiseUnderOrg(String propertyId, String step) async {
+    const String mutation = '''
+      mutation DeletePropertyStepwiseUnderOrg(\$propertyId: ID!, \$step: String!) {
+        deletePropertyStepwiseUnderOrg(propertyId: \$propertyId, step: \$step)
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'propertyId': propertyId, 'step': step});
+    return data['deletePropertyStepwiseUnderOrg'] == true;
+  }
+
+  static Future<List<dynamic>> fetchOrganizationPropertyOwners(String propertyId) async {
+    const String query = '''
+      query OrganizationPropertyOwners(\$propertyId: ID!) {
+        organizationPropertyOwners(propertyId: \$propertyId) {
+          id
+          userId
+          propertyId
+          name
+          phoneNumber
+          email
+          role
+          isPrimary
+          isActive
+        }
+      }
+    ''';
+    final data = await performQuery(query, variables: {'propertyId': propertyId});
+    return data['organizationPropertyOwners'] as List<dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> addPropertyOwnerUnderOrg(Map<String, dynamic> input) async {
+    const String mutation = '''
+      mutation AddPropertyOwnerUnderOrg(\$input: AddPropertyOwnerUnderOrgInput!) {
+        addPropertyOwnerUnderOrg(input: \$input) {
+          id
+          userId
+          propertyId
+          name
+          phoneNumber
+          email
+          role
+          isPrimary
+          isActive
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'input': input});
+    return data['addPropertyOwnerUnderOrg'] as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> updatePropertyOwnerUnderOrg(Map<String, dynamic> input) async {
+    const String mutation = '''
+      mutation UpdatePropertyOwnerUnderOrg(\$input: UpdatePropertyOwnerUnderOrgInput!) {
+        updatePropertyOwnerUnderOrg(input: \$input) {
+          id
+          userId
+          propertyId
+          name
+          phoneNumber
+          email
+          role
+          isPrimary
+          isActive
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'input': input});
+    return data['updatePropertyOwnerUnderOrg'] as Map<String, dynamic>;
+  }
+
+  static Future<bool> deletePropertyOwnerUnderOrg(String ownerId) async {
+    const String mutation = '''
+      mutation DeletePropertyOwnerUnderOrg(\$ownerId: ID!) {
+        deletePropertyOwnerUnderOrg(ownerId: \$ownerId)
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'ownerId': ownerId});
+    return data['deletePropertyOwnerUnderOrg'] == true;
+  }
+
+  static Future<List<dynamic>> fetchOrganizationPropertyRooms(String propertyId) async {
+    const String query = '''
+      query OrganizationPropertyRooms(\$propertyId: ID!) {
+        organizationPropertyRooms(propertyId: \$propertyId) {
+          id
+          propertyId
+          roomNumber
+          floorNumber
+          capacity
+          roomType
+          foodOption
+          monthlyRentWithFood
+          monthlyRentWithoutFood
+          status
+          occupiedBeds
+          availableBeds
+          beds {
+            id
+            roomId
+            bedLabel
+            status
+            tenantName
+          }
+        }
+      }
+    ''';
+    final data = await performQuery(query, variables: {'propertyId': propertyId});
+    return data['organizationPropertyRooms'] as List<dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> createRoomUnderOrg(Map<String, dynamic> input) async {
+    const String mutation = '''
+      mutation CreateRoomUnderOrg(\$input: CreateRoomUnderOrgInput!) {
+        createRoomUnderOrg(input: \$input) {
+          id
+          propertyId
+          roomNumber
+          floorNumber
+          capacity
+          roomType
+          foodOption
+          monthlyRentWithFood
+          monthlyRentWithoutFood
+          status
+          occupiedBeds
+          availableBeds
+          beds {
+            id
+            roomId
+            bedLabel
+            status
+            tenantName
+          }
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'input': input});
+    return data['createRoomUnderOrg'] as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> updateRoomUnderOrg(Map<String, dynamic> input) async {
+    const String mutation = '''
+      mutation UpdateRoomUnderOrg(\$input: UpdateRoomUnderOrgInput!) {
+        updateRoomUnderOrg(input: \$input) {
+          id
+          propertyId
+          roomNumber
+          floorNumber
+          capacity
+          roomType
+          foodOption
+          monthlyRentWithFood
+          monthlyRentWithoutFood
+          status
+          occupiedBeds
+          availableBeds
+          beds {
+            id
+            roomId
+            bedLabel
+            status
+            tenantName
+          }
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'input': input});
+    return data['updateRoomUnderOrg'] as Map<String, dynamic>;
+  }
+
+  static Future<bool> deleteRoomUnderOrg(String roomId) async {
+    const String mutation = '''
+      mutation DeleteRoomUnderOrg(\$roomId: ID!) {
+        deleteRoomUnderOrg(roomId: \$roomId)
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'roomId': roomId});
+    return data['deleteRoomUnderOrg'] == true;
+  }
+
+  static Future<Map<String, dynamic>> addBedUnderOrg(String roomId, String bedLabel) async {
+    const String mutation = '''
+      mutation AddBedUnderOrg(\$roomId: ID!, \$bedLabel: String!) {
+        addBedUnderOrg(roomId: \$roomId, bedLabel: \$bedLabel) {
+          id
+          roomId
+          bedLabel
+          status
+          tenantName
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'roomId': roomId, 'bedLabel': bedLabel});
+    return data['addBedUnderOrg'] as Map<String, dynamic>;
+  }
+
+  static Future<bool> deleteBedUnderOrg(String bedId) async {
+    const String mutation = '''
+      mutation DeleteBedUnderOrg(\$bedId: ID!) {
+        deleteBedUnderOrg(bedId: \$bedId)
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'bedId': bedId});
+    return data['deleteBedUnderOrg'] == true;
+  }
+
+  static Future<List<dynamic>> fetchOrganizationPlatformFeeOverview({String? billingMonth}) async {
+    const String query = '''
+      query OrganizationPlatformFeeOverview(\$billingMonth: String) {
+        organizationPlatformFeeOverview(billingMonth: \$billingMonth) {
+          propertyId
+          propertyName
+          adminId
+          adminName
+          adminCode
+          billingMonth
+          feePerTenant
+          platformFeeUpiId
+          platformFeePayeeName
+          totalCollected
+          totalSettled
+          pendingAmount
+          tenantsContributed
+          settlements {
+            id
+            propertyId
+            adminId
+            billingMonth
+            amountPaid
+            paymentMode
+            referenceId
+            notes
+            paidAt
+            recordedBy
+          }
+        }
+      }
+    ''';
+    final data = await performQuery(query, variables: {
+      if (billingMonth != null) 'billingMonth': billingMonth,
+    });
+    return data['organizationPlatformFeeOverview'] as List<dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> markPlatformFeePaidUnderOrg(Map<String, dynamic> input) async {
+    const String mutation = '''
+      mutation MarkPlatformFeePaidUnderOrg(\$input: MarkPlatformFeePaidUnderOrgInput!) {
+        markPlatformFeePaidUnderOrg(input: \$input) {
+          id
+          propertyId
+          adminId
+          billingMonth
+          amountPaid
+          paymentMode
+          referenceId
+          notes
+          paidAt
+          recordedBy
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'input': input});
+    return data['markPlatformFeePaidUnderOrg'] as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> updatePlatformFeeSettlementUnderOrg(Map<String, dynamic> input) async {
+    const String mutation = '''
+      mutation UpdatePlatformFeeSettlementUnderOrg(\$input: UpdatePlatformFeeSettlementUnderOrgInput!) {
+        updatePlatformFeeSettlementUnderOrg(input: \$input) {
+          id
+          propertyId
+          adminId
+          billingMonth
+          amountPaid
+          paymentMode
+          referenceId
+          notes
+          paidAt
+          recordedBy
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'input': input});
+    return data['updatePlatformFeeSettlementUnderOrg'] as Map<String, dynamic>;
+  }
+
+  static Future<bool> deletePlatformFeeSettlementUnderOrg(String settlementId) async {
+    const String mutation = '''
+      mutation DeletePlatformFeeSettlementUnderOrg(\$settlementId: ID!) {
+        deletePlatformFeeSettlementUnderOrg(settlementId: \$settlementId)
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'settlementId': settlementId});
+    return data['deletePlatformFeeSettlementUnderOrg'] == true;
   }
 
   static Future<Map<String, dynamic>> createAdminUnderOrg(Map<String, dynamic> input) async {

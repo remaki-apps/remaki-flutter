@@ -62,6 +62,10 @@ import 'screens/organization/org_edit_admin_screen.dart';
 import 'screens/organization/org_properties_screen.dart';
 import 'screens/organization/org_more_screen.dart';
 import 'screens/organization/org_admin_success_screen.dart';
+import 'screens/organization/org_property_form_screen.dart';
+import 'screens/organization/org_property_details_screen.dart';
+import 'screens/organization/org_platform_fee_screen.dart';
+import 'screens/organization/org_stepwise_delete_screen.dart';
 
 Future<void> bootstrapApp() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -209,13 +213,18 @@ final router = GoRouter(
         '/org_create_admin',
         '/org_admin_success',
         '/org_properties',
+        '/org_property_form',
+        '/org_platform_fee',
+        '/org_stepwise_delete',
         '/org_more',
         '/about',
         '/terms',
         '/privacy',
         '/help_support',
       };
-      if (location.startsWith('/org_admin_details') || location.startsWith('/org_edit_admin')) {
+      if (location.startsWith('/org_admin_details') ||
+          location.startsWith('/org_edit_admin') ||
+          location.startsWith('/org_property_details')) {
         return null;
       }
       if (!allowedOrgRoutes.contains(location)) {
@@ -543,6 +552,49 @@ final router = GoRouter(
           ),
         );
       },
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/org_property_form',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: OrgPropertyFormScreen(
+          propertyId: state.uri.queryParameters['propertyId'],
+          initialAdminId: state.uri.queryParameters['adminId'],
+        ),
+      ),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/org_property_details/:id',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: OrgPropertyDetailsScreen(propertyId: state.pathParameters['id']!),
+      ),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/org_platform_fee',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: const OrgPlatformFeeScreen(),
+      ),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/org_stepwise_delete',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: OrgStepwiseDeleteScreen(
+          targetId: state.uri.queryParameters['targetId'] ?? '',
+          isAdmin: state.uri.queryParameters['isAdmin'] == 'true',
+          targetName: state.uri.queryParameters['name'] ?? 'Item',
+        ),
+      ),
     ),
     ShellRoute(
       navigatorKey: _orgShellNavigatorKey,

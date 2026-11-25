@@ -306,23 +306,30 @@ class UnpaidTenantsScreen extends StatelessWidget {
                                             ],
                                           ),
                                         ),
-                                        if (tenant.isUpcoming)
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFFEFF6FF),
-                                              borderRadius: BorderRadius.circular(4),
-                                              border: Border.all(color: const Color(0xFFBFDBFE)),
-                                            ),
-                                            child: Text(
-                                              'Due ${DateFormat('dd MMM').format(tenant.rentDueDate)}',
-                                              style: const TextStyle(
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.w700,
-                                                color: Color(0xFF2563EB),
-                                              ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                          decoration: BoxDecoration(
+                                            color: tenant.isUpcoming
+                                                ? const Color(0xFFEFF6FF)
+                                                : const Color(0xFFF8FAFC),
+                                            borderRadius: BorderRadius.circular(4),
+                                            border: Border.all(
+                                              color: tenant.isUpcoming
+                                                  ? const Color(0xFFBFDBFE)
+                                                  : const Color(0xFFE2E8F0),
                                             ),
                                           ),
+                                          child: Text(
+                                            'Due: ${DateFormat('dd MMM yyyy').format(tenant.rentDueDate)}',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w700,
+                                              color: tenant.isUpcoming
+                                                  ? const Color(0xFF2563EB)
+                                                  : const Color(0xFF475569),
+                                            ),
+                                          ),
+                                        ),
                                         if (tenant.isOverdue && !tenant.isPending)
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),

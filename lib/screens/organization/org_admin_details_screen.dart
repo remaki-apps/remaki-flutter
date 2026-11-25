@@ -7,6 +7,7 @@ import '../../providers/organization_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../models/organization_models.dart';
 import '../../widgets/fancy_toast.dart';
+import '../../services/api_service.dart';
 
 class OrgAdminDetailsScreen extends StatefulWidget {
   final String adminId;
@@ -100,61 +101,58 @@ class _OrgAdminDetailsScreenState extends State<OrgAdminDetailsScreen> {
     }
   }
 
-  Future<void> _deleteAdmin(OrganizationProvider provider, OrganizationAdminSummary admin) async {
-    final confirmed = await showDialog<bool>(
+  Future<void> _changePassword(OrganizationProvider provider, OrganizationAdminSummary admin) async {
+    final passCtrl = TextEditingController();
+    final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text('Change Password — ${admin.displayName}', style: GoogleFonts.lato(fontWeight: FontWeight.w800, fontSize: 16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.warning_amber_rounded, color: AppTheme.danger, size: 24),
-            const SizedBox(width: 8),
-            Text('Delete Admin?', style: GoogleFonts.lato(fontWeight: FontWeight.w700)),
+            Text(
+              'Setting a new password will immediately log out all active sessions for this admin.',
+              style: GoogleFonts.lato(fontSize: 12.5, color: AppTheme.textSecondary),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: passCtrl,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'New Password (min 6 chars)'),
+            ),
           ],
         ),
-        content: Text(
-          'Are you sure you want to delete admin "${admin.displayName}"?\n\n'
-          'Note: Admins with active tenants or historical payments cannot be deleted to protect tenant records. You may deactivate them instead.',
-          style: GoogleFonts.lato(fontSize: 13.5, color: const Color(0xFF64748B), height: 1.4),
-        ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: GoogleFonts.lato(color: const Color(0xFF64748B))),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.danger,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Delete', style: GoogleFonts.lato(fontWeight: FontWeight.w700)),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor, foregroundColor: Colors.white),
+            child: const Text('Update Password'),
           ),
         ],
       ),
     );
 
-    if (confirmed == true && mounted) {
-      setState(() => _isDeleting = true);
+    if (ok == true && mounted) {
+      if (passCtrl.text.trim().length < 6) {
+        FancyToast.showError(context, 'Invalid Password', message: 'Password must be at least 6 characters.');
+        return;
+      }
       try {
-        await provider.deleteAdmin(widget.adminId);
+        await provider.changeAdminPassword(admin.id, passCtrl.text.trim());
         if (mounted) {
-          FancyToast.showSuccess(context, 'Admin Deleted', message: 'Admin removed successfully');
-          context.pop();
+          FancyToast.showSuccess(context, 'Password Changed', message: 'New password set and active sessions revoked.');
         }
       } catch (e) {
-        if (mounted) {
-          FancyToast.showError(
-            context,
-            'Delete Failed',
-            message: e.toString().replaceAll('Exception: ', ''),
-          );
-        }
-      } finally {
-        if (mounted) setState(() => _isDeleting = false);
+        if (mounted) FancyToast.showError(context, 'Failed', message: ApiService.cleanErrorMessage(e));
       }
     }
+  }
+
+  Future<void> _deleteAdmin(OrganizationProvider provider, OrganizationAdminSummary admin) async {
+    context.push('/org_stepwise_delete?targetId=${admin.id}&isAdmin=true&name=${Uri.encodeComponent(admin.displayName)}');
   }
 
   @override
@@ -446,7 +444,41 @@ class _OrgAdminDetailsScreenState extends State<OrgAdminDetailsScreen> {
                     ),
                     const SizedBox(height: 10),
 
-                    // Delete Button
+                    // Change Password Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _changePassword(orgProvider, admin),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF0F172A),
+                          side: const BorderSide(color: Color(0xFFCBD5E1)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        icon: const Icon(Icons.lock_reset_rounded, size: 18),
+                        label: Text('Change Admin Password', style: GoogleFonts.lato(fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Multi-PG Onboarding Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => context.push('/org_property_form?adminId=${admin.id}'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF0284C7),
+                          side: const BorderSide(color: Color(0xFF0284C7)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        icon: const Icon(Icons.add_business_outlined, size: 18),
+                        label: Text('Add Another PG for This Admin', style: GoogleFonts.lato(fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Stepwise Delete / Deactivate Button
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
@@ -458,7 +490,7 @@ class _OrgAdminDetailsScreenState extends State<OrgAdminDetailsScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                        label: Text('Delete Admin Account', style: GoogleFonts.lato(fontWeight: FontWeight.w700)),
+                        label: Text('Manage / Delete Admin', style: GoogleFonts.lato(fontWeight: FontWeight.w700)),
                       ),
                     ),
                   ],

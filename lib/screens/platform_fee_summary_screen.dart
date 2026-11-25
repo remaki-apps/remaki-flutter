@@ -631,7 +631,10 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
                         const SizedBox(height: 12),
 
                         // Platform Fee Paid to Organization Card
-                        _buildPlatformFeePaidCard(platformFeePaid: platformFeePaid),
+                        _buildPlatformFeePaidCard(
+                          platformFeePaid: platformFeePaid,
+                          settlements: (_summaryData?['settlements'] as List<dynamic>?) ?? const [],
+                        ),
                         const SizedBox(height: 14),
 
                         // Reset Information Alert Banner
@@ -792,7 +795,10 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
     );
   }
 
-  Widget _buildPlatformFeePaidCard({required double platformFeePaid}) {
+  Widget _buildPlatformFeePaidCard({
+    required double platformFeePaid,
+    List<dynamic> settlements = const [],
+  }) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -862,6 +868,36 @@ class _PlatformFeeSummaryScreenState extends State<PlatformFeeSummaryScreen> {
                     ),
                   ],
                 ),
+                if (settlements.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                  const SizedBox(height: 8),
+                  ...settlements.map((raw) {
+                    final s = raw as Map<String, dynamic>;
+                    final amt = (s['amountPaid'] as num?)?.toDouble() ?? 0.0;
+                    final mode = s['paymentMode']?.toString() ?? 'UPI';
+                    final ref = s['referenceId']?.toString();
+                    final dt = DateTime.tryParse(s['paidAt']?.toString() ?? '')?.toLocal();
+                    final dateStr = dt != null ? DateFormat('dd MMM yyyy').format(dt) : '';
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.check_circle_rounded, size: 13, color: Color(0xFF059669)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              '₹${amt.toStringAsFixed(0)} ($mode)${ref != null && ref.isNotEmpty ? " • $ref" : ""}',
+                              style: GoogleFonts.lato(fontSize: 11.5, fontWeight: FontWeight.w600, color: const Color(0xFF334155)),
+                            ),
+                          ),
+                          if (dateStr.isNotEmpty)
+                            Text(dateStr, style: GoogleFonts.lato(fontSize: 11, color: const Color(0xFF64748B))),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
               ],
             ),
           ),
