@@ -64,6 +64,10 @@ class _OrgPropertyDetailsScreenState extends State<OrgPropertyDetailsScreen> wit
     final emailCtrl = TextEditingController(text: existing?.email ?? '');
     final passCtrl = TextEditingController();
     String role = existing?.role ?? 'CO_OWNER';
+    const roleOptions = ['CO_OWNER', 'PRIMARY_OWNER', 'MANAGER', 'ADMIN'];
+    if (!roleOptions.contains(role)) {
+      role = 'CO_OWNER';
+    }
 
     final ok = await showDialog<bool>(
       context: context,
@@ -92,6 +96,7 @@ class _OrgPropertyDetailsScreenState extends State<OrgPropertyDetailsScreen> wit
                     DropdownMenuItem(value: 'CO_OWNER', child: Text('Co-Owner')),
                     DropdownMenuItem(value: 'PRIMARY_OWNER', child: Text('Primary Owner')),
                     DropdownMenuItem(value: 'MANAGER', child: Text('Manager')),
+                    DropdownMenuItem(value: 'ADMIN', child: Text('Admin')),
                   ],
                   onChanged: (v) => setModalState(() => role = v ?? 'CO_OWNER'),
                 ),
@@ -157,6 +162,9 @@ class _OrgPropertyDetailsScreenState extends State<OrgPropertyDetailsScreen> wit
     final withFoodCtrl = TextEditingController(text: '${existing?.monthlyRentWithFood.toStringAsFixed(0) ?? "7000"}');
     final withoutFoodCtrl = TextEditingController(text: '${existing?.monthlyRentWithoutFood.toStringAsFixed(0) ?? "5500"}');
     String roomType = existing?.roomType ?? 'NON_AC';
+    if (roomType != 'NON_AC' && roomType != 'AC') {
+      roomType = 'NON_AC';
+    }
 
     final ok = await showDialog<bool>(
       context: context,

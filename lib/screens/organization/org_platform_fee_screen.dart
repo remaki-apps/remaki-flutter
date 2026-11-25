@@ -117,6 +117,9 @@ class _OrgPlatformFeeScreenState extends State<OrgPlatformFeeScreen> {
     final refCtrl = TextEditingController(text: existing?.referenceId ?? '');
     final notesCtrl = TextEditingController(text: existing?.notes ?? '');
     String mode = existing?.paymentMode ?? 'UPI';
+    if (mode != 'UPI' && mode != 'BANK_TRANSFER' && mode != 'CASH') {
+      mode = 'UPI';
+    }
 
     final ok = await showDialog<bool>(
       context: context,
