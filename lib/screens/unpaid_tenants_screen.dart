@@ -22,7 +22,6 @@ class UnpaidTenantsScreen extends StatefulWidget {
 
 class _UnpaidTenantsScreenState extends State<UnpaidTenantsScreen> {
   late String _typeFilter; // 'all', 'rent', 'bills', 'overdue'
-  String _foodFilter = 'all'; // 'all', 'with_food', 'without_food'
 
   @override
   void initState() {
@@ -73,19 +72,13 @@ class _UnpaidTenantsScreenState extends State<UnpaidTenantsScreen> {
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
 
-    final List<Tenant> baseTenants = _typeFilter == 'bills'
+    final List<Tenant> unpaidTenants = _typeFilter == 'bills'
         ? appProvider.unpaidBillsTenants
         : _typeFilter == 'rent'
             ? appProvider.unpaidRentTenants
             : _typeFilter == 'overdue'
                 ? appProvider.unpaidRentTenants.where((t) => t.isOverdue || (t.pendingRentAmount > 0 && DateTime.now().difference(t.rentDueDate).inDays >= 3)).toList()
                 : appProvider.unpaidTenants;
-
-    final List<Tenant> unpaidTenants = baseTenants.where((t) {
-      if (_foodFilter == 'with_food') return t.foodIncluded;
-      if (_foodFilter == 'without_food') return !t.foodIncluded;
-      return true;
-    }).toList();
 
     final String screenTitle = _typeFilter == 'overdue'
         ? 'Overdue Tenants (3+ Days)'
@@ -115,42 +108,25 @@ class _UnpaidTenantsScreenState extends State<UnpaidTenantsScreen> {
         ),
         centerTitle: true,
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(88),
+          preferredSize: const Size.fromHeight(46),
           child: Column(
             children: [
               Container(
                 color: Colors.white,
-                padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
-                child: Column(
-                  children: [
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _filterChip('All', _typeFilter == 'all', () => setState(() => _typeFilter = 'all')),
-                          const SizedBox(width: 6),
-                          _filterChip('Rent', _typeFilter == 'rent', () => setState(() => _typeFilter = 'rent')),
-                          const SizedBox(width: 6),
-                          _filterChip('Bills', _typeFilter == 'bills', () => setState(() => _typeFilter = 'bills')),
-                          const SizedBox(width: 6),
-                          _filterChip('Overdue', _typeFilter == 'overdue', () => setState(() => _typeFilter = 'overdue')),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _filterChip('All Food Plans', _foodFilter == 'all', () => setState(() => _foodFilter = 'all'), isFood: true),
-                          const SizedBox(width: 6),
-                          _filterChip('With Food', _foodFilter == 'with_food', () => setState(() => _foodFilter = 'with_food'), isFood: true),
-                          const SizedBox(width: 6),
-                          _filterChip('Without Food', _foodFilter == 'without_food', () => setState(() => _foodFilter = 'without_food'), isFood: true),
-                        ],
-                      ),
-                    ),
-                  ],
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _filterChip('All', _typeFilter == 'all', () => setState(() => _typeFilter = 'all')),
+                      const SizedBox(width: 6),
+                      _filterChip('Rent', _typeFilter == 'rent', () => setState(() => _typeFilter = 'rent')),
+                      const SizedBox(width: 6),
+                      _filterChip('Bills', _typeFilter == 'bills', () => setState(() => _typeFilter = 'bills')),
+                      const SizedBox(width: 6),
+                      _filterChip('Overdue', _typeFilter == 'overdue', () => setState(() => _typeFilter = 'overdue')),
+                    ],
+                  ),
                 ),
               ),
               Container(color: const Color(0xFFE2E8F0), height: 1),
