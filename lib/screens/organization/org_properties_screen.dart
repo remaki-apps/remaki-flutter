@@ -279,7 +279,6 @@ class OrgPropertiesScreen extends StatelessWidget {
           ),
         ],
       ),
-      ),
     );
   }
 
