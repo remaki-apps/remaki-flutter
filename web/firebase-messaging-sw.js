@@ -33,6 +33,8 @@ messaging.onBackgroundMessage((payload) => {
     badge:              '/icons/Icon-192.png',
     data:               { route, ...(payload.data || {}) },
     requireInteraction: true,
+    silent:             false,
+    renotify:           true,
     tag,
   });
 });
