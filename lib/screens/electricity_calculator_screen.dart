@@ -25,6 +25,7 @@ class _ElectricityCalculatorScreenState
 
   bool _isLoading = true;
   bool _isSavingConfig = false;
+  bool _isEditingRate = false;
   bool _isPreviewing = false;
   bool _isGenerating = false;
   String? _errorMessage;
@@ -32,6 +33,7 @@ class _ElectricityCalculatorScreenState
   bool _enabled = false;
   String _propertyId = '';
   String _propertyName = '';
+  double _savedCostPerUnit = 0.0;
   double? _latestReading;
   String? _latestBillingMonth;
 
@@ -40,7 +42,6 @@ class _ElectricityCalculatorScreenState
   final _currReadingCtrl = TextEditingController();
 
   late String _billingMonth;
-  DateTime? _dueDate;
 
   List<Map<String, dynamic>> _rooms = [];
   Set<String> _selectedRoomIds = {};
@@ -102,6 +103,8 @@ class _ElectricityCalculatorScreenState
         _enabled = enabled;
         _propertyId = config['propertyId']?.toString() ?? '';
         _propertyName = config['propertyName']?.toString() ?? 'PG Property';
+        _savedCostPerUnit = costPerUnit;
+        _isEditingRate = costPerUnit <= 0;
         _latestReading = latestReading;
         _latestBillingMonth = config['latestBillingMonth']?.toString();
         _costPerUnitCtrl.text = costPerUnit > 0 ? _fmtNum(costPerUnit) : '';
@@ -126,6 +129,15 @@ class _ElectricityCalculatorScreenState
     return v.toStringAsFixed(2);
   }
 
+  String _formatMonth(String ym) {
+    try {
+      final dt = DateTime.parse('$ym-01');
+      return DateFormat('MMMM yyyy').format(dt);
+    } catch (_) {
+      return ym;
+    }
+  }
+
   double get _livePrevReading =>
       _latestReading ?? (double.tryParse(_prevReadingCtrl.text.trim()) ?? 0.0);
 
@@ -145,10 +157,14 @@ class _ElectricityCalculatorScreenState
     return units * _liveRate;
   }
 
-  Future<void> _saveConfig() async {
+  Future<void> _saveRate() async {
     final rate = double.tryParse(_costPerUnitCtrl.text.trim());
-    if (rate == null || rate < 0) {
-      FancyToast.showError(context, 'Invalid Rate', message: 'Enter a valid cost per unit (>= 0).');
+    if (rate == null || rate <= 0) {
+      FancyToast.showError(
+        context,
+        'Invalid Rate',
+        message: 'Please enter a cost per unit greater than 0.',
+      );
       return;
     }
 
@@ -160,14 +176,50 @@ class _ElectricityCalculatorScreenState
         sharedRoomIds: _selectedRoomIds.toList(),
       );
       if (!mounted) return;
+      setState(() {
+        _savedCostPerUnit = rate;
+        _isEditingRate = false;
+        _preview = null;
+      });
       FancyToast.showSuccess(
         context,
-        'Configuration Saved',
-        message: 'Default unit rate and shared rooms updated.',
+        'Rate Saved',
+        message: 'Electricity rate updated to ₹${_fmtNum(rate)} per unit.',
       );
     } catch (e) {
       if (mounted) {
-        FancyToast.showError(context, 'Save Failed', message: e.toString().replaceFirst('Exception: ', ''));
+        FancyToast.showError(
+          context,
+          'Save Failed',
+          message: e.toString().replaceFirst('Exception: ', ''),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSavingConfig = false);
+    }
+  }
+
+  Future<void> _saveSelectedRooms() async {
+    setState(() => _isSavingConfig = true);
+    try {
+      await ApiService.updateElectricityConfig(
+        propertyId: _propertyId,
+        costPerUnit: _liveRate > 0 ? _liveRate : _savedCostPerUnit,
+        sharedRoomIds: _selectedRoomIds.toList(),
+      );
+      if (!mounted) return;
+      FancyToast.showSuccess(
+        context,
+        'Rooms Saved',
+        message: 'Default room selection updated.',
+      );
+    } catch (e) {
+      if (mounted) {
+        FancyToast.showError(
+          context,
+          'Save Failed',
+          message: e.toString().replaceFirst('Exception: ', ''),
+        );
       }
     } finally {
       if (mounted) setState(() => _isSavingConfig = false);
@@ -175,12 +227,21 @@ class _ElectricityCalculatorScreenState
   }
 
   Future<void> _previewSplit() async {
+    if (_isEditingRate) {
+      FancyToast.showError(
+        context,
+        'Save Rate First',
+        message: 'Please save the electricity rate before calculating.',
+      );
+      return;
+    }
+
     final curr = _liveCurrReading;
     final prev = _livePrevReading;
     final rate = _liveRate;
 
     if (rate <= 0) {
-      FancyToast.showError(context, 'Rate Required', message: 'Enter cost per unit (> 0).');
+      FancyToast.showError(context, 'Rate Required', message: 'Set cost per unit (> 0) first.');
       return;
     }
     if (curr == null || curr < 0) {
@@ -218,14 +279,15 @@ class _ElectricityCalculatorScreenState
     } catch (e) {
       if (!mounted) return;
       setState(() => _isPreviewing = false);
-      FancyToast.showError(context, 'Preview Failed', message: e.toString().replaceFirst('Exception: ', ''));
+      FancyToast.showError(context, 'Calculation Failed', message: e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
   Future<void> _confirmAndGenerate() async {
     if (_preview == null) return;
     final sharesCount = _preview!['eligibleTenantCount'] ?? 0;
-    final total = _preview!['totalAmount'] ?? 0;
+    final total = (_preview!['totalAmount'] as num?)?.toStringAsFixed(2) ?? '0.00';
+    final monthLabel = _formatMonth(_billingMonth);
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -233,7 +295,7 @@ class _ElectricityCalculatorScreenState
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: Text('Generate Electricity Bills?', style: GoogleFonts.lato(fontWeight: FontWeight.w800)),
         content: Text(
-          'This will generate ₹$total across $sharesCount tenant(s) for $_billingMonth and send push notifications. Continue?',
+          'This will add a total of ₹$total split across $sharesCount tenant(s) for $monthLabel and notify them.',
           style: GoogleFonts.lato(fontSize: 13.5, color: const Color(0xFF475569)),
         ),
         actions: [
@@ -258,10 +320,8 @@ class _ElectricityCalculatorScreenState
         currentReading: _liveCurrReading!,
         costPerUnitOverride: _liveRate,
         selectedRoomIds: _selectedRoomIds.toList(),
-        dueDate: _dueDate?.toIso8601String(),
       );
 
-      // Persist selected rooms & unit rate as convenience defaults
       await ApiService.updateElectricityConfig(
         propertyId: _propertyId,
         costPerUnit: _liveRate,
@@ -277,7 +337,7 @@ class _ElectricityCalculatorScreenState
       FancyToast.showSuccess(
         context,
         'Bills Generated',
-        message: 'Electricity bills created and tenants notified.',
+        message: 'Electricity bills added and tenants notified.',
       );
       await _loadAll();
       _tabController.animateTo(1);
@@ -289,21 +349,22 @@ class _ElectricityCalculatorScreenState
   }
 
   Future<void> _voidCycle(String cycleId, String month) async {
+    final monthLabel = _formatMonth(month);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text('Void $month Cycle?', style: GoogleFonts.lato(fontWeight: FontWeight.w800)),
+        title: Text('Cancel $monthLabel Bill?', style: GoogleFonts.lato(fontWeight: FontWeight.w800)),
         content: Text(
-          'This will void the $month electricity cycle and remove its unpaid tenant bills. You can only void if no tenant has paid yet.',
+          'This will cancel the $monthLabel electricity bill and remove the unpaid charges from tenants. This is only allowed if no tenant has paid yet.',
           style: GoogleFonts.lato(fontSize: 13.5, color: const Color(0xFF475569)),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Keep Bill')),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444), foregroundColor: Colors.white),
-            child: const Text('Void Cycle'),
+            child: const Text('Cancel Bill'),
           ),
         ],
       ),
@@ -314,11 +375,15 @@ class _ElectricityCalculatorScreenState
     try {
       await ApiService.voidLatestElectricityCycle(cycleId);
       if (!mounted) return;
-      FancyToast.showSuccess(context, 'Cycle Voided', message: '$month electricity cycle has been voided.');
+      FancyToast.showSuccess(
+        context,
+        'Bill Cancelled',
+        message: '$monthLabel electricity bill has been cancelled.',
+      );
       await _loadAll();
     } catch (e) {
       if (mounted) {
-        FancyToast.showError(context, 'Cannot Void', message: e.toString().replaceFirst('Exception: ', ''));
+        FancyToast.showError(context, 'Cannot Cancel', message: e.toString().replaceFirst('Exception: ', ''));
       }
     }
   }
@@ -349,11 +414,13 @@ class _ElectricityCalculatorScreenState
           children: [
             Text(
               'Electricity Calculator',
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.lato(fontSize: 17, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
             ),
             if (_propertyName.isNotEmpty)
               Text(
                 _propertyName,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.lato(fontSize: 11.5, color: const Color(0xFF64748B), fontWeight: FontWeight.w600),
               ),
           ],
@@ -366,7 +433,7 @@ class _ElectricityCalculatorScreenState
                 indicatorColor: AppTheme.primaryColor,
                 labelStyle: GoogleFonts.lato(fontWeight: FontWeight.w800, fontSize: 13.5),
                 tabs: const [
-                  Tab(text: 'Calculator & Split'),
+                  Tab(text: 'Calculate & Split'),
                   Tab(text: 'Billing History'),
                 ],
               )
@@ -453,7 +520,7 @@ class _ElectricityCalculatorScreenState
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // 1. Unit Rate Configuration Card
+          // 1. Electricity Rate Card (Edit / Save pattern)
           _card(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -462,42 +529,103 @@ class _ElectricityCalculatorScreenState
                   children: [
                     const Icon(Icons.bolt_rounded, color: Color(0xFFD97706), size: 20),
                     const SizedBox(width: 8),
-                    Text('Tariff & Default Rooms', style: GoogleFonts.lato(fontSize: 15, fontWeight: FontWeight.w800)),
-                    const Spacer(),
-                    TextButton.icon(
-                      onPressed: _isSavingConfig ? null : _saveConfig,
-                      icon: _isSavingConfig
-                          ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.save_outlined, size: 16),
-                      label: const Text('Save Defaults'),
+                    Expanded(
+                      child: Text(
+                        'Electricity Rate',
+                        style: GoogleFonts.lato(fontSize: 15, fontWeight: FontWeight.w800),
+                      ),
                     ),
+                    if (!_isEditingRate)
+                      TextButton.icon(
+                        onPressed: () => setState(() => _isEditingRate = true),
+                        icon: const Icon(Icons.edit_outlined, size: 16),
+                        label: const Text('Edit'),
+                      )
+                    else ...[
+                      if (_savedCostPerUnit > 0)
+                        TextButton(
+                          onPressed: _isSavingConfig
+                              ? null
+                              : () {
+                                  setState(() {
+                                    _costPerUnitCtrl.text = _fmtNum(_savedCostPerUnit);
+                                    _isEditingRate = false;
+                                  });
+                                },
+                          child: const Text('Cancel'),
+                        ),
+                      ElevatedButton.icon(
+                        onPressed: _isSavingConfig ? null : _saveRate,
+                        icon: _isSavingConfig
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              )
+                            : const Icon(Icons.check_rounded, size: 16),
+                        label: const Text('Save'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 10),
-                TextFormField(
-                  controller: _costPerUnitCtrl,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  onChanged: (_) => setState(() => _preview = null),
-                  decoration: _inputDeco('Cost per Unit (₹ / kWh)', prefixText: '₹ '),
-                ),
+                if (!_isEditingRate)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Cost per Unit',
+                          style: GoogleFonts.lato(fontSize: 13.5, color: const Color(0xFF64748B), fontWeight: FontWeight.w600),
+                        ),
+                        Text(
+                          '₹${_fmtNum(_savedCostPerUnit)} / unit',
+                          style: GoogleFonts.lato(fontSize: 15, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  TextFormField(
+                    controller: _costPerUnitCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    onChanged: (_) => setState(() => _preview = null),
+                    decoration: _inputDeco('Cost per Unit (₹ / kWh)', prefixText: '₹ '),
+                  ),
               ],
             ),
           ),
           const SizedBox(height: 14),
 
-          // 2. Meter Reading Card
+          // 2. Meter Reading Card (No Due Date)
           _card(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Meter Reading & Cycle', style: GoogleFonts.lato(fontSize: 15, fontWeight: FontWeight.w800)),
+                Text('Meter Reading & Month', style: GoogleFonts.lato(fontSize: 15, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: months.contains(_billingMonth) ? _billingMonth : months.first,
+                  isExpanded: true,
                   decoration: _inputDeco('Billing Month'),
                   items: months.map((m) {
-                    final dt = DateTime.parse('$m-01');
-                    return DropdownMenuItem(value: m, child: Text('${DateFormat('MMMM yyyy').format(dt)} ($m)'));
+                    return DropdownMenuItem(
+                      value: m,
+                      child: Text(_formatMonth(m), overflow: TextOverflow.ellipsis),
+                    );
                   }).toList(),
                   onChanged: (val) {
                     if (val != null) setState(() { _billingMonth = val; _preview = null; });
@@ -513,7 +641,9 @@ class _ElectricityCalculatorScreenState
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         onChanged: (_) => setState(() => _preview = null),
                         decoration: _inputDeco(
-                          _latestReading != null ? 'Previous ($_latestBillingMonth)' : 'Initial Reading',
+                          _latestReading != null
+                              ? 'Previous (${_latestBillingMonth ?? ''})'
+                              : 'Starting Reading',
                         ).copyWith(
                           fillColor: _latestReading != null ? const Color(0xFFF1F5F9) : Colors.white,
                         ),
@@ -530,60 +660,30 @@ class _ElectricityCalculatorScreenState
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                InkWell(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: _dueDate ?? DateTime.now().add(const Duration(days: 5)),
-                      firstDate: DateTime.now().subtract(const Duration(days: 30)),
-                      lastDate: DateTime.now().add(const Duration(days: 90)),
-                    );
-                    if (picked != null) setState(() => _dueDate = picked);
-                  },
-                  child: InputDecorator(
-                    decoration: _inputDeco('Due Date (Optional)'),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _dueDate != null ? DateFormat('dd MMM yyyy').format(_dueDate!) : 'No due date set',
-                          style: GoogleFonts.lato(
-                            fontSize: 13.5,
-                            color: _dueDate != null ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
-                          ),
-                        ),
-                        if (_dueDate != null)
-                          GestureDetector(
-                            onTap: () => setState(() => _dueDate = null),
-                            child: const Icon(Icons.close_rounded, size: 18, color: Color(0xFF64748B)),
-                          )
-                        else
-                          const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF64748B)),
-                      ],
-                    ),
-                  ),
-                ),
                 if (units != null) ...[
                   const SizedBox(height: 12),
                   Container(
+                    width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: units >= 0 ? const Color(0xFFEEF2FF) : const Color(0xFFFEF2F2),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 4,
                       children: [
                         Text(
-                          'Units: ${units >= 0 ? _fmtNum(units) : 'Invalid'}',
+                          'Units Used: ${units >= 0 ? _fmtNum(units) : 'Invalid'}',
                           style: GoogleFonts.lato(
                             fontWeight: FontWeight.w800,
                             color: units >= 0 ? const Color(0xFF4338CA) : const Color(0xFFDC2626),
                           ),
                         ),
                         Text(
-                          totalAmt != null ? 'Total: ₹${totalAmt.toStringAsFixed(2)}' : 'Enter rate > 0',
+                          totalAmt != null ? 'Total Bill: ₹${totalAmt.toStringAsFixed(2)}' : 'Set rate > 0',
                           style: GoogleFonts.lato(fontWeight: FontWeight.w800, fontSize: 15, color: const Color(0xFF0F172A)),
                         ),
                       ],
@@ -602,9 +702,23 @@ class _ElectricityCalculatorScreenState
               children: [
                 Row(
                   children: [
-                    Text('Rooms Sharing This Bill', style: GoogleFonts.lato(fontSize: 15, fontWeight: FontWeight.w800)),
-                    const Spacer(),
+                    Expanded(
+                      child: Text(
+                        'Select Rooms to Share Bill',
+                        style: GoogleFonts.lato(fontSize: 15, fontWeight: FontWeight.w800),
+                      ),
+                    ),
                     TextButton(
+                      onPressed: _isSavingConfig ? null : _saveSelectedRooms,
+                      child: const Text('Save Selection'),
+                    ),
+                  ],
+                ),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    ActionChip(
+                      label: const Text('Select Occupied'),
                       onPressed: () {
                         setState(() {
                           _selectedRoomIds = _rooms
@@ -614,11 +728,10 @@ class _ElectricityCalculatorScreenState
                           _preview = null;
                         });
                       },
-                      child: const Text('Select Occupied'),
                     ),
-                    TextButton(
+                    ActionChip(
+                      label: const Text('Clear All'),
                       onPressed: () => setState(() { _selectedRoomIds.clear(); _preview = null; }),
-                      child: const Text('Clear'),
                     ),
                   ],
                 ),
@@ -638,7 +751,10 @@ class _ElectricityCalculatorScreenState
                       dense: true,
                       value: checked,
                       activeColor: AppTheme.primaryColor,
-                      title: Text('Room $roomNum (Floor $floor)', style: GoogleFonts.lato(fontWeight: FontWeight.w700, fontSize: 13.5)),
+                      title: Text(
+                        'Room $roomNum (Floor $floor)',
+                        style: GoogleFonts.lato(fontWeight: FontWeight.w700, fontSize: 13.5),
+                      ),
                       subtitle: Text(
                         count > 0 ? '$count active tenant(s)' : 'Vacant (no active tenants)',
                         style: GoogleFonts.lato(
@@ -670,7 +786,7 @@ class _ElectricityCalculatorScreenState
               icon: _isPreviewing
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                   : const Icon(Icons.calculate_outlined),
-              label: Text('Preview Tenant Split', style: GoogleFonts.lato(fontSize: 15, fontWeight: FontWeight.w800)),
+              label: Text('Calculate Split', style: GoogleFonts.lato(fontSize: 15, fontWeight: FontWeight.w800)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
                 foregroundColor: Colors.white,
@@ -703,15 +819,24 @@ class _ElectricityCalculatorScreenState
             children: [
               const Icon(Icons.receipt_long_rounded, color: Color(0xFF059669), size: 20),
               const SizedBox(width: 8),
-              Text('Split Preview (${preview['billingMonth']})', style: GoogleFonts.lato(fontSize: 15, fontWeight: FontWeight.w800)),
+              Expanded(
+                child: Text(
+                  'Bill Breakdown (${_formatMonth(preview['billingMonth']?.toString() ?? '')})',
+                  style: GoogleFonts.lato(fontSize: 15, fontWeight: FontWeight.w800),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
           Container(
+            width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(color: const Color(0xFFF0FDF4), borderRadius: BorderRadius.circular(12)),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 4,
               children: [
                 Text('${preview['eligibleTenantCount']} Tenant(s)', style: GoogleFonts.lato(fontWeight: FontWeight.w700)),
                 Text('${preview['unitsConsumed']} units', style: GoogleFonts.lato(fontWeight: FontWeight.w700)),
@@ -758,7 +883,7 @@ class _ElectricityCalculatorScreenState
   Widget _buildHistoryTab() {
     if (_cycles.isEmpty) {
       return Center(
-        child: Text('No electricity billing cycles generated yet.', style: GoogleFonts.lato(color: const Color(0xFF64748B))),
+        child: Text('No electricity bills generated yet.', style: GoogleFonts.lato(color: const Color(0xFF64748B))),
       );
     }
 
@@ -779,13 +904,19 @@ class _ElectricityCalculatorScreenState
           final cycle = _cycles[idx];
           final id = cycle['id'].toString();
           final month = cycle['billingMonth']?.toString() ?? '';
+          final monthLabel = _formatMonth(month);
           final status = cycle['status']?.toString() ?? 'GENERATED';
-          final isVoided = status == 'VOIDED';
+          final isCancelled = status == 'VOIDED';
           final shares = ((cycle['shares'] as List<dynamic>?) ?? [])
               .map((e) => Map<String, dynamic>.from(e as Map))
               .toList();
           final hasPaidShare = shares.any((s) => s['billStatus'] == 'PAID');
-          final canVoid = id == latestGeneratedId && !hasPaidShare;
+          final canCancel = id == latestGeneratedId && !hasPaidShare;
+
+          final prevVal = (cycle['previousReading'] as num?)?.toDouble() ?? 0;
+          final currVal = (cycle['currentReading'] as num?)?.toDouble() ?? 0;
+          final unitsVal = (cycle['unitsConsumed'] as num?)?.toDouble() ?? 0;
+          final rateVal = (cycle['costPerUnit'] as num?)?.toDouble() ?? 0;
 
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -794,38 +925,64 @@ class _ElectricityCalculatorScreenState
                 tilePadding: EdgeInsets.zero,
                 title: Row(
                   children: [
-                    Text(month, style: GoogleFonts.lato(fontWeight: FontWeight.w800, fontSize: 15)),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: isVoided ? const Color(0xFFFEE2E2) : const Color(0xFFDCFCE7),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        status,
-                        style: GoogleFonts.lato(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w800,
-                          color: isVoided ? const Color(0xFFDC2626) : const Color(0xFF15803D),
-                        ),
+                    Expanded(
+                      child: Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          Text(monthLabel, style: GoogleFonts.lato(fontWeight: FontWeight.w800, fontSize: 15)),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isCancelled ? const Color(0xFFFEE2E2) : const Color(0xFFDCFCE7),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              isCancelled ? 'Cancelled' : 'Billed',
+                              style: GoogleFonts.lato(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                color: isCancelled ? const Color(0xFFDC2626) : const Color(0xFF15803D),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 8),
                     Text(
                       '₹${(cycle['totalAmount'] as num).toStringAsFixed(2)}',
                       style: GoogleFonts.lato(fontWeight: FontWeight.w900, fontSize: 15),
                     ),
                   ],
                 ),
-                subtitle: Text(
-                  'Prev ${cycle['previousReading']} → Curr ${cycle['currentReading']} (${cycle['unitsConsumed']} units @ ₹${cycle['costPerUnit']}/unit)',
-                  style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF64748B)),
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Meter Reading: ${_fmtNum(prevVal)} → ${_fmtNum(currVal)} (${_fmtNum(unitsVal)} units used)',
+                        style: GoogleFonts.lato(fontSize: 12.5, color: const Color(0xFF475569), fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Rate: ₹${_fmtNum(rateVal)} / unit • Split among ${shares.length} tenant(s)',
+                        style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF64748B)),
+                      ),
+                    ],
+                  ),
                 ),
                 children: [
                   const Divider(),
                   ...shares.map((s) {
-                    final billStatus = s['billStatus']?.toString() ?? 'PENDING';
+                    final rawStatus = s['billStatus']?.toString() ?? 'PENDING';
+                    final statusLabel = rawStatus == 'PAID'
+                        ? 'Paid'
+                        : rawStatus == 'VOIDED'
+                            ? 'Cancelled'
+                            : 'Pending';
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       dense: true,
@@ -837,13 +994,13 @@ class _ElectricityCalculatorScreenState
                         children: [
                           Text('₹${(s['shareAmount'] as num).toStringAsFixed(2)}', style: GoogleFonts.lato(fontWeight: FontWeight.w800)),
                           Text(
-                            billStatus,
+                            statusLabel,
                             style: GoogleFonts.lato(
-                              fontSize: 10,
+                              fontSize: 10.5,
                               fontWeight: FontWeight.w800,
-                              color: billStatus == 'PAID'
+                              color: rawStatus == 'PAID'
                                   ? const Color(0xFF15803D)
-                                  : billStatus == 'VOIDED'
+                                  : rawStatus == 'VOIDED'
                                       ? const Color(0xFF94A3B8)
                                       : const Color(0xFFD97706),
                             ),
@@ -852,14 +1009,14 @@ class _ElectricityCalculatorScreenState
                       ),
                     );
                   }),
-                  if (canVoid) ...[
+                  if (canCancel) ...[
                     const SizedBox(height: 8),
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         onPressed: () => _voidCycle(id, month),
                         icon: const Icon(Icons.undo_rounded, size: 16),
-                        label: const Text('Void Latest Cycle'),
+                        label: const Text('Cancel & Remove Unpaid Bills'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFFDC2626),
                           side: const BorderSide(color: Color(0xFFFCA5A5)),
