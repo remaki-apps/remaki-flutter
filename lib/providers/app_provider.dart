@@ -509,44 +509,24 @@ class AppProvider with ChangeNotifier {
   }
 
   List<Tenant> get newTenantsThisMonth => currentTenants.where((t) => t.moveInDate.month == DateTime.now().month).toList();
-  List<Tenant> get unpaidTenants => currentTenants.where((t) {
-    final bool hasPendingRent = (t.pendingRentAmount > 0 || !t.isPaid);
-    final bool hasPendingBills = t.totalPendingBills > 0;
 
-    if (hasPendingRent) {
-      // Wait until the configured reminder window (default 0 days = exact due date)
-      return _isDueDateReached(
-        t.rentDueDate,
-        reminderDaysBeforeDue: t.reminderDaysBeforeDue,
-        isReminderDue: t.isReminderDue,
-      );
-    } else if (hasPendingBills) {
-      // Only bills: show immediately as no due date for those
-      return true;
-    }
-    return false;
-  }).toList();
-  List<Tenant> get unpaidRentTenants => currentTenants.where((t) =>
-    (t.pendingRentAmount > 0 || !t.isPaid) &&
-    _isDueDateReached(
+  bool _hasRentDueNow(Tenant t) {
+    final bool hasPendingRent = (t.pendingRentAmount > 0 || !t.isPaid) && t.paymentStatus != 'PAID';
+    if (!hasPendingRent) return false;
+    return _isDueDateReached(
       t.rentDueDate,
       reminderDaysBeforeDue: t.reminderDaysBeforeDue,
       isReminderDue: t.isReminderDue,
-    )
-  ).toList();
-  List<Tenant> get unpaidBillsTenants => currentTenants.where((t) {
-    final bool hasPendingRent = (t.pendingRentAmount > 0 || !t.isPaid);
-    final bool hasPendingBills = t.totalPendingBills > 0;
-    if (!hasPendingBills) return false;
-    if (hasPendingRent) {
-      return _isDueDateReached(
-        t.rentDueDate,
-        reminderDaysBeforeDue: t.reminderDaysBeforeDue,
-        isReminderDue: t.isReminderDue,
-      );
-    }
-    return true;
+    );
+  }
+
+  List<Tenant> get unpaidTenants => currentTenants.where((t) {
+    return _hasRentDueNow(t) || t.totalPendingBills > 0;
   }).toList();
+
+  List<Tenant> get unpaidRentTenants => currentTenants.where(_hasRentDueNow).toList();
+
+  List<Tenant> get unpaidBillsTenants => currentTenants.where((t) => t.totalPendingBills > 0).toList();
 
   Future<String?> addTenant(Tenant tenant, {int dueDay = 5}) async {
     tenants.add(tenant);

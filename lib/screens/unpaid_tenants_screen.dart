@@ -12,9 +12,23 @@ import '../widgets/fancy_toast.dart';
 import '../widgets/app_shimmer.dart';
 import '../utils/phone_utils.dart';
 
-class UnpaidTenantsScreen extends StatelessWidget {
+class UnpaidTenantsScreen extends StatefulWidget {
   final String? filter;
   const UnpaidTenantsScreen({super.key, this.filter});
+
+  @override
+  State<UnpaidTenantsScreen> createState() => _UnpaidTenantsScreenState();
+}
+
+class _UnpaidTenantsScreenState extends State<UnpaidTenantsScreen> {
+  late String _typeFilter; // 'all', 'rent', 'bills', 'overdue'
+  String _foodFilter = 'all'; // 'all', 'with_food', 'without_food'
+
+  @override
+  void initState() {
+    super.initState();
+    _typeFilter = widget.filter ?? 'all';
+  }
 
   Future<void> _sendWhatsAppReminder(
     BuildContext context,
@@ -59,20 +73,26 @@ class UnpaidTenantsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
 
-    final List<Tenant> unpaidTenants = filter == 'bills'
+    final List<Tenant> baseTenants = _typeFilter == 'bills'
         ? appProvider.unpaidBillsTenants
-        : filter == 'rent'
-            ? appProvider.currentTenants.where((t) => (!t.isPaid && t.paymentStatus != 'PAID' && t.rentAmount > 0) || t.pendingRentAmount > 0).toList()
-            : filter == 'overdue'
-                ? appProvider.currentTenants.where((t) => t.isOverdue || (t.pendingRentAmount > 0 && DateTime.now().difference(t.rentDueDate).inDays >= 3)).toList()
+        : _typeFilter == 'rent'
+            ? appProvider.unpaidRentTenants
+            : _typeFilter == 'overdue'
+                ? appProvider.unpaidRentTenants.where((t) => t.isOverdue || (t.pendingRentAmount > 0 && DateTime.now().difference(t.rentDueDate).inDays >= 3)).toList()
                 : appProvider.unpaidTenants;
 
-    final String screenTitle = filter == 'overdue'
+    final List<Tenant> unpaidTenants = baseTenants.where((t) {
+      if (_foodFilter == 'with_food') return t.foodIncluded;
+      if (_foodFilter == 'without_food') return !t.foodIncluded;
+      return true;
+    }).toList();
+
+    final String screenTitle = _typeFilter == 'overdue'
         ? 'Overdue Tenants (3+ Days)'
-        : filter == 'bills'
+        : _typeFilter == 'bills'
             ? 'Unpaid Bills'
-            : filter == 'rent'
-                ? 'Pending & Upcoming Rent'
+            : _typeFilter == 'rent'
+                ? 'Pending Rent'
                 : 'Unpaid Tenants';
 
     return Scaffold(
@@ -95,8 +115,47 @@ class UnpaidTenantsScreen extends StatelessWidget {
         ),
         centerTitle: true,
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(color: const Color(0xFFE2E8F0), height: 1),
+          preferredSize: const Size.fromHeight(88),
+          child: Column(
+            children: [
+              Container(
+                color: Colors.white,
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+                child: Column(
+                  children: [
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _filterChip('All', _typeFilter == 'all', () => setState(() => _typeFilter = 'all')),
+                          const SizedBox(width: 6),
+                          _filterChip('Rent', _typeFilter == 'rent', () => setState(() => _typeFilter = 'rent')),
+                          const SizedBox(width: 6),
+                          _filterChip('Bills', _typeFilter == 'bills', () => setState(() => _typeFilter = 'bills')),
+                          const SizedBox(width: 6),
+                          _filterChip('Overdue', _typeFilter == 'overdue', () => setState(() => _typeFilter = 'overdue')),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _filterChip('All Food Plans', _foodFilter == 'all', () => setState(() => _foodFilter = 'all'), isFood: true),
+                          const SizedBox(width: 6),
+                          _filterChip('With Food', _foodFilter == 'with_food', () => setState(() => _foodFilter = 'with_food'), isFood: true),
+                          const SizedBox(width: 6),
+                          _filterChip('Without Food', _foodFilter == 'without_food', () => setState(() => _foodFilter = 'without_food'), isFood: true),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(color: const Color(0xFFE2E8F0), height: 1),
+            ],
+          ),
         ),
       ),
       body: RefreshIndicator(
@@ -444,6 +503,30 @@ class UnpaidTenantsScreen extends StatelessWidget {
                 );
               },
             ),
+      ),
+    );
+  }
+
+  Widget _filterChip(String label, bool selected, VoidCallback onTap, {bool isFood = false}) {
+    final Color activeColor = isFood ? const Color(0xFF059669) : AppTheme.primaryColor;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(
+          color: selected ? activeColor.withValues(alpha: 0.12) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: selected ? activeColor : const Color(0xFFE2E8F0)),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.lato(
+            fontSize: 11.5,
+            fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+            color: selected ? activeColor : const Color(0xFF64748B),
+          ),
+        ),
       ),
     );
   }
