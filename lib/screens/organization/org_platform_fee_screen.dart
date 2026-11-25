@@ -16,9 +16,33 @@ class OrgPlatformFeeScreen extends StatefulWidget {
 }
 
 class _OrgPlatformFeeScreenState extends State<OrgPlatformFeeScreen> {
+  final DateTime _currentMonth = DateTime(DateTime.now().year, DateTime.now().month);
   DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
   bool _isLoading = true;
   List<OrganizationPropertyPlatformFeeSummary> _items = [];
+
+  DateTime get _earliestMonth {
+    DateTime earliest = _currentMonth;
+    for (final item in _items) {
+      for (final m in item.availableMonths) {
+        final parts = m.split('-');
+        if (parts.length == 2) {
+          final y = int.tryParse(parts[0]);
+          final mo = int.tryParse(parts[1]);
+          if (y != null && mo != null) {
+            final dt = DateTime(y, mo);
+            if (dt.isBefore(earliest)) {
+              earliest = dt;
+            }
+          }
+        }
+      }
+    }
+    return earliest;
+  }
+
+  bool get _canGoPrev => _selectedMonth.isAfter(_earliestMonth);
+  bool get _canGoNext => _selectedMonth.isBefore(_currentMonth);
 
   @override
   void initState() {
@@ -49,8 +73,10 @@ class _OrgPlatformFeeScreenState extends State<OrgPlatformFeeScreen> {
   }
 
   void _changeMonth(int delta) {
+    final next = DateTime(_selectedMonth.year, _selectedMonth.month + delta);
+    if (next.isAfter(_currentMonth) || next.isBefore(_earliestMonth)) return;
     setState(() {
-      _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + delta);
+      _selectedMonth = next;
     });
     _loadData();
   }
@@ -254,9 +280,23 @@ class _OrgPlatformFeeScreenState extends State<OrgPlatformFeeScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                IconButton(icon: const Icon(Icons.chevron_left_rounded), onPressed: () => _changeMonth(-1)),
+                IconButton(
+                  icon: Icon(
+                    Icons.chevron_left_rounded,
+                    color: _canGoPrev ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1),
+                  ),
+                  tooltip: _canGoPrev ? 'Previous Month' : 'First Recorded Month',
+                  onPressed: _canGoPrev ? () => _changeMonth(-1) : null,
+                ),
                 Text(DateFormat('MMMM yyyy').format(_selectedMonth), style: GoogleFonts.lato(fontSize: 15, fontWeight: FontWeight.w800)),
-                IconButton(icon: const Icon(Icons.chevron_right_rounded), onPressed: () => _changeMonth(1)),
+                IconButton(
+                  icon: Icon(
+                    Icons.chevron_right_rounded,
+                    color: _canGoNext ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1),
+                  ),
+                  tooltip: _canGoNext ? 'Next Month' : 'Current Month',
+                  onPressed: _canGoNext ? () => _changeMonth(1) : null,
+                ),
               ],
             ),
           ),

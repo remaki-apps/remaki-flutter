@@ -59,6 +59,21 @@ class _OrgPropertyDetailsScreenState extends State<OrgPropertyDetailsScreen> wit
   }
 
   Future<void> _showOwnerDialog({OrganizationPropertyOwnerItem? existing}) async {
+    final orgProvider = context.read<OrganizationProvider>();
+    OrganizationPropertyItem? prop;
+    try {
+      prop = orgProvider.properties.firstWhere((p) => p.id == widget.propertyId);
+    } catch (_) {}
+
+    final existingAdminCandidates = orgProvider.admins.where((a) {
+      if (prop != null && a.id == prop.adminId) return false;
+      if (_owners.any((o) => o.userId == a.id)) return false;
+      return true;
+    }).toList();
+
+    bool useExistingAdmin = existing == null && existingAdminCandidates.isNotEmpty;
+    String? selectedExistingAdminId = existingAdminCandidates.isNotEmpty ? existingAdminCandidates.first.id : null;
+
     final nameCtrl = TextEditingController(text: existing?.name ?? '');
     final phoneCtrl = TextEditingController(text: existing?.phoneNumber ?? '');
     final emailCtrl = TextEditingController(text: existing?.email ?? '');
@@ -79,14 +94,53 @@ class _OrgPropertyDetailsScreenState extends State<OrgPropertyDetailsScreen> wit
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Full Name *')),
                 if (existing == null) ...[
-                  const SizedBox(height: 8),
-                  TextField(controller: phoneCtrl, decoration: const InputDecoration(labelText: 'Mobile Number *'), keyboardType: TextInputType.phone),
-                  const SizedBox(height: 8),
-                  TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: 'Email (optional)')),
-                  const SizedBox(height: 8),
-                  TextField(controller: passCtrl, decoration: const InputDecoration(labelText: 'Password (optional)')),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ChoiceChip(
+                          label: const Text('Existing Admin'),
+                          selected: useExistingAdmin,
+                          onSelected: existingAdminCandidates.isEmpty
+                              ? null
+                              : (sel) => setModalState(() => useExistingAdmin = true),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ChoiceChip(
+                          label: const Text('New Co-Owner'),
+                          selected: !useExistingAdmin,
+                          onSelected: (sel) => setModalState(() => useExistingAdmin = false),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                if (existing == null && useExistingAdmin) ...[
+                  DropdownButtonFormField<String>(
+                    value: selectedExistingAdminId,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Select Existing Admin *'),
+                    items: existingAdminCandidates.map((a) {
+                      return DropdownMenuItem<String>(
+                        value: a.id,
+                        child: Text('${a.displayName} (${a.adminCode})', overflow: TextOverflow.ellipsis),
+                      );
+                    }).toList(),
+                    onChanged: (v) => setModalState(() => selectedExistingAdminId = v),
+                  ),
+                ] else ...[
+                  TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Full Name *')),
+                  if (existing == null) ...[
+                    const SizedBox(height: 8),
+                    TextField(controller: phoneCtrl, decoration: const InputDecoration(labelText: 'Mobile Number *'), keyboardType: TextInputType.phone),
+                    const SizedBox(height: 8),
+                    TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: 'Email (optional)')),
+                    const SizedBox(height: 8),
+                    TextField(controller: passCtrl, decoration: const InputDecoration(labelText: 'Password (optional)')),
+                  ],
                 ],
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
@@ -116,14 +170,26 @@ class _OrgPropertyDetailsScreenState extends State<OrgPropertyDetailsScreen> wit
     if (ok == true && mounted) {
       try {
         if (existing == null) {
-          await ApiService.addPropertyOwnerUnderOrg({
-            'propertyId': widget.propertyId,
-            'name': nameCtrl.text.trim(),
-            'phoneNumber': phoneCtrl.text.trim(),
-            if (emailCtrl.text.trim().isNotEmpty) 'email': emailCtrl.text.trim(),
-            if (passCtrl.text.trim().isNotEmpty) 'password': passCtrl.text.trim(),
-            'role': role,
-          });
+          if (useExistingAdmin) {
+            if (selectedExistingAdminId == null) {
+              FancyToast.showError(context, 'Admin Required', message: 'Please select an existing admin.');
+              return;
+            }
+            await ApiService.addPropertyOwnerUnderOrg({
+              'propertyId': widget.propertyId,
+              'existingUserId': selectedExistingAdminId,
+              'role': role,
+            });
+          } else {
+            await ApiService.addPropertyOwnerUnderOrg({
+              'propertyId': widget.propertyId,
+              'name': nameCtrl.text.trim(),
+              'phoneNumber': phoneCtrl.text.trim(),
+              if (emailCtrl.text.trim().isNotEmpty) 'email': emailCtrl.text.trim(),
+              if (passCtrl.text.trim().isNotEmpty) 'password': passCtrl.text.trim(),
+              'role': role,
+            });
+          }
         } else {
           await ApiService.updatePropertyOwnerUnderOrg({
             'ownerId': existing.id,
@@ -133,6 +199,7 @@ class _OrgPropertyDetailsScreenState extends State<OrgPropertyDetailsScreen> wit
         }
         if (mounted) {
           FancyToast.showSuccess(context, 'Saved', message: 'Co-owner updated.');
+          orgProvider.loadFromAPI(showLoading: false);
           _loadDetails();
         }
       } catch (e) {

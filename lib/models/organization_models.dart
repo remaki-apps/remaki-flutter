@@ -485,6 +485,7 @@ class OrganizationPropertyPlatformFeeSummary {
   final double totalSettled;
   final double pendingAmount;
   final int tenantsContributed;
+  final List<String> availableMonths;
   final List<OrgPlatformFeeSettlementItem> settlements;
 
   OrganizationPropertyPlatformFeeSummary({
@@ -501,6 +502,7 @@ class OrganizationPropertyPlatformFeeSummary {
     required this.totalSettled,
     required this.pendingAmount,
     required this.tenantsContributed,
+    this.availableMonths = const [],
     required this.settlements,
   });
 
@@ -519,6 +521,10 @@ class OrganizationPropertyPlatformFeeSummary {
       totalSettled: (json['totalSettled'] as num?)?.toDouble() ?? 0.0,
       pendingAmount: (json['pendingAmount'] as num?)?.toDouble() ?? 0.0,
       tenantsContributed: (json['tenantsContributed'] as num?)?.toInt() ?? 0,
+      availableMonths: (json['availableMonths'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
       settlements: (json['settlements'] as List<dynamic>?)
               ?.map((s) => OrgPlatformFeeSettlementItem.fromJson(s as Map<String, dynamic>))
               .toList() ??

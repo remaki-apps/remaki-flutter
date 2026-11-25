@@ -2113,6 +2113,7 @@ class ApiService {
           totalSettled
           pendingAmount
           tenantsContributed
+          availableMonths
           settlements {
             id
             propertyId
