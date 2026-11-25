@@ -158,6 +158,7 @@ class PropertyItem {
   final double platformFee;
   final String? upiId;
   final String? upiPayeeName;
+  final bool electricityCalculatorEnabled;
 
   PropertyItem({
     required this.id,
@@ -171,6 +172,7 @@ class PropertyItem {
     this.platformFee = 5.0,
     this.upiId,
     this.upiPayeeName,
+    this.electricityCalculatorEnabled = false,
   });
 
   factory PropertyItem.fromJson(Map<String, dynamic> json) => PropertyItem(
@@ -185,6 +187,7 @@ class PropertyItem {
         platformFee: (json['platformFee'] as num?)?.toDouble() ?? 5.0,
         upiId: json['upiId']?.toString(),
         upiPayeeName: json['upiPayeeName']?.toString(),
+        electricityCalculatorEnabled: json['electricityCalculatorEnabled'] == true,
       );
 
   Map<String, dynamic> toJson() => {
@@ -199,6 +202,7 @@ class PropertyItem {
         'totalFloors': totalFloors,
         'upiId': upiId,
         'upiPayeeName': upiPayeeName,
+        'electricityCalculatorEnabled': electricityCalculatorEnabled,
       };
 }
 

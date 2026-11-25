@@ -671,6 +671,7 @@ class ApiService {
             platformFee
             upiId
             upiPayeeName
+            electricityCalculatorEnabled
           }
         }
       }

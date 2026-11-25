@@ -604,6 +604,9 @@ class MoreScreen extends StatelessWidget {
 
                   _ElectricityCalculatorMenuTile(
                     propertyId: provider.selectedPropertyId,
+                    initialEnabled: provider.properties
+                        .where((p) => p.id == provider.selectedPropertyId)
+                        .any((p) => p.electricityCalculatorEnabled),
                   ),
 
                   _buildActionCard(
@@ -841,8 +844,12 @@ class MoreScreen extends StatelessWidget {
 
 class _ElectricityCalculatorMenuTile extends StatefulWidget {
   final String? propertyId;
+  final bool initialEnabled;
 
-  const _ElectricityCalculatorMenuTile({this.propertyId});
+  const _ElectricityCalculatorMenuTile({
+    this.propertyId,
+    this.initialEnabled = false,
+  });
 
   @override
   State<_ElectricityCalculatorMenuTile> createState() =>
@@ -851,19 +858,22 @@ class _ElectricityCalculatorMenuTile extends StatefulWidget {
 
 class _ElectricityCalculatorMenuTileState
     extends State<_ElectricityCalculatorMenuTile> {
-  bool _enabled = false;
+  late bool _enabled;
   String? _loadedForPropertyId;
 
   @override
   void initState() {
     super.initState();
+    _enabled = widget.initialEnabled;
     _checkEnabled();
   }
 
   @override
   void didUpdateWidget(covariant _ElectricityCalculatorMenuTile oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.propertyId != widget.propertyId) {
+    if (oldWidget.propertyId != widget.propertyId ||
+        oldWidget.initialEnabled != widget.initialEnabled) {
+      _enabled = widget.initialEnabled;
       _checkEnabled();
     }
   }
