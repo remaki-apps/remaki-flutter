@@ -64,8 +64,8 @@ class _OrgPropertyDetailsScreenState extends State<OrgPropertyDetailsScreen> wit
     final emailCtrl = TextEditingController(text: existing?.email ?? '');
     final passCtrl = TextEditingController();
     String role = existing?.role ?? 'CO_OWNER';
-    const roleOptions = ['CO_OWNER', 'PRIMARY_OWNER', 'MANAGER', 'ADMIN'];
-    if (!roleOptions.contains(role)) {
+    if (role == 'PRIMARY_OWNER') role = 'ADMIN';
+    if (role != 'CO_OWNER' && role != 'ADMIN') {
       role = 'CO_OWNER';
     }
 
@@ -94,9 +94,7 @@ class _OrgPropertyDetailsScreenState extends State<OrgPropertyDetailsScreen> wit
                   decoration: const InputDecoration(labelText: 'Role'),
                   items: const [
                     DropdownMenuItem(value: 'CO_OWNER', child: Text('Co-Owner')),
-                    DropdownMenuItem(value: 'PRIMARY_OWNER', child: Text('Primary Owner')),
-                    DropdownMenuItem(value: 'MANAGER', child: Text('Manager')),
-                    DropdownMenuItem(value: 'ADMIN', child: Text('Admin')),
+                    DropdownMenuItem(value: 'ADMIN', child: Text('Owner (Admin)')),
                   ],
                   onChanged: (v) => setModalState(() => role = v ?? 'CO_OWNER'),
                 ),
