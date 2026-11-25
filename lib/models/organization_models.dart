@@ -222,6 +222,7 @@ class OrganizationPropertyItem {
   final int availableBeds;
   final int totalTenants;
   final int coOwnersCount;
+  final bool electricityCalculatorEnabled;
 
   OrganizationPropertyItem({
     required this.id,
@@ -250,6 +251,7 @@ class OrganizationPropertyItem {
     required this.availableBeds,
     required this.totalTenants,
     this.coOwnersCount = 0,
+    this.electricityCalculatorEnabled = false,
   });
 
   factory OrganizationPropertyItem.fromJson(Map<String, dynamic> json) {
@@ -280,6 +282,7 @@ class OrganizationPropertyItem {
       availableBeds: (json['availableBeds'] as num?)?.toInt() ?? 0,
       totalTenants: (json['totalTenants'] as num?)?.toInt() ?? 0,
       coOwnersCount: (json['coOwnersCount'] as num?)?.toInt() ?? 0,
+      electricityCalculatorEnabled: json['electricityCalculatorEnabled'] == true,
     );
   }
 }

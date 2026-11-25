@@ -39,6 +39,7 @@ class _OrgPropertyFormScreenState extends State<OrgPropertyFormScreen> {
 
   String? _selectedAdminId;
   bool _isActive = true;
+  bool _electricityCalculatorEnabled = false;
   bool _isSaving = false;
   bool _initialized = false;
 
@@ -71,6 +72,7 @@ class _OrgPropertyFormScreenState extends State<OrgPropertyFormScreen> {
     _feePayeeCtrl = TextEditingController(text: existing?.platformFeePayeeName ?? 'Remaki Organization');
 
     _isActive = existing?.isActive ?? true;
+    _electricityCalculatorEnabled = existing?.electricityCalculatorEnabled ?? false;
     _selectedAdminId = existing?.adminId ??
         widget.initialAdminId ??
         (orgProvider.admins.isNotEmpty ? orgProvider.admins.first.id : null);
@@ -120,6 +122,7 @@ class _OrgPropertyFormScreenState extends State<OrgPropertyFormScreen> {
         'platformFee': double.tryParse(_platformFeeCtrl.text.trim()) ?? 9.0,
         'platformFeeUpiId': _feeUpiIdCtrl.text.trim().isNotEmpty ? _feeUpiIdCtrl.text.trim() : null,
         'platformFeePayeeName': _feePayeeCtrl.text.trim().isNotEmpty ? _feePayeeCtrl.text.trim() : null,
+        'electricityCalculatorEnabled': _electricityCalculatorEnabled,
       };
 
       if (isEdit) {
@@ -263,6 +266,27 @@ class _OrgPropertyFormScreenState extends State<OrgPropertyFormScreen> {
               TextFormField(controller: _feeUpiIdCtrl, decoration: _inputDeco('Organization Fee UPI ID')),
               const SizedBox(height: 10),
               TextFormField(controller: _feePayeeCtrl, decoration: _inputDeco('Organization Fee Payee Name')),
+
+              const SizedBox(height: 16),
+              _sectionLabel('FEATURE CONTROLS (PG-SPECIFIC)'),
+              const SizedBox(height: 6),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: SwitchListTile(
+                  title: Text('Enable Electricity Calculator', style: GoogleFonts.lato(fontWeight: FontWeight.w700, fontSize: 14)),
+                  subtitle: Text(
+                    'Allow this PG\'s admin to configure unit rates and split meter bills across selected rooms.',
+                    style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF64748B)),
+                  ),
+                  activeColor: AppTheme.primaryColor,
+                  value: _electricityCalculatorEnabled,
+                  onChanged: (v) => setState(() => _electricityCalculatorEnabled = v),
+                ),
+              ),
 
               if (isEdit) ...[
                 const SizedBox(height: 14),

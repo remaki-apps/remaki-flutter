@@ -14,6 +14,7 @@ import 'screens/dashboard_screen.dart';
 import 'screens/rooms_screen.dart';
 import 'screens/room_details_screen.dart';
 import 'screens/add_room_bill_screen.dart';
+import 'screens/electricity_calculator_screen.dart';
 import 'screens/enter_split_amount_screen.dart';
 import 'screens/add_tenant_screen.dart';
 import 'screens/allocate_tenant_screen.dart';
@@ -471,6 +472,17 @@ final router = GoRouter(
         context: context,
         state: state,
         child: const ConfigurationScreen(),
+      ),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/electricity_calculator',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: ElectricityCalculatorScreen(
+          propertyId: state.uri.queryParameters['propertyId'],
+        ),
       ),
     ),
     GoRoute(

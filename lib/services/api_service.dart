@@ -1785,6 +1785,7 @@ class ApiService {
     availableBeds
     totalTenants
     coOwnersCount
+    electricityCalculatorEnabled
   ''';
 
   static Future<List<dynamic>> fetchOrganizationProperties() async {
@@ -2390,5 +2391,212 @@ class ApiService {
     } catch (e) {
       return null;
     }
+  }
+
+  // ==================== ELECTRICITY CALCULATOR ====================
+
+  static Future<Map<String, dynamic>> fetchElectricityConfig({String? propertyId}) async {
+    const String query = '''
+      query ElectricityConfig(\$propertyId: ID) {
+        electricityConfig(propertyId: \$propertyId) {
+          propertyId
+          propertyName
+          electricityCalculatorEnabled
+          costPerUnit
+          sharedRoomIds
+          latestReading
+          latestBillingMonth
+          rooms {
+            id
+            roomNumber
+            floorNumber
+            activeTenantCount
+            isSelected
+          }
+        }
+      }
+    ''';
+    final data = await performQuery(query, variables: {'propertyId': propertyId});
+    return data['electricityConfig'] as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> updateElectricityConfig({
+    String? propertyId,
+    required double costPerUnit,
+    required List<String> sharedRoomIds,
+  }) async {
+    const String mutation = '''
+      mutation UpdateElectricityConfig(\$input: UpdateElectricityConfigInput!) {
+        updateElectricityConfig(input: \$input) {
+          propertyId
+          propertyName
+          electricityCalculatorEnabled
+          costPerUnit
+          sharedRoomIds
+          latestReading
+          latestBillingMonth
+          rooms {
+            id
+            roomNumber
+            floorNumber
+            activeTenantCount
+            isSelected
+          }
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {
+      'input': {
+        'propertyId': propertyId,
+        'costPerUnit': costPerUnit,
+        'sharedRoomIds': sharedRoomIds,
+      }
+    });
+    return data['updateElectricityConfig'] as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> previewElectricitySplit({
+    String? propertyId,
+    required String billingMonth,
+    double? previousReading,
+    required double currentReading,
+    double? costPerUnitOverride,
+    required List<String> selectedRoomIds,
+  }) async {
+    const String query = '''
+      query PreviewElectricitySplit(\$input: PreviewElectricitySplitInput!) {
+        previewElectricitySplit(input: \$input) {
+          propertyId
+          billingMonth
+          previousReading
+          currentReading
+          unitsConsumed
+          costPerUnit
+          totalAmount
+          eligibleTenantCount
+          selectedRoomCount
+          shares {
+            tenantId
+            tenantName
+            roomId
+            roomNumber
+            bedLabel
+            shareAmount
+          }
+        }
+      }
+    ''';
+    final data = await performQuery(query, variables: {
+      'input': {
+        'propertyId': propertyId,
+        'billingMonth': billingMonth,
+        if (previousReading != null) 'previousReading': previousReading,
+        'currentReading': currentReading,
+        if (costPerUnitOverride != null) 'costPerUnitOverride': costPerUnitOverride,
+        'selectedRoomIds': selectedRoomIds,
+      }
+    });
+    return data['previewElectricitySplit'] as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> generateElectricityBills({
+    String? propertyId,
+    required String billingMonth,
+    double? previousReading,
+    required double currentReading,
+    double? costPerUnitOverride,
+    required List<String> selectedRoomIds,
+    String? dueDate,
+  }) async {
+    const String mutation = '''
+      mutation GenerateElectricityBills(\$input: GenerateElectricityBillsInput!) {
+        generateElectricityBills(input: \$input) {
+          id
+          propertyId
+          billingMonth
+          previousReading
+          currentReading
+          unitsConsumed
+          costPerUnit
+          totalAmount
+          selectedRoomIds
+          status
+          generatedBy
+          generatedAt
+          shares {
+            id
+            tenantId
+            tenantName
+            roomNumber
+            bedLabel
+            shareAmount
+            billId
+            billStatus
+          }
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {
+      'input': {
+        'propertyId': propertyId,
+        'billingMonth': billingMonth,
+        if (previousReading != null) 'previousReading': previousReading,
+        'currentReading': currentReading,
+        if (costPerUnitOverride != null) 'costPerUnitOverride': costPerUnitOverride,
+        'selectedRoomIds': selectedRoomIds,
+        if (dueDate != null) 'dueDate': dueDate,
+      }
+    });
+    return data['generateElectricityBills'] as Map<String, dynamic>;
+  }
+
+  static Future<List<dynamic>> fetchElectricityCycles({String? propertyId}) async {
+    const String query = '''
+      query ElectricityCycles(\$propertyId: ID) {
+        electricityCycles(propertyId: \$propertyId) {
+          id
+          propertyId
+          billingMonth
+          previousReading
+          currentReading
+          unitsConsumed
+          costPerUnit
+          totalAmount
+          selectedRoomIds
+          status
+          generatedBy
+          generatedAt
+          voidedAt
+          voidedBy
+          shares {
+            id
+            tenantId
+            tenantName
+            roomNumber
+            bedLabel
+            shareAmount
+            billId
+            billStatus
+          }
+        }
+      }
+    ''';
+    final data = await performQuery(query, variables: {'propertyId': propertyId});
+    return data['electricityCycles'] as List<dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> voidLatestElectricityCycle(String cycleId) async {
+    const String mutation = '''
+      mutation VoidLatestElectricityCycle(\$cycleId: ID!) {
+        voidLatestElectricityCycle(cycleId: \$cycleId) {
+          id
+          status
+          voidedAt
+          voidedBy
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'cycleId': cycleId});
+    return data['voidLatestElectricityCycle'] as Map<String, dynamic>;
   }
 }

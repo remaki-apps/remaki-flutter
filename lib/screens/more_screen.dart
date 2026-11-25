@@ -602,6 +602,10 @@ class MoreScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
 
+                  _ElectricityCalculatorMenuTile(
+                    propertyId: provider.selectedPropertyId,
+                  ),
+
                   _buildActionCard(
                     icon: Icons.tune_rounded,
                     iconColor: const Color(0xFF4F46E5),
@@ -830,6 +834,105 @@ class MoreScreen extends StatelessWidget {
           ],
         ),
         onTap: onTap,
+      ),
+    );
+  }
+}
+
+class _ElectricityCalculatorMenuTile extends StatefulWidget {
+  final String? propertyId;
+
+  const _ElectricityCalculatorMenuTile({this.propertyId});
+
+  @override
+  State<_ElectricityCalculatorMenuTile> createState() =>
+      _ElectricityCalculatorMenuTileState();
+}
+
+class _ElectricityCalculatorMenuTileState
+    extends State<_ElectricityCalculatorMenuTile> {
+  bool _enabled = false;
+  String? _loadedForPropertyId;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkEnabled();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ElectricityCalculatorMenuTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.propertyId != widget.propertyId) {
+      _checkEnabled();
+    }
+  }
+
+  Future<void> _checkEnabled() async {
+    final targetId = widget.propertyId;
+    _loadedForPropertyId = targetId;
+    try {
+      final config = await ApiService.fetchElectricityConfig(propertyId: targetId);
+      if (!mounted || _loadedForPropertyId != targetId) return;
+      setState(() {
+        _enabled = config['electricityCalculatorEnabled'] == true;
+      });
+    } catch (_) {
+      if (!mounted || _loadedForPropertyId != targetId) return;
+      setState(() {
+        _enabled = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_enabled) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFF1F5F9)),
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          leading: Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.bolt_rounded, color: Color(0xFFD97706), size: 20),
+          ),
+          title: Text(
+            'Electricity Calculator',
+            style: GoogleFonts.lato(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF0F172A),
+            ),
+          ),
+          subtitle: Text(
+            'Meter readings, tariff & multi-room bill split',
+            style: GoogleFonts.lato(fontSize: 11.5, color: const Color(0xFF64748B)),
+          ),
+          trailing: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.chevron_right_rounded, color: Color(0xFFCBD5E1), size: 20),
+            ],
+          ),
+          onTap: () {
+            final pid = widget.propertyId;
+            if (pid != null && pid.isNotEmpty) {
+              context.push('/electricity_calculator?propertyId=$pid');
+            } else {
+              context.push('/electricity_calculator');
+            }
+          },
+        ),
       ),
     );
   }

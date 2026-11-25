@@ -271,6 +271,31 @@ class OrgPropertiesScreen extends StatelessWidget {
               ),
             ],
           ),
+          if (prop.electricityCalculatorEnabled) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.bolt_rounded, size: 14, color: Color(0xFFD97706)),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Electricity Calculator Enabled',
+                    style: GoogleFonts.lato(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFFB45309),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
       ),
