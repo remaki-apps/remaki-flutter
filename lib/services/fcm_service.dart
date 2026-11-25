@@ -5,8 +5,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/in_app_notification.dart';
-import '../widgets/in_app_notification_banner.dart';
 import 'api_service.dart';
 import 'fcm_web_helper_stub.dart'
     if (dart.library.html) 'fcm_web_helper_web.dart' as web_helper;
@@ -141,46 +139,9 @@ class FcmService {
           );
         }
 
-        // Native desktop OS notification for Web browsers
+        // Native desktop OS notification for Web browsers (single notification; in-app banner removed)
         if (kIsWeb) {
           web_helper.showWebNotificationImpl(title, body, route);
-        }
-
-        // Floating In-App Banner for active screen (Works on Web, iOS Safari, Android, and Desktop!)
-        final navState = _navigatorKey?.currentState;
-        final overlayState = navState?.overlay;
-        final context = _navigatorKey?.currentContext ?? navState?.context;
-        if (overlayState != null || (context != null && context.mounted)) {
-          final item = InAppNotificationItem(
-            id: 'fcm_${DateTime.now().millisecondsSinceEpoch}',
-            title: title,
-            message: body,
-            category: NotificationCategory.announcement,
-            priority: NotificationPriority.urgent,
-            targetRoute: route,
-            timestamp: DateTime.now(),
-            iconData: Icons.notifications_active_rounded,
-            iconColor: const Color(0xFF4F46E5),
-            iconBgColor: const Color(0xFFEEF2FF),
-            data: data,
-          );
-
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            final activeContext = _navigatorKey?.currentContext ?? navState?.context;
-            final activeOverlay = _navigatorKey?.currentState?.overlay ?? overlayState;
-            if (activeOverlay != null || (activeContext != null && activeContext.mounted)) {
-              InAppNotificationBanner.show(
-                activeContext ?? activeOverlay!.context,
-                item,
-                explicitOverlay: activeOverlay,
-                onTap: () {
-                  if (route.isNotEmpty) {
-                    _onNavigate?.call(route);
-                  }
-                },
-              );
-            }
-          });
         }
       });
 

@@ -17,48 +17,47 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 // ── Handle background messages (tab hidden / browser minimised) ───────────────
-// Called when Firebase JS SDK routes the push to this service worker.
+// Called when Firebase JS SDK routes data-only push to this service worker.
 messaging.onBackgroundMessage((payload) => {
   console.log('[FCM-SW] onBackgroundMessage received:', payload);
   const title = payload.notification?.title || payload.data?.title || 'Remaki';
   const body  = payload.notification?.body  || payload.data?.body  || '';
   const route = payload.data?.route || '/';
+  const tag   = payload.data?.tag || `remaki-${payload.data?.entityType || 'push'}-${payload.data?.entityId || 'msg'}`;
 
-  self.registration.showNotification(title, {
+  return self.registration.showNotification(title, {
     body,
-    icon:              '/icons/Icon-192.png',
-    badge:             '/icons/Icon-192.png',
-    data:              { route, ...(payload.data || {}) },
+    icon:               '/icons/Icon-192.png',
+    badge:              '/icons/Icon-192.png',
+    data:               { route, ...(payload.data || {}) },
     requireInteraction: true,
-    tag:               `remaki-${payload.data?.entityType || 'push'}-${Date.now()}`,
+    tag,
   });
 });
 
 // ── Raw push event fallback ───────────────────────────────────────────────────
-// Belt-and-suspenders: if the Firebase compat SDK does NOT intercept the push
-// event (e.g. when the payload has no notification field), this raw handler
-// still shows a notification so nothing is silently dropped.
+// Only used if the Firebase compat SDK does NOT intercept the push event.
 self.addEventListener('push', (event) => {
-  // The compat SDK sets self._firebaseMessagingHandled = true when it handles the event.
-  // We only act if it did NOT handle it.
   if (self._firebaseMessagingHandled) return;
 
-  console.log('[FCM-SW] Raw push event (compat SDK did not handle):', event.data?.text());
   let payload = {};
   try { payload = event.data?.json() || {}; } catch (_) {}
+  // If Firebase notification payload is present, Firebase handles it when not data-only.
+  if (payload.notification) return;
 
-  const title = payload.notification?.title || payload.data?.title || 'Remaki';
-  const body  = payload.notification?.body  || payload.data?.body  || '';
+  const title = payload.data?.title || 'Remaki';
+  const body  = payload.data?.body  || '';
   const route = payload.data?.route || '/';
+  const tag   = payload.data?.tag || `remaki-${payload.data?.entityType || 'push'}-${payload.data?.entityId || 'msg'}`;
 
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon:              '/icons/Icon-192.png',
-      badge:             '/icons/Icon-192.png',
-      data:              { route, ...(payload.data || {}) },
+      icon:               '/icons/Icon-192.png',
+      badge:              '/icons/Icon-192.png',
+      data:               { route, ...(payload.data || {}) },
       requireInteraction: true,
-      tag:               `remaki-raw-${Date.now()}`,
+      tag,
     })
   );
 });
