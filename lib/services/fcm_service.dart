@@ -141,7 +141,8 @@ class FcmService {
 
         // Native desktop OS notification for Web browsers (single notification; in-app banner removed)
         if (kIsWeb) {
-          web_helper.showWebNotificationImpl(title, body, route);
+          final tag = data['tag']?.toString();
+          web_helper.showWebNotificationImpl(title, body, route, tag);
         }
       });
 

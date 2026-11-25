@@ -6,9 +6,9 @@ import 'dart:html' as html;
 
 /// Shows a native OS notification by routing through the active service worker
 /// registration (prefers firebase-messaging-sw.js stored at window._fcmSwRegistration).
-void showWebNotificationImpl(String title, String body, String route) {
+void showWebNotificationImpl(String title, String body, String route, [String? tag]) {
   try {
-    js_util.callMethod(html.window, 'showWebNotification', [title, body, route]);
+    js_util.callMethod(html.window, 'showWebNotification', [title, body, route, tag]);
   } catch (_) {}
 }
 

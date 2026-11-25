@@ -18,6 +18,8 @@ const messaging = firebase.messaging();
 
 // ── Handle background messages (tab hidden / browser minimised) ───────────────
 // Called when Firebase JS SDK routes data-only push to this service worker.
+// Firebase automatically suppresses this when a client tab is in the foreground,
+// where FirebaseMessaging.onMessage handles display instead.
 messaging.onBackgroundMessage((payload) => {
   console.log('[FCM-SW] onBackgroundMessage received:', payload);
   const title = payload.notification?.title || payload.data?.title || 'Remaki';
@@ -33,33 +35,6 @@ messaging.onBackgroundMessage((payload) => {
     requireInteraction: true,
     tag,
   });
-});
-
-// ── Raw push event fallback ───────────────────────────────────────────────────
-// Only used if the Firebase compat SDK does NOT intercept the push event.
-self.addEventListener('push', (event) => {
-  if (self._firebaseMessagingHandled) return;
-
-  let payload = {};
-  try { payload = event.data?.json() || {}; } catch (_) {}
-  // If Firebase notification payload is present, Firebase handles it when not data-only.
-  if (payload.notification) return;
-
-  const title = payload.data?.title || 'Remaki';
-  const body  = payload.data?.body  || '';
-  const route = payload.data?.route || '/';
-  const tag   = payload.data?.tag || `remaki-${payload.data?.entityType || 'push'}-${payload.data?.entityId || 'msg'}`;
-
-  event.waitUntil(
-    self.registration.showNotification(title, {
-      body,
-      icon:               '/icons/Icon-192.png',
-      badge:              '/icons/Icon-192.png',
-      data:               { route, ...(payload.data || {}) },
-      requireInteraction: true,
-      tag,
-    })
-  );
 });
 
 // ── Notification click → focus the app tab and deep-link ─────────────────────

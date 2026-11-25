@@ -717,7 +717,7 @@
     };
 
     // ─── Browser Native Desktop Notification for Web Foreground Push ──────────
-    window.showWebNotification = function(title, body, route) {
+    window.showWebNotification = function(title, body, route, tag) {
       if (!('Notification' in window)) return;
       if (Notification.permission === 'granted') {
         const notifTitle = title || 'Remaki Alert';
@@ -727,40 +727,31 @@
           badge: '/icons/Icon-192.png',
           data: { route: route || '/' },
           requireInteraction: true,
-          tag: 'remaki_' + Date.now()
+          tag: tag || ('remaki_' + Date.now())
         };
 
-        if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
-          navigator.serviceWorker.ready.then(function(reg) {
-            if (reg && reg.showNotification) {
-              return reg.showNotification(notifTitle, notifOptions);
-            } else {
-              const n = new Notification(notifTitle, notifOptions);
-              n.onclick = function() {
-                window.focus();
-                if (route && route.length > 0) window.location.hash = '#' + route;
-                n.close();
-              };
-            }
-          }).catch(function() {
-            try {
-              const n = new Notification(notifTitle, notifOptions);
-              n.onclick = function() {
-                window.focus();
-                if (route && route.length > 0) window.location.hash = '#' + route;
-                n.close();
-              };
-            } catch (_) {}
+        const showWithReg = function(reg) {
+          if (reg && reg.showNotification) {
+            return reg.showNotification(notifTitle, notifOptions);
+          }
+          const n = new Notification(notifTitle, notifOptions);
+          n.onclick = function() {
+            window.focus();
+            if (route && route.length > 0) window.location.hash = '#' + route;
+            n.close();
+          };
+        };
+
+        if (window._fcmSwRegistration && window._fcmSwRegistration.showNotification) {
+          window._fcmSwRegistration.showNotification(notifTitle, notifOptions).catch(function() {
+            showWithReg(null);
+          });
+        } else if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
+          navigator.serviceWorker.ready.then(showWithReg).catch(function() {
+            try { showWithReg(null); } catch (_) {}
           });
         } else {
-          try {
-            const n = new Notification(notifTitle, notifOptions);
-            n.onclick = function() {
-              window.focus();
-              if (route && route.length > 0) window.location.hash = '#' + route;
-              n.close();
-            };
-          } catch (e) {
+          try { showWithReg(null); } catch (e) {
             console.warn('[FCM] Native notification failed:', e);
           }
         }
