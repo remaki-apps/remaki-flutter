@@ -84,10 +84,6 @@ class _OrgAdminsScreenState extends State<OrgAdminsScreen> {
                       ],
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.refresh_rounded, color: AppTheme.primaryColor),
-                    onPressed: () => orgProvider.loadFromAPI(showLoading: false),
-                  ),
                 ],
               ),
             ),

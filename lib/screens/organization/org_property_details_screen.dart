@@ -10,7 +10,8 @@ import '../../widgets/fancy_toast.dart';
 
 class OrgPropertyDetailsScreen extends StatefulWidget {
   final String propertyId;
-  const OrgPropertyDetailsScreen({super.key, required this.propertyId});
+  final int initialTab;
+  const OrgPropertyDetailsScreen({super.key, required this.propertyId, this.initialTab = 0});
 
   @override
   State<OrgPropertyDetailsScreen> createState() => _OrgPropertyDetailsScreenState();
@@ -25,7 +26,7 @@ class _OrgPropertyDetailsScreenState extends State<OrgPropertyDetailsScreen> wit
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 2, vsync: this, initialIndex: widget.initialTab.clamp(0, 1));
     _loadDetails();
   }
 
@@ -334,8 +335,15 @@ class _OrgPropertyDetailsScreenState extends State<OrgPropertyDetailsScreen> wit
                   body: RefreshIndicator(
                     onRefresh: _loadDetails,
                     child: _rooms.isEmpty
-                        ? const Center(child: Text('No rooms configured yet.'))
+                        ? ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: const [
+                              SizedBox(height: 140),
+                              Center(child: Text('No rooms configured yet.')),
+                            ],
+                          )
                         : ListView.separated(
+                            physics: const AlwaysScrollableScrollPhysics(),
                             padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                             itemCount: _rooms.length,
                             separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -421,8 +429,15 @@ class _OrgPropertyDetailsScreenState extends State<OrgPropertyDetailsScreen> wit
                   body: RefreshIndicator(
                     onRefresh: _loadDetails,
                     child: _owners.isEmpty
-                        ? const Center(child: Text('No co-owners mapped to this PG.'))
+                        ? ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: const [
+                              SizedBox(height: 140),
+                              Center(child: Text('No co-owners mapped to this PG.')),
+                            ],
+                          )
                         : ListView.separated(
+                            physics: const AlwaysScrollableScrollPhysics(),
                             padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                             itemCount: _owners.length,
                             separatorBuilder: (_, __) => const SizedBox(height: 10),

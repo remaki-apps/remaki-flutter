@@ -571,7 +571,10 @@ final router = GoRouter(
       pageBuilder: (context, state) => _buildPageWithTransition(
         context: context,
         state: state,
-        child: OrgPropertyDetailsScreen(propertyId: state.pathParameters['id']!),
+        child: OrgPropertyDetailsScreen(
+          propertyId: state.pathParameters['id']!,
+          initialTab: int.tryParse(state.uri.queryParameters['tab'] ?? '') ?? 0,
+        ),
       ),
     ),
     GoRoute(

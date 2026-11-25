@@ -95,11 +95,6 @@ class _OrgDashboardScreenState extends State<OrgDashboardScreen> {
                               ],
                             ),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.refresh_rounded, color: AppTheme.primaryColor),
-                            onPressed: () => orgProvider.loadFromAPI(showLoading: false),
-                            tooltip: 'Refresh',
-                          ),
                         ],
                       ),
                       const SizedBox(height: 18),

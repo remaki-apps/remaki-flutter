@@ -59,10 +59,6 @@ class OrgPropertiesScreen extends StatelessWidget {
                     icon: const Icon(Icons.add_business_rounded, color: AppTheme.primaryColor),
                     onPressed: () => context.push('/org_property_form'),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.refresh_rounded, color: AppTheme.primaryColor),
-                    onPressed: () => orgProvider.loadFromAPI(showLoading: false),
-                  ),
                 ],
               ),
             ),
@@ -75,6 +71,7 @@ class OrgPropertiesScreen extends StatelessWidget {
                 child: properties.isEmpty
                     ? _buildEmptyState()
                     : ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                         padding: const EdgeInsets.fromLTRB(18, 4, 18, 120),
                         itemCount: properties.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -239,6 +236,38 @@ class OrgPropertiesScreen extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: _buildMetricTile('Available', '${prop.availableBeds}'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => context.push('/org_property_details/${prop.id}?tab=0'),
+                  icon: const Icon(Icons.meeting_room_outlined, size: 16),
+                  label: Text('Rooms (${prop.totalRooms})', style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primaryDark,
+                    side: const BorderSide(color: Color(0xFFE2E8F0)),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => context.push('/org_property_details/${prop.id}?tab=1'),
+                  icon: const Icon(Icons.group_add_outlined, size: 16),
+                  label: Text('Co-Owners (${prop.coOwnersCount})', style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primaryColor,
+                    side: const BorderSide(color: Color(0xFFC7D2FE)),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
               ),
             ],
           ),
