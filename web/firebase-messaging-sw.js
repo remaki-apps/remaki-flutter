@@ -29,13 +29,13 @@ messaging.onBackgroundMessage((payload) => {
 
   return self.registration.showNotification(title, {
     body,
-    icon:               '/icons/Icon-192.png',
-    badge:              '/icons/Icon-192.png',
-    data:               { route, ...(payload.data || {}) },
-    requireInteraction: true,
-    silent:             false,
-    renotify:           true,
+    icon:    '/icons/Icon-192.png',
+    badge:   '/icons/Icon-192.png',
+    data:    { route, ...(payload.data || {}) },
     tag,
+    renotify: true,
+    // requireInteraction removed: on Windows/Chrome it suppresses the visual banner/toast
+    // and silently places the notification only in the Action Center tray.
   });
 });
 
