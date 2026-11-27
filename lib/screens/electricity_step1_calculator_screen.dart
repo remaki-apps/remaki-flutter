@@ -226,7 +226,7 @@ class _ElectricityStep1CalculatorScreenState
   double get _calculatedTotal =>
       double.parse((_unitsConsumed * _effectiveRate).toStringAsFixed(2));
 
-  void _proceedToStep2() {
+  Future<void> _proceedToStep2() async {
     if (_isEditingRate) {
       FancyToast.showError(
         context,
@@ -281,7 +281,10 @@ class _ElectricityStep1CalculatorScreenState
       defaultDescription: 'Electricity bill - ${_formatMmYy(_billingMonth)}',
     );
 
-    context.push('/add_room_bill', extra: draft);
+    final res = await context.push('/add_room_bill', extra: draft);
+    if (res == true && mounted) {
+      context.pop(true);
+    }
   }
 
   @override

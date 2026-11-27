@@ -531,10 +531,13 @@ class _ElectricityCalculatorScreenState
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () async {
-                      await context.push(
+                      final res = await context.push(
                         '/electricity_step1?groupId=${group.id}&propertyId=${group.propertyId}',
                       );
-                      _loadAll();
+                      await _loadAll();
+                      if (res == true && mounted) {
+                        _tabController.animateTo(1);
+                      }
                     },
                     icon: const Icon(Icons.calculate_outlined, size: 18),
                     label: Text(

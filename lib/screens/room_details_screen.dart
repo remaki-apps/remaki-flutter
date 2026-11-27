@@ -52,7 +52,7 @@ class RoomDetailsScreen extends StatelessWidget {
               ],
             ),
             content: Text(
-              'Room ${room.roomNumber} is part of combined group "${group.name}" (Rooms: $roomNames). Electricity for this room is billed together with the group.',
+              'Room ${room.number} is part of combined group "${group.name}" (Rooms: $roomNames). Electricity for this room is billed together with the group.',
             ),
             actions: [
               TextButton(

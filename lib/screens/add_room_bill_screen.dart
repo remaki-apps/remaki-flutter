@@ -288,7 +288,11 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
         'Bill Split Successfully!',
         message: '₹${_totalAmount.toStringAsFixed(2)} added to ${_selectedTenantIds.length} tenant(s).',
       );
-      _navigateBackToRoom();
+      if (widget.electricityDraft != null) {
+        context.pop(true);
+      } else {
+        _navigateBackToRoom();
+      }
     } catch (e) {
       if (!mounted) return;
       FancyToast.showError(
