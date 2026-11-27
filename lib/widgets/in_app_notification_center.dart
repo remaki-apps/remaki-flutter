@@ -410,6 +410,10 @@ class _NotificationCenterModal extends StatelessWidget {
         return 'View Resident Details & Send Reminder';
       case NotificationCategory.paymentStatus:
         return 'View Payments & Receipts';
+      case NotificationCategory.announcement:
+        return 'View Announcement';
+      case NotificationCategory.general:
+        return 'View Details';
     }
   }
 }
