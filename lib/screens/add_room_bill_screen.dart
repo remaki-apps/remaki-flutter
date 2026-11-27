@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/app_provider.dart';
+import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../models/models.dart';
 import '../widgets/tenant_avatar.dart';
@@ -11,9 +12,17 @@ import '../widgets/keyboard_responsive_layout.dart';
 enum SplitMode { even, byAmount }
 
 class AddRoomBillScreen extends StatefulWidget {
-  final String roomId;
+  final String? roomId;
+  final List<String>? roomIds;
   final double? initialAmount;
-  const AddRoomBillScreen({super.key, required this.roomId, this.initialAmount});
+  final ElectricitySplitDraft? electricityDraft;
+  const AddRoomBillScreen({
+    super.key,
+    this.roomId,
+    this.roomIds,
+    this.initialAmount,
+    this.electricityDraft,
+  });
 
   @override
   State<AddRoomBillScreen> createState() => _AddRoomBillScreenState();
@@ -40,19 +49,31 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
     {'label': 'Maintenance', 'icon': Icons.build_rounded, 'color': Color(0xFF6366F1)},
   ];
 
+  List<String> get _targetRoomIds =>
+      widget.electricityDraft?.roomIds ??
+      widget.roomIds ??
+      (widget.roomId != null && widget.roomId!.isNotEmpty ? [widget.roomId!] : []);
+
   @override
   void initState() {
     super.initState();
-    if (widget.initialAmount != null && widget.initialAmount! > 0) {
-      _totalAmount = widget.initialAmount!;
-      _amountController.text = widget.initialAmount! % 1 == 0
-          ? widget.initialAmount!.toInt().toString()
-          : widget.initialAmount!.toString();
+    final draft = widget.electricityDraft;
+    final initAmt = draft?.totalAmount ?? widget.initialAmount;
+    if (initAmt != null && initAmt > 0) {
+      _totalAmount = initAmt;
+      _amountController.text =
+          initAmt % 1 == 0 ? initAmt.toInt().toString() : initAmt.toStringAsFixed(2);
     }
-    // Initialize selected tenants to all tenants in the room
+    if (draft != null) {
+      _descController.text = draft.defaultDescription;
+      _selectedCategory = 'Electricity';
+    }
+    // Initialize selected tenants to all tenants in the target room(s)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final appProvider = Provider.of<AppProvider>(context, listen: false);
-      final roomTenants = appProvider.tenants.where((t) => t.roomId == widget.roomId).toList();
+      final targetIds = _targetRoomIds;
+      final roomTenants =
+          appProvider.tenants.where((t) => targetIds.contains(t.roomId)).toList();
       setState(() {
         _selectedTenantIds = roomTenants.map((t) => t.id).toSet();
         _syncTenantControllers(roomTenants);
@@ -155,8 +176,10 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
   void _navigateBackToRoom() {
     if (context.canPop()) {
       context.pop();
-    } else {
+    } else if (widget.roomId != null && widget.roomId!.isNotEmpty) {
       context.go('/room_details/${widget.roomId}');
+    } else {
+      context.go('/rooms');
     }
   }
 
@@ -217,7 +240,33 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
     final splitAmount = _selectedTenantIds.isNotEmpty ? _totalAmount / _selectedTenantIds.length : 0.0;
 
     try {
-      if (_splitMode == SplitMode.even) {
+      final draft = widget.electricityDraft;
+      if (draft != null) {
+        await ApiService.generateElectricityBills(
+          propertyId: draft.propertyId,
+          billingMonth: draft.billingMonth,
+          scopeType: draft.scopeType,
+          roomId: draft.roomId,
+          groupId: draft.groupId,
+          previousReading: draft.previousReading,
+          currentReading: draft.currentReading,
+          costPerUnitOverride: draft.costPerUnit,
+          selectedRoomIds: draft.roomIds,
+          selectedTenantIds:
+              _splitMode == SplitMode.even ? _selectedTenantIds.toList() : null,
+          splitMode: _splitMode == SplitMode.even ? 'EQUAL' : 'CUSTOM',
+          customSplits: _splitMode == SplitMode.byAmount
+              ? _selectedTenantIds
+                  .map((id) => {
+                        'tenantId': id,
+                        'amount': _customAmounts[id] ?? 0.0,
+                      })
+                  .toList()
+              : null,
+          description: desc,
+        );
+        await appProvider.loadFromAPI(showLoading: false);
+      } else if (_splitMode == SplitMode.even) {
         await appProvider.addBillToTenants(
           _selectedTenantIds.toList(),
           splitAmount,
@@ -225,7 +274,7 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
         );
       } else {
         await appProvider.addBillWithCustomSplits(
-          roomId: widget.roomId,
+          roomId: widget.roomId ?? _targetRoomIds.first,
           totalAmount: _totalAmount,
           splitsByTenantId: {
             for (var id in _selectedTenantIds) id: _customAmounts[id] ?? 0.0,
@@ -257,11 +306,22 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
   @override
   Widget build(BuildContext context) {
     final appProvider = Provider.of<AppProvider>(context);
+    final targetRoomIds = _targetRoomIds;
+    final primaryRoomId = widget.roomId ?? (targetRoomIds.isNotEmpty ? targetRoomIds.first : '');
     final room = appProvider.rooms.firstWhere(
-      (r) => r.id == widget.roomId,
-      orElse: () => Room(id: widget.roomId, number: widget.roomId, capacity: 0, beds: []),
+      (r) => r.id == primaryRoomId,
+      orElse: () => Room(id: primaryRoomId, number: primaryRoomId, capacity: 0, beds: []),
     );
-    final roomTenants = appProvider.tenants.where((t) => t.roomId == widget.roomId).toList();
+    final roomMap = {for (final r in appProvider.rooms) r.id: r};
+    final roomTenants = appProvider.tenants
+        .where((t) => targetRoomIds.contains(t.roomId))
+        .toList()
+      ..sort((a, b) {
+        final ra = roomMap[a.roomId]?.number ?? '';
+        final rb = roomMap[b.roomId]?.number ?? '';
+        final cmp = ra.compareTo(rb);
+        return cmp != 0 ? cmp : a.name.compareTo(b.name);
+      });
     _syncTenantControllers(roomTenants);
 
     final splitAmount = _selectedTenantIds.isNotEmpty ? _totalAmount / _selectedTenantIds.length : 0.0;
@@ -321,7 +381,9 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        'Room ${room.number}',
+                        widget.electricityDraft != null
+                            ? widget.electricityDraft!.title
+                            : 'Room ${room.number}',
                         style: const TextStyle(
                           color: AppTheme.primaryColor,
                           fontSize: 11,
@@ -479,6 +541,7 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
                                   constraints: const BoxConstraints(minWidth: 50, maxWidth: 240),
                                   child: TextField(
                                     controller: _amountController,
+                                    readOnly: widget.electricityDraft != null,
                                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                     style: const TextStyle(
                                       fontSize: 32,
@@ -957,17 +1020,41 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
                                     ),
                                     const SizedBox(width: 10),
 
-                                    // Tenant Name only (Bed removed per request)
+                                    // Tenant Name (+ Room badge when multi-room)
                                     Expanded(
-                                      child: Text(
-                                        tenant.name,
-                                        style: TextStyle(
-                                          fontSize: 13.5,
-                                          fontWeight: FontWeight.w600,
-                                          color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF334155),
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                      child: Row(
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              tenant.name,
+                                              style: TextStyle(
+                                                fontSize: 13.5,
+                                                fontWeight: FontWeight.w600,
+                                                color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF334155),
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          if (targetRoomIds.length > 1) ...[
+                                            const SizedBox(width: 6),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFF1F5F9),
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: Text(
+                                                'R${roomMap[tenant.roomId]?.number ?? ''}',
+                                                style: const TextStyle(
+                                                  fontSize: 10.5,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Color(0xFF475569),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
                                       ),
                                     ),
 

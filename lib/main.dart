@@ -15,6 +15,7 @@ import 'screens/rooms_screen.dart';
 import 'screens/room_details_screen.dart';
 import 'screens/add_room_bill_screen.dart';
 import 'screens/electricity_calculator_screen.dart';
+import 'screens/electricity_step1_calculator_screen.dart';
 import 'screens/enter_split_amount_screen.dart';
 import 'screens/add_tenant_screen.dart';
 import 'screens/allocate_tenant_screen.dart';
@@ -319,6 +320,23 @@ final router = GoRouter(
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
+      path: '/add_room_bill',
+      pageBuilder: (context, state) {
+        final draft = state.extra as ElectricitySplitDraft?;
+        return _buildPageWithTransition(
+          context: context,
+          state: state,
+          child: AddRoomBillScreen(
+            roomId: draft?.roomId,
+            roomIds: draft?.roomIds,
+            initialAmount: draft?.totalAmount,
+            electricityDraft: draft,
+          ),
+        );
+      },
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
       path: '/add_room_bill/:roomId',
       pageBuilder: (context, state) {
         final amountStr = state.uri.queryParameters['amount'];
@@ -482,6 +500,19 @@ final router = GoRouter(
         state: state,
         child: ElectricityCalculatorScreen(
           propertyId: state.uri.queryParameters['propertyId'],
+        ),
+      ),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/electricity_step1',
+      pageBuilder: (context, state) => _buildPageWithTransition(
+        context: context,
+        state: state,
+        child: ElectricityStep1CalculatorScreen(
+          propertyId: state.uri.queryParameters['propertyId'],
+          roomId: state.uri.queryParameters['roomId'],
+          groupId: state.uri.queryParameters['groupId'],
         ),
       ),
     ),

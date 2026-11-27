@@ -672,6 +672,7 @@ class ApiService {
             upiId
             upiPayeeName
             electricityCalculatorEnabled
+            electricityCostPerUnit
           }
         }
       }
@@ -1787,6 +1788,7 @@ class ApiService {
     totalTenants
     coOwnersCount
     electricityCalculatorEnabled
+    electricityCostPerUnit
   ''';
 
   static Future<List<dynamic>> fetchOrganizationProperties() async {
@@ -2500,13 +2502,217 @@ class ApiService {
     return data['previewElectricitySplit'] as Map<String, dynamic>;
   }
 
+  static Future<List<dynamic>> fetchElectricityGroups({String? propertyId}) async {
+    const String query = '''
+      query ElectricityGroups(\$propertyId: ID) {
+        electricityGroups(propertyId: \$propertyId) {
+          id
+          propertyId
+          name
+          costPerUnitOverride
+          propertyDefaultCostPerUnit
+          effectiveCostPerUnit
+          lastMeterReading
+          activeTenantCount
+          createdAt
+          updatedAt
+          rooms {
+            id
+            roomId
+            roomNumber
+            floorNumber
+            activeTenantCount
+          }
+        }
+      }
+    ''';
+    final data = await performQuery(query, variables: {'propertyId': propertyId});
+    return data['electricityGroups'] as List<dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> fetchRoomElectricityContext(String roomId) async {
+    const String query = '''
+      query RoomElectricityContext(\$roomId: ID!) {
+        roomElectricityContext(roomId: \$roomId) {
+          roomId
+          roomNumber
+          propertyId
+          inGroup
+          lastReading
+          costPerUnitOverride
+          propertyDefaultCostPerUnit
+          effectiveCostPerUnit
+          group {
+            id
+            propertyId
+            name
+            costPerUnitOverride
+            propertyDefaultCostPerUnit
+            effectiveCostPerUnit
+            lastMeterReading
+            activeTenantCount
+            createdAt
+            updatedAt
+            rooms {
+              id
+              roomId
+              roomNumber
+              floorNumber
+              activeTenantCount
+            }
+          }
+        }
+      }
+    ''';
+    final data = await performQuery(query, variables: {'roomId': roomId});
+    return data['roomElectricityContext'] as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> createElectricityGroup({
+    String? propertyId,
+    required String name,
+    required List<String> roomIds,
+    double? costPerUnitOverride,
+  }) async {
+    const String mutation = '''
+      mutation CreateElectricityGroup(\$input: CreateElectricityGroupInput!) {
+        createElectricityGroup(input: \$input) {
+          id
+          propertyId
+          name
+          costPerUnitOverride
+          propertyDefaultCostPerUnit
+          effectiveCostPerUnit
+          lastMeterReading
+          activeTenantCount
+          createdAt
+          updatedAt
+          rooms {
+            id
+            roomId
+            roomNumber
+            floorNumber
+            activeTenantCount
+          }
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {
+      'input': {
+        if (propertyId != null) 'propertyId': propertyId,
+        'name': name,
+        'roomIds': roomIds,
+        if (costPerUnitOverride != null) 'costPerUnitOverride': costPerUnitOverride,
+      }
+    });
+    return data['createElectricityGroup'] as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> updateElectricityGroup({
+    required String groupId,
+    String? name,
+    List<String>? roomIds,
+    double? costPerUnitOverride,
+    bool updateCostOverride = false,
+  }) async {
+    const String mutation = '''
+      mutation UpdateElectricityGroup(\$input: UpdateElectricityGroupInput!) {
+        updateElectricityGroup(input: \$input) {
+          id
+          propertyId
+          name
+          costPerUnitOverride
+          propertyDefaultCostPerUnit
+          effectiveCostPerUnit
+          lastMeterReading
+          activeTenantCount
+          createdAt
+          updatedAt
+          rooms {
+            id
+            roomId
+            roomNumber
+            floorNumber
+            activeTenantCount
+          }
+        }
+      }
+    ''';
+    final Map<String, dynamic> input = {'groupId': groupId};
+    if (name != null) input['name'] = name;
+    if (roomIds != null) input['roomIds'] = roomIds;
+    if (updateCostOverride || costPerUnitOverride != null) {
+      input['costPerUnitOverride'] = costPerUnitOverride;
+    }
+    final data = await performQuery(mutation, variables: {'input': input});
+    return data['updateElectricityGroup'] as Map<String, dynamic>;
+  }
+
+  static Future<bool> deleteElectricityGroup(String groupId) async {
+    const String mutation = '''
+      mutation DeleteElectricityGroup(\$groupId: ID!) {
+        deleteElectricityGroup(groupId: \$groupId)
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'groupId': groupId});
+    return data['deleteElectricityGroup'] == true;
+  }
+
+  static Future<Map<String, dynamic>> updateElectricityRoomRate({
+    required String roomId,
+    double? costPerUnitOverride,
+  }) async {
+    const String mutation = '''
+      mutation UpdateElectricityRoomRate(\$roomId: ID!, \$costPerUnitOverride: Float) {
+        updateElectricityRoomRate(roomId: \$roomId, costPerUnitOverride: \$costPerUnitOverride) {
+          roomId
+          roomNumber
+          propertyId
+          inGroup
+          lastReading
+          costPerUnitOverride
+          propertyDefaultCostPerUnit
+          effectiveCostPerUnit
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {
+      'roomId': roomId,
+      'costPerUnitOverride': costPerUnitOverride,
+    });
+    return data['updateElectricityRoomRate'] as Map<String, dynamic>;
+  }
+
+  static Future<double> updatePropertyElectricityRate({
+    String? propertyId,
+    required double costPerUnit,
+  }) async {
+    const String mutation = '''
+      mutation UpdatePropertyElectricityRate(\$propertyId: ID, \$costPerUnit: Float!) {
+        updatePropertyElectricityRate(propertyId: \$propertyId, costPerUnit: \$costPerUnit)
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {
+      'propertyId': propertyId,
+      'costPerUnit': costPerUnit,
+    });
+    return (data['updatePropertyElectricityRate'] as num).toDouble();
+  }
+
   static Future<Map<String, dynamic>> generateElectricityBills({
     String? propertyId,
     required String billingMonth,
+    String scopeType = 'PROPERTY',
+    String? roomId,
+    String? groupId,
     double? previousReading,
     required double currentReading,
     double? costPerUnitOverride,
-    required List<String> selectedRoomIds,
+    List<String>? selectedRoomIds,
+    List<String>? selectedTenantIds,
+    String splitMode = 'EQUAL',
+    List<Map<String, dynamic>>? customSplits,
+    String? description,
     String? dueDate,
   }) async {
     const String mutation = '''
@@ -2515,6 +2721,12 @@ class ApiService {
           id
           propertyId
           billingMonth
+          scopeType
+          roomId
+          groupId
+          groupNameSnapshot
+          splitMode
+          description
           previousReading
           currentReading
           unitsConsumed
@@ -2528,6 +2740,7 @@ class ApiService {
             id
             tenantId
             tenantName
+            roomId
             roomNumber
             bedLabel
             shareAmount
@@ -2539,12 +2752,19 @@ class ApiService {
     ''';
     final data = await performQuery(mutation, variables: {
       'input': {
-        'propertyId': propertyId,
+        if (propertyId != null) 'propertyId': propertyId,
         'billingMonth': billingMonth,
+        'scopeType': scopeType,
+        if (roomId != null) 'roomId': roomId,
+        if (groupId != null) 'groupId': groupId,
         if (previousReading != null) 'previousReading': previousReading,
         'currentReading': currentReading,
         if (costPerUnitOverride != null) 'costPerUnitOverride': costPerUnitOverride,
-        'selectedRoomIds': selectedRoomIds,
+        if (selectedRoomIds != null) 'selectedRoomIds': selectedRoomIds,
+        if (selectedTenantIds != null) 'selectedTenantIds': selectedTenantIds,
+        'splitMode': splitMode,
+        if (customSplits != null) 'customSplits': customSplits,
+        if (description != null) 'description': description,
         if (dueDate != null) 'dueDate': dueDate,
       }
     });
@@ -2558,6 +2778,12 @@ class ApiService {
           id
           propertyId
           billingMonth
+          scopeType
+          roomId
+          groupId
+          groupNameSnapshot
+          splitMode
+          description
           previousReading
           currentReading
           unitsConsumed
@@ -2573,6 +2799,7 @@ class ApiService {
             id
             tenantId
             tenantName
+            roomId
             roomNumber
             bedLabel
             shareAmount

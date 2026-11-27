@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../providers/app_provider.dart';
+import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../models/models.dart';
 import '../widgets/tenant_avatar.dart';
@@ -20,6 +21,78 @@ class RoomDetailsScreen extends StatelessWidget {
       context.pop();
     } else {
       context.go('/rooms');
+    }
+  }
+
+  Future<void> _openRoomElectricity(BuildContext context, Room room) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final raw = await ApiService.fetchRoomElectricityContext(room.id);
+      if (!context.mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+
+      final ctx = RoomElectricityContext.fromJson(raw);
+      if (ctx.inGroup && ctx.group != null) {
+        final group = ctx.group!;
+        final roomNames = group.rooms.map((r) => r.roomNumber).join(', ');
+        final openGroup = await showDialog<bool>(
+          context: context,
+          builder: (dlgCtx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            title: const Row(
+              children: [
+                Icon(Icons.bolt_rounded, color: Color(0xFFD97706)),
+                SizedBox(width: 8),
+                Expanded(child: Text('Grouped Meter Room')),
+              ],
+            ),
+            content: Text(
+              'Room ${room.roomNumber} is part of combined group "${group.name}" (Rooms: $roomNames). Electricity for this room is billed together with the group.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dlgCtx).pop(false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFD97706),
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => Navigator.of(dlgCtx).pop(true),
+                child: const Text('Open Group Billing'),
+              ),
+            ],
+          ),
+        );
+
+        if (openGroup == true && context.mounted) {
+          context.push(
+            '/electricity_step1?groupId=${group.id}&propertyId=${ctx.propertyId}',
+          );
+        }
+        return;
+      }
+
+      if (context.mounted) {
+        context.push(
+          '/electricity_step1?roomId=${room.id}&propertyId=${ctx.propertyId}',
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        FancyToast.showError(
+          context,
+          'Electricity Error',
+          message: ApiService.cleanErrorMessage(e),
+        );
+      }
     }
   }
 
@@ -367,22 +440,70 @@ class RoomDetailsScreen extends StatelessWidget {
             // Bottom Action Bar
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.receipt_long_outlined, color: Colors.white, size: 20),
-                  label: const Text(
-                    'Split Room Bill',
-                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                  onPressed: () => context.push('/enter_split_amount/${room.id}'),
-                ),
+              child: Builder(
+                builder: (context) {
+                  final currentProp = appProvider.properties.firstWhere(
+                    (p) => p.id == (appProvider.selectedPropertyId ?? room.propertyId),
+                    orElse: () => PropertyItem(id: '', name: ''),
+                  );
+                  final showElectricity = currentProp.electricityCalculatorEnabled;
+                  if (!showElectricity) {
+                    return SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.receipt_long_outlined, color: Colors.white, size: 20),
+                        label: const Text(
+                          'Split Room Bill',
+                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        onPressed: () => context.push('/enter_split_amount/${room.id}'),
+                      ),
+                    );
+                  }
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.receipt_long_outlined, color: Colors.white, size: 18),
+                          label: const Text(
+                            'Split Bill',
+                            style: TextStyle(color: Colors.white, fontSize: 14.5, fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          onPressed: () => context.push('/enter_split_amount/${room.id}'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.bolt_rounded, color: Colors.white, size: 19),
+                          label: const Text(
+                            'Electricity',
+                            style: TextStyle(color: Colors.white, fontSize: 14.5, fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFD97706),
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          onPressed: () => _openRoomElectricity(context, room),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ],

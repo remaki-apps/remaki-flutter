@@ -159,6 +159,7 @@ class PropertyItem {
   final String? upiId;
   final String? upiPayeeName;
   final bool electricityCalculatorEnabled;
+  final double electricityCostPerUnit;
 
   PropertyItem({
     required this.id,
@@ -173,6 +174,7 @@ class PropertyItem {
     this.upiId,
     this.upiPayeeName,
     this.electricityCalculatorEnabled = false,
+    this.electricityCostPerUnit = 0.0,
   });
 
   factory PropertyItem.fromJson(Map<String, dynamic> json) => PropertyItem(
@@ -188,6 +190,7 @@ class PropertyItem {
         upiId: json['upiId']?.toString(),
         upiPayeeName: json['upiPayeeName']?.toString(),
         electricityCalculatorEnabled: json['electricityCalculatorEnabled'] == true,
+        electricityCostPerUnit: (json['electricityCostPerUnit'] as num?)?.toDouble() ?? 0.0,
       );
 
   Map<String, dynamic> toJson() => {
@@ -203,7 +206,261 @@ class PropertyItem {
         'upiId': upiId,
         'upiPayeeName': upiPayeeName,
         'electricityCalculatorEnabled': electricityCalculatorEnabled,
+        'electricityCostPerUnit': electricityCostPerUnit,
       };
+}
+
+class ElectricityRoomGroupMember {
+  final String id;
+  final String roomId;
+  final String roomNumber;
+  final String floorNumber;
+  final int activeTenantCount;
+
+  ElectricityRoomGroupMember({
+    required this.id,
+    required this.roomId,
+    required this.roomNumber,
+    required this.floorNumber,
+    required this.activeTenantCount,
+  });
+
+  factory ElectricityRoomGroupMember.fromJson(Map<String, dynamic> json) =>
+      ElectricityRoomGroupMember(
+        id: json['id']?.toString() ?? '',
+        roomId: json['roomId']?.toString() ?? '',
+        roomNumber: json['roomNumber']?.toString() ?? '',
+        floorNumber: json['floorNumber']?.toString() ?? '',
+        activeTenantCount: (json['activeTenantCount'] as num?)?.toInt() ?? 0,
+      );
+}
+
+class ElectricityRoomGroup {
+  final String id;
+  final String propertyId;
+  final String name;
+  final double? costPerUnitOverride;
+  final double propertyDefaultCostPerUnit;
+  final double effectiveCostPerUnit;
+  final double? lastMeterReading;
+  final List<ElectricityRoomGroupMember> rooms;
+  final int activeTenantCount;
+  final String createdAt;
+  final String updatedAt;
+
+  ElectricityRoomGroup({
+    required this.id,
+    required this.propertyId,
+    required this.name,
+    this.costPerUnitOverride,
+    this.propertyDefaultCostPerUnit = 0.0,
+    this.effectiveCostPerUnit = 0.0,
+    this.lastMeterReading,
+    this.rooms = const [],
+    this.activeTenantCount = 0,
+    this.createdAt = '',
+    this.updatedAt = '',
+  });
+
+  factory ElectricityRoomGroup.fromJson(Map<String, dynamic> json) =>
+      ElectricityRoomGroup(
+        id: json['id']?.toString() ?? '',
+        propertyId: json['propertyId']?.toString() ?? '',
+        name: json['name']?.toString() ?? '',
+        costPerUnitOverride: (json['costPerUnitOverride'] as num?)?.toDouble(),
+        propertyDefaultCostPerUnit:
+            (json['propertyDefaultCostPerUnit'] as num?)?.toDouble() ?? 0.0,
+        effectiveCostPerUnit:
+            (json['effectiveCostPerUnit'] as num?)?.toDouble() ?? 0.0,
+        lastMeterReading: (json['lastMeterReading'] as num?)?.toDouble(),
+        rooms: (json['rooms'] as List<dynamic>? ?? const [])
+            .map((r) => ElectricityRoomGroupMember.fromJson(r as Map<String, dynamic>))
+            .toList(),
+        activeTenantCount: (json['activeTenantCount'] as num?)?.toInt() ?? 0,
+        createdAt: json['createdAt']?.toString() ?? '',
+        updatedAt: json['updatedAt']?.toString() ?? '',
+      );
+}
+
+class RoomElectricityContext {
+  final String roomId;
+  final String roomNumber;
+  final String propertyId;
+  final bool inGroup;
+  final ElectricityRoomGroup? group;
+  final double? lastReading;
+  final double? costPerUnitOverride;
+  final double propertyDefaultCostPerUnit;
+  final double effectiveCostPerUnit;
+
+  RoomElectricityContext({
+    required this.roomId,
+    required this.roomNumber,
+    required this.propertyId,
+    required this.inGroup,
+    this.group,
+    this.lastReading,
+    this.costPerUnitOverride,
+    this.propertyDefaultCostPerUnit = 0.0,
+    this.effectiveCostPerUnit = 0.0,
+  });
+
+  factory RoomElectricityContext.fromJson(Map<String, dynamic> json) =>
+      RoomElectricityContext(
+        roomId: json['roomId']?.toString() ?? '',
+        roomNumber: json['roomNumber']?.toString() ?? '',
+        propertyId: json['propertyId']?.toString() ?? '',
+        inGroup: json['inGroup'] == true,
+        group: json['group'] != null
+            ? ElectricityRoomGroup.fromJson(json['group'] as Map<String, dynamic>)
+            : null,
+        lastReading: (json['lastReading'] as num?)?.toDouble(),
+        costPerUnitOverride: (json['costPerUnitOverride'] as num?)?.toDouble(),
+        propertyDefaultCostPerUnit:
+            (json['propertyDefaultCostPerUnit'] as num?)?.toDouble() ?? 0.0,
+        effectiveCostPerUnit:
+            (json['effectiveCostPerUnit'] as num?)?.toDouble() ?? 0.0,
+      );
+}
+
+class ElectricitySplitDraft {
+  final String scopeType; // SINGLE_ROOM | COMBINED_GROUP
+  final String? propertyId;
+  final String? roomId;
+  final String? groupId;
+  final List<String> roomIds;
+  final String title;
+  final String billingMonth; // YYYY-MM
+  final double previousReading;
+  final double currentReading;
+  final double unitsConsumed;
+  final double costPerUnit;
+  final double totalAmount;
+  final String defaultDescription;
+
+  ElectricitySplitDraft({
+    required this.scopeType,
+    this.propertyId,
+    this.roomId,
+    this.groupId,
+    required this.roomIds,
+    required this.title,
+    required this.billingMonth,
+    required this.previousReading,
+    required this.currentReading,
+    required this.unitsConsumed,
+    required this.costPerUnit,
+    required this.totalAmount,
+    required this.defaultDescription,
+  });
+}
+
+class ElectricityBillShare {
+  final String id;
+  final String tenantId;
+  final String tenantName;
+  final String roomId;
+  final String roomNumber;
+  final String? bedLabel;
+  final double shareAmount;
+  final String billId;
+  final String? billStatus;
+
+  ElectricityBillShare({
+    required this.id,
+    required this.tenantId,
+    required this.tenantName,
+    required this.roomId,
+    required this.roomNumber,
+    this.bedLabel,
+    required this.shareAmount,
+    required this.billId,
+    this.billStatus,
+  });
+
+  factory ElectricityBillShare.fromJson(Map<String, dynamic> json) =>
+      ElectricityBillShare(
+        id: json['id']?.toString() ?? '',
+        tenantId: json['tenantId']?.toString() ?? '',
+        tenantName: json['tenantName']?.toString() ?? '',
+        roomId: json['roomId']?.toString() ?? '',
+        roomNumber: json['roomNumber']?.toString() ?? '',
+        bedLabel: json['bedLabel']?.toString(),
+        shareAmount: (json['shareAmount'] as num?)?.toDouble() ?? 0.0,
+        billId: json['billId']?.toString() ?? '',
+        billStatus: json['billStatus']?.toString(),
+      );
+}
+
+class ElectricityBillCycle {
+  final String id;
+  final String propertyId;
+  final String billingMonth;
+  final String scopeType;
+  final String? roomId;
+  final String? groupId;
+  final String? groupNameSnapshot;
+  final String splitMode;
+  final String? description;
+  final double previousReading;
+  final double currentReading;
+  final double unitsConsumed;
+  final double costPerUnit;
+  final double totalAmount;
+  final List<String> selectedRoomIds;
+  final String status;
+  final String generatedBy;
+  final String generatedAt;
+  final List<ElectricityBillShare> shares;
+
+  ElectricityBillCycle({
+    required this.id,
+    required this.propertyId,
+    required this.billingMonth,
+    required this.scopeType,
+    this.roomId,
+    this.groupId,
+    this.groupNameSnapshot,
+    required this.splitMode,
+    this.description,
+    required this.previousReading,
+    required this.currentReading,
+    required this.unitsConsumed,
+    required this.costPerUnit,
+    required this.totalAmount,
+    required this.selectedRoomIds,
+    required this.status,
+    required this.generatedBy,
+    required this.generatedAt,
+    this.shares = const [],
+  });
+
+  factory ElectricityBillCycle.fromJson(Map<String, dynamic> json) =>
+      ElectricityBillCycle(
+        id: json['id']?.toString() ?? '',
+        propertyId: json['propertyId']?.toString() ?? '',
+        billingMonth: json['billingMonth']?.toString() ?? '',
+        scopeType: json['scopeType']?.toString() ?? 'PROPERTY',
+        roomId: json['roomId']?.toString(),
+        groupId: json['groupId']?.toString(),
+        groupNameSnapshot: json['groupNameSnapshot']?.toString(),
+        splitMode: json['splitMode']?.toString() ?? 'EQUAL',
+        description: json['description']?.toString(),
+        previousReading: (json['previousReading'] as num?)?.toDouble() ?? 0.0,
+        currentReading: (json['currentReading'] as num?)?.toDouble() ?? 0.0,
+        unitsConsumed: (json['unitsConsumed'] as num?)?.toDouble() ?? 0.0,
+        costPerUnit: (json['costPerUnit'] as num?)?.toDouble() ?? 0.0,
+        totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0.0,
+        selectedRoomIds: (json['selectedRoomIds'] as List<dynamic>? ?? const [])
+            .map((e) => e.toString())
+            .toList(),
+        status: json['status']?.toString() ?? 'GENERATED',
+        generatedBy: json['generatedBy']?.toString() ?? '',
+        generatedAt: json['generatedAt']?.toString() ?? '',
+        shares: (json['shares'] as List<dynamic>? ?? const [])
+            .map((s) => ElectricityBillShare.fromJson(s as Map<String, dynamic>))
+            .toList(),
+      );
 }
 
 class Room {

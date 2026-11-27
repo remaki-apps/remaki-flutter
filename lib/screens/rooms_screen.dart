@@ -158,17 +158,61 @@ class _RoomsScreenState extends State<RoomsScreen> {
                             ),
                           ],
                         ),
-                        GestureDetector(
-                          onTap: () => setState(() => _isSearching = true),
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEEF2FF),
-                              borderRadius: BorderRadius.circular(12),
+                        Row(
+                          children: [
+                            if (appProvider.properties.any((p) =>
+                                p.id == appProvider.selectedPropertyId &&
+                                p.electricityCalculatorEnabled)) ...[
+                              GestureDetector(
+                                onTap: () {
+                                  final pid = appProvider.selectedPropertyId;
+                                  if (pid != null && pid.isNotEmpty) {
+                                    context.push('/electricity_calculator?propertyId=$pid');
+                                  } else {
+                                    context.push('/electricity_calculator');
+                                  }
+                                },
+                                child: Container(
+                                  height: 40,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEF3C7),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: const Color(0xFFFDE68A)),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.bolt_rounded,
+                                          color: Color(0xFFD97706), size: 18),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Electricity',
+                                        style: GoogleFonts.lato(
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: const Color(0xFF92400E),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                            GestureDetector(
+                              onTap: () => setState(() => _isSearching = true),
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEEF2FF),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(Icons.search, color: AppTheme.primaryColor, size: 20),
+                              ),
                             ),
-                            child: const Icon(Icons.search, color: AppTheme.primaryColor, size: 20),
-                          ),
+                          ],
                         ),
                       ],
                     ),

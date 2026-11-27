@@ -36,6 +36,7 @@ class _OrgPropertyFormScreenState extends State<OrgPropertyFormScreen> {
   late TextEditingController _platformFeeCtrl;
   late TextEditingController _feeUpiIdCtrl;
   late TextEditingController _feePayeeCtrl;
+  late TextEditingController _electricityCostCtrl;
 
   String? _selectedAdminId;
   bool _isActive = true;
@@ -73,6 +74,14 @@ class _OrgPropertyFormScreenState extends State<OrgPropertyFormScreen> {
 
     _isActive = existing?.isActive ?? true;
     _electricityCalculatorEnabled = existing?.electricityCalculatorEnabled ?? false;
+    final existingCost = existing?.electricityCostPerUnit ?? 0.0;
+    _electricityCostCtrl = TextEditingController(
+      text: existingCost > 0
+          ? (existingCost % 1 == 0
+              ? existingCost.toInt().toString()
+              : existingCost.toString())
+          : '',
+    );
     _selectedAdminId = existing?.adminId ??
         widget.initialAdminId ??
         (orgProvider.admins.isNotEmpty ? orgProvider.admins.first.id : null);
@@ -94,6 +103,7 @@ class _OrgPropertyFormScreenState extends State<OrgPropertyFormScreen> {
     _platformFeeCtrl.dispose();
     _feeUpiIdCtrl.dispose();
     _feePayeeCtrl.dispose();
+    _electricityCostCtrl.dispose();
     super.dispose();
   }
 
@@ -123,6 +133,9 @@ class _OrgPropertyFormScreenState extends State<OrgPropertyFormScreen> {
         'platformFeeUpiId': _feeUpiIdCtrl.text.trim().isNotEmpty ? _feeUpiIdCtrl.text.trim() : null,
         'platformFeePayeeName': _feePayeeCtrl.text.trim().isNotEmpty ? _feePayeeCtrl.text.trim() : null,
         'electricityCalculatorEnabled': _electricityCalculatorEnabled,
+        if (_electricityCalculatorEnabled)
+          'electricityCostPerUnit':
+              double.tryParse(_electricityCostCtrl.text.trim()) ?? 0.0,
       };
 
       if (isEdit) {
@@ -287,6 +300,30 @@ class _OrgPropertyFormScreenState extends State<OrgPropertyFormScreen> {
                   onChanged: (v) => setState(() => _electricityCalculatorEnabled = v),
                 ),
               ),
+              if (_electricityCalculatorEnabled) ...[
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _electricityCostCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText: 'Default Electricity Cost per Unit (₹) — Optional',
+                    hintText: 'e.g. 10',
+                    prefixIcon: const Icon(Icons.bolt_rounded, color: Color(0xFFD97706)),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                    helperText: 'Rooms and combined groups inherit this rate unless overridden.',
+                  ),
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) return null;
+                    final parsed = double.tryParse(val.trim());
+                    if (parsed == null || parsed < 0) {
+                      return 'Enter a valid non-negative rate';
+                    }
+                    return null;
+                  },
+                ),
+              ],
 
               if (isEdit) ...[
                 const SizedBox(height: 14),

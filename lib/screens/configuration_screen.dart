@@ -23,10 +23,55 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
   int _currentSliderDays = 0;
   bool _isPropertyOverrideActive = false;
 
+  final TextEditingController _electricityRateCtrl = TextEditingController();
+  bool _isSavingElectricityRate = false;
+  String? _loadedRatePropertyId;
+
   @override
   void initState() {
     super.initState();
     _loadSettings();
+  }
+
+  @override
+  void dispose() {
+    _electricityRateCtrl.dispose();
+    super.dispose();
+  }
+
+  void _syncElectricityRateField(PropertyItem? prop) {
+    if (prop == null) return;
+    if (_loadedRatePropertyId == prop.id) return;
+    _loadedRatePropertyId = prop.id;
+    final rate = prop.electricityCostPerUnit;
+    _electricityRateCtrl.text = rate > 0
+        ? (rate % 1 == 0 ? rate.toInt().toString() : rate.toString())
+        : '';
+  }
+
+  Future<void> _saveElectricityRate(PropertyItem prop) async {
+    final parsed = double.tryParse(_electricityRateCtrl.text.trim());
+    if (parsed == null || parsed < 0) {
+      FancyToast.showError(context, 'Invalid Rate', message: 'Enter a valid non-negative cost per unit.');
+      return;
+    }
+    setState(() => _isSavingElectricityRate = true);
+    try {
+      await ApiService.updatePropertyElectricityRate(
+        propertyId: prop.id,
+        costPerUnit: parsed,
+      );
+      if (mounted) {
+        FancyToast.showSuccess(context, 'Default electricity rate updated for ${prop.name}!');
+        await Provider.of<AppProvider>(context, listen: false).loadFromAPI(showLoading: false);
+      }
+    } catch (e) {
+      if (mounted) {
+        FancyToast.showError(context, 'Save Error', message: ApiService.cleanErrorMessage(e));
+      }
+    } finally {
+      if (mounted) setState(() => _isSavingElectricityRate = false);
+    }
   }
 
   Future<void> _loadSettings() async {
@@ -470,6 +515,111 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
                         ),
                       ),
                       const SizedBox(height: 30),
+
+                      // PG-Wide Electricity Default Rate Card
+                      Builder(
+                        builder: (context) {
+                          final activePropId = _selectedPropertyId ?? appProvider.selectedPropertyId;
+                          final targetProp = properties.where((p) => p.id == activePropId && p.electricityCalculatorEnabled).firstOrNull
+                              ?? properties.where((p) => p.electricityCalculatorEnabled).firstOrNull;
+                          if (targetProp == null) return const SizedBox.shrink();
+                          _syncElectricityRateField(targetProp);
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFEF3C7),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(Icons.bolt_rounded, color: Color(0xFFD97706), size: 20),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Default Electricity Rate (${targetProp.name})',
+                                          style: GoogleFonts.lato(
+                                            fontSize: 16.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: const Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                        Text(
+                                          'Inherited by rooms and groups without a custom rate override',
+                                          style: GoogleFonts.lato(
+                                            fontSize: 12,
+                                            color: const Color(0xFF64748B),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _electricityRateCtrl,
+                                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                        decoration: InputDecoration(
+                                          labelText: 'Cost per Unit (₹)',
+                                          hintText: 'e.g. 10',
+                                          prefixText: '₹ ',
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    SizedBox(
+                                      height: 48,
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFFD97706),
+                                          foregroundColor: Colors.white,
+                                          elevation: 0,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        ),
+                                        onPressed: _isSavingElectricityRate
+                                            ? null
+                                            : () => _saveElectricityRate(targetProp),
+                                        child: _isSavingElectricityRate
+                                            ? const SizedBox(
+                                                width: 18,
+                                                height: 18,
+                                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                              )
+                                            : Text(
+                                                'Save Rate',
+                                                style: GoogleFonts.lato(fontWeight: FontWeight.w700),
+                                              ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                            ],
+                          );
+                        },
+                      ),
 
                       // Informational Rules Card
                       Container(
