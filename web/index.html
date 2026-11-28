@@ -688,6 +688,13 @@
       }).catch(function (err) {
         console.warn('[FCM-SW] firebase-messaging-sw.js registration failed:', err);
       });
+
+      navigator.serviceWorker.addEventListener('message', function (event) {
+        if (event.data && event.data.type === 'REM_FCM_NAVIGATE' && event.data.route) {
+          var targetRoute = String(event.data.route);
+          window.location.hash = '#' + (targetRoute.startsWith('/') ? targetRoute : '/' + targetRoute);
+        }
+      });
     }
 
     // Hide loading indicator when Flutter is ready

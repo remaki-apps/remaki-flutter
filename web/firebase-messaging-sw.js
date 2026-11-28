@@ -53,10 +53,13 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      // Focus any existing open Remaki tab
+      // Focus any existing open Remaki tab and navigate via postMessage without full SPA reload
       for (const client of windowClients) {
         if ('focus' in client) {
-          if ('navigate' in client) client.navigate(targetUrl);
+          client.postMessage({
+            type: 'REM_FCM_NAVIGATE',
+            route: route.startsWith('/') ? route : '/' + route,
+          });
           return client.focus();
         }
       }

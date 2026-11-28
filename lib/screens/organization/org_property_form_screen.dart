@@ -41,6 +41,7 @@ class _OrgPropertyFormScreenState extends State<OrgPropertyFormScreen> {
   String? _selectedAdminId;
   bool _isActive = true;
   bool _electricityCalculatorEnabled = false;
+  String _genderPolicy = 'BOTH';
   bool _isSaving = false;
   bool _initialized = false;
 
@@ -74,6 +75,7 @@ class _OrgPropertyFormScreenState extends State<OrgPropertyFormScreen> {
 
     _isActive = existing?.isActive ?? true;
     _electricityCalculatorEnabled = existing?.electricityCalculatorEnabled ?? false;
+    _genderPolicy = existing?.genderPolicy ?? 'BOTH';
     final existingCost = existing?.electricityCostPerUnit ?? 0.0;
     _electricityCostCtrl = TextEditingController(
       text: existingCost > 0
@@ -133,6 +135,7 @@ class _OrgPropertyFormScreenState extends State<OrgPropertyFormScreen> {
         'platformFeeUpiId': _feeUpiIdCtrl.text.trim().isNotEmpty ? _feeUpiIdCtrl.text.trim() : null,
         'platformFeePayeeName': _feePayeeCtrl.text.trim().isNotEmpty ? _feePayeeCtrl.text.trim() : null,
         'electricityCalculatorEnabled': _electricityCalculatorEnabled,
+        'genderPolicy': _genderPolicy,
         if (_electricityCalculatorEnabled)
           'electricityCostPerUnit':
               double.tryParse(_electricityCostCtrl.text.trim()) ?? 0.0,
@@ -283,6 +286,67 @@ class _OrgPropertyFormScreenState extends State<OrgPropertyFormScreen> {
               const SizedBox(height: 16),
               _sectionLabel('FEATURE CONTROLS (PG-SPECIFIC)'),
               const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'PG Gender Type',
+                      style: GoogleFonts.lato(fontWeight: FontWeight.w700, fontSize: 14),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Controls whether new tenants default to Male, Female, or allow choosing either.',
+                      style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF64748B)),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        for (final opt in [
+                          ('MALE', 'Male'),
+                          ('FEMALE', 'Female'),
+                          ('BOTH', 'Both'),
+                        ])
+                          Expanded(
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(10),
+                              onTap: () => setState(() => _genderPolicy = opt.$1),
+                              child: Row(
+                                children: [
+                                  Radio<String>(
+                                    value: opt.$1,
+                                    groupValue: _genderPolicy,
+                                    activeColor: AppTheme.primaryColor,
+                                    onChanged: (val) {
+                                      if (val != null) setState(() => _genderPolicy = val);
+                                    },
+                                  ),
+                                  Flexible(
+                                    child: Text(
+                                      opt.$2,
+                                      style: GoogleFonts.lato(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,

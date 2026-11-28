@@ -547,6 +547,7 @@ class AppProvider with ChangeNotifier {
         'phone': tenant.phone,
         'email': tenant.email,
         'emergencyContact': tenant.emergencyContact,
+        if (tenant.gender != null && tenant.gender!.isNotEmpty) 'gender': tenant.gender,
         'bedId': tenant.bedId.isNotEmpty ? tenant.bedId : null,
         'monthlyRent': tenant.rentAmount,
         'securityDeposit': tenant.securityDeposit,

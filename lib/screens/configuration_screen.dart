@@ -39,6 +39,7 @@ class _ConfigurationScreenState extends State<ConfigurationScreen> {
     _electricityRateCtrl.dispose();
     super.dispose();
   }
+  
 
   void _syncElectricityRateField(PropertyItem? prop) {
     if (prop == null) return;

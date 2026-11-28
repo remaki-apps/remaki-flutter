@@ -29,6 +29,13 @@ class FcmService {
   Function(String route)? _onNavigate;
   GlobalKey<NavigatorState>? _navigatorKey;
   String? _lastToken;
+  String? pendingInitialRoute;
+
+  String? consumePendingRoute() {
+    final r = pendingInitialRoute;
+    pendingInitialRoute = null;
+    return r;
+  }
 
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
     'remaki_alerts',
@@ -154,15 +161,12 @@ class FcmService {
         }
       });
 
-      // 6. Handle App Cold Start from Terminated State
+      // 6. Handle App Cold Start from Terminated State (consumed by SplashScreen)
       final initialMessage = await _messaging.getInitialMessage();
       if (initialMessage != null) {
         final route = initialMessage.data['route'] as String?;
         if (route != null && route.isNotEmpty) {
-          // Delay briefly to allow router & splash to finish mounting
-          Future.delayed(const Duration(milliseconds: 700), () {
-            _onNavigate?.call(route);
-          });
+          pendingInitialRoute = route;
         }
       }
     } catch (e) {

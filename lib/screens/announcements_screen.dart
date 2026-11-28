@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../providers/app_provider.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/fancy_toast.dart';
@@ -29,6 +31,8 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   bool _isSending = false;
   bool _isImageLoading = false;
   int _selectedDurationDays = 3; // 1, 3, or 7 days
+  Set<String> _selectedPropertyIds = {};
+  bool _sendToAllPgs = true;
 
   Widget _buildDurationChip(int days, String label, StateSetter setModalState) {
     final isSelected = _selectedDurationDays == days;
@@ -190,12 +194,28 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         }
       }
 
+      final props = Provider.of<AppProvider>(context, listen: false).properties;
+      List<String>? targetPropertyIds;
+      if (props.length == 1) {
+        targetPropertyIds = [props.first.id];
+      } else if (props.length > 1) {
+        if (!_sendToAllPgs && _selectedPropertyIds.isEmpty) {
+          FancyToast.showError(context, 'Select PG', message: 'Please select at least one PG or All PGs.');
+          setState(() => _isSending = false);
+          return;
+        }
+        targetPropertyIds = (_sendToAllPgs || _selectedPropertyIds.length == props.length)
+            ? []
+            : _selectedPropertyIds.toList();
+      }
+
       await ApiService.createAnnouncement(
         heading: _headingCtrl.text.trim(),
         description: _descCtrl.text.trim(),
         imageBase64: imageBase64,
         imageUrl: r2PublicUrl,
         durationDays: _selectedDurationDays,
+        propertyIds: targetPropertyIds,
       );
 
       if (mounted) {
@@ -500,6 +520,67 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                         color: const Color(0xFF94A3B8),
                         fontWeight: FontWeight.w500,
                       ),
+                    ),
+                    Builder(
+                      builder: (_) {
+                        final props = Provider.of<AppProvider>(context, listen: false).properties;
+                        if (props.length <= 1) return const SizedBox.shrink();
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 16),
+                            Text(
+                              'TARGET PGS',
+                              style: GoogleFonts.lato(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF64748B),
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                FilterChip(
+                                  label: const Text('All PGs'),
+                                  selected: _sendToAllPgs,
+                                  selectedColor: const Color(0xFFEEF2FF),
+                                  checkmarkColor: const Color(0xFF4F46E5),
+                                  onSelected: (val) {
+                                    setModalState(() {
+                                      _sendToAllPgs = val;
+                                      if (val) {
+                                        _selectedPropertyIds.clear();
+                                      }
+                                    });
+                                  },
+                                ),
+                                ...props.map((p) {
+                                  final isSel = !_sendToAllPgs && _selectedPropertyIds.contains(p.id);
+                                  return FilterChip(
+                                    label: Text(p.name),
+                                    selected: isSel,
+                                    selectedColor: const Color(0xFFEEF2FF),
+                                    checkmarkColor: const Color(0xFF4F46E5),
+                                    onSelected: (val) {
+                                      setModalState(() {
+                                        _sendToAllPgs = false;
+                                        if (val) {
+                                          _selectedPropertyIds.add(p.id);
+                                        } else {
+                                          _selectedPropertyIds.remove(p.id);
+                                        }
+                                      });
+                                    },
+                                  );
+                                }),
+                              ],
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 16),
                     AnimatedImageUploadProgressBar(
@@ -1084,15 +1165,28 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                             const Icon(Icons.check_circle_outline_rounded, size: 14, color: Color(0xFF10B981)),
                             const SizedBox(width: 5),
                             Flexible(
-                              child: Text(
-                                'Delivered to all active PG tenants',
-                                style: GoogleFonts.lato(
-                                  fontSize: 11.5,
-                                  color: const Color(0xFF059669),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                              child: Builder(
+                                builder: (context) {
+                                  final rawTargets = (item['targetPropertyIds'] as List<dynamic>?)
+                                          ?.map((e) => e.toString())
+                                          .toList() ??
+                                      const <String>[];
+                                  final props = context.watch<AppProvider>().properties;
+                                  final propNameMap = {for (final p in props) p.id: p.name};
+                                  final label = rawTargets.isEmpty
+                                      ? 'Delivered to all active PG tenants'
+                                      : 'Delivered to: ${rawTargets.map((id) => propNameMap[id] ?? 'PG').join(', ')}';
+                                  return Text(
+                                    label,
+                                    style: GoogleFonts.lato(
+                                      fontSize: 11.5,
+                                      color: const Color(0xFF059669),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  );
+                                },
                               ),
                             ),
                           ],

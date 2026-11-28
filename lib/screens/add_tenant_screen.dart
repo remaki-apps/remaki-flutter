@@ -57,12 +57,43 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
   String _agreementDuration = 'None';
   bool _foodIncluded = true;
 
+  String _resolveGenderPolicy(AppProvider provider, {String? roomId}) {
+    String? propId;
+    if (roomId != null && roomId.isNotEmpty) {
+      final matchingRoom = provider.rooms.where((r) => r.id == roomId).firstOrNull ??
+          provider.currentRooms.where((r) => r.id == roomId).firstOrNull;
+      propId = matchingRoom?.propertyId;
+    }
+    propId ??= (provider.selectedPropertyId != null && provider.selectedPropertyId != 'ALL')
+        ? provider.selectedPropertyId
+        : null;
+    if (propId != null) {
+      final prop = provider.properties.where((p) => p.id == propId).firstOrNull;
+      if (prop != null) return prop.genderPolicy;
+    }
+    return 'BOTH';
+  }
+
   @override
   void initState() {
     super.initState();
     _selectedRoomId = widget.initialRoomId;
     _selectedBedId = widget.initialBedId;
     _moveInController.text = DateFormat('dd-MM-yyyy').format(_moveInDate);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final provider = Provider.of<AppProvider>(context, listen: false);
+      final policy = _resolveGenderPolicy(provider, roomId: _selectedRoomId);
+      setState(() {
+        if (policy == 'MALE') {
+          _gender = 'Male';
+        } else if (policy == 'FEMALE') {
+          _gender = 'Female';
+        } else if (_gender != 'Male' && _gender != 'Female') {
+          _gender = 'Male';
+        }
+      });
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (ApiService.isLoggedIn) {
         Provider.of<AppProvider>(context, listen: false).loadFromAPI();
@@ -496,14 +527,71 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
               ),
             ),
 
-            // Gender Dropdown
-            CustomExpandableDropdown<String>(
-              label: 'Gender',
-              value: _gender,
-              hintText: 'Select Gender',
-              icon: Icons.wc_outlined,
-              items: ['Male', 'Female', 'Other'].map((g) => DropdownOption(value: g, label: g)).toList(),
-              onChanged: (val) => setState(() => _gender = val),
+            // Gender (locked for single-gender PG, Male/Female only for BOTH PG)
+            Builder(
+              builder: (context) {
+                final provider = context.watch<AppProvider>();
+                final policy = _resolveGenderPolicy(provider, roomId: _selectedRoomId);
+                if (policy == 'MALE' || policy == 'FEMALE') {
+                  final fixedGender = policy == 'MALE' ? 'Male' : 'Female';
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.wc_outlined, color: Color(0xFF64748B), size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Gender',
+                                style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                fixedGender,
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEEF2FF),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.lock_outline_rounded, size: 13, color: Color(0xFF4F46E5)),
+                              SizedBox(width: 4),
+                              Text(
+                                'PG Policy',
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF4F46E5)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return CustomExpandableDropdown<String>(
+                  label: 'Gender',
+                  value: (_gender == 'Male' || _gender == 'Female') ? _gender : 'Male',
+                  hintText: 'Select Gender',
+                  icon: Icons.wc_outlined,
+                  items: ['Male', 'Female'].map((g) => DropdownOption(value: g, label: g)).toList(),
+                  onChanged: (val) => setState(() => _gender = val),
+                );
+              },
             ),
 
             _buildInputField(_emergencyContactController, 'Emergency Contact', 'Name & Phone number', Icons.contact_phone_outlined, maxLines: 2),
@@ -578,6 +666,12 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
                   _selectedRoomId = val;
                   _selectedBedId = null;
                   _inlineError = null;
+                  final newPolicy = _resolveGenderPolicy(appProvider, roomId: val);
+                  if (newPolicy == 'MALE') {
+                    _gender = 'Male';
+                  } else if (newPolicy == 'FEMALE') {
+                    _gender = 'Female';
+                  }
                 });
               },
             ),
@@ -896,6 +990,7 @@ class _AddTenantScreenState extends State<AddTenantScreen> {
       phone: _phoneController.text.trim(),
       email: _emailController.text.trim(),
       emergencyContact: _emergencyContactController.text.trim(),
+      gender: _gender,
       roomId: _selectedRoomId!,
       bedId: _selectedBedId!,
       propertyId: targetPropId,

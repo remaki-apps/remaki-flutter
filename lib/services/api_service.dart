@@ -287,20 +287,13 @@ class ApiService {
                 : '';
 
             final bool isAuthFailure = code == 'UNAUTHORIZED' ||
-                code == 'FORBIDDEN' ||
-                code == 'USER_NOT_FOUND' ||
+                code == 'UNAUTHENTICATED' ||
                 httpStatus == '401' ||
-                httpStatus == '403' ||
                 lower.contains('unauthorized') ||
                 lower.contains('unauthenticated') ||
                 lower.contains('jwt expired') ||
                 lower.contains('invalid token') ||
-                lower.contains('user not found') ||
-                lower.contains('tenant profile not found') ||
-                lower.contains('profile not found') ||
-                lower.contains('tenant not found') ||
-                lower.contains('invalid credentials') ||
-                lower.contains('not authorized');
+                lower.contains('invalid credentials');
 
             if (isAuthFailure) {
               await clearAuthToken();
@@ -327,12 +320,7 @@ class ApiService {
             if (lower.contains('unauthorized') ||
                 lower.contains('unauthenticated') ||
                 lower.contains('jwt expired') ||
-                lower.contains('invalid token') ||
-                lower.contains('user not found') ||
-                lower.contains('tenant profile not found') ||
-                lower.contains('profile not found') ||
-                lower.contains('tenant not found') ||
-                lower.contains('not authorized')) {
+                lower.contains('invalid token')) {
               await clearAuthToken();
             }
             throw ApiException(cleanErrorMessage(extractedMsg));
@@ -350,9 +338,13 @@ class ApiService {
             return responseJson;
           }
           return <String, dynamic>{};
-        } else if (response.statusCode == 401 || response.statusCode == 403 || response.statusCode == 404) {
+        } else if (response.statusCode == 401) {
           await clearAuthToken();
-          throw ApiException('Your session has expired or user was not found. Please log in again.');
+          throw ApiException('Your session has expired. Please log in again.');
+        } else if (response.statusCode == 403) {
+          throw ApiException('You do not have permission to perform this action.');
+        } else if (response.statusCode == 404) {
+          throw ApiException('Requested resource was not found.');
         } else if (response.statusCode >= 500) {
           throw ApiException('Server error (${response.statusCode}). Please try again shortly.');
         } else {
@@ -436,6 +428,7 @@ class ApiService {
           platformFee
           occupation
           dateOfBirth
+          gender
           maritalStatus
           fatherName
           permanentAddress
@@ -477,6 +470,7 @@ class ApiService {
           latestPaymentRequestStatus
           occupation
           dateOfBirth
+          gender
           maritalStatus
           fatherName
           permanentAddress
@@ -633,6 +627,7 @@ class ApiService {
           phone
           occupation
           dateOfBirth
+          gender
           maritalStatus
           fatherName
           permanentAddress
@@ -673,6 +668,7 @@ class ApiService {
             upiPayeeName
             electricityCalculatorEnabled
             electricityCostPerUnit
+            genderPolicy
           }
         }
       }
@@ -750,6 +746,7 @@ class ApiService {
           imageUrl
           durationDays
           expiresAt
+          targetPropertyIds
           createdAt
         }
       }
@@ -769,10 +766,11 @@ class ApiService {
     String? imageBase64,
     String? imageUrl,
     int durationDays = 3,
+    List<String>? propertyIds,
   }) async {
     const mutation = '''
-      mutation CreateAnnouncement(\$heading: String!, \$description: String!, \$imageBase64: String, \$imageUrl: String, \$durationDays: Int) {
-        createAnnouncement(heading: \$heading, description: \$description, imageBase64: \$imageBase64, imageUrl: \$imageUrl, durationDays: \$durationDays) {
+      mutation CreateAnnouncement(\$heading: String!, \$description: String!, \$imageBase64: String, \$imageUrl: String, \$durationDays: Int, \$propertyIds: [ID!]) {
+        createAnnouncement(heading: \$heading, description: \$description, imageBase64: \$imageBase64, imageUrl: \$imageUrl, durationDays: \$durationDays, propertyIds: \$propertyIds) {
           id
         }
       }
@@ -783,6 +781,7 @@ class ApiService {
       'imageBase64': imageBase64,
       'imageUrl': imageUrl,
       'durationDays': durationDays,
+      if (propertyIds != null) 'propertyIds': propertyIds,
     });
   }
 
@@ -1789,6 +1788,7 @@ class ApiService {
     coOwnersCount
     electricityCalculatorEnabled
     electricityCostPerUnit
+    genderPolicy
   ''';
 
   static Future<List<dynamic>> fetchOrganizationProperties() async {

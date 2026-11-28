@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/api_service.dart';
+import '../services/fcm_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -148,12 +149,32 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
     if (!ApiService.isLoggedIn) {
       context.go('/login');
-    } else if (ApiService.role == 'TENANT') {
-      if (!ApiService.hasSecurityPin) {
-        context.go('/setup_security_pin');
-      } else {
-        context.go('/tenant_home');
+      return;
+    }
+
+    if (ApiService.role == 'TENANT' && !ApiService.hasSecurityPin) {
+      context.go('/setup_security_pin');
+      return;
+    }
+
+    final pending = FcmService.instance.consumePendingRoute();
+    if (pending != null && pending.isNotEmpty) {
+      context.go(pending);
+      return;
+    }
+
+    if (kIsWeb) {
+      final frag = Uri.base.fragment;
+      if (frag.isNotEmpty && frag != '/' && frag != '/splash') {
+        context.go(frag.startsWith('/') ? frag : '/$frag');
+        return;
       }
+    }
+
+    if (ApiService.role == 'ORGANIZATION') {
+      context.go('/org_dashboard');
+    } else if (ApiService.role == 'TENANT') {
+      context.go('/tenant_home');
     } else {
       context.go('/');
     }

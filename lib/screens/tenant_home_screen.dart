@@ -37,7 +37,7 @@ class TenantHomeScreen extends StatefulWidget {
   State<TenantHomeScreen> createState() => _TenantHomeScreenState();
 }
 
-class _TenantHomeScreenState extends State<TenantHomeScreen> {
+class _TenantHomeScreenState extends State<TenantHomeScreen> with WidgetsBindingObserver {
   double _effectivePlatformFee = 0.0;
   String _paymentType = 'BOTH';
   late int _currentNavIndex;
@@ -168,9 +168,12 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
   bool _isUpdatingPin = false;
   String? _securityPinError;
 
+  DateTime? _lastAutoRefreshAt;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _currentNavIndex = widget.initialTab;
     NetworkProvider.instance.addRestoredListener(_onNetworkRestored);
     _loadAllData();
@@ -179,6 +182,24 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _handleIncomingSharedScreenshot();
     });
+  }
+
+  void _refreshWithCooldown() {
+    if (!mounted) return;
+    final now = DateTime.now();
+    if (_lastAutoRefreshAt != null &&
+        now.difference(_lastAutoRefreshAt!) < const Duration(seconds: 5)) {
+      return;
+    }
+    _lastAutoRefreshAt = now;
+    _loadAllData();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshWithCooldown();
+    }
   }
 
   void _onNetworkRestored() {
@@ -194,7 +215,9 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
     final route = message.data['route']?.toString();
 
     // Auto-refresh notices, bills, and payments live without requiring manual page reload!
-    if (entityType == 'ANNOUNCEMENT' || (route != null && route.contains('announcement'))) {
+    if (entityType == 'ANNOUNCEMENT' ||
+        (route != null &&
+            (route.contains('announcement') || route.contains('tenant_notices')))) {
       _fetchAnnouncements();
     } else if (entityType == 'BILL' || entityType == 'PAYMENT_REQUEST' || entityType == 'RENT_REMINDER') {
       _fetchProfile();
@@ -211,11 +234,13 @@ class _TenantHomeScreenState extends State<TenantHomeScreen> {
       setState(() {
         _currentNavIndex = widget.initialTab;
       });
+      _refreshWithCooldown();
     }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     NetworkProvider.instance.removeRestoredListener(_onNetworkRestored);
     _descriptionController.dispose();
     _customPaymentAmountController.dispose();

@@ -32,6 +32,7 @@ import 'screens/login_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/setup_security_pin_screen.dart';
 import 'screens/tenant_home_screen.dart';
+import 'screens/tenant_notices_screen.dart';
 import 'screens/pending_approvals_screen.dart';
 import 'screens/announcements_screen.dart';
 import 'screens/about_remaki_screen.dart';
@@ -190,11 +191,14 @@ final router = GoRouter(
 
     // Role-Based Access Control
     if (ApiService.role == 'TENANT') {
+      if (location == '/announcements') {
+        return '/tenant_notices';
+      }
       const allowedTenantRoutes = {
         '/tenant_home',
         '/tenant_my_profile',
         '/tenant_complaints',
-        '/announcements',
+        '/tenant_notices',
         '/setup_security_pin',
         '/about',
         '/terms',
@@ -235,6 +239,23 @@ final router = GoRouter(
     }
 
     return null;
+  },
+  errorBuilder: (context, state) {
+    final fallback = !ApiService.isLoggedIn
+        ? '/login'
+        : ApiService.role == 'TENANT'
+            ? '/tenant_home'
+            : ApiService.role == 'ORGANIZATION'
+                ? '/org_dashboard'
+                : '/';
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.mounted) {
+        context.go(fallback);
+      }
+    });
+    return const Scaffold(
+      body: Center(child: CircularProgressIndicator()),
+    );
   },
   routes: [
     GoRoute(
@@ -451,8 +472,18 @@ final router = GoRouter(
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,
+      path: '/pending_approvals',
+      redirect: (_, __) => '/approvals',
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
       path: '/announcements',
       builder: (context, state) => const AnnouncementsScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/tenant_notices',
+      builder: (context, state) => const TenantNoticesScreen(),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

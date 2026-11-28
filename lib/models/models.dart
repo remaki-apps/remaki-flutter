@@ -160,6 +160,7 @@ class PropertyItem {
   final String? upiPayeeName;
   final bool electricityCalculatorEnabled;
   final double electricityCostPerUnit;
+  final String genderPolicy;
 
   PropertyItem({
     required this.id,
@@ -175,6 +176,7 @@ class PropertyItem {
     this.upiPayeeName,
     this.electricityCalculatorEnabled = false,
     this.electricityCostPerUnit = 0.0,
+    this.genderPolicy = 'BOTH',
   });
 
   factory PropertyItem.fromJson(Map<String, dynamic> json) => PropertyItem(
@@ -191,6 +193,7 @@ class PropertyItem {
         upiPayeeName: json['upiPayeeName']?.toString(),
         electricityCalculatorEnabled: json['electricityCalculatorEnabled'] == true,
         electricityCostPerUnit: (json['electricityCostPerUnit'] as num?)?.toDouble() ?? 0.0,
+        genderPolicy: json['genderPolicy']?.toString() ?? 'BOTH',
       );
 
   Map<String, dynamic> toJson() => {
@@ -207,6 +210,7 @@ class PropertyItem {
         'upiPayeeName': upiPayeeName,
         'electricityCalculatorEnabled': electricityCalculatorEnabled,
         'electricityCostPerUnit': electricityCostPerUnit,
+        'genderPolicy': genderPolicy,
       };
 }
 
@@ -711,6 +715,7 @@ class Tenant {
 
   String? occupation;
   String? dateOfBirth;
+  String? gender;
   String? maritalStatus;
   String? fatherName;
   String? permanentAddress;
@@ -884,6 +889,7 @@ class Tenant {
     
     this.occupation,
     this.dateOfBirth,
+    this.gender,
     this.maritalStatus,
     this.fatherName,
     this.permanentAddress,
@@ -942,6 +948,7 @@ class Tenant {
         'defaultPaymentMode': defaultPaymentMode,
         'occupation': occupation,
         'dateOfBirth': dateOfBirth,
+        'gender': gender,
         'maritalStatus': maritalStatus,
         'fatherName': fatherName,
         'permanentAddress': permanentAddress,
@@ -986,6 +993,7 @@ class Tenant {
         defaultPaymentMode: json['defaultPaymentMode'] as String?,
         occupation: json['occupation'] as String?,
         dateOfBirth: json['dateOfBirth'] as String?,
+        gender: json['gender'] as String?,
         maritalStatus: json['maritalStatus'] as String?,
         fatherName: json['fatherName'] as String?,
         permanentAddress: json['permanentAddress'] as String?,
