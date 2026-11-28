@@ -1167,7 +1167,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                             Flexible(
                               child: Builder(
                                 builder: (context) {
-                                  final rawTargets = (item['targetPropertyIds'] as List<dynamic>?)
+                                  final rawTargets = (a['targetPropertyIds'] as List<dynamic>?)
                                           ?.map((e) => e.toString())
                                           .toList() ??
                                       const <String>[];
