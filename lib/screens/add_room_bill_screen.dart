@@ -8,6 +8,7 @@ import '../models/models.dart';
 import '../widgets/tenant_avatar.dart';
 import '../widgets/fancy_toast.dart';
 import '../widgets/keyboard_responsive_layout.dart';
+import '../utils/string_utils.dart';
 
 enum SplitMode { even, byAmount }
 
@@ -16,12 +17,14 @@ class AddRoomBillScreen extends StatefulWidget {
   final List<String>? roomIds;
   final double? initialAmount;
   final ElectricitySplitDraft? electricityDraft;
+  final bool isPropertyWide;
   const AddRoomBillScreen({
     super.key,
     this.roomId,
     this.roomIds,
     this.initialAmount,
     this.electricityDraft,
+    this.isPropertyWide = false,
   });
 
   @override
@@ -31,6 +34,7 @@ class AddRoomBillScreen extends StatefulWidget {
 class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
   final _amountController = TextEditingController();
   final _descController = TextEditingController();
+  final _tenantSearchController = TextEditingController();
   final Map<String, TextEditingController> _tenantControllers = {};
   final Map<String, double> _customAmounts = {};
 
@@ -38,6 +42,7 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
   Set<String> _selectedTenantIds = {};
   double _totalAmount = 0.0;
   String? _selectedCategory;
+  String _tenantSearchQuery = '';
   bool _isSubmitting = false;
 
   final List<Map<String, dynamic>> _quickCategories = [
@@ -68,9 +73,19 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
       _descController.text = draft.defaultDescription;
       _selectedCategory = 'Electricity';
     }
-    // Initialize selected tenants to all tenants in the target room(s)
+    // Initialize selected tenants: 0 selected in PG-wide mode, all room tenants in room mode
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final appProvider = Provider.of<AppProvider>(context, listen: false);
+      if (widget.isPropertyWide) {
+        final pgTenants = appProvider.currentTenants
+            .where((t) => t.roomId.isNotEmpty)
+            .toList();
+        setState(() {
+          _selectedTenantIds = {};
+          _syncTenantControllers(pgTenants);
+        });
+        return;
+      }
       final targetIds = _targetRoomIds;
       final roomTenants =
           appProvider.tenants.where((t) => targetIds.contains(t.roomId)).toList();
@@ -93,6 +108,7 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
   void dispose() {
     _amountController.dispose();
     _descController.dispose();
+    _tenantSearchController.dispose();
     for (var c in _tenantControllers.values) {
       c.dispose();
     }
@@ -156,7 +172,7 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
 
   void _autoFillRemaining(List<Tenant> roomTenants) {
     final diff = _totalAmount - _customTotalSum;
-    if (diff <= 0) return;
+    if (diff <= 0 || roomTenants.isEmpty) return;
 
     // Find first selected tenant or tenant with 0 amount to allocate remainder
     final targetTenant = roomTenants.firstWhere(
@@ -173,9 +189,11 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
     });
   }
 
-  void _navigateBackToRoom() {
+  void _navigateBack() {
     if (context.canPop()) {
       context.pop();
+    } else if (widget.isPropertyWide) {
+      context.go('/tenants');
     } else if (widget.roomId != null && widget.roomId!.isNotEmpty) {
       context.go('/room_details/${widget.roomId}');
     } else {
@@ -266,6 +284,19 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
           description: desc,
         );
         await appProvider.loadFromAPI(showLoading: false);
+      } else if (widget.isPropertyWide) {
+        await appProvider.addBillToPgTenants(
+          propertyId: appProvider.effectivePropertyId,
+          totalAmount: _totalAmount,
+          splitType: _splitMode == SplitMode.even ? 'EQUAL' : 'CUSTOM',
+          tenantIds: _splitMode == SplitMode.even ? _selectedTenantIds.toList() : null,
+          splitsByTenantId: _splitMode == SplitMode.byAmount
+              ? {
+                  for (var id in _selectedTenantIds) id: _customAmounts[id] ?? 0.0,
+                }
+              : null,
+          description: desc,
+        );
       } else if (_splitMode == SplitMode.even) {
         await appProvider.addBillToTenants(
           _selectedTenantIds.toList(),
@@ -291,7 +322,7 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
       if (widget.electricityDraft != null) {
         context.pop(true);
       } else {
-        _navigateBackToRoom();
+        _navigateBack();
       }
     } catch (e) {
       if (!mounted) return;
@@ -317,16 +348,26 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
       orElse: () => Room(id: primaryRoomId, number: primaryRoomId, capacity: 0, beds: []),
     );
     final roomMap = {for (final r in appProvider.rooms) r.id: r};
-    final roomTenants = appProvider.tenants
-        .where((t) => targetRoomIds.contains(t.roomId))
-        .toList()
+    final roomTenants = (widget.isPropertyWide
+            ? appProvider.currentTenants.where((t) => t.roomId.isNotEmpty).toList()
+            : appProvider.tenants.where((t) => targetRoomIds.contains(t.roomId)).toList())
       ..sort((a, b) {
         final ra = roomMap[a.roomId]?.number ?? '';
         final rb = roomMap[b.roomId]?.number ?? '';
-        final cmp = ra.compareTo(rb);
+        final cmp = naturalCompare(ra, rb);
         return cmp != 0 ? cmp : a.name.compareTo(b.name);
       });
     _syncTenantControllers(roomTenants);
+
+    final searchQ = _tenantSearchQuery.trim().toLowerCase();
+    final visibleTenants = (widget.isPropertyWide && searchQ.isNotEmpty)
+        ? roomTenants.where((t) {
+            final roomNum = (roomMap[t.roomId]?.number ?? '').toLowerCase();
+            return t.name.toLowerCase().contains(searchQ) ||
+                roomNum.contains(searchQ) ||
+                'r$roomNum'.contains(searchQ);
+          }).toList()
+        : roomTenants;
 
     final splitAmount = _selectedTenantIds.isNotEmpty ? _totalAmount / _selectedTenantIds.length : 0.0;
     final isAllSelected = roomTenants.isNotEmpty && _selectedTenantIds.length == roomTenants.length;
@@ -338,7 +379,7 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) {
-          _navigateBackToRoom();
+          _navigateBack();
         }
       },
       child: Scaffold(
@@ -350,7 +391,7 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
           leading: Padding(
             padding: const EdgeInsets.all(8.0),
             child: GestureDetector(
-              onTap: _navigateBackToRoom,
+              onTap: _navigateBack,
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -364,9 +405,9 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Split Room Bill',
-                style: TextStyle(
+              Text(
+                widget.isPropertyWide ? 'Split Tenant Bill' : 'Split Room Bill',
+                style: const TextStyle(
                   color: Color(0xFF0F172A),
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
@@ -387,7 +428,9 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
                       child: Text(
                         widget.electricityDraft != null
                             ? widget.electricityDraft!.title
-                            : 'Room ${room.number}',
+                            : (widget.isPropertyWide
+                                ? (appProvider.pgName.isNotEmpty ? appProvider.pgName : 'All Rooms')
+                                : 'Room ${room.number}'),
                         style: const TextStyle(
                           color: AppTheme.primaryColor,
                           fontSize: 11,
@@ -911,6 +954,45 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
                     ),
                     const SizedBox(height: 8),
 
+                    if (widget.isPropertyWide && roomTenants.isNotEmpty) ...[
+                      TextField(
+                        controller: _tenantSearchController,
+                        onChanged: (val) => setState(() => _tenantSearchQuery = val),
+                        style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                        decoration: InputDecoration(
+                          hintText: 'Search tenant name or room...',
+                          hintStyle: const TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
+                          prefixIcon: const Icon(Icons.search_rounded, size: 18, color: Color(0xFF64748B)),
+                          suffixIcon: _tenantSearchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.close_rounded, size: 16, color: Color(0xFF64748B)),
+                                  onPressed: () {
+                                    _tenantSearchController.clear();
+                                    setState(() => _tenantSearchQuery = '');
+                                  },
+                                )
+                              : null,
+                          filled: true,
+                          fillColor: Colors.white,
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: AppTheme.primaryColor),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+
                     // List of Tenants
                     if (roomTenants.isEmpty)
                       Container(
@@ -925,9 +1007,9 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
                           children: [
                             const Icon(Icons.people_outline_rounded, color: Color(0xFF94A3B8), size: 32),
                             const SizedBox(height: 8),
-                            const Text(
-                              'No tenants in this room',
-                              style: TextStyle(
+                            Text(
+                              widget.isPropertyWide ? 'No allocated tenants' : 'No tenants in this room',
+                              style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF0F172A),
@@ -935,9 +1017,41 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Allocate tenants to Room ${room.number} first before splitting bills.',
+                              widget.isPropertyWide
+                                  ? 'Allocate tenants to a room first before splitting bills.'
+                                  : 'Allocate tenants to Room ${room.number} first before splitting bills.',
                               textAlign: TextAlign.center,
                               style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (visibleTenants.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: const Column(
+                          children: [
+                            Icon(Icons.search_off_rounded, color: Color(0xFF94A3B8), size: 30),
+                            SizedBox(height: 8),
+                            Text(
+                              'No matching tenants',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Try a different tenant name or room number.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                             ),
                           ],
                         ),
@@ -946,10 +1060,10 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
                       ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: roomTenants.length,
+                        itemCount: visibleTenants.length,
                         separatorBuilder: (context, index) => const SizedBox(height: 6),
                         itemBuilder: (context, index) {
-                          final tenant = roomTenants[index];
+                          final tenant = visibleTenants[index];
                           final isSelected = _selectedTenantIds.contains(tenant.id);
 
                           return AnimatedContainer(
@@ -1040,7 +1154,7 @@ class _AddRoomBillScreenState extends State<AddRoomBillScreen> {
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          if (targetRoomIds.length > 1) ...[
+                                          if (widget.isPropertyWide || targetRoomIds.length > 1) ...[
                                             const SizedBox(width: 6),
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

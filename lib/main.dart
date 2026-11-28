@@ -344,6 +344,7 @@ final router = GoRouter(
       path: '/add_room_bill',
       pageBuilder: (context, state) {
         final draft = state.extra as ElectricitySplitDraft?;
+        final isPropertyWide = state.uri.queryParameters['scope'] == 'pg';
         return _buildPageWithTransition(
           context: context,
           state: state,
@@ -352,6 +353,7 @@ final router = GoRouter(
             roomIds: draft?.roomIds,
             initialAmount: draft?.totalAmount,
             electricityDraft: draft,
+            isPropertyWide: isPropertyWide,
           ),
         );
       },

@@ -437,6 +437,11 @@ class AppProvider with ChangeNotifier {
   }
 
   // Filtered rooms and tenants for currently selected PG
+  String? get effectivePropertyId =>
+      (selectedPropertyId != null && selectedPropertyId != 'ALL')
+          ? selectedPropertyId
+          : (properties.isNotEmpty ? properties.first.id : null);
+
   List<Room> get currentRooms {
     final activeId = (selectedPropertyId != null && selectedPropertyId != 'ALL')
         ? selectedPropertyId
@@ -815,6 +820,48 @@ class AppProvider with ChangeNotifier {
       await saveToStorage();
     } catch (e) {
       debugPrint('Error generating custom split bill: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> addBillToPgTenants({
+    String? propertyId,
+    required double totalAmount,
+    required String splitType,
+    List<String>? tenantIds,
+    Map<String, double>? splitsByTenantId,
+    required String description,
+  }) async {
+    final targetPropertyId = propertyId ?? effectivePropertyId;
+    final payload = <String, dynamic>{
+      if (targetPropertyId != null && targetPropertyId.isNotEmpty)
+        'propertyId': targetPropertyId,
+      'totalAmount': totalAmount,
+      'splitType': splitType,
+      'description': description,
+    };
+
+    if (splitType == 'EQUAL') {
+      final ids = (tenantIds ?? []).toSet().toList();
+      if (ids.isEmpty) return;
+      payload['tenantProfileIds'] = ids;
+    } else {
+      final nonZeroSplits = (splitsByTenantId ?? {}).entries.where((e) => e.value > 0).toList();
+      if (nonZeroSplits.isEmpty) return;
+      payload['customSplits'] = nonZeroSplits
+          .map((e) => {
+                'tenantProfileId': e.key,
+                'value': e.value,
+              })
+          .toList();
+    }
+
+    try {
+      await ApiService.generateTenantsCurrentBill(payload);
+      await loadFromAPI(showLoading: false);
+      await saveToStorage();
+    } catch (e) {
+      debugPrint('Error generating PG tenant split bill: $e');
       rethrow;
     }
   }

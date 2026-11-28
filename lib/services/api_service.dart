@@ -1081,6 +1081,25 @@ class ApiService {
     await performQuery(mutation, variables: {'input': input});
   }
 
+  static Future<List<dynamic>> generateTenantsCurrentBill(Map<String, dynamic> input) async {
+    const String mutation = '''
+      mutation GenerateTenantsCurrentBill(\$input: GenerateTenantsCurrentBillInput!) {
+        generateTenantsCurrentBill(input: \$input) {
+          id
+          tenantProfileId
+          amount
+          type
+          status
+          dueDate
+          description
+          createdAt
+        }
+      }
+    ''';
+    final data = await performQuery(mutation, variables: {'input': input});
+    return (data?['generateTenantsCurrentBill'] as List<dynamic>?) ?? [];
+  }
+
   static Future<void> allocateTenantToBed(String tenantId, String bedId, {double? rentAmount, double? securityDeposit, String? moveInDate}) async {
     const String mutation = '''
       mutation AllocateTenantToBed(\$tenantId: ID!, \$bedId: ID!, \$rentAmount: Float, \$securityDeposit: Float, \$moveInDate: String) {

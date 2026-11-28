@@ -8,6 +8,7 @@ import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tenant_avatar.dart';
 import '../widgets/app_shimmer.dart';
+import '../widgets/fancy_toast.dart';
 import '../utils/string_utils.dart';
 
 class TenantsScreen extends StatefulWidget {
@@ -380,9 +381,49 @@ class _TenantsScreenState extends State<TenantsScreen> {
                       ),
                       const SizedBox(width: 8),
                       GestureDetector(
+                        onTap: () {
+                          final allocatedTenants = appProvider.currentTenants
+                              .where((t) => t.roomId.isNotEmpty)
+                              .toList();
+                          if (appProvider.effectivePropertyId == null || allocatedTenants.isEmpty) {
+                            FancyToast.showError(
+                              context,
+                              'No allocated tenants',
+                              message: 'Allocate at least one tenant to a room before splitting a bill.',
+                            );
+                            return;
+                          }
+                          context.push('/add_room_bill?scope=pg');
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.35)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.receipt_long_rounded, color: AppTheme.primaryColor, size: 15),
+                              SizedBox(width: 4),
+                              Text(
+                                'Split Bill',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
                         onTap: () => context.push('/add_tenant'),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
                             color: AppTheme.primaryColor,
                             borderRadius: BorderRadius.circular(12),
@@ -391,13 +432,14 @@ class _TenantsScreenState extends State<TenantsScreen> {
                             ],
                           ),
                           child: const Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.person_add_alt_1_rounded, color: Colors.white, size: 16),
-                              SizedBox(width: 6),
+                              Icon(Icons.person_add_alt_1_rounded, color: Colors.white, size: 15),
+                              SizedBox(width: 5),
                               Text(
                                 'Add Tenant',
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 12.5,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
